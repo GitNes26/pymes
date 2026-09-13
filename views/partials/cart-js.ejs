@@ -274,7 +274,25 @@
     const p = PROMAP[String(it.id)];
     it.qty += delta;
     if (isNaN(it.qty) || it.qty <= 0) { delete cart[key]; saveCart(); renderCart(); return; }
-    if (p && p.stock !== null && it.qty > p.stock) { it.qty = p.stock; toast("Stock maximo disponible", false); }
+    if (p) {
+      const pvm = normVariantModel(p.variants);
+      // Con variantes, p.stock siempre es null (vive por combinación) —
+      // antes eso hacía que el tope de stock se saltara por completo al
+      // subir la cantidad desde el carrito con los botones +/-.
+      let cap = null;
+      if (it.variant && pvm.stock) {
+        const ck = it.variant.split(' / ').join('|');
+        const st = pvm.stock[ck];
+        if (st !== undefined) cap = st;
+      } else if (p.stock !== null) {
+        cap = p.stock;
+      }
+      if (cap !== null && it.qty > cap) {
+        if (cap <= 0) { delete cart[key]; saveCart(); renderCart(); toast('Ya no hay disponibles', false); return; }
+        it.qty = cap;
+        toast('Stock máximo disponible', false);
+      }
+    }
     saveCart();
     renderCart();
   }

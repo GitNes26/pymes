@@ -194,6 +194,7 @@
             <span class="prod-off">-<%= Math.round((1-product.price/product.old_price)*100) %>%</span>
           <% } %>
         </div>
+        <p id="prod-stock-note" style="font-size:13px;font-weight:700;margin:4px 0 0;"></p>
         <% if (product.promo_desc) { %>
           <div style="display:flex;align-items:flex-start;gap:10px;margin-top:14px;padding:12px 14px;border-radius:14px;font-size:13px;font-weight:600;color:#b91c1c;background:linear-gradient(135deg,#fef2f2,#fff7ed);border:1px solid rgba(239,68,68,.22);line-height:1.45;">
             <span style="flex-shrink:0;width:28px;height:28px;border-radius:9px;background:#ef4444;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;"><i class="bi bi-tag-fill"></i></span>
@@ -252,8 +253,7 @@
 
         <!-- Actions -->
         <div class="actions">
-          <button class="btn-add" onclick="addProductToCart()"><i class="bi bi-bag-plus"></i> Agregar al carrito</button>
-          <a href="https://wa.me/<%= biz.whatsapp.startsWith('52') ? biz.whatsapp : '52' + biz.whatsapp %>?text=<%= encodeURIComponent('Hola ' + biz.name + ', me interesa: ' + product.name + ' — ' + money(product.price)) %>" target="_blank" rel="noopener" class="btn-wa"><i class="bi bi-whatsapp"></i> Pedir</a>
+          <button class="btn-add" style="flex:1;" onclick="addProductToCart()"><i class="bi bi-bag-plus"></i> Agregar al carrito</button>
         </div>
 
         <a href="/<%= biz.slug %>" class="back-link"><i class="bi bi-grid-3x3-gap"></i> Ver todo el catálogo</a>
@@ -286,7 +286,6 @@
         <p class="sticky-price" id="sticky-price"><%= money(product.price) %></p>
       </div>
       <button class="btn-add" style="flex:1;" onclick="addProductToCart()"><i class="bi bi-bag-plus"></i> Agregar</button>
-      <a href="https://wa.me/<%= biz.whatsapp.startsWith('52') ? biz.whatsapp : '52' + biz.whatsapp %>?text=<%= encodeURIComponent('Hola ' + biz.name + ', me interesa: ' + product.name + ' — ' + money(product.price)) %>" target="_blank" class="btn-wa" style="padding:13px 16px;"><i class="bi bi-whatsapp"></i></a>
     </div>
   </div>
 
@@ -319,6 +318,7 @@
   <script>
     (function () {
       var PROD_ID = <%- product.id %>;
+      var PROD_STOCK = <%- (product.displayStock === null || product.displayStock === undefined) ? 'null' : product.displayStock %>;
       var vm = { attrs: [], images: {} };
       try { var d = JSON.parse(<%- JSON.stringify(product.variants || '') %>); if (d && d.attrs) vm = d; } catch (e) {}
       var sel = {};
@@ -327,7 +327,11 @@
       function comboKey() { return vm.attrs.map(function(a){ return sel[a.name]||''; }).join('|'); }
       function render() {
         var box = document.getElementById('prod-variants');
-        if (!box || !vm.attrs.length) { if (box) box.innerHTML=''; return; }
+        if (!box || !vm.attrs.length) {
+          if (box) box.innerHTML = '';
+          updatePrice(); updateImage(); updateStockNote();
+          return;
+        }
         box.innerHTML = '';
         vm.attrs.forEach(function(a) {
           var isColor = /color/i.test(a.name);
@@ -356,6 +360,27 @@
         });
         updatePrice();
         updateImage();
+        updateStockNote();
+      }
+      // Cuántas piezas quedan — del total del producto, o de la combinación
+      // elegida si es "con variantes" (cada una tiene su propio stock).
+      function updateStockNote() {
+        var el = document.getElementById('prod-stock-note');
+        if (!el) return;
+        var stock;
+        if (vm.attrs.length) {
+          var key = comboKey();
+          var complete = vm.attrs.every(function (a) { return sel[a.name]; });
+          if (!complete) { el.textContent = ''; return; }
+          var st = vm.stock && vm.stock[key];
+          stock = (st === undefined || st === '') ? null : Number(st);
+        } else {
+          stock = PROD_STOCK;
+        }
+        if (stock === null || stock === undefined) { el.textContent = ''; return; }
+        if (stock <= 0) { el.textContent = 'Agotado'; el.style.color = '#ef4444'; }
+        else if (stock <= 5) { el.textContent = '🔥 ¡Quedan ' + stock + '!'; el.style.color = '#ea580c'; }
+        else { el.textContent = stock + ' disponibles'; el.style.color = 'var(--text-sec)'; }
       }
       function updatePrice() {
         var key = comboKey();

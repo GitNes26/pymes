@@ -1546,7 +1546,19 @@ function getCatalog(businessId) {
      LEFT JOIN categories c ON c.id = p.category_id
      WHERE p.business_id = ? AND p.active = 1
      ORDER BY p.featured DESC, p.sort ASC, p.created_at DESC`
-  ).all(businessId).map(withPromo).map(p => { p.imgs = productImgs(p); p.shortDesc = (p.description || '').replace(/\s+/g, ' ').trim().slice(0, 110); return p; });
+  ).all(businessId).map(withPromo).map(p => {
+    p.imgs = productImgs(p);
+    p.shortDesc = (p.description || '').replace(/\s+/g, ' ').trim().slice(0, 110);
+    // Para que el cliente sepa si se va a acabar: con variantes el stock
+    // vive por combinación (p.stock siempre null a propósito), así que se
+    // suma aquí para mostrar "quedan X" tanto en la tarjeta como en la
+    // ficha del producto.
+    const vm = parseVariantList(p.variants);
+    p.displayStock = (vm.attrs && vm.attrs.length)
+      ? Object.values(vm.stock || {}).reduce((s, v) => s + (parseInt(v, 10) || 0), 0)
+      : p.stock;
+    return p;
+  });
   const pages = db.prepare(
     'SELECT id, slug, title, icon, sort FROM pages WHERE business_id = ? AND active = 1 ORDER BY sort ASC, id ASC'
   ).all(businessId);
@@ -2047,6 +2059,10 @@ app.get('/:slug/p/:id', (req, res, next) => {
   }
   p.imgs = productImgs(p);
   withPromo(p);
+  const pvm0 = parseVariantList(p.variants);
+  p.displayStock = (pvm0.attrs && pvm0.attrs.length)
+    ? Object.values(pvm0.stock || {}).reduce((s, v) => s + (parseInt(v, 10) || 0), 0)
+    : p.stock;
   track(biz.id, 'view', p.name);
   const estilo = getEffectiveEstilo(biz);
   const pal = getPalette(biz, estilo);
