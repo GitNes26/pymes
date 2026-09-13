@@ -147,7 +147,7 @@
           <div id="prod-grid" class="product-grid">
             <% allProducts.forEach((p, i) => { %>
               <article class="product-card m-ripple <%= i >= 12 ? 'hidden' : '' %>" data-active-layer
-                   data-search="<%= [p.name, p.tags, p.description].filter(Boolean).join(' ').toLowerCase() %>" data-state="<%= p.active ? 'active' : 'hidden' %>" data-stock="<%= p.stock === null ? '' : (p.stock > 5 ? 'ok' : (p.stock > 0 ? 'low' : 'out')) %>" data-promo="<%= p.old_price ? 1 : 0 %>"
+                   data-search="<%= [p.name, p.tags, p.description].filter(Boolean).join(' ').toLowerCase() %>" data-state="<%= p.active ? 'active' : 'hidden' %>" data-stock="<%= p.displayStock === null ? '' : (p.displayStock > 5 ? 'ok' : (p.displayStock > 0 ? 'low' : 'out')) %>" data-promo="<%= p.old_price ? 1 : 0 %>"
                    data-edit-id="<%= p.id %>" data-edit-name="<%= (p.name || '').replace(/"/g, '&quot;') %>" data-edit-price="<%= p.price %>" data-edit-old="<%= p.old_price || '' %>"
                    data-edit-cat="<%= p.category_id || '' %>" data-edit-desc="<%= (p.description || '').replace(/"/g, '&quot;') %>" data-edit-image="<%= (p.image || '').replace(/"/g, '&quot;') %>" data-edit-galeria="<%= (p.galeria || '').replace(/"/g, '&quot;') %>"
                    data-edit-stock="<%= p.stock === null ? '' : p.stock %>" data-edit-variants="<%= encodeURIComponent(JSON.stringify(p.variants || [])) %>" data-edit-featured="<%= p.featured ? 1 : 0 %>" data-edit-promo="<%= p.promo_ends_at || '' %>"
@@ -173,7 +173,7 @@
                     <% } %>
                     <span class="w-0.5 h-0.5 rounded-full bg-slate-300"></span>
                     <span class="m-badge !h-5 !text-[10px] <%= p.active ? 'm-badge-success' : 'm-badge-neutral' %>"><%= p.active ? 'Visible' : 'Oculto' %></span>
-                    <span class="m-badge !h-5 !text-[10px] <%= (p.stock === null || p.stock <= 0) ? 'm-badge-error' : 'm-badge-primary' %>"><%= (p.stock === null || p.stock <= 0) ? 'Agotado' : p.stock + ' en stock' %></span>
+                    <span class="m-badge !h-5 !text-[10px] <%= (p.displayStock === null || p.displayStock <= 0) ? 'm-badge-error' : 'm-badge-primary' %>"><%= (p.displayStock === null || p.displayStock <= 0) ? 'Agotado' : p.displayStock + ' en stock' %></span>
                     <% if (p.variantCount > 0) { %>
                       <span class="m-badge !h-5 !text-[10px] m-badge-warn"><%= p.variantCount %> <%= p.variantCount === 1 ? 'var.' : 'var.' %></span>
                     <% } %>
@@ -283,9 +283,10 @@
               </select>
               <p id="f-cat-hint" class="text-[11px] text-slate-400 mt-1 <%= categories.length ? 'hidden' : '' %>"><% if (puedeCategorias) { %>Aún no tienes categorías. Créala en la pestaña <button type="button" class="font-bold text-neutral-800 hover:underline" onclick="switchCrudTab('categorias')">Categorías</button>.<% } else { %>Aún no hay categorías. Pídele al dueño de la tienda que las cree.<% } %></p>
             </div>
-            <div class="m-field">
-              <label for="f-price">Precio *</label>
+            <div class="m-field" id="f-price-wrap">
+              <label for="f-price" id="f-price-label">Precio *</label>
               <input name="price" id="f-price" required type="number" step="0.01" min="0" placeholder="0.00">
+              <p id="f-price-note" class="hidden text-[11px] font-bold text-amber-600 mt-1">Con variantes, el precio se pone por cada variante en el paso 2 (Variantes) — es obligatorio en todas.</p>
             </div>
             <div class="m-field md:col-span-2">
               <label for="f-promo-type">Promoción <span class="font-normal text-slate-400">(opcional)</span></label>
@@ -399,7 +400,7 @@
             </div>
 
             <div>
-              <p class="font-bold text-xs text-slate-700 mb-2">3 · Variantes generadas <span class="font-normal text-slate-400">(stock obligatorio en cada una; toca la foto para cambiarla si quieres)</span></p>
+              <p class="font-bold text-xs text-slate-700 mb-2">3 · Variantes generadas <span class="font-normal text-slate-400">(precio y stock obligatorios en cada una; toca la foto para cambiarla si quieres)</span></p>
               <div id="f-combo-box"></div>
             </div>
             <input type="hidden" name="variants" id="f-var-hidden">
@@ -1063,6 +1064,7 @@
 
         renderCombos();
         syncStockField();
+        syncPriceField();
       }
 
       function renderCombos() {
@@ -1098,8 +1100,8 @@
             '</div>' +
             '<span class="block text-[9px] font-bold text-white bg-black/60 truncate px-1 py-0.5">' + esc(label) + '</span>' +
             '<div class="flex items-center gap-1 px-1 py-1 bg-slate-50 border-t border-slate-100">' +
-              '<span class="text-[9px] font-bold text-slate-400">$</span>' +
-              '<input type="number" min="0" step="0.01" placeholder="Precio" value="' + esc(pr) + '" class="combo-price w-full text-[10px] border border-slate-200 rounded px-1 py-0.5 focus:outline-none focus:border-neutral-500" title="Precio de esta combinación (vacío = usa el del producto)">' +
+              '<span class="text-[9px] font-bold text-slate-400">Precio*</span>' +
+              '<input type="number" min="0" step="0.01" placeholder="0.00" value="' + esc(pr) + '" class="combo-price w-full text-[10px] border border-slate-200 rounded px-1 py-0.5 focus:outline-none focus:border-neutral-500" title="Precio obligatorio de esta variante">' +
             '</div>' +
             '<div class="flex items-center gap-1 px-1 py-1 bg-slate-50 border-t border-slate-100">' +
               '<span class="text-[9px] font-bold text-slate-400">Stock*</span>' +
@@ -1404,6 +1406,7 @@
         if (pfStep === PF_STEPS.length) renderResumen();
       }
       syncStockField();
+      syncPriceField();
     }
 
     function renderSteps() {
@@ -1471,7 +1474,10 @@
 
       var priceEl = document.getElementById('f-price');
       var pnum = parseFloat(priceEl.value);
-      if (priceEl.value === '' || isNaN(pnum)) { setError('f-price', 'Escribe el precio (un número, ej: 25.50)'); ok = false; }
+      var priceWrap = document.getElementById('f-price-wrap');
+      var hasVarsPrice = priceWrap && priceWrap.classList.contains('price-hidden');
+      if (hasVarsPrice) { clearError('f-price'); }
+      else if (priceEl.value === '' || isNaN(pnum)) { setError('f-price', 'Escribe el precio (un número, ej: 25.50)'); ok = false; }
       else if (pnum < 0) { setError('f-price', 'El precio no puede ser negativo'); ok = false; }
       else clearError('f-price');
 
@@ -1531,27 +1537,68 @@
         wrap.classList.remove('stock-hidden');
       }
     }
+    // Con variantes, cada combinación tiene su propio precio (paso 2) — el
+    // precio "general" no aplica y solo confundía (¿cuál de los dos manda?).
+    // Se oculta aquí igual que ya se hace con el stock.
+    function syncPriceField() {
+      var wrap = document.getElementById('f-price-wrap');
+      var note = document.getElementById('f-price-note');
+      var input = document.getElementById('f-price');
+      var label = document.getElementById('f-price-label');
+      if (!wrap) return;
+      if (pfTipo === 'variantes') {
+        input.value = '';
+        input.required = false;
+        input.classList.add('hidden');
+        if (label) label.classList.add('hidden');
+        if (note) note.classList.remove('hidden');
+        wrap.classList.add('price-hidden');
+      } else {
+        input.required = true;
+        input.classList.remove('hidden');
+        if (label) label.classList.remove('hidden');
+        if (note) note.classList.add('hidden');
+        wrap.classList.remove('price-hidden');
+      }
+    }
 
     function renderResumen() {
       var box = document.getElementById('pf-resumen');
       if (!box) return;
       var name = document.getElementById('f-name').value || '(sin nombre)';
-      var price = Number(document.getElementById('f-price').value) || 0;
       var old = Number(document.getElementById('f-old').value) || 0;
       var catSel = document.getElementById('f-cat');
       var catName = (catSel && catSel.options[catSel.selectedIndex]) ? catSel.options[catSel.selectedIndex].text : 'Sin categoría';
       var desc = document.getElementById('f-desc').value || '';
       var stock = document.getElementById('f-stock').value;
-      var promo = document.getElementById('f-promo').value;
+      var promoEnds = document.getElementById('f-promo').value;
+      var promoType = document.getElementById('f-promo-type').value;
       var featured = document.getElementById('f-featured').checked;
+      var sku = document.getElementById('f-sku').value || '';
+      var barcode = document.getElementById('f-barcode').value || '';
+      var tags = document.getElementById('f-tags').value || '';
+      var video = document.getElementById('f-video').value || '';
+      var specs = document.getElementById('f-specs').value || '';
+      var installments = document.getElementById('f-installments').checked;
       var fotoEls = document.querySelectorAll('#f-fotos [data-url]');
       var ed = window.VAR_EDITORS && window.VAR_EDITORS.f;
       var attrs = (ed && ed.model.attrs) || [];
+      var hasVariantes = pfTipo === 'variantes' && attrs.length > 0;
       var portada = fotoEls.length ? fotoEls[0].getAttribute('data-url') : '/img/sin-imagen.svg';
       if (!fotoEls.length && attrs.length && ed && ed.model.images) {
         var imgsR = Object.keys(ed.model.images).map(function (k) { return ed.model.images[k]; }).filter(Boolean);
         if (imgsR.length) portada = imgsR[0];
       }
+
+      // Precio: si es "único" viene del campo de arriba; con variantes se
+      // calcula de los precios capturados por combinación (paso 2), que es
+      // donde en verdad viven — el campo de arriba ni se muestra ni se pide.
+      var priceVals = [];
+      if (hasVariantes) {
+        var prc = (ed && ed.model && ed.model.prices) || {};
+        Object.keys(prc).forEach(function (k) { var v = Number(prc[k]); if (!isNaN(v)) priceVals.push(v); });
+      }
+      var price = hasVariantes ? (priceVals.length ? Math.min.apply(null, priceVals) : 0) : (Number(document.getElementById('f-price').value) || 0);
 
       var titulo = pfMode === 'editar' ? '✏️ Editando producto' : pfMode === 'duplicar' ? '📄 Duplicando producto' : '🛒 Producto listo para guardar';
 
@@ -1561,16 +1608,29 @@
       h += '<div class="flex-1 min-w-0">';
       h += '<div class="font-extrabold text-slate-900 truncate">' + escHTML(name) + '</div>';
       h += '<div class="flex items-baseline gap-2 mt-1">';
-      h += '<span class="font-black text-lg text-slate-900">' + money(price) + '</span>';
-      if (old > price) h += '<span class="text-xs text-slate-400 line-through">' + money(old) + '</span>';
+      if (hasVariantes) {
+        h += '<span class="font-black text-lg text-slate-900">' + (priceVals.length ? 'Desde ' + money(price) : 'Sin precio aún') + '</span>';
+      } else {
+        h += '<span class="font-black text-lg text-slate-900">' + money(price) + '</span>';
+        if (old > price) h += '<span class="text-xs text-slate-400 line-through">' + money(old) + '</span>';
+      }
       h += '</div>';
-      h += '<div class="text-xs text-slate-500 mt-0.5">' + escHTML(catName) + (stock !== '' ? ' · Stock: ' + stock : '') + (promo ? ' · Promo vence ' + promo : '') + '</div>';
+      h += '<div class="text-xs text-slate-500 mt-0.5">' + escHTML(catName) + (!hasVariantes && stock !== '' ? ' · Stock: ' + stock : '') + (promoEnds ? ' · Promo vence ' + promoEnds : '') + '</div>';
       if (featured) h += '<span class="inline-block mt-1 text-[11px] font-bold bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">⭐ Destacado</span>';
       h += '</div></div>';
 
       if (desc) h += '<p class="text-xs text-slate-500 mt-3 border-l-2 border-slate-200 pl-3">' + escHTML(desc) + '</p>';
 
-      if (attrs.length) {
+      // Promoción: mismo tipo de detalle que ve el cliente en el catálogo.
+      if (promoType) {
+        var promoLabels = { descuento: '💵 Precio rebajado', porcentaje: '📉 % de descuento', '2x1': '🛍️ 2x1', '3x2': '🛍️ 3x2', regalo: '🎁 Regalo' };
+        var promoDetail = promoLabels[promoType] || promoType;
+        if (promoType === 'porcentaje') promoDetail += ' — ' + (document.getElementById('f-promo-value').value || '0') + '%';
+        if (promoType === 'regalo') promoDetail += ' — ' + escHTML(document.getElementById('f-promo-gift').value || '');
+        h += '<div class="mt-2 text-xs font-bold text-red-500">' + promoDetail + '</div>';
+      }
+
+      if (hasVariantes) {
         h += '<div class="mt-4">';
         attrs.forEach(function (a) {
           h += '<div class="flex items-start gap-2 py-1.5 border-b border-slate-100">';
@@ -1583,14 +1643,17 @@
         attrs.forEach(function (a) { nCombos *= (a.values && a.values.length) || 1; });
         h += '<div class="mt-2 text-xs text-slate-500 font-bold">1 producto · ' + nCombos + ' variante' + (nCombos === 1 ? '' : 's') + ' (misma descripción; cada variante con su propia foto, precio y stock)</div>';
         var stok = (ed && ed.model && ed.model.stock) || {};
+        var prcs = (ed && ed.model && ed.model.prices) || {};
         var stockVals = [];
-        var totalStock = 0, sinStock = 0;
+        var totalStock = 0, sinStock = 0, sinPrecio = 0;
         (function walk(i, prefix) {
           if (i === attrs.length) {
             var k = prefix.join('|');
             var s = stok[k];
             if (s === undefined || s === '') sinStock++;
             else { stockVals.push(Number(s)); totalStock += Number(s); }
+            var p = prcs[k];
+            if (p === undefined || p === '') sinPrecio++;
             return;
           }
           var vals = (attrs[i].values && attrs[i].values.length) ? attrs[i].values : [''];
@@ -1598,6 +1661,7 @@
         })(0, []);
         if (stockVals.length) h += '<div class="text-xs text-slate-500 mt-0.5">Stock por variante: <b class="text-slate-700">' + stockVals.join(', ') + '</b> · Total <b class="text-slate-700">' + totalStock + '</b></div>';
         if (sinStock) h += '<div class="text-xs font-bold text-amber-600 mt-1">⚠ ' + sinStock + ' variante' + (sinStock === 1 ? '' : 's') + ' sin stock definido — revísalo en el paso 2 (Variantes)</div>';
+        if (sinPrecio) h += '<div class="text-xs font-bold text-amber-600 mt-1">⚠ ' + sinPrecio + ' variante' + (sinPrecio === 1 ? '' : 's') + ' sin precio definido — revísalo en el paso 2 (Variantes)</div>';
         var thumbs = [];
         Object.keys(ed.model.images || {}).forEach(function (k) { if (ed.model.images[k]) thumbs.push(ed.model.images[k]); });
         if (thumbs.length) {
@@ -1610,7 +1674,17 @@
         h += '<div class="mt-3 text-xs text-slate-400">Sin atributos · el producto se vende tal cual.</div>';
       }
 
-      h += '<div class="mt-3 pt-2 border-t border-slate-100 text-xs text-slate-400">📷 ' + fotoEls.length + ' foto(s)' + (attrs.length ? ' · 🏷️ ' + attrs.length + ' atributo(s)' : '') + '</div>';
+      // Datos sueltos que antes no se veían en ningún lado antes de guardar.
+      var extras = [];
+      if (sku) extras.push('SKU: ' + escHTML(sku));
+      if (barcode) extras.push('Código: ' + escHTML(barcode));
+      if (tags) extras.push('Etiquetas: ' + escHTML(tags));
+      if (video) extras.push('🎬 Video adjunto');
+      if (specs) extras.push('📋 ' + specs.split('\n').filter(Boolean).length + ' característica(s)');
+      if (installments) extras.push('◐ Vende por abonos (' + (document.getElementById('f-inst-count').value || 6) + ')');
+      if (extras.length) h += '<div class="mt-3 text-[11px] text-slate-500 flex flex-wrap gap-x-3 gap-y-1">' + extras.map(function (e) { return '<span>' + e + '</span>'; }).join('') + '</div>';
+
+      h += '<div class="mt-3 pt-2 border-t border-slate-100 text-xs text-slate-400">📷 ' + fotoEls.length + ' foto(s)' + (hasVariantes ? ' · 🏷️ ' + attrs.length + ' atributo(s)' : '') + '</div>';
 
       box.innerHTML = h;
     }
@@ -1674,6 +1748,7 @@
       setVal('f-image', ''); setVal('f-galeria', '');
       initFotos('f', '', '');
       syncStockField();
+      syncPriceField();
       var form = document.getElementById('pf-form');
       form.action = '/<%= biz.slug %>/admin/producto';
       document.getElementById('pf-title').textContent = 'Duplicar producto';
@@ -1720,24 +1795,41 @@
       document.getElementById('pf-form').addEventListener('submit', function (e) {
         if (pfTipo !== 'variantes') return;
         var ed = window.VAR_EDITORS && window.VAR_EDITORS.f;
-        var faltan = [];
-        if (ed && ed.model && ed.model.attrs.length) {
-          (function walk(i, prefix) {
-            if (i === ed.model.attrs.length) {
-              var k = prefix.join('|');
-              var s = ed.model.stock && ed.model.stock[k];
-              if (s === undefined || s === '') faltan.push(prefix.join(' / ') || '(variante)');
-              return;
-            }
-            var vals = (ed.model.attrs[i].values && ed.model.attrs[i].values.length) ? ed.model.attrs[i].values : [''];
-            vals.forEach(function (v) { walk(i + 1, prefix.concat([v])); });
-          })(0, []);
-        }
-        if (faltan.length) {
+        // Sin al menos un atributo con valores, "Con variantes" no genera
+        // ninguna variante real — no tiene caso guardar así.
+        if (!ed || !ed.model || !ed.model.attrs.length) {
           e.preventDefault();
           e.stopPropagation();
-          if (window.mostrarToast) window.mostrarToast('⚠ Falta stock en ' + faltan.slice(0, 3).join(', ') + (faltan.length > 3 ? ' y ' + (faltan.length - 3) + ' más' : '') + ' — complétalo en el paso 2 (Variantes)', 'error');
+          if (window.mostrarToast) window.mostrarToast('⚠ Agrega al menos un atributo (Talla, Color…) para generar las variantes', 'error');
           goStep(3);
+          return;
+        }
+        var faltanStock = [], faltanPrecio = [];
+        (function walk(i, prefix) {
+          if (i === ed.model.attrs.length) {
+            var k = prefix.join('|');
+            var s = ed.model.stock && ed.model.stock[k];
+            var pr = ed.model.prices && ed.model.prices[k];
+            if (s === undefined || s === '') faltanStock.push(prefix.join(' / ') || '(variante)');
+            if (pr === undefined || pr === '') faltanPrecio.push(prefix.join(' / ') || '(variante)');
+            return;
+          }
+          var vals = (ed.model.attrs[i].values && ed.model.attrs[i].values.length) ? ed.model.attrs[i].values : [''];
+          vals.forEach(function (v) { walk(i + 1, prefix.concat([v])); });
+        })(0, []);
+        if (faltanPrecio.length) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (window.mostrarToast) window.mostrarToast('⚠ Falta precio en ' + faltanPrecio.slice(0, 3).join(', ') + (faltanPrecio.length > 3 ? ' y ' + (faltanPrecio.length - 3) + ' más' : '') + ' — complétalo en el paso 2 (Variantes)', 'error');
+          goStep(3);
+          return;
+        }
+        if (faltanStock.length) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (window.mostrarToast) window.mostrarToast('⚠ Falta stock en ' + faltanStock.slice(0, 3).join(', ') + (faltanStock.length > 3 ? ' y ' + (faltanStock.length - 3) + ' más' : '') + ' — complétalo en el paso 2 (Variantes)', 'error');
+          goStep(3);
+          return;
         }
         // Portada automática: si no se subieron fotos de producto, la portada es la primera foto de variante.
         var ed0 = window.VAR_EDITORS && window.VAR_EDITORS.f;
@@ -1757,11 +1849,21 @@
       renderAttrCatalog();
       // El wizard de captura solo existe si hay permiso de crear o editar productos.
       if (!document.getElementById('pf-form')) return;
+      // El panel es SPA-lite: al guardar, panel-ajax.ejs solo reemplaza el
+      // innerHTML de <main> (no vuelve a ejecutar este <script>), así que
+      // pfStep/pfTipo/pfMode quedaban con el valor de ANTES de guardar —
+      // el HTML fresco ya mostraba el paso 1, pero el indicador de pasos
+      // seguía marcando "Guardar" como activo. Se resetea aquí siempre;
+      // restoreFormOnError() lo vuelve a ajustar más abajo si hubo error.
+      pfStep = 1;
+      pfMode = 'crear';
+      pfTipo = 'unico';
       initVariantes('f', '');
       initStepper();
       onPromoTypeChange();
       bindValidation();
       syncStockField();
+      syncPriceField();
       renderTplPills('f');
       restoreFormOnError();
     }

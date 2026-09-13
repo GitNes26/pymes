@@ -2519,6 +2519,12 @@ function panelData(biz) {
     p.stock = p.stock === null || p.stock === undefined ? null : p.stock;
     p.variants = parseVariantList(p.variants);
     p.variantCount = variantCount(p.variants);
+    // Con variantes, el stock del producto (columna suelta) siempre queda en
+    // null a propósito — vive repartido por combinación. Sin esto, cualquier
+    // producto con variantes se mostraba "Agotado" aunque tuviera stock real.
+    p.displayStock = p.variantCount > 0
+      ? Object.values(p.variants.stock || {}).reduce((s, v) => s + (parseInt(v, 10) || 0), 0)
+      : p.stock;
     return withPromo(p);
   });
   const orders = db.prepare(
@@ -2812,21 +2818,31 @@ app.post('/:slug/admin/producto', requireAuth, can('productos.crear'), (req, res
     return res.status(400).render('productos', { biz, ...panelData(biz), error: check.message, planBlock: check.planBlock || null });
   }
   const { name, category_id, description, image, stock, variants } = req.body;
-  const { price, old_price } = parsePrices(req.body);
+  const { price: bodyPrice, old_price } = parsePrices(req.body);
   const promo = parsePromo(req.body);
   const inst = parseInstallment(req.body);
   const renderError = (message) => res.status(400).render('productos', { biz, ...panelData(biz), error: message, planBlock: null, formdata: req.body });
   if (!name || !String(name).trim()) {
     return renderError('El nombre del producto es obligatorio.');
   }
-  if (price < 0) {
-    return renderError('El precio no puede ser negativo.');
-  }
-  if (req.body.price === '' || req.body.price === undefined || req.body.price === null || isNaN(parseFloat(req.body.price))) {
-    return renderError('El precio es obligatorio (usa un número, ej: 25.50).');
+  // Con variantes, el precio vive por cada combinación (paso 2), no arriba —
+  // el precio "general" se calcula solo (el más bajo entre variantes) para
+  // que el catálogo y los filtros de precio tengan algo con qué ordenar.
+  const variantsJson = parseVariants(variants);
+  const variantModel = variantsJson ? JSON.parse(variantsJson) : null;
+  let price = bodyPrice;
+  if (variantModel) {
+    const combosPrices = Object.values(variantModel.prices || {}).map(Number).filter(n => !isNaN(n) && n >= 0);
+    price = combosPrices.length ? Math.min(...combosPrices) : bodyPrice;
+  } else {
+    if (price < 0) {
+      return renderError('El precio no puede ser negativo.');
+    }
+    if (req.body.price === '' || req.body.price === undefined || req.body.price === null || isNaN(parseFloat(req.body.price))) {
+      return renderError('El precio es obligatorio (usa un número, ej: 25.50).');
+    }
   }
   // Stock obligatorio en productos sin atributos (con variantes, el stock se define por cada combinación).
-  const variantsJson = parseVariants(variants);
   const stockNum = parseStock(stock);
   if (!variantsJson) {
     if (stockNum === null) {
@@ -2891,21 +2907,31 @@ app.post('/:slug/admin/producto/:id/mover', requireAuth, can('productos.editar')
 
 app.post('/:slug/admin/producto/:id', requireAuth, can('productos.editar'), (req, res) => {
   const { name, category_id, description, image, stock, variants } = req.body;
-  const { price, old_price } = parsePrices(req.body);
+  const { price: bodyPrice, old_price } = parsePrices(req.body);
   const promo = parsePromo(req.body);
   const inst = parseInstallment(req.body);
   const renderError = (message) => res.status(400).render('productos', { biz: req.biz, ...panelData(req.biz), error: message, planBlock: null, formdata: req.body });
   if (!name || !name.trim()) {
     return renderError('El nombre del producto es obligatorio.');
   }
-  if (req.body.price === '' || req.body.price === undefined || req.body.price === null || isNaN(parseFloat(req.body.price))) {
-    return renderError('El precio es obligatorio (usa un número, ej: 25.50).');
-  }
-  if (price < 0) {
-    return renderError('El precio no puede ser negativo.');
+  // Con variantes, el precio vive por cada combinación (paso 2), no arriba —
+  // el precio "general" se calcula solo (el más bajo entre variantes) para
+  // que el catálogo y los filtros de precio tengan algo con qué ordenar.
+  const variantsJson = parseVariants(variants);
+  const variantModel = variantsJson ? JSON.parse(variantsJson) : null;
+  let price = bodyPrice;
+  if (variantModel) {
+    const combosPrices = Object.values(variantModel.prices || {}).map(Number).filter(n => !isNaN(n) && n >= 0);
+    price = combosPrices.length ? Math.min(...combosPrices) : bodyPrice;
+  } else {
+    if (req.body.price === '' || req.body.price === undefined || req.body.price === null || isNaN(parseFloat(req.body.price))) {
+      return renderError('El precio es obligatorio (usa un número, ej: 25.50).');
+    }
+    if (price < 0) {
+      return renderError('El precio no puede ser negativo.');
+    }
   }
   // Stock obligatorio en productos sin atributos (con variantes, el stock se define por cada combinación).
-  const variantsJson = parseVariants(variants);
   const stockNum = parseStock(stock);
   if (!variantsJson) {
     if (stockNum === null) {
