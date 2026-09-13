@@ -2443,6 +2443,15 @@ app.get('/:slug/admin', (req, res) => {
   if (!biz) return res.status(404).render('404', { message: 'Tienda no encontrada' });
   const block = storeBlock(biz);
   if (block.blocked) return res.status(403).render('store-off', { biz, reason: block.reason });
+  // Ya tiene sesión válida para esta tienda (p.ej. volvió desde el catálogo
+  // con el botón "Panel"): mandarlo directo al panel en vez de pedirle el
+  // PIN de nuevo — antes esta ruta siempre mostraba el login sin checar la
+  // cookie "sid", así que la sesión "se perdía" aunque siguiera activa.
+  const sess = findSession(req.cookies && req.cookies.sid);
+  if (sess && sess.biz_id === biz.id && (sess.kind === 'owner' || sess.kind === 'employee') && !req.query.salir) {
+    touchSession(res, sess.token);
+    return res.redirect('/' + req.params.slug + '/admin/panel');
+  }
   const pal = getPalette(biz, getEffectiveEstilo(biz));
   let ok = null, error = null;
   if (req.query.salir) ok = 'Sesión cerrada correctamente.';

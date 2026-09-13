@@ -266,23 +266,14 @@
       <div class="flex items-center gap-4">
         <a href="#como-funciona" class="hidden md:block text-sm font-medium text-slate-500 hover:text-slate-900 transition">Cómo funciona</a>
         <a href="#tiendas" class="hidden md:block text-sm font-medium text-slate-500 hover:text-slate-900 transition">Tiendas</a>
-        <button type="button" id="pwa-install-btn-landing" style="display:none" onclick="window.installPWA && window.installPWA()" class="items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-900 transition border border-slate-200 rounded-lg px-3 py-1.5">
+        <button type="button" id="pwa-install-btn-landing" onclick="window.installPWA && window.installPWA()" class="hidden md:inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-900 transition border border-slate-200 rounded-lg px-3 py-1.5">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14"/></svg>
-          Instalar
+          Descargar app móvil
         </button>
         <a href="/registrar" class="btn-solid text-sm py-1.5 px-4">Registrar tienda</a>
       </div>
     </div>
   </nav>
-  <script>
-    (function () {
-      var btn = document.getElementById('pwa-install-btn-landing');
-      if (!btn) return;
-      function apply(can) { btn.style.display = can ? 'inline-flex' : 'none'; }
-      document.addEventListener('pwa-installable-change', function (e) { apply(e.detail.installable); });
-      if (document.documentElement.classList.contains('pwa-installable')) apply(true);
-    })();
-  </script>
 
   <!-- ============================================================
   HERO (más compacto y con glow)
@@ -306,6 +297,10 @@
           <a href="/registrar" class="btn-solid">Registra tu tienda gratis</a>
           <a href="#como-funciona" class="btn-outline">Ver cómo funciona</a>
         </div>
+        <button type="button" id="pwa-install-btn-hero" onclick="window.installPWA && window.installPWA()" class="mt-3 inline-flex items-center gap-1.5 text-sm font-bold text-[#141210] hover:text-blue-600 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 19h14M12 3v12m0 0 4-4m-4 4-4-4"/></svg>
+          Descargar app móvil
+        </button>
         <p class="mt-4 text-xs text-slate-400 font-medium">Sin tarjeta · Sin carrito · Sin módulos extra</p>
       </div>
 

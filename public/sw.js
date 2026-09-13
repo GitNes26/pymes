@@ -1,4 +1,4 @@
-const CACHE = 'nessik-v4';
+const CACHE = 'nessik-v5';
 
 const CORE = [
   '/css/material.css',

@@ -62,6 +62,7 @@
 
   var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
   var isSafari = isIOS && /safari/i.test(navigator.userAgent) && !/crios|fxios/i.test(navigator.userAgent);
+  var isAndroid = /android/i.test(navigator.userAgent);
 
   // iOS no dispara beforeinstallprompt: si no está instalada, mostramos el
   // botón igual, pero con instrucciones manuales (Safari no automatiza esto).
@@ -69,8 +70,29 @@
     markInstallable(true);
   }
 
+  // Aviso propio sin depender de mostrarToast() (no existe fuera del panel/carrito)
+  // — así el botón "Descargar app móvil" funciona igual en la landing pública.
+  function pwaNote(msg) {
+    if (window.mostrarToast) { mostrarToast(msg, 'info'); return; }
+    var t = document.getElementById('pwa-note');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'pwa-note';
+      t.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);' +
+        'max-width:calc(100vw - 32px);background:#141210;color:#fff;font:600 13px/1.4 Inter,system-ui,sans-serif;' +
+        'padding:11px 16px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.25);z-index:99999;' +
+        'opacity:0;transition:opacity .25s ease;text-align:center;';
+      document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    requestAnimationFrame(function () { t.style.opacity = '1'; });
+    clearTimeout(t._hideT);
+    t._hideT = setTimeout(function () { t.style.opacity = '0'; }, 4000);
+  }
+
   // Llamar desde un botón: window.installPWA()
   window.installPWA = function () {
+    if (standalone) { pwaNote('Ya la tienes instalada — ábrela desde el ícono en tu inicio 📲'); return; }
     if (deferredPrompt) {
       deferredPrompt.prompt();
       deferredPrompt.userChoice.finally(function () {
@@ -80,15 +102,16 @@
       return;
     }
     if (isIOS) {
-      if (window.mostrarToast) {
-        mostrarToast('Toca el ícono Compartir ⬆️ y elige "Agregar a inicio"', 'info');
-      } else {
-        alert('En Safari: toca el ícono de Compartir y elige "Agregar a inicio".');
-      }
+      pwaNote('Toca el ícono Compartir ⬆️ (abajo en Safari) y elige "Agregar a inicio"');
       return;
     }
-    if (window.mostrarToast) {
-      mostrarToast('Tu navegador todavía no permite instalar esta app', 'info');
+    if (isAndroid) {
+      // Chrome/Android a veces tarda en ofrecer el evento beforeinstallprompt
+      // (heurística propia del navegador); mientras tanto, el camino manual
+      // siempre funciona — así el botón "obliga" a que aparezca la opción.
+      pwaNote('Toca el menú ⋮ de tu navegador y elige "Instalar aplicación" o "Agregar a pantalla de inicio"');
+      return;
     }
+    pwaNote('Busca el ícono de instalar ⊕ en la barra de direcciones de tu navegador');
   };
 })();
