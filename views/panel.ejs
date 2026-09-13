@@ -337,11 +337,11 @@
             <option value="mayor">$ Mayor monto</option>
             <option value="menor">$ Menor monto</option>
           </select>
-          <div class="flex items-center gap-1.5">
-            <input id="order-desde" type="date" class="border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-neutral-400" title="Desde">
-            <span class="text-slate-400 text-xs">–</span>
-            <input id="order-hasta" type="date" class="border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-neutral-400" title="Hasta">
-            <button type="button" onclick="limpiarFiltrosPedidos()" class="text-xs font-bold text-neutral-600 hover:text-neutral-800">Limpiar</button>
+          <div class="flex flex-wrap items-center gap-1.5 w-full sm:w-auto">
+            <input id="order-desde" type="date" class="flex-1 min-w-0 sm:flex-none sm:w-auto border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-neutral-400" title="Desde">
+            <span class="text-slate-400 text-xs shrink-0">–</span>
+            <input id="order-hasta" type="date" class="flex-1 min-w-0 sm:flex-none sm:w-auto border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-neutral-400" title="Hasta">
+            <button type="button" onclick="limpiarFiltrosPedidos()" class="text-xs font-bold text-neutral-600 hover:text-neutral-800 shrink-0">Limpiar</button>
           </div>
         </div>
         <p id="order-count" class="text-[11px] font-bold mb-2" style="color:var(--ap-text-sec)"></p>
@@ -359,10 +359,11 @@
                  var oPend = o.is_installment && oRest > 0;
                  var sNext = null, sOverdue = 0;
                  if (o.schedule) { o.schedule.forEach(function(s){ if (!s.covered && !sNext) sNext = s; if (s.overdue) sOverdue++; }); } %>
-              <div class="m-list-item m-ripple px-2 first:pt-1 last:pb-1" data-active-layer
+              <div class="m-list-item m-ripple px-2 py-2.5 flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 first:pt-1 last:pb-1" data-active-layer
                    data-order-status="<%= o.status %>" data-paid="<%= o.paid ? 1 : 0 %>" data-confirm-anchor
                    data-installment="<%= o.is_installment ? 1 : 0 %>" data-pend="<%= oPend ? 1 : 0 %>" data-total="<%= o.total || 0 %>"
                    data-search="<%= (o.items + ' ' + (o.customer_name || '')).toLowerCase().replace(/"/g, '&quot;') %>" data-created="<%= o.created_at %>">
+                <div class="flex items-start gap-2.5 min-w-0">
                 <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style="background:rgba(44,44,46,0.06);color:var(--ap-accent-text)">
                   <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1 5h12M7 13L5.4 5M7 13l.4 2M10 21a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z"/></svg>
                 </div>
@@ -420,7 +421,8 @@
                   <% } %>
                   <p class="text-[10px] mt-0.5" style="color:var(--ap-text-sec)"><%= fmtFecha(o.created_at) %></p>
                 </div>
-                <div class="flex flex-wrap items-center gap-1 shrink-0 justify-end">
+                </div>
+                <div class="flex flex-wrap items-center gap-1 justify-start sm:justify-end sm:shrink-0">
                   <% if (o.is_installment && o.status !== 'cancelado' && oRest > 0) { %>
                     <button type="button" class="m-btn m-btn-sm m-btn-tonal !min-h-0 !py-1.5 !text-emerald-600 !border-emerald-200 hover:!bg-emerald-50" 
                             onclick="modalAbono(<%= o.id %>, <%= oRest %>, <%= sNext ? sNext.amount : 0 %>, '<%= sNext ? fmtFecha(sNext.date, true) : '' %>')">

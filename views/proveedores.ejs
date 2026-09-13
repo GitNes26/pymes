@@ -88,7 +88,21 @@
     .success-note{margin-bottom:14px;padding:11px 14px;border:1px solid #cde4d7;border-radius:11px;background:#f1faf5;color:#275f43;font-size:12px;font-weight:750;}
     .error-note{margin-bottom:14px;padding:11px 14px;border:1px solid #eec9c9;border-radius:11px;background:#fdf1f1;color:#8c2f2f;font-size:12px;font-weight:750;}
     @media(max-width:980px){.suppliers-workspace{grid-template-columns:1fr}.supplier-directory{position:static}.supplier-form{grid-template-columns:repeat(2,minmax(0,1fr))}.supplier-form .supplier-notes,.supplier-form .supplier-submit-wrap{grid-column:1/-1}.supplier-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
-    @media(max-width:640px){.suppliers-shell{padding:16px 12px 36px}.suppliers-header{display:block}.supplier-flow{margin-top:13px;overflow-x:auto;padding-bottom:2px}.supplier-panel-pad{padding:16px}.supplier-form,.supplier-list{grid-template-columns:1fr}.purchase-top{grid-template-columns:1fr}.purchase-help{text-align:left}.purchase-table-copy{display:block;margin-top:3px}.history-lines>div{align-items:flex-start}.suppliers-admin-page .m-btn{max-width:100%}}
+    @media(max-width:640px){.suppliers-shell{padding:16px 12px 36px}.suppliers-header{display:block}.supplier-flow{margin-top:13px;overflow-x:auto;padding-bottom:2px}.supplier-panel-pad{padding:16px}.supplier-form,.supplier-list{grid-template-columns:1fr}.purchase-top{grid-template-columns:1fr}.purchase-help{text-align:left}.purchase-table-copy{display:block;margin-top:3px}.history-lines>div{align-items:flex-start}.suppliers-admin-page .m-btn{max-width:100%}
+      /* Pedido de compra en móvil: cada línea como tarjeta-lista (igual que Productos/Clientes) en vez de tabla con scroll horizontal */
+      #po-grid{overflow-x:visible!important;border:0!important;background:transparent!important;}
+      #po-grid table{display:block;width:100%;min-width:0!important;}
+      #po-grid thead{display:none;}
+      #po-grid tbody{display:block;}
+      #po-grid tr.po-row{position:relative;display:block;width:100%;background:#fff;border:1px solid var(--sp-line)!important;border-radius:12px;padding:10px 44px 10px 10px;margin-bottom:8px;}
+      #po-grid tr.po-row td{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%!important;min-width:0;padding:6px 0!important;border:0!important;text-align:left;}
+      #po-grid tr.po-row td[data-label]::before{content:attr(data-label);flex:0 0 auto;color:#7a8992;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;}
+      #po-grid tr.po-row td[data-label] input,#po-grid tr.po-row td[data-label] .po-sub{width:auto!important;min-width:0;flex:1 1 auto;text-align:right;}
+      #po-grid tr.po-row td:last-child{position:absolute;top:8px;right:8px;padding:0!important;width:auto!important;}
+      #po-grid tr.po-row td:nth-child(2){align-items:flex-start;}
+      #po-grid tr.po-row .po-vlist{left:auto;right:0;width:auto;max-width:min(256px,calc(100vw - 64px));}
+      body.dark #po-grid tr.po-row{background:#151c23;}
+    }
     body.dark.suppliers-admin-page{background:#0d1117;color:#e7eef3;}
     body.dark .suppliers-title,body.dark .panel-title,body.dark .supplier-item-name,body.dark .history-name,body.dark .history-total{color:#edf4f8;}
     body.dark .supplier-panel,body.dark .history-item,body.dark .po-row td{background:#151c23;border-color:#2b3741;}
@@ -168,8 +182,8 @@
         <div class="purchase-top"><div class="panel-title-wrap"><span class="panel-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M6 2h9l3 3v17H6zM14 2v5h5M9 12h6M9 16h6"/></svg></span><div><h2 class="panel-title">Nuevo pedido de compra</h2><p class="panel-copy">Captura productos, costos y precio de venta</p></div></div><p class="purchase-help"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M4 5h16v14H4zM8 9h.01M12 9h.01M16 9h.01M8 13h8M8 16h5"/></svg>Enter avanza · Ctrl+V pega desde Excel</p></div>
         <form method="POST" action="/<%= biz.slug %>/admin/compra" id="po-form">
           <div class="m-field mb-3">
-            <label>Proveedor</label>
-            <select name="supplier_id" id="po-supplier">
+            <label>Proveedor *</label>
+            <select name="supplier_id" id="po-supplier" required>
               <option value="">Selecciona…</option>
               <% suppliers.forEach(s => { %><option value="<%= s.id %>"><%= s.name %></option><% }) %>
             </select>
@@ -330,15 +344,22 @@
       var inp = row.querySelector('.po-name');
       var r = inp.getBoundingClientRect();
       var vv = window.visualViewport;
+      // offsetLeft/offsetTop: en móvil (sobre todo iOS Safari), el teclado
+      // desplaza el visual viewport sin mover el layout viewport, así que
+      // getBoundingClientRect() y nuestro dropdown position:fixed quedan
+      // desalineados si no se compensa esa diferencia — era la causa de que
+      // el autocomplete "se moviera" de su input al abrirse el teclado.
+      var offX = (vv && vv.offsetLeft) || 0;
+      var offY = (vv && vv.offsetTop) || 0;
       var vw = (vv && vv.width) || window.innerWidth;
       var vh = (vv && vv.height) || window.innerHeight;
       var H = 224; // max-h-56
       var w = Math.min(Math.max(r.width, 280), Math.max(240, vw - 16));
-      var left = Math.max(8, Math.min(r.left, vw - w - 8));
-      var below = r.bottom + 6;
+      var left = Math.max(8, Math.min(r.left - offX, vw - w - 8));
+      var below = (r.bottom - offY) + 6;
       var top;
       if (below + H <= vh - 8) top = below;
-      else if (r.top - H - 6 >= 8) top = r.top - H - 6;
+      else if ((r.top - offY) - H - 6 >= 8) top = (r.top - offY) - H - 6;
       else top = Math.max(8, vh - H - 8);
       poAc.style.left = left + 'px';
       poAc.style.top = top + 'px';
@@ -415,10 +436,10 @@
       row.dataset.prevPid = row.dataset.pid;
       row.dataset.var = opts.variant || '';
       row.innerHTML =
-        '<td class="px-3 py-1.5 align-middle relative">' +
+        '<td class="px-3 py-1.5 align-middle relative" data-label="Producto">' +
           '<input type="text" class="po-name w-full min-w-[170px] border border-slate-200 rounded-lg px-2 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-neutral-400" placeholder="Producto (escribe para buscar)" autocomplete="off">' +
         '</td>' +
-        '<td class="px-2 py-1.5 align-middle">' +
+        '<td class="px-2 py-1.5 align-middle" data-label="Variante">' +
           '<span class="po-vstatic hidden bg-amber-100 text-amber-800 rounded-lg px-2 py-1.5 text-xs font-bold whitespace-nowrap"></span>' +
           '<details class="po-vdet hidden relative text-xs">' +
             '<summary tabindex="-1" class="po-vsum bg-amber-50 border border-amber-300 text-amber-800 rounded-lg px-2 py-1.5 font-bold cursor-pointer select-none">' + UI_ICONS.sliders + 'Variantes <span class="po-vcount text-amber-600"></span></summary>' +
@@ -426,10 +447,10 @@
           '</details>' +
           '<input type="text" tabindex="-1" class="po-vname w-full border border-amber-300 bg-amber-50 rounded-lg px-2 py-1.5 text-sm hidden" placeholder="Atributo (ej: XS / Azul)">' +
         '</td>' +
-        '<td class="px-2 py-1.5 align-middle"><input type="number" min="1" class="po-qty w-full border border-slate-200 rounded-lg px-2 py-1.5 text-sm" placeholder="0"></td>' +
-        '<td class="px-2 py-1.5 align-middle"><input type="number" min="0" step="0.01" class="po-cost w-full border border-slate-200 rounded-lg px-2 py-1.5 text-sm" placeholder="0.00"></td>' +
-        '<td class="px-2 py-1.5 align-middle"><input type="number" min="0" step="0.01" class="po-price w-full border border-slate-200 rounded-lg px-2 py-1.5 text-sm" placeholder="0.00"></td>' +
-        '<td class="px-2 py-1.5 align-middle text-right"><span class="po-sub text-xs font-black text-slate-700">$0.00</span></td>' +
+        '<td class="px-2 py-1.5 align-middle" data-label="Cant."><input type="number" min="1" class="po-qty w-full border border-slate-200 rounded-lg px-2 py-1.5 text-sm" placeholder="0"></td>' +
+        '<td class="px-2 py-1.5 align-middle" data-label="Costo"><input type="number" min="0" step="0.01" class="po-cost w-full border border-slate-200 rounded-lg px-2 py-1.5 text-sm" placeholder="0.00"></td>' +
+        '<td class="px-2 py-1.5 align-middle" data-label="Precio venta"><input type="number" min="0" step="0.01" class="po-price w-full border border-slate-200 rounded-lg px-2 py-1.5 text-sm" placeholder="0.00"></td>' +
+        '<td class="px-2 py-1.5 align-middle text-right" data-label="Subtotal"><span class="po-sub text-xs font-black text-slate-700">$0.00</span></td>' +
         '<td class="px-2 py-1.5 align-middle text-center"><button type="button" aria-label="Eliminar línea" title="Eliminar línea" class="po-del w-7 h-7 rounded-lg bg-slate-100 text-red-600 hover:bg-red-50 hover:text-red-800 grid place-items-center">' + UI_ICONS.trash + '</button></td>';
 
       var inp = row.querySelector('.po-name');
@@ -673,8 +694,12 @@
       poRows().forEach(function(r){ var b = acBox(r); if (b && !b.classList.contains('hidden')) acPlace(r); });
     }
     window.addEventListener('scroll', acReposAll, { passive: true });
+    window.addEventListener('resize', acReposAll, { passive: true });
     document.getElementById('po-grid').addEventListener('scroll', acReposAll, { passive: true });
-    if (window.visualViewport) window.visualViewport.addEventListener('resize', acReposAll);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', acReposAll);
+      window.visualViewport.addEventListener('scroll', acReposAll);
+    }
 
     function copiarPedido(msg) {
       var text = decodeURIComponent(msg);
