@@ -127,7 +127,7 @@
     if (!t) {
       t = document.createElement('div');
       t.id = 'cart-toast';
-      t.className = 'fixed left-1/2 -translate-x-1/2 bottom-24 z-[999] px-4 py-2.5 rounded-xl text-sm font-bold text-white shadow-lg transition-all duration-300 opacity-0 translate-y-2';
+      t.className = 'fixed left-1/2 -translate-x-1/2 bottom-24 z-[10001] px-4 py-2.5 rounded-xl text-sm font-bold text-white shadow-lg transition-all duration-300 opacity-0 translate-y-2';
       document.body.appendChild(t);
     }
     t.textContent = msg;
@@ -144,7 +144,10 @@
     if (!vm.attrs.length) return;
     const sel = {};
     const modal = document.createElement('div');
-    modal.className = 'fixed inset-0 z-[1000] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm';
+    // z-[10000]: por encima del modal de vista rápida del producto (.pd-overlay,
+    // z-index:9998) — si no, el selector de variantes abría oculto detrás de él
+    // (parecía que no pasaba nada / que el producto no tenía variantes).
+    modal.className = 'fixed inset-0 z-[10000] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm';
     modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
 
     const panel = document.createElement('div');
@@ -230,38 +233,43 @@
   function itemKey(storeSlug, id, variant) {
     return storeSlug + ':' + String(id) + (variant ? '|' + variant : '');
   }
+  // Devuelve true solo si de verdad se agregó al carrito. Los llamadores que
+  // encadenan "✓ Agregado" / auto-cerrar en el mismo onclick deben checar este
+  // valor: si el producto tiene variantes y aún no se eligió una, esto solo
+  // abre el selector (variantPicker) y no agrega nada todavía.
   function addToCart(id, name, price, variant, store, image) {
     const s = store || CURRENT_STORE;
     const p = PROMAP[String(id)];
-    if (!p) { toast('Producto no encontrado', false); return; }
+    if (!p) { toast('Producto no encontrado', false); return false; }
     if (!name) name = p.name;
     name = String(name).replace(/<[^>]*>/g, '').trim();
     if (!name) name = 'Producto';
     if (price == null || price === 0) price = p.price;
-    if (!price || price <= 0) { toast('Precio invalido', false); return; }
+    if (!price || price <= 0) { toast('Precio invalido', false); return false; }
     if (!image) image = p.image;
     const pvm = normVariantModel(p.variants);
-    if (!pvm.attrs.length && (p.stock === null || p.stock === undefined || p.stock <= 0)) { toast('Producto agotado 😕', false); return; }
-    if (pvm.attrs.length && !variant) { variantPicker(id); return; }
+    if (!pvm.attrs.length && (p.stock === null || p.stock === undefined || p.stock <= 0)) { toast('Producto agotado 😕', false); return false; }
+    if (pvm.attrs.length && !variant) { variantPicker(id); return false; }
     const key = itemKey(s.slug, id, variant);
     // stock por combinación
     if (variant && pvm.stock) {
       const ck = variant.split(' / ').join('|');
       const st = pvm.stock[ck];
-      if (st === undefined || st <= 0) { toast('Esa combinación está agotada 😕', false); return; }
+      if (st === undefined || st <= 0) { toast('Esa combinación está agotada 😕', false); return false; }
     }
     cart[key] = cart[key] || { store: s, id, name, price: Number(price), image: image || p.image, variant: variant || '', qty: 0 };
-    if (!pvm.attrs.length && p.stock !== null && cart[key].qty + 1 > p.stock) { toast('Stock máximo disponible', false); return; }
+    if (!pvm.attrs.length && p.stock !== null && cart[key].qty + 1 > p.stock) { toast('Stock máximo disponible', false); return false; }
     if (variant && pvm.stock) {
       const ck = variant.split(' / ').join('|');
       const st = pvm.stock[ck];
-      if (st !== undefined && cart[key].qty + 1 > st) { toast('Solo quedan ' + st + ' de esa combinación', false); return; }
+      if (st !== undefined && cart[key].qty + 1 > st) { toast('Solo quedan ' + st + ' de esa combinación', false); return false; }
     }
     cart[key].qty++;
     saveCart();
     renderCart();
     if (window.haptic) window.haptic();
     toast('Agregado ✓', true);
+    return true;
   }
   function addAdToCart(btn) {
     const d = btn.dataset;
