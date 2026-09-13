@@ -1074,15 +1074,39 @@
         var cs = combos();
         if (!cs.length) return;
         var m = document.createElement('p');
-        m.className = 'text-[11px] font-bold text-neutral-800 bg-neutral-100 border border-neutral-100 rounded-lg px-2.5 py-1.5 mb-2';
+        m.className = 'text-[11px] font-bold text-neutral-800 bg-neutral-100 border border-neutral-100 rounded-lg px-2.5 py-1.5 mb-3';
         m.textContent = 'Sigue siendo 1 producto: una descripción para todos, y cada variante con su propia foto, precio y stock. Los atributos crean ' + cs.length + ' variante' + (cs.length === 1 ? '' : 's') + '.';
         cbox.appendChild(m);
+
+        // Precio general opcional: rellena todas las variantes de un jalón,
+        // pero cada una se puede seguir editando aparte después — nunca es
+        // "un precio para todo el producto", siempre queda guardado por
+        // variante (así lo pide el servidor).
+        var bulk = document.createElement('div');
+        bulk.className = 'flex items-end gap-2 mb-3 p-2.5 rounded-xl bg-neutral-50 border border-neutral-100';
+        bulk.innerHTML =
+          '<div class="flex-1">' +
+            '<label class="block text-[10px] font-bold text-slate-500 mb-1">Precio general <span class="font-normal text-slate-400">(opcional — lo aplicas a todas y luego ajustas la que quieras)</span></label>' +
+            '<input type="number" min="0" step="0.01" placeholder="0.00" class="combo-bulk-price w-full text-sm border border-slate-300 rounded-lg px-2.5 py-2 bg-white text-slate-900 focus:outline-none focus:border-neutral-500" style="color-scheme:light">' +
+          '</div>' +
+          '<button type="button" class="combo-bulk-apply m-btn m-btn-outlined !h-[38px] !text-xs shrink-0">Aplicar a todas</button>';
+        bulk.querySelector('.combo-bulk-apply').onclick = function () {
+          var v = bulk.querySelector('.combo-bulk-price').value;
+          if (v === '' || isNaN(parseFloat(v))) { if (window.mostrarToast) mostrarToast('Escribe un precio válido primero', 'error'); return; }
+          cs.forEach(function (vals) { model.prices[comboKey(vals)] = parseFloat(v) || 0; });
+          save();
+          renderCombos();
+          if (window.mostrarToast) mostrarToast('Precio aplicado a las ' + cs.length + ' variantes ✓', 'ok');
+        };
+        cbox.appendChild(bulk);
+
         var t = document.createElement('p');
         t.className = 'text-xs font-bold text-slate-600 mb-2';
-        t.textContent = 'Fotos por combinación (opcional — la primera con foto será la portada del producto)';
+        t.textContent = 'Cada variante — precio y stock son suyos, no del producto (toca la foto para cambiarla)';
         cbox.appendChild(t);
-        var grid = document.createElement('div');
-        grid.className = 'grid grid-cols-3 sm:grid-cols-4 gap-2';
+
+        var list = document.createElement('div');
+        list.className = 'flex flex-col gap-2';
         cs.forEach(function (vals) {
           var key = comboKey(vals);
           var label = vals.join(' / ');
@@ -1091,44 +1115,67 @@
           var pr = (model.prices && model.prices[key] !== undefined && model.prices[key] !== '') ? model.prices[key] : '';
           var sk = (model.skus && model.skus[key]) ? model.skus[key] : '';
           var bc = (model.barcodes && model.barcodes[key]) ? model.barcodes[key] : '';
+          var inputCls = 'w-full text-xs border border-slate-300 rounded-lg px-2 py-1.5 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-neutral-500 focus:ring-1 focus:ring-neutral-400';
           var cell = document.createElement('div');
-          cell.className = 'relative rounded-lg overflow-hidden border border-slate-200 bg-white';
-          cell.title = 'Foto para: ' + label;
+          cell.className = 'var-combo-block rounded-xl border border-slate-200 bg-white overflow-hidden';
           cell.innerHTML =
-            '<div class="aspect-square cursor-pointer">' +
-              (img ? '<img src="' + esc(img) + '" class="w-full h-full object-cover">' : '<div class="w-full h-full flex items-center justify-center text-slate-300 text-lg">🖼</div>') +
-            '</div>' +
-            '<span class="block text-[9px] font-bold text-white bg-black/60 truncate px-1 py-0.5">' + esc(label) + '</span>' +
-            '<div class="flex items-center gap-1 px-1 py-1 bg-slate-50 border-t border-slate-100">' +
-              '<span class="text-[9px] font-bold text-slate-400">Precio*</span>' +
-              '<input type="number" min="0" step="0.01" placeholder="0.00" value="' + esc(pr) + '" class="combo-price w-full text-[10px] border border-slate-200 rounded px-1 py-0.5 focus:outline-none focus:border-neutral-500" title="Precio obligatorio de esta variante">' +
-            '</div>' +
-            '<div class="flex items-center gap-1 px-1 py-1 bg-slate-50 border-t border-slate-100">' +
-              '<span class="text-[9px] font-bold text-slate-400">Stock*</span>' +
-              '<input type="number" min="0" placeholder="0" value="' + esc(st) + '" class="combo-stock w-full text-[10px] border border-slate-200 rounded px-1 py-0.5 focus:outline-none focus:border-neutral-500" title="Stock obligatorio de esta variante (0 = agotada)">' +
-            '</div>' +
-            '<div class="flex items-center gap-1 px-1 py-1 bg-slate-50 border-t border-slate-100">' +
-              '<span class="text-[9px] font-bold text-slate-400">SKU</span>' +
-              '<input type="text" placeholder="—" value="' + esc(sk) + '" class="combo-sku w-full text-[10px] border border-slate-200 rounded px-1 py-0.5 focus:outline-none focus:border-neutral-500">' +
-            '</div>' +
-            '<div class="flex items-center gap-1 px-1 py-1 bg-slate-50 border-t border-slate-100">' +
-              '<span class="text-[9px] font-bold text-slate-400">Barra</span>' +
-              '<input type="text" placeholder="—" value="' + esc(bc) + '" class="combo-barcode w-full text-[10px] border border-slate-200 rounded px-1 py-0.5 focus:outline-none focus:border-neutral-500">' +
+            '<div class="flex gap-3 p-2.5">' +
+              '<div class="relative shrink-0">' +
+                '<button type="button" class="combo-photo w-16 h-16 rounded-lg overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center" title="Foto para: ' + esc(label) + '">' +
+                  (img ? '<img src="' + esc(img) + '" class="w-full h-full object-cover">' : '<span class="text-slate-300 text-xl">🖼</span>') +
+                '</button>' +
+                (img ?
+                  '<div class="absolute -top-1.5 -right-1.5 flex gap-1">' +
+                    '<button type="button" class="combo-photo-edit w-5 h-5 rounded-full bg-black/60 text-white text-[10px] font-bold flex items-center justify-center hover:bg-neutral-800 transition" title="Editar foto">✎</button>' +
+                    '<button type="button" class="combo-photo-del w-5 h-5 rounded-full bg-black/60 text-white text-[10px] font-bold flex items-center justify-center hover:bg-red-600 transition" title="Quitar foto">✕</button>' +
+                  '</div>'
+                : '') +
+              '</div>' +
+              '<div class="flex-1 min-w-0">' +
+                '<p class="text-xs font-bold text-slate-800 truncate mb-1.5">' + esc(label) + '</p>' +
+                '<div class="grid grid-cols-2 gap-2">' +
+                  '<div>' +
+                    '<label class="block text-[10px] font-bold text-slate-500 mb-0.5">Precio* de esta variante</label>' +
+                    '<input type="number" min="0" step="0.01" placeholder="0.00" value="' + esc(pr) + '" class="combo-price ' + inputCls + '" style="color-scheme:light" title="Precio obligatorio de esta variante">' +
+                  '</div>' +
+                  '<div>' +
+                    '<label class="block text-[10px] font-bold text-slate-500 mb-0.5">Stock*</label>' +
+                    '<input type="number" min="0" placeholder="0" value="' + esc(st) + '" class="combo-stock ' + inputCls + '" style="color-scheme:light" title="Stock obligatorio de esta variante (0 = agotada)">' +
+                  '</div>' +
+                  '<div>' +
+                    '<label class="block text-[10px] font-bold text-slate-500 mb-0.5">SKU <span class="font-normal text-slate-400">(opc.)</span></label>' +
+                    '<input type="text" placeholder="—" value="' + esc(sk) + '" class="combo-sku ' + inputCls + '" style="color-scheme:light">' +
+                  '</div>' +
+                  '<div>' +
+                    '<label class="block text-[10px] font-bold text-slate-500 mb-0.5">Código de barras <span class="font-normal text-slate-400">(opc.)</span></label>' +
+                    '<input type="text" placeholder="—" value="' + esc(bc) + '" class="combo-barcode ' + inputCls + '" style="color-scheme:light">' +
+                  '</div>' +
+                '</div>' +
+                '<p class="combo-stock-warn hidden text-[10px] font-black text-red-500 mt-1">¡Falta stock!</p>' +
+              '</div>' +
             '</div>';
-          cell.querySelector('.aspect-square').onclick = function () { subirCombo(key); };
+          cell.querySelector('.combo-photo').onclick = function () { subirCombo(key); };
+          var editBtn = cell.querySelector('.combo-photo-edit');
+          if (editBtn) editBtn.onclick = function (e) {
+            e.stopPropagation();
+            abrirEditorImagen(img, function (newUrl) {
+              if (!newUrl) return;
+              model.images[key] = newUrl; save(); renderCombos();
+            });
+          };
+          var delBtn = cell.querySelector('.combo-photo-del');
+          if (delBtn) delBtn.onclick = function (e) {
+            e.stopPropagation();
+            delete model.images[key]; save(); renderCombos();
+          };
           var stInp = cell.querySelector('.combo-stock');
           (function (inp) {
             function syncSt() {
               var missing = inp.value.trim() === '';
               inp.style.borderColor = missing ? '#f87171' : '';
               inp.style.boxShadow = missing ? '0 0 0 2px rgba(248,113,113,.15)' : '';
-              var tag = inp.parentNode.querySelector('.combo-stock-warn');
-              if (missing && !tag) {
-                tag = document.createElement('span');
-                tag.className = 'combo-stock-warn text-[8px] font-black text-red-500';
-                tag.textContent = '¡Falta stock!';
-                inp.parentNode.appendChild(tag);
-              } else if (!missing && tag) tag.remove();
+              var tag = cell.querySelector('.combo-stock-warn');
+              if (tag) tag.classList.toggle('hidden', !missing);
             }
             inp.addEventListener('input', function () {
               var v = this.value;
@@ -1138,11 +1185,21 @@
             });
             syncSt();
           })(stInp);
-          cell.querySelector('.combo-price').addEventListener('input', function () {
-            var v = this.value;
-            if (v === '') delete model.prices[key]; else model.prices[key] = parseFloat(v) || 0;
-            save();
-          });
+          var prInp = cell.querySelector('.combo-price');
+          (function (inp) {
+            function syncPr() {
+              var missing = inp.value.trim() === '';
+              inp.style.borderColor = missing ? '#f87171' : '';
+              inp.style.boxShadow = missing ? '0 0 0 2px rgba(248,113,113,.15)' : '';
+            }
+            inp.addEventListener('input', function () {
+              var v = this.value;
+              if (v === '') delete model.prices[key]; else model.prices[key] = parseFloat(v) || 0;
+              save();
+              syncPr();
+            });
+            syncPr();
+          })(prInp);
           cell.querySelector('.combo-sku').addEventListener('input', function () {
             var v = this.value.trim();
             if (v === '') delete model.skus[key]; else model.skus[key] = v;
@@ -1153,9 +1210,9 @@
             if (v === '') delete model.barcodes[key]; else model.barcodes[key] = v;
             save();
           });
-          grid.appendChild(cell);
+          list.appendChild(cell);
         });
-        cbox.appendChild(grid);
+        cbox.appendChild(list);
       }
 
       window.VAR_EDITORS = window.VAR_EDITORS || {};
