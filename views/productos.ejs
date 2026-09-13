@@ -2441,6 +2441,14 @@
         var gal = JSON.parse(raw);
         if (Array.isArray(gal)) gal.forEach(function (g) { if (g && lista.indexOf(g) === -1) lista.push(g); });
       } catch (e) {}
+      // Producto con variantes: p.image/galeria suelen venir vacíos porque las
+      // fotos viven por combo — sin esto la tarjeta siempre caía al placeholder.
+      try {
+        var vraw = decodeURIComponent(row.getAttribute('data-edit-variants') || '');
+        var vm = JSON.parse(vraw);
+        var images = (vm && !Array.isArray(vm) && vm.images) ? vm.images : null;
+        if (images) Object.keys(images).forEach(function (k) { var g = images[k]; if (g && lista.indexOf(g) === -1) lista.push(g); });
+      } catch (e) {}
       return lista;
     }
     function tpCargarFoto(idx) {
