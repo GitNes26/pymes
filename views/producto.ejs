@@ -188,7 +188,7 @@
         <h1 class="prod-title"><%= product.name %></h1>
         
         <div class="prod-prices">
-          <span class="prod-price"><%= money(product.price) %></span>
+          <span class="prod-price" id="prod-price-main"><%= money(product.price) %></span>
           <% if (product.old_price && product.old_price > product.price) { %>
             <span class="prod-old"><%= money(product.old_price) %></span>
             <span class="prod-off">-<%= Math.round((1-product.price/product.old_price)*100) %>%</span>
@@ -354,12 +354,29 @@
           wrap.appendChild(row);
           box.appendChild(wrap);
         });
+        updatePrice();
+        updateImage();
       }
       function updatePrice() {
         var key = comboKey();
-        var price = (vm.prices && vm.prices[key]) ? Number(vm.prices[key]) : <%- product.price %>;
+        var price = (vm.prices && vm.prices[key] !== undefined && vm.prices[key] !== '') ? Number(vm.prices[key]) : <%- product.price %>;
         var pe = document.getElementById('sticky-price');
         if (pe) pe.textContent = '$' + price.toFixed(2);
+        var pm = document.getElementById('prod-price-main');
+        if (pm) pm.textContent = '$' + price.toFixed(2);
+      }
+      // Al elegir Talla/Color, si esa combinación tiene su propia foto, la
+      // vista principal cambia a esa — antes se quedaba pegada en la foto
+      // general del producto sin importar qué variante se eligiera.
+      function updateImage() {
+        var key = comboKey();
+        var img = (vm.images && vm.images[key]) ? vm.images[key] : '';
+        if (!img) return;
+        var main = document.getElementById('prod-main-img');
+        if (main) main.src = img;
+        document.querySelectorAll('.prod-thumb').forEach(function (t) {
+          t.classList.toggle('active', t.getAttribute('src') === img);
+        });
       }
       window.addProductToCart = function() {
         var complete = !vm.attrs.length || vm.attrs.every(function(a){ return sel[a.name]; });

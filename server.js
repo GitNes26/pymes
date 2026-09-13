@@ -2780,20 +2780,31 @@ function parsePromoEnd(v) {
 function parseGaleria(v) {
   if (!v || !String(v).trim()) return '';
   const raw = String(v).trim();
-  let parts = [];
+  // Ojo: "parts" debe distinguir "el JSON era válido y la galería viene
+  // vacía" (parts = [], legítimo) de "esto no era JSON" (parts = null,
+  // ahí sí toca el resguardo de separar por comas). Antes ambos casos
+  // caían en el mismo "!parts.length", así que una galería vacía ("[]")
+  // se volvía a partir por comas, y el string completo "[]" (sin comas)
+  // quedaba como si fuera una URL de foto — se guardaba un elemento
+  // fantasma literal "[]" que en el catálogo se veía como una miniatura
+  // rota / "sin imagen" de más, aunque solo se hubiera subido 1 foto.
+  let parts = null;
   if (raw.startsWith('[')) {
     try {
       const arr = JSON.parse(raw);
       if (Array.isArray(arr)) parts = arr.map(s => String(s).trim()).filter(Boolean);
-    } catch (e) { parts = []; }
+    } catch (e) { parts = null; }
   }
-  if (!parts.length) parts = raw.split(',').map(s => s.trim()).filter(Boolean);
+  if (parts === null) parts = raw.split(',').map(s => s.trim()).filter(Boolean);
   return parts.length ? JSON.stringify(parts) : '';
 }
 
-// Lista de imágenes de un producto: la principal + las de la galería
+// Lista de imágenes de un producto: la principal + las de la galería.
+// Filtra cualquier entrada que no parezca ruta/URL real (defensa extra por
+// si queda algún dato viejo corrupto de la galería con basura tipo "[]").
 function productImgs(p) {
-  const list = [p.image || '', ...parseVariantsArray(p.galeria || '')].map(s => String(s || '').trim()).filter(Boolean);
+  const looksLikeImg = s => s.length > 1 && (s[0] === '/' || /^https?:\/\//i.test(s));
+  const list = [p.image || '', ...parseVariantsArray(p.galeria || '')].map(s => String(s || '').trim()).filter(looksLikeImg);
   return list.length ? list : [p.image || '/img/sin-imagen.svg'];
 }
 
