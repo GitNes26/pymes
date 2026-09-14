@@ -55,8 +55,11 @@
   const CURRENT_STORE = { slug: SLUG, name: STORE_NAME, whatsapp: STORE_WHATSAPP, logo: STORE_LOGO, wa_message: <%- safeJson(biz.wa_message || '') %> };
   // Pago en línea: solo aplica al carrito de ESTA tienda (no a productos de
   // otras tiendas que llegaron como anuncio) — cada quien cobra con su propia
-  // cuenta de Mercado Pago, ver Configuración → Pagos en línea.
+  // cuenta de Mercado Pago, ver Configuración → Pagos en línea. Por ahora
+  // está oculto en el admin (ver config.ejs) y por lo tanto siempre false.
   const MP_ENABLED = <%- biz.mp_enabled ? 'true' : 'false' %>;
+  // Transferencia bancaria: igual solo para el carrito de esta tienda.
+  const TRANSFER = <%- safeJson(biz.transfer_enabled && (biz.transfer_bank || biz.transfer_account) ? { bank: biz.transfer_bank || '', account: biz.transfer_account || '', holder: biz.transfer_holder || '' } : null) %>;
   const HORARIO_RAW = <%- safeJson(biz.horario || '') %>;
   const HORARIO_MSG = <%- safeJson(biz.horario_msg || '') %>;
 
@@ -546,6 +549,14 @@
             </div>
           </div>
           <div style="padding:0 12px;">${itemsHtml}</div>
+          ${(TRANSFER && g.store.slug === SLUG) ? `
+          <div style="margin:0 12px 10px;padding:10px 12px;background:#f0fdf4;border:1px dashed #86efac;border-radius:12px;">
+            <div style="font-size:12px;font-weight:800;color:#166534;margin-bottom:4px;">💵 Transferencia bancaria</div>
+            ${TRANSFER.bank ? `<div style="font-size:12px;color:#166534;">${esc(TRANSFER.bank)}</div>` : ''}
+            ${TRANSFER.account ? `<div style="display:flex;align-items:center;gap:6px;margin-top:2px;"><span style="font-size:13px;font-weight:700;color:#14532d;letter-spacing:.02em;">${esc(TRANSFER.account)}</span><button type="button" onclick="copiarCuentaTransferencia(this,${jattr(TRANSFER.account)})" aria-label="Copiar cuenta" style="border:none;background:#dcfce7;color:#166534;border-radius:7px;padding:2px 7px;font-size:10px;font-weight:800;cursor:pointer;">Copiar</button></div>` : ''}
+            ${TRANSFER.holder ? `<div style="font-size:11px;color:#4d7c5f;margin-top:2px;">A nombre de ${esc(TRANSFER.holder)}</div>` : ''}
+            <div style="font-size:11px;color:#4d7c5f;margin-top:6px;">Transfiere y manda tu comprobante por WhatsApp junto con tu pedido.</div>
+          </div>` : ''}
           <div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;">
             ${(MP_ENABLED && g.store.slug === SLUG) ? `<button type="button" onclick="payWithMercadoPago(${jattr(g.store.slug)})" style="width:100%;background:#009ee3;color:#fff;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:14px;cursor:pointer;">💳 Pagar con Mercado Pago</button>` : ''}
             <button type="button" onclick="sendStoreOrder(${jattr(g.store.slug)})" style="width:100%;background:#1e293b;color:#fff;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:14px;cursor:pointer;">Pedir por WhatsApp</button>
@@ -631,6 +642,17 @@
     const items = g.items.map(it => ({ id: it.id, qty: it.qty, variant: it.variant || '' }));
     const qs = new URLSearchParams({ items: JSON.stringify(items), nombre, telefono });
     window.location.href = '/' + slug + '/pagar-mp?' + qs.toString();
+  }
+  function copiarCuentaTransferencia(btn, cuenta) {
+    const done = function () { if (btn) { const t = btn.textContent; btn.textContent = '¡Copiada!'; setTimeout(function () { btn.textContent = t; }, 1400); } };
+    const fallback = function () {
+      const ta = document.createElement('textarea');
+      ta.value = cuenta; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); done(); } catch (e) {}
+      ta.remove();
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(cuenta).then(done, fallback);
+    else fallback();
   }
   let _chatOpener = null;
   let _chatFirstRender = true;

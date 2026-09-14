@@ -65,6 +65,15 @@ addColumnIfMissing('businesses', 'horario_msg', "TEXT DEFAULT ''"); // mensaje c
 // guardado pero desactivado sin borrarlo).
 addColumnIfMissing('businesses', 'mp_access_token', "TEXT DEFAULT ''");
 addColumnIfMissing('businesses', 'mp_enabled', 'INTEGER DEFAULT 0');
+// Transferencia bancaria: el dueño publica su cuenta y el cliente transfiere
+// por su cuenta y manda el comprobante por WhatsApp — sin pasarela, sin
+// comisión, es como ya operan la mayoría de estas tiendas. transfer_enabled
+// controla si se muestra en el catálogo (los datos pueden quedar guardados
+// y desactivados sin borrarlos, igual que mp_enabled).
+addColumnIfMissing('businesses', 'transfer_bank', "TEXT DEFAULT ''");
+addColumnIfMissing('businesses', 'transfer_account', "TEXT DEFAULT ''");
+addColumnIfMissing('businesses', 'transfer_holder', "TEXT DEFAULT ''");
+addColumnIfMissing('businesses', 'transfer_enabled', 'INTEGER DEFAULT 0');
 
 // Sesiones con token aleatorio (el dueño y el maestro). Ya no se usa cookie estática.
 db.exec(`

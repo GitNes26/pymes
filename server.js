@@ -1740,7 +1740,22 @@ app.get('/manifest.webmanifest', (req, res) => {
 app.get('/', (req, res) => {
   const stores = db.prepare(`
     SELECT b.*,
-      COUNT(t.id) AS visits_count
+      COUNT(t.id) AS visits_count,
+      (
+        SELECT p.image FROM products p
+        WHERE p.business_id = b.id AND p.visible = 1 AND p.image IS NOT NULL AND p.image <> ''
+        ORDER BY p.id DESC LIMIT 1
+      ) AS cover_image,
+      (
+        SELECT p.name FROM products p
+        WHERE p.business_id = b.id AND p.visible = 1
+        ORDER BY p.id DESC LIMIT 1
+      ) AS featured_product,
+      (
+        SELECT p.price FROM products p
+        WHERE p.business_id = b.id AND p.visible = 1
+        ORDER BY p.id DESC LIMIT 1
+      ) AS featured_price
     FROM businesses b
     LEFT JOIN tracking t
       ON t.business_id = b.id
@@ -4075,8 +4090,16 @@ function applyConfig(biz, body) {
   const mpFormPosted = Object.prototype.hasOwnProperty.call(body, 'mp_form');
   const mpAccessToken = mpFormPosted ? String(body.mp_access_token || '').trim().slice(0, 300) : biz.mp_access_token;
   const mpEnabled = mpFormPosted ? (body.mp_enabled === '1' ? 1 : 0) : biz.mp_enabled;
+  // Transferencia bancaria: mismo patrón (marcador transfer_form en su propio
+  // <form>) — el dueño publica su cuenta y el cliente transfiere y manda el
+  // comprobante por WhatsApp, sin pasarela de por medio.
+  const transferFormPosted = Object.prototype.hasOwnProperty.call(body, 'transfer_form');
+  const transferBank = transferFormPosted ? String(body.transfer_bank || '').trim().slice(0, 120) : biz.transfer_bank;
+  const transferAccount = transferFormPosted ? String(body.transfer_account || '').trim().slice(0, 60) : biz.transfer_account;
+  const transferHolder = transferFormPosted ? String(body.transfer_holder || '').trim().slice(0, 120) : biz.transfer_holder;
+  const transferEnabled = transferFormPosted ? (body.transfer_enabled === '1' ? 1 : 0) : biz.transfer_enabled;
   db.prepare(
-    `UPDATE businesses SET name = ?, whatsapp = ?, description = ?, template = ?, color = ?, color_hex = ?, color_hex2 = ?, color_mode = ?, grid_cols = ?, logo = ?, banner = ?, giro = ?, giros = ?, estilo = ?, bg = ?, card = ?, text = ?, muted = ?, border = ?, radius = ?, font = ?, accent = ?, accent2 = ?, header = ?, header_text = ?, wa_message = ?, currency = ?, sections = ?, demo = ?, horario = ?, horario_msg = ?, blocks = ?, page_bg = ?, redes = ?, faq = ?, address = ?, catalog_design = ?, mp_access_token = ?, mp_enabled = ? WHERE id = ?`
+    `UPDATE businesses SET name = ?, whatsapp = ?, description = ?, template = ?, color = ?, color_hex = ?, color_hex2 = ?, color_mode = ?, grid_cols = ?, logo = ?, banner = ?, giro = ?, giros = ?, estilo = ?, bg = ?, card = ?, text = ?, muted = ?, border = ?, radius = ?, font = ?, accent = ?, accent2 = ?, header = ?, header_text = ?, wa_message = ?, currency = ?, sections = ?, demo = ?, horario = ?, horario_msg = ?, blocks = ?, page_bg = ?, redes = ?, faq = ?, address = ?, catalog_design = ?, mp_access_token = ?, mp_enabled = ?, transfer_bank = ?, transfer_account = ?, transfer_holder = ?, transfer_enabled = ? WHERE id = ?`
   ).run(
     name || biz.name,
     cleanWa || biz.whatsapp,
@@ -4117,6 +4140,10 @@ function applyConfig(biz, body) {
     catDesign,
     mpAccessToken,
     mpEnabled,
+    transferBank,
+    transferAccount,
+    transferHolder,
+    transferEnabled,
     biz.id
   );
   // Modo fácil: guarda el preset elegido y crea las páginas sugeridas

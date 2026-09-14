@@ -731,8 +731,13 @@
 
       <!-- ============================================================
       SECCIÓN: PAGOS EN LÍNEA (Mercado Pago — Checkout Pro)
+      Queda pendiente por el momento — se decidió que para el tipo de
+      negocio que usa esto, transferencia + comprobante por WhatsApp
+      (ver la sección de abajo) tiene más sentido como primera opción.
+      El código y la ruta de pago siguen intactos, solo se oculta del
+      admin; basta con quitar este "false" para reactivarla.
       ============================================================ -->
-      <% if (!esMaestro) { %>
+      <% if (!esMaestro && false) { %>
       <section id="config-pagos" class="m-card config-section p-5 md:p-6 dark:bg-[#161b22] dark:border-[#21262d]">
         <div class="config-section-head flex items-center gap-3 mb-5">
           <div class="w-10 h-10 rounded-xl bg-sky-50 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0">
@@ -761,6 +766,56 @@
 
           <div class="rounded-xl border border-slate-200 dark:border-[#30363d] p-3 text-xs text-slate-500 dark:text-slate-400">
             Cuando está activo, tus clientes verán un botón <b>"Pagar con Mercado Pago"</b> junto al de WhatsApp. El pedido se marca como <b>pagado</b> automáticamente en tu panel apenas Mercado Pago confirma el cobro — no tienes que revisar nada a mano.
+          </div>
+
+          <div class="flex gap-3 pt-2">
+            <button class="m-btn m-btn-filled flex-1 !min-h-11 dark:bg-[#d4d4d4] dark:text-[#062e6f] dark:hover:bg-[#a0c4ff]">
+              Guardar cambios
+            </button>
+          </div>
+        </form>
+      </section>
+      <% } %>
+
+      <!-- ============================================================
+      SECCIÓN: TRANSFERENCIA BANCARIA
+      ============================================================ -->
+      <% if (!esMaestro) { %>
+      <section id="config-pagos" class="m-card config-section p-5 md:p-6 dark:bg-[#161b22] dark:border-[#21262d]">
+        <div class="config-section-head flex items-center gap-3 mb-5">
+          <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 10h18M6 10v8M10 10v8M14 10v8M18 10v8M4 18h16M12 3l9 5H3l9-5z"/></svg>
+          </div>
+          <div>
+            <h2 class="font-extrabold text-slate-900 dark:text-white">Transferencia bancaria</h2>
+            <p class="text-xs text-slate-400 dark:text-slate-500">Publica tu cuenta para que te transfieran — sin comisiones ni pasarela</p>
+          </div>
+        </div>
+
+        <form method="POST" action="<%= cfgAction %>" class="space-y-4" id="form-transferencia">
+          <input type="hidden" name="transfer_form" value="1">
+          <label class="flex items-center gap-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl px-4 py-3 cursor-pointer">
+            <input type="checkbox" name="transfer_enabled" value="1" <%= biz.transfer_enabled ? 'checked' : '' %> class="w-4.5 h-4.5 accent-emerald-500">
+            <span class="text-sm font-bold text-slate-700 dark:text-slate-200">Mostrar mi cuenta en el catálogo para recibir transferencias</span>
+          </label>
+
+          <div class="grid md:grid-cols-2 gap-4">
+            <div>
+              <label class="config-label">Banco</label>
+              <input name="transfer_bank" value="<%= biz.transfer_bank || '' %>" maxlength="120" class="config-input" placeholder="Ej: BBVA">
+            </div>
+            <div>
+              <label class="config-label">Cuenta / CLABE</label>
+              <input name="transfer_account" value="<%= biz.transfer_account || '' %>" maxlength="60" class="config-input" placeholder="Ej: 012180001234567895">
+            </div>
+          </div>
+          <div>
+            <label class="config-label">A nombre de</label>
+            <input name="transfer_holder" value="<%= biz.transfer_holder || '' %>" maxlength="120" class="config-input" placeholder="Ej: Juan Pérez Gómez">
+          </div>
+
+          <div class="rounded-xl border border-slate-200 dark:border-[#30363d] p-3 text-xs text-slate-500 dark:text-slate-400">
+            Cuando está activo, tus clientes verán estos datos en el carrito con instrucciones de <b>transferir y mandar su comprobante por WhatsApp</b> junto con su pedido — tú confirmas el pago a mano, como ya lo haces hoy.
           </div>
 
           <div class="flex gap-3 pt-2">
