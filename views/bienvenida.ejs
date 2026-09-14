@@ -5,7 +5,7 @@
 </head>
 <body class="m-material min-h-screen" style="background:var(--ap-bg);color:var(--ap-text)">
 
-  <main class="max-w-2xl mx-auto px-4 py-10 md:py-16">
+  <main class="max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto px-4 lg:px-8 py-10 md:py-16">
 
     <!-- Progreso: línea que avanza (giro elegido → estilo definido → catálogo preparado) -->
     <div class="wz-progress" id="wz-progress">
@@ -49,7 +49,7 @@
           <input type="text" id="wz-giro-search" placeholder="Busca tu giro (ej: panadería, ropa, taller...)" class="w-full text-sm rounded-full px-4 py-2.5 outline-none" style="border:1px solid var(--ap-border);background:var(--ap-card);color:var(--ap-text)">
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" id="wz-giro-grid" role="radiogroup" aria-label="Elige el giro de tu negocio">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4" id="wz-giro-grid" role="radiogroup" aria-label="Elige el giro de tu negocio">
           <% GIRO_PRESETS.forEach(p => { %>
             <button type="button" class="wz-card" role="radio" aria-checked="false" data-giro="<%= p.id %>" data-search="<%= (p.nombre + ' ' + p.descripcion).toLowerCase() %>">
               <span class="wz-card-check" aria-hidden="true"><svg class="wz-check-icon" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></span>
@@ -107,7 +107,7 @@
           <input type="text" id="wz-design-search" placeholder="Busca un estilo (ej: elegante, industrial, pastel...)" class="w-full text-sm rounded-full px-4 py-2.5 outline-none" style="border:1px solid var(--ap-border);background:var(--ap-card);color:var(--ap-text)">
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" id="wz-vibe-grid" role="radiogroup" aria-label="Elige el diseño de tu catálogo">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4" id="wz-vibe-grid" role="radiogroup" aria-label="Elige el diseño de tu catálogo">
           <% CAT_DESIGNS.forEach(d => { var t = d.tokens; %>
             <button type="button" class="wz-card wz-vibe-card" role="radio" aria-checked="false" data-design="<%= d.id %>" data-search="<%= (d.name + ' ' + d.desc).toLowerCase() %>">
               <span class="wz-card-check" aria-hidden="true"><svg class="wz-check-icon" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></span>
@@ -466,6 +466,36 @@
     .wz-spinner { width: 14px; height: 14px; animation: wzSpin .7s linear infinite; }
     .wz-spinner circle { stroke: currentColor; stroke-dasharray: 42; stroke-dashoffset: 14; opacity: .85; }
     @keyframes wzSpin { to { transform: rotate(360deg); } }
+
+    /* ============================================================
+       Escritorio — antes el asistente quedaba con el mismo tamaño de
+       móvil solo centrado en la pantalla grande (mucho espacio vacío
+       a los lados, tarjetas y teléfono diminutos). Aquí se agranda
+       todo proporcional al espacio real disponible.
+       ============================================================ */
+    @media (min-width: 1024px) {
+      .wz-progress { max-width: 640px; }
+      .wz-card { padding: 22px 14px; gap: 8px; }
+      .wz-card-title { font-size: 14.5px; }
+      .wz-card-desc { font-size: 12px; }
+      .wz-pictogram { font-size: 1.85rem; }
+      #wz-giro-search, #wz-design-search { font-size: 15px; padding-top: 12px; padding-bottom: 12px; }
+      .relative.max-w-sm { max-width: 26rem; }
+
+      /* El teléfono de vista previa deja de achicarse — en escritorio hay
+         espacio de sobra para mostrarlo a tamaño real. */
+      .wz-phone-wrap-sm { transform: none; margin-bottom: 20px; margin-top: 0; }
+      .wz-phone { width: 260px; padding: 8px; }
+      .wz-phone-header { padding: 14px 16px; }
+      .wz-phone-logo { width: 24px; height: 24px; font-size: 10px; }
+      .wz-phone-header h3 { font-size: 15px; }
+      .wz-phone-status { font-size: 8px; }
+      .wz-phone-body { padding: 13px; }
+      .wz-phone-search { height: 28px; font-size: 8px; }
+      .wz-phone-cats span { padding: 5px 9px; font-size: 7px; }
+      .wz-phone-product-img { height: 56px; }
+      .wz-phone-wa { height: 30px; font-size: 8px; }
+    }
 
     /* ============================================================
        Accesibilidad: respeta prefers-reduced-motion
