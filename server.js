@@ -1644,7 +1644,7 @@ function getStats(businessId) {
   // Un pedido a plazos ingresa según sus abonos (cada abono en la fecha en que se cobró).
   // Un pedido sin abonos (contado) ingresa completo el día que se marca cobrado (paid_at).
   // Los pedidos pendientes o cancelados nunca cuentan como ingreso.
-  const ordRows = db.prepare("SELECT id, total, status, paid, created_at, paid_at FROM orders WHERE business_id = ?").all(businessId);
+  const ordRows = db.prepare("SELECT id, total, status, paid, created_at, paid_at, items FROM orders WHERE business_id = ?").all(businessId);
   const abonoRows = db.prepare("SELECT order_id, amount, created_at FROM abonos WHERE business_id = ?").all(businessId);
   const abonoPorPedido = {};
   abonoRows.forEach(a => { abonoPorPedido[a.order_id] = (abonoPorPedido[a.order_id] || 0) + (a.amount || 0); });
@@ -1705,10 +1705,37 @@ function getStats(businessId) {
     });
   });
   const topSellersArr = Object.keys(topSellers).map(n => ({ name: n, c: topSellers[n] })).sort((a, b) => b.c - a.c).slice(0, 6);
+
+  // ==== Ganancia estimada = ingresos − costo de lo vendido ====
+  // El costo por producto es OPCIONAL (ver Productos → Más detalles), así que
+  // esto es una estimación: solo descuenta costo de los productos que sí lo
+  // tienen capturado — hasCostData avisa a la vista si vale la pena mostrarlo
+  // (si nadie ha capturado costos, "ganancia = ingresos" sería engañoso).
+  const costMap = {};
+  db.prepare('SELECT name, cost FROM products WHERE business_id = ?').all(businessId).forEach(p => {
+    if (p.cost > 0) costMap[String(p.name || '').trim().toLowerCase()] = p.cost;
+  });
+  const hasCostData = Object.keys(costMap).length > 0;
+  let costTotal = 0;
+  if (hasCostData) {
+    ordRows.forEach(o => {
+      if (!recvPedido(o)) return;
+      String(o.items || '').split(/[\n|]/).forEach(line => {
+        const m = line.match(/(\d+)\s*x\s+(.+?)\s*=\s*[^]*?$/);
+        if (!m) return;
+        const qty = parseInt(m[1]) || 0;
+        const nm = m[2].trim().replace(/\s*\([^)]*\)\s*$/, '').trim().toLowerCase();
+        if (costMap[nm]) costTotal += costMap[nm] * qty;
+      });
+    });
+  }
+  const profit = revenue - costTotal;
+
   return {
     today, week, prevWeek, total, waClicks, orders, paid, revenue, revenueWeek, prevRevenue, avgOrder,
     weekDelta: pct(week, prevWeek), revenueDelta: pct(revenueWeek, prevRevenue),
-    topProducts, topWaProducts, topSellers: topSellersArr, daily, ordersDaily, conv, clickRate, orderRate
+    topProducts, topWaProducts, topSellers: topSellersArr, daily, ordersDaily, conv, clickRate, orderRate,
+    hasCostData, costTotal, profit
   };
 }
 
@@ -2819,7 +2846,7 @@ function logPriceHistory(bizId, p) {
 // - Nuevo formato: { attrs: [{name, values}], images: { "Talla|Color": url } }
 // - Legado: array de strings o de {name, image} → un solo atributo
 function parseVariantModel(v) {
-  const empty = { attrs: [], images: {}, stock: {}, prices: {}, skus: {}, barcodes: {} };
+  const empty = { attrs: [], images: {}, stock: {}, prices: {}, costs: {}, skus: {}, barcodes: {} };
   if (!v) return empty;
   let raw = v;
   if (typeof v === 'string') {
@@ -2839,9 +2866,10 @@ function parseVariantModel(v) {
     const images = (raw.images && typeof raw.images === 'object') ? raw.images : {};
     const stock = (raw.stock && typeof raw.stock === 'object') ? raw.stock : {};
     const prices = (raw.prices && typeof raw.prices === 'object') ? raw.prices : {};
+    const costs = (raw.costs && typeof raw.costs === 'object') ? raw.costs : {};
     const skus = (raw.skus && typeof raw.skus === 'object') ? raw.skus : {};
     const barcodes = (raw.barcodes && typeof raw.barcodes === 'object') ? raw.barcodes : {};
-    return { attrs, images, stock, prices, skus, barcodes };
+    return { attrs, images, stock, prices, costs, skus, barcodes };
   }
 
   // Legado: array de strings o de {name, image}
@@ -2858,14 +2886,14 @@ function parseVariantModel(v) {
       }
     });
     if (!values.length) return empty;
-    return { attrs: [{ name: '', values }], images, stock: {}, prices: {}, skus: {}, barcodes: {} };
+    return { attrs: [{ name: '', values }], images, stock: {}, prices: {}, costs: {}, skus: {}, barcodes: {} };
   }
 
   // Legado: string separado por comas
   if (typeof raw === 'string') {
     const values = raw.split(',').map(s => s.trim()).filter(Boolean);
     if (!values.length) return empty;
-    return { attrs: [{ name: '', values }], images: {}, stock: {}, prices: {}, skus: {}, barcodes: {} };
+    return { attrs: [{ name: '', values }], images: {}, stock: {}, prices: {}, costs: {}, skus: {}, barcodes: {} };
   }
 
   return empty;
@@ -2935,6 +2963,13 @@ function parseStock(v) {
   if (v === '' || v === null || v === undefined) return null;
   const n = parseInt(v);
   return isNaN(n) ? null : n;
+}
+
+// Costo de compra: opcional, nunca obligatorio (muchos dueños no lo saben o
+// no quieren capturarlo aún) — a diferencia de precio/stock, 0 = "no capturado".
+function parseCost(v) {
+  const n = parseFloat(v);
+  return isNaN(n) || n < 0 ? 0 : n;
 }
 
 function parsePromoEnd(v) {
@@ -3031,9 +3066,9 @@ app.post('/:slug/admin/producto', requireAuth, can('productos.crear'), (req, res
   }
   try {
     db.prepare(
-      `INSERT INTO products (business_id, category_id, name, price, old_price, description, image, galeria, stock, variants, promo_ends_at, featured, promo_type, promo_value, promo_gift, sku, tags, video, specs, barcode, allow_installments, installment_count, installment_min_down, installment_frequency)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    ).run(biz.id, category_id || null, String(name).trim(), price, old_price, description || '', image || '', parseGaleria(req.body.galeria), stockNum, variantsJson, parsePromoEnd(req.body.promo_ends_at), req.body.featured ? 1 : 0, promo.promo_type, promo.promo_value, promo.promo_gift, (req.body.sku || '').toString().trim().slice(0, 60), (req.body.tags || '').toString().trim().slice(0, 300), (req.body.video || '').toString().trim().slice(0, 300), (req.body.specs || '').toString().slice(0, 2000), (req.body.barcode || '').toString().trim().slice(0, 60), inst.allow_installments, inst.installment_count, inst.installment_min_down, inst.installment_frequency);
+      `INSERT INTO products (business_id, category_id, name, price, old_price, description, image, galeria, stock, variants, promo_ends_at, featured, promo_type, promo_value, promo_gift, sku, tags, video, specs, barcode, allow_installments, installment_count, installment_min_down, installment_frequency, cost)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).run(biz.id, category_id || null, String(name).trim(), price, old_price, description || '', image || '', parseGaleria(req.body.galeria), stockNum, variantsJson, parsePromoEnd(req.body.promo_ends_at), req.body.featured ? 1 : 0, promo.promo_type, promo.promo_value, promo.promo_gift, (req.body.sku || '').toString().trim().slice(0, 60), (req.body.tags || '').toString().trim().slice(0, 300), (req.body.video || '').toString().trim().slice(0, 300), (req.body.specs || '').toString().slice(0, 2000), (req.body.barcode || '').toString().trim().slice(0, 60), inst.allow_installments, inst.installment_count, inst.installment_min_down, inst.installment_frequency, parseCost(req.body.cost));
     const created = db.prepare('SELECT * FROM products WHERE business_id = ? ORDER BY id DESC LIMIT 1').get(biz.id);
     if (created) logPriceHistory(biz.id, created);
   } catch (err) {
@@ -3120,9 +3155,9 @@ app.post('/:slug/admin/producto/:id', requireAuth, can('productos.editar'), (req
   }
   try {
     db.prepare(
-      `UPDATE products SET name = ?, price = ?, old_price = ?, category_id = ?, description = ?, image = ?, galeria = ?, stock = ?, variants = ?, promo_ends_at = ?, featured = ?, promo_type = ?, promo_value = ?, promo_gift = ?, sku = ?, tags = ?, video = ?, specs = ?, barcode = ?, allow_installments = ?, installment_count = ?, installment_min_down = ?, installment_frequency = ?
+      `UPDATE products SET name = ?, price = ?, old_price = ?, category_id = ?, description = ?, image = ?, galeria = ?, stock = ?, variants = ?, promo_ends_at = ?, featured = ?, promo_type = ?, promo_value = ?, promo_gift = ?, sku = ?, tags = ?, video = ?, specs = ?, barcode = ?, allow_installments = ?, installment_count = ?, installment_min_down = ?, installment_frequency = ?, cost = ?
        WHERE id = ? AND business_id = ?`
-    ).run(name.trim(), price, old_price, category_id || null, description || '', image || '', parseGaleria(req.body.galeria), stockNum, variantsJson, parsePromoEnd(req.body.promo_ends_at), req.body.featured ? 1 : 0, promo.promo_type, promo.promo_value, promo.promo_gift, (req.body.sku || '').toString().trim().slice(0, 60), (req.body.tags || '').toString().trim().slice(0, 300), (req.body.video || '').toString().trim().slice(0, 300), (req.body.specs || '').toString().slice(0, 2000), (req.body.barcode || '').toString().trim().slice(0, 60), inst.allow_installments, inst.installment_count, inst.installment_min_down, inst.installment_frequency, req.params.id, req.biz.id);
+    ).run(name.trim(), price, old_price, category_id || null, description || '', image || '', parseGaleria(req.body.galeria), stockNum, variantsJson, parsePromoEnd(req.body.promo_ends_at), req.body.featured ? 1 : 0, promo.promo_type, promo.promo_value, promo.promo_gift, (req.body.sku || '').toString().trim().slice(0, 60), (req.body.tags || '').toString().trim().slice(0, 300), (req.body.video || '').toString().trim().slice(0, 300), (req.body.specs || '').toString().slice(0, 2000), (req.body.barcode || '').toString().trim().slice(0, 60), inst.allow_installments, inst.installment_count, inst.installment_min_down, inst.installment_frequency, parseCost(req.body.cost), req.params.id, req.biz.id);
     const updated = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
     if (updated) logPriceHistory(req.biz.id, updated);
   } catch (err) {
@@ -4368,18 +4403,26 @@ app.post('/:slug/admin/compra/:id/recibido', requireAuth, can('config'), (req, r
             const key = it.variant.split(' / ').join('|');
             model.stock = model.stock || {};
             model.stock[key] = (model.stock[key] || 0) + it.qty;
+            // El costo capturado al hacer el pedido queda como el costo actual
+            // de esa variante — así no hay que volver a escribirlo a mano en
+            // Productos cada vez que se compra.
+            if (it.cost > 0) { model.costs = model.costs || {}; model.costs[key] = it.cost; }
             db.prepare('UPDATE products SET variants = ? WHERE id = ?').run(JSON.stringify(model), it.product_id);
             actualizados++;
           }
         } else {
-          db.prepare('UPDATE products SET stock = COALESCE(stock, 0) + ? WHERE id = ? AND business_id = ?').run(it.qty, it.product_id, req.biz.id);
+          if (it.cost > 0) {
+            db.prepare('UPDATE products SET stock = COALESCE(stock, 0) + ?, cost = ? WHERE id = ? AND business_id = ?').run(it.qty, it.cost, it.product_id, req.biz.id);
+          } else {
+            db.prepare('UPDATE products SET stock = COALESCE(stock, 0) + ? WHERE id = ? AND business_id = ?').run(it.qty, it.product_id, req.biz.id);
+          }
           actualizados++;
         }
       } else {
         // Producto libre: se crea automáticamente (rápido). Precio = PVP si se puso, si no = costo.
         const price = it.price > 0 ? it.price : it.cost;
-        db.prepare('INSERT INTO products (business_id, name, price, old_price, stock, active, description) VALUES (?, ?, ?, NULL, ?, 1, ?)')
-          .run(req.biz.id, String(it.name).slice(0, 160), price, it.qty, 'Creado desde pedido de compra. Ajusta foto/variantes en Productos.');
+        db.prepare('INSERT INTO products (business_id, name, price, old_price, stock, active, description, cost) VALUES (?, ?, ?, NULL, ?, 1, ?, ?)')
+          .run(req.biz.id, String(it.name).slice(0, 160), price, it.qty, 'Creado desde pedido de compra. Ajusta foto/variantes en Productos.', it.cost || 0);
         creados++;
       }
     });

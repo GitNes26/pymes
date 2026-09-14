@@ -78,13 +78,14 @@
       </section>
 
       <!-- Métricas clave -->
-      <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8 md:mb-10">
-        <% const cards = [
-          { label: 'Visitas hoy', value: stats.today, isNum: true, delta: stats.weekDelta, deltaLabel: 'vs. semana pasada', target: '#sec-charts' },
-          { label: 'Ingresos cobrados', value: stats.revenue, isMoney: true, delta: stats.revenueDelta, deltaLabel: 'vs. semana pasada', title: 'Dinero que realmente entró: abonos cobrados + pedidos de contado cobrados (sin pendientes ni cancelados)', target: '#sec-pedidos' },
-          { label: 'Pedidos WhatsApp', value: stats.waClicks, isNum: true, target: '#sec-funnel' },
-          { label: 'Conversión', value: stats.conv, isPct: true, target: '#sec-funnel' }
-        ]; %>
+      <% const cards = [
+        { label: 'Visitas hoy', value: stats.today, isNum: true, delta: stats.weekDelta, deltaLabel: 'vs. semana pasada', target: '#sec-charts' },
+        { label: 'Ingresos cobrados', value: stats.revenue, isMoney: true, delta: stats.revenueDelta, deltaLabel: 'vs. semana pasada', title: 'Dinero que realmente entró: abonos cobrados + pedidos de contado cobrados (sin pendientes ni cancelados)', target: '#sec-pedidos' },
+        { label: 'Pedidos WhatsApp', value: stats.waClicks, isNum: true, target: '#sec-funnel' },
+        { label: 'Conversión', value: stats.conv, isPct: true, target: '#sec-funnel' }
+      ]; %>
+      <% if (stats.hasCostData) { cards.push({ label: 'Ganancia estimada', value: stats.profit, isMoney: true, title: 'Ingresos cobrados menos el costo de los productos vendidos que ya tienen costo capturado — si un producto no tiene costo, no se descuenta (es una estimación, no exacta).', target: '#sec-pedidos' }); } %>
+      <section class="grid grid-cols-2 <%= cards.length > 4 ? 'lg:grid-cols-5' : 'lg:grid-cols-4' %> gap-4 md:gap-6 mb-8 md:mb-10">
         <% cards.forEach((c) => { %>
           <div class="rounded-2xl p-5 md:p-7 cursor-pointer transition-colors" style="background:var(--ap-card);border:1px solid var(--ap-border);box-shadow:var(--ap-shadow)" title="<%= c.title || '' %>" data-scroll-target="<%= c.target %>">
             <p class="text-[10.5px] font-semibold uppercase tracking-[0.12em]" style="color:var(--ap-text-sec)"><%= c.label %></p>

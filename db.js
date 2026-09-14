@@ -222,6 +222,11 @@ addColumnIfMissing('orders', 'is_installment', 'INTEGER DEFAULT 0'); // 1 = pedi
 addColumnIfMissing('orders', 'installment_paid', 'REAL DEFAULT 0'); // total ya abonado
 addColumnIfMissing('orders', 'installment_count', 'INTEGER DEFAULT 0'); // abonos configurados
 addColumnIfMissing('orders', 'installment_frequency', "TEXT DEFAULT 'semanal'"); // semanal | quincenal | mensual (para calcular las fechas de pago)
+// Costo de compra (lo que le costó al dueño, no lo que cobra) — para poder
+// calcular margen/ganancia real en vez de solo ingresos brutos. Con
+// variantes, el costo vive por combinación dentro del JSON de variants
+// (igual que precio/stock/sku), este campo es solo para productos sin variantes.
+addColumnIfMissing('products', 'cost', 'REAL DEFAULT 0');
 
 // Historial de abonos (pagos parciales)
 db.exec(`
