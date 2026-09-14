@@ -1819,11 +1819,15 @@ app.post('/:slug/admin/bienvenida', requireAuth, (req, res) => {
   const vibe = VIBE_OPTIONS.find(v => v.estilo === req.body.estilo && v.color === req.body.color);
   const estiloId = vibe ? vibe.estilo : preset.estilo;
   const colorObj = getColor(vibe ? vibe.color : preset.color);
+  // giro (texto libre, minúsculas): ya no se pide en /registrar — se llena aquí
+  // con el preset elegido para que sigan funcionando las recomendaciones de
+  // negocios complementarios y las demos por giro (GIRO_DEMO), que buscan por
+  // este campo.
   db.prepare(
-    `UPDATE businesses SET template = ?, estilo = ?, color = ?, color_hex = ?, color_hex2 = ?, color_mode = ?, grid_cols = ?, giro_preset = ?, onboarding_done = 1 WHERE id = ?`
+    `UPDATE businesses SET template = ?, estilo = ?, color = ?, color_hex = ?, color_hex2 = ?, color_mode = ?, grid_cols = ?, giro_preset = ?, giro = ?, onboarding_done = 1 WHERE id = ?`
   ).run(
     preset.template, estiloId, colorObj.id, colorObj.c1, colorObj.c2, preset.color_mode, preset.grid_cols,
-    preset.id, biz.id
+    preset.id, preset.id, biz.id
   );
   db.crearPaginasSugeridas(biz.id, preset.paginas_sugeridas);
   db.crearCategoriasSugeridas(biz.id, GIRO_CATEGORIAS[preset.id] || GIRO_CATEGORIAS.otros);

@@ -68,16 +68,6 @@
         </div>
 
         <div>
-          <label class="block text-sm font-bold mb-1.5">Giro del negocio</label>
-          <select name="giro" data-allow-custom="1" class="w-full border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-neutral-400">
-            <option value="">— Elige o escribe tu giro —</option>
-            <% if (form && form.giro && !GIROS.includes(form.giro)) { %><option value="<%= form.giro %>" selected><%= form.giro %></option><% } %>
-            <% GIROS.forEach(g => { %><option value="<%= g %>" <%= (form && form.giro === g) ? 'selected' : '' %>><%= g %></option><% }) %>
-          </select>
-          <p class="text-xs text-slate-400 mt-1">Elige tu giro o escribe uno nuevo: si no existe, se agrega automáticamente y queda disponible para otros negocios. Se usa para recomendar negocios complementarios.</p>
-        </div>
-
-        <div>
           <label class="block text-sm font-bold mb-1.5">PIN de acceso (el dueño lo puede cambiar)</label>
           <input name="pin" type="text" inputmode="numeric" maxlength="12" value="<%= form ? form.pin : '' %>" placeholder="6 a 12 dígitos" class="w-full border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-neutral-400">
           <p class="text-xs text-slate-400 mt-1">Mínimo 6 dígitos. Es tu contraseña para entrar al panel.</p>

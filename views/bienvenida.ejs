@@ -104,6 +104,35 @@
           </div>
         </div>
 
+        <!-- Demo animada: con el plan gratis, el catálogo muestra productos de
+             otras tiendas ("también te puede interesar") — se enseña aquí para
+             que el dueño vea cómo se ve en vez de solo leerlo. -->
+        <div class="rounded-2xl p-5 md:p-6 mt-4" style="background:var(--ap-card);border:1px solid var(--ap-border);box-shadow:var(--ap-shadow)">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-lg">📣</span>
+            <p class="font-semibold text-[15px]" style="color:var(--ap-text)">Así se verán los anuncios de otras tiendas</p>
+          </div>
+          <p class="text-[13px] mb-4" style="color:var(--ap-text-sec)">Con el plan gratis, tu catálogo incluye una franja "También te puede interesar" con productos de otras tiendas — te ayuda a empezar sin costo. Puedes quitarla cuando quieras con el plan Pro.</p>
+          <div class="wz-ad-demo" id="wz-ad-demo">
+            <div class="wz-ad-demo-label">También te puede interesar</div>
+            <div class="wz-ad-demo-track">
+              <% const wzAdDemo = [
+                { c1: '#fb923c', c2: '#ef4444', store: 'Ferretería El Toro', price: '$189.00' },
+                { c1: '#34d399', c2: '#0ea5e9', store: 'Cafetería Aroma', price: '$65.00' },
+                { c1: '#a78bfa', c2: '#ec4899', store: 'Boutique Lía', price: '$349.00' },
+                { c1: '#fbbf24', c2: '#f97316', store: 'Dulcería Sol', price: '$45.00' }
+              ]; %>
+              <% wzAdDemo.forEach((ad, i) => { %>
+                <div class="wz-ad-demo-card" style="animation-delay:<%= i * 0.18 %>s">
+                  <div class="wz-ad-demo-img" style="background:linear-gradient(135deg,<%= ad.c1 %>,<%= ad.c2 %>)"></div>
+                  <div class="wz-ad-demo-store"><%= ad.store %></div>
+                  <div class="wz-ad-demo-price"><%= ad.price %></div>
+                </div>
+              <% }) %>
+            </div>
+          </div>
+        </div>
+
         <div class="text-center mt-8 flex items-center justify-center gap-3">
           <button type="button" class="m-btn m-btn-outlined px-6" id="wz-back-3">← Atrás</button>
           <button type="submit" class="m-btn m-btn-filled px-8" id="wz-submit">Crear mi catálogo 🚀</button>
@@ -141,6 +170,26 @@
       background: var(--ap-bg); padding-top: 14px; padding-bottom: 14px;
       margin-left: -16px; margin-right: -16px; padding-left: 16px; padding-right: 16px;
     }
+
+    /* Demo animada de la franja de anuncios (paso 3) */
+    .wz-ad-demo { border-radius: var(--ap-radius); background: var(--ap-bg); padding: 14px; overflow: hidden; }
+    .wz-ad-demo-label { font-size: 11px; font-weight: 700; color: var(--ap-text-sec); margin-bottom: 10px; }
+    .wz-ad-demo-track { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 2px; }
+    .wz-ad-demo-card {
+      flex: 0 0 100px; opacity: 0; transform: translateY(10px) scale(.94);
+      animation: wzAdIn .5s cubic-bezier(.22,1,.36,1) forwards;
+    }
+    .wz-ad-demo-img {
+      width: 100px; height: 72px; border-radius: 12px; margin-bottom: 6px;
+      box-shadow: 0 6px 16px -6px rgba(0,0,0,.25);
+      background-size: 200% 200%; animation: wzAdGlow 3.5s ease-in-out infinite;
+    }
+    .wz-ad-demo-store { font-size: 10px; font-weight: 700; color: var(--ap-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .wz-ad-demo-price { font-size: 11px; font-weight: 800; color: var(--ap-accent-text); }
+    @keyframes wzAdIn { to { opacity: 1; transform: none; } }
+    @keyframes wzAdGlow { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+    /* Al reentrar al paso 3 se reinicia la animación quitando y reponiendo la clase */
+    .wz-ad-demo-replay .wz-ad-demo-card { animation: none; }
   </style>
 
   <script>
@@ -173,6 +222,15 @@
       });
       setDot(step);
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      // Reinicia la animación de la demo de anuncios cada vez que se vuelve al paso 3
+      if (step === 3) {
+        var demo = document.getElementById('wz-ad-demo');
+        if (demo) {
+          demo.classList.add('wz-ad-demo-replay');
+          void demo.offsetWidth; // fuerza reflow para que el navegador "olvide" el estado anterior
+          demo.classList.remove('wz-ad-demo-replay');
+        }
+      }
     }
 
     // Buscador del paso 1: filtra los 100 giros por nombre/descripción para
