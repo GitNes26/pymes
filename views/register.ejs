@@ -3,103 +3,107 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Registrar tienda | Nessik</title>
-  <script src="/vendor/tailwind.js"></script>
+  <meta name="theme-color" content="#f7f7f8">
+  <title>Haz realidad tu tienda | Nessik</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <style>body { font-family: 'Inter', sans-serif; }</style>
-  <link rel="stylesheet" href="/css/material.css">
-  <script src="/js/material.js"></script>
-  <script src="/js/searchable-select.js"></script>
+  <link rel="stylesheet" href="/css/register.css?v=20260914">
 </head>
-<body class="m-material bg-slate-50 min-h-screen">
-
-  <nav class="bg-white border-b border-slate-100 sticky top-0 z-50">
-    <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-      <a href="/" class="flex items-center gap-2">
-        <div class="w-8 h-8 rounded-xl bg-[#2c2c2e] flex items-center justify-center text-white font-black text-sm">N</div>
-        <span class="font-extrabold text-lg">Nessik</span>
-      </a>
-      <a href="/" class="text-sm font-medium text-slate-600 hover:text-slate-900">← Volver</a>
-    </div>
+<body>
+  <nav class="register-nav" aria-label="Navegación principal">
+    <a href="/" class="brand" aria-label="Nessik, ir al inicio"><span class="brand-mark" aria-hidden="true">N</span><span>Nessik</span></a>
+    <a href="/" class="back-link"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>Volver al inicio</a>
   </nav>
 
-  <main class="max-w-3xl mx-auto px-4 py-8">
-    <div class="text-center mb-6">
-      <h1 class="text-2xl md:text-3xl font-black tracking-tight">Registrar una tienda</h1>
-      <p class="text-slate-500 mt-1.5">Crea tu tienda en minutos. Catálogo y pedidos por WhatsApp listos.</p>
-    </div>
+  <main class="register-layout">
+    <section class="form-panel" aria-labelledby="register-title">
+      <header class="register-heading">
+        <h1 id="register-title">Dale vida a tu tienda.</h1>
+        <p>Escribe los datos básicos y mira cómo toma forma en tiempo real. En unos minutos podrás compartirla y recibir pedidos.</p>
+      </header>
 
-    <% if (ok) { %>
-      <div class="bg-[var(--md-secondary-container)] rounded-2xl p-5 mb-4 m-pop">
-        <p class="font-bold text-[var(--md-on-secondary-container)] mb-1">Tienda creada correctamente ✓</p>
-        <p class="text-sm text-emerald-700">Catálogo: <a href="/<%= ok %>" class="font-bold underline">/<%= ok %></a></p>
-        <p class="text-sm text-emerald-700">Panel (PIN 1234): <a href="/<%= ok %>/admin" class="font-bold underline">/<%= ok %>/admin</a></p>
+      <div class="build-progress" aria-label="Progreso de creación">
+        <div class="progress-track" aria-hidden="true"><span id="progress-fill"></span></div>
+        <div class="progress-copy"><strong id="progress-label">Empecemos por tu negocio</strong><span id="progress-count">0% listo</span></div>
       </div>
-    <% } %>
-    <% if (error) { %>
-      <div class="bg-[var(--md-error-container)] rounded-2xl p-4 mb-4 text-sm font-semibold text-[#8c1d18] m-pop"><%= error %></div>
-    <% } %>
 
-    <form method="POST" action="/registrar" class="m-card p-6 m-rise">
-      <div class="space-y-4">
-        <div>
-          <label class="block text-sm font-bold mb-1.5">Nombre del negocio *</label>
-          <input id="f-name" name="name" required value="<%= form ? form.name : '' %>" placeholder="Ej: Ferretería El Toro" class="w-full border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-neutral-400">
+      <div class="mobile-build-status" aria-live="polite">
+        <span id="mobile-preview-initial" aria-hidden="true">N</span>
+        <div><strong id="mobile-preview-name">Tu tienda está tomando forma</strong><small id="mobile-preview-progress">Completa los datos para abrirla</small></div>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+      </div>
+
+      <% if (ok) { %>
+        <div class="success-card" role="status">
+          <span class="status-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg></span>
+          <div><h2>Tu tienda ya está viva</h2><p>Ya puedes verla y entrar a organizar tus productos.</p><div class="success-actions"><a href="/<%= ok %>">Ver mi tienda</a><a href="/<%= ok %>/admin">Entrar al panel</a></div></div>
+        </div>
+      <% } %>
+
+      <% if (error) { %>
+        <div class="error-card" role="alert"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v5m0 3.5v.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg><div><strong>No pudimos crearla todavía</strong><p><%= error %> Corrige ese dato y vuelve a intentarlo.</p></div></div>
+      <% } %>
+
+      <form id="register-form" method="POST" action="/registrar" novalidate>
+        <div class="field-group">
+          <div class="field-heading"><span class="field-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 10h16M6 10v10h12V10M5 4h14l1 6H4l1-6Zm5 16v-5h4v5"/></svg></span><div><h2>La identidad de tu negocio</h2><p>Así aparecerá frente a tus clientes.</p></div></div>
+          <label for="f-name">Nombre del negocio <span>*</span></label>
+          <div class="input-shell"><input id="f-name" name="name" required maxlength="80" value="<%= form ? form.name : '' %>" placeholder="Ej. Ferretería El Toro" autocomplete="organization"><span class="field-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 12 4 4 8-9"/></svg></span></div>
+          <label for="f-description">¿Qué encontrará la gente?</label>
+          <textarea id="f-description" name="description" rows="2" maxlength="160" placeholder="Ej. Todo para tu obra y hogar en Torreón."><%= form ? form.description : '' %></textarea>
+          <div class="field-meta"><span>Una frase corta basta</span><span id="description-count">0/160</span></div>
         </div>
 
-        <div>
-          <label class="block text-sm font-bold mb-1.5">Enlace (solo letras, números y guiones) *</label>
-          <div class="flex items-center border rounded-xl px-4 py-2.5 focus-within:ring-2 focus-within:ring-neutral-400">
-            <span class="text-slate-400 text-sm font-medium">nessik.net/</span>
-            <input id="f-slug" name="slug" required pattern="[a-z0-9\-]+" maxlength="60" value="<%= form ? form.slug : '' %>" placeholder="ferreteria-eltoro" autocomplete="off" class="flex-1 focus:outline-none ml-1">
+        <div class="field-group">
+          <div class="field-heading"><span class="field-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.07.07l2-2A5 5 0 0 0 12 4M14 11a5 5 0 0 0-7.07-.07l-2 2A5 5 0 0 0 12 20"/></svg></span><div><h2>Tu dirección en internet</h2><p>Se crea sola; puedes personalizarla.</p></div></div>
+          <label for="f-slug">Enlace público <span>*</span></label>
+          <div class="input-shell url-shell"><span>nessik.net/</span><input id="f-slug" name="slug" required pattern="[a-z0-9\-]+" maxlength="60" value="<%= form ? form.slug : '' %>" placeholder="ferreteria-el-toro" autocomplete="off" spellcheck="false"><span class="field-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 12 4 4 8-9"/></svg></span></div>
+          <p class="field-help">Este es el enlace que compartirás por WhatsApp y redes.</p>
+        </div>
+
+        <div class="field-group">
+          <div class="field-heading"><span class="field-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8.5 3h7A2.5 2.5 0 0 1 18 5.5v13a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 6 18.5v-13A2.5 2.5 0 0 1 8.5 3ZM10 6h4m-3 12h2"/></svg></span><div><h2>Donde llegarán tus pedidos</h2><p>Conectamos cada producto con tu WhatsApp.</p></div></div>
+          <label for="f-whatsapp">WhatsApp de ventas <span>*</span></label>
+          <div class="input-shell phone-shell"><span>+52</span><input id="f-whatsapp" name="whatsapp" required type="tel" inputmode="numeric" maxlength="10" value="<%= form ? form.whatsapp : '' %>" placeholder="871 992 0338" autocomplete="tel-national"><span class="field-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 12 4 4 8-9"/></svg></span></div>
+          <p class="field-help">Escribe los 10 dígitos de tu número.</p>
+          <label for="f-pin">Crea tu PIN de acceso <span>*</span></label>
+          <div class="input-shell pin-shell"><input id="f-pin" name="pin" type="password" inputmode="numeric" minlength="6" maxlength="12" required value="<%= form ? form.pin : '' %>" placeholder="6 a 12 dígitos" autocomplete="new-password"><button type="button" class="pin-toggle" aria-label="Mostrar PIN" aria-pressed="false"><svg class="eye-open" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg><svg class="eye-closed" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 3 18 18M10.6 6.1A10.7 10.7 0 0 1 12 6c6 0 9.5 6 9.5 6a16.6 16.6 0 0 1-2.1 2.7M6.2 6.2C3.8 7.8 2.5 12 2.5 12s3.5 6 9.5 6c1 0 2-.2 2.8-.5M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg></button><span class="field-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 12 4 4 8-9"/></svg></span></div>
+          <p class="field-help">Será la llave para administrar tu catálogo.</p>
+        </div>
+
+        <div class="submit-zone"><button id="submit-button" type="submit"><span class="button-label">Crear mi tienda</span><span class="button-loading">Dando vida a tu tienda…</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></button><p>Empiezas gratis. Después te ayudaremos a elegir el estilo y tus primeras categorías.</p></div>
+      </form>
+    </section>
+
+    <aside class="preview-panel" aria-label="Vista previa de tu tienda">
+      <div class="preview-intro"><div><h2>Así se está viendo</h2><p id="preview-message" aria-live="polite">Tu tienda aparecerá aquí mientras la creas.</p></div><span class="live-badge"><i></i> Vista en vivo</span></div>
+      <div class="phone-stage">
+        <div class="orbit orbit-one" aria-hidden="true"></div><div class="orbit orbit-two" aria-hidden="true"></div>
+        <div class="phone" id="store-preview">
+          <div class="phone-top" aria-hidden="true"><span>9:41</span><i></i><span class="phone-signals"><b></b><b></b><b></b></span></div>
+          <div class="store-screen">
+            <header class="store-header">
+              <div class="mini-nav"><span class="mini-logo" id="preview-initial">N</span><span class="mini-menu"><i></i><i></i></span></div>
+              <div class="store-copy"><span class="open-label"><i></i> Catálogo disponible</span><h3 id="preview-name">Tu negocio</h3><p id="preview-description">Aquí aparecerá lo que hace especial a tu tienda.</p></div>
+              <div class="store-wave" aria-hidden="true"><span></span><span></span><span></span></div>
+            </header>
+            <div class="store-body">
+              <div class="mini-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="m16 16 4 4"/></svg>Buscar en tu tienda</div>
+              <div class="mini-categories"><span>Todo</span><span>Novedades</span><span>Favoritos</span></div>
+              <div class="mini-products"><article><div class="product-image product-one"><span></span></div><strong>Producto destacado</strong><small>Disponible</small><b>$—</b></article><article><div class="product-image product-two"><span></span></div><strong>Favorito de clientes</strong><small>Disponible</small><b>$—</b></article></div>
+              <div class="mini-whatsapp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.4-4A8 8 0 1 1 20 11.5Z"/><path d="M9 9.3c.4 2 1.6 3.2 3.7 3.9"/></svg><span><strong>Haz tu pedido</strong><small id="preview-phone">Conecta tu WhatsApp</small></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></div>
+            </div>
           </div>
-          <p class="text-xs text-slate-400 mt-1">El enlace público de tu tienda. Se llena solo con el nombre del negocio; puedes editarlo si quieres otro.</p>
         </div>
-
-        <div>
-          <label class="block text-sm font-bold mb-1.5">WhatsApp de ventas (10 dígitos) *</label>
-          <input name="whatsapp" required type="tel" inputmode="numeric" maxlength="10" value="<%= form ? form.whatsapp : '' %>" placeholder="8719920338" class="w-full border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-neutral-400">
-          <p class="text-xs text-slate-400 mt-1">Los pedidos llegarán a este número.</p>
-        </div>
-
-        <div>
-          <label class="block text-sm font-bold mb-1.5">Descripción corta</label>
-          <textarea name="description" rows="2" placeholder="Ej: Todo para tu obra y hogar en Torreón." class="w-full border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-neutral-400"><%= form ? form.description : '' %></textarea>
-        </div>
-
-        <div>
-          <label class="block text-sm font-bold mb-1.5">PIN de acceso (el dueño lo puede cambiar)</label>
-          <input name="pin" type="text" inputmode="numeric" maxlength="12" value="<%= form ? form.pin : '' %>" placeholder="6 a 12 dígitos" class="w-full border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-neutral-400">
-          <p class="text-xs text-slate-400 mt-1">Mínimo 6 dígitos. Es tu contraseña para entrar al panel.</p>
-        </div>
-
-        <button class="m-btn m-btn-filled w-full !min-h-11">Crear tienda</button>
       </div>
-    </form>
+      <div class="readiness" aria-live="polite">
+        <div class="readiness-item" data-step="identity"><span><svg viewBox="0 0 24 24"><path d="m6 12 4 4 8-9"/></svg></span><div><strong>Tu marca</strong><small>Lista para ser reconocida</small></div></div>
+        <div class="readiness-item" data-step="link"><span><svg viewBox="0 0 24 24"><path d="m6 12 4 4 8-9"/></svg></span><div><strong>Tu enlace</strong><small id="preview-url">Esperando el nombre</small></div></div>
+        <div class="readiness-item" data-step="orders"><span><svg viewBox="0 0 24 24"><path d="m6 12 4 4 8-9"/></svg></span><div><strong>Tus pedidos</strong><small>Conecta el WhatsApp de ventas</small></div></div>
+      </div>
+    </aside>
   </main>
-
-  <script>
-    // El enlace se llena solo con el nombre del negocio: minúsculas, sin acentos y espacios → guiones.
-    // Deja de autocompletar en cuanto el usuario escribe manualmente en el campo del enlace.
-    (function () {
-      var slugTouched = document.getElementById('f-slug').value.length > 0;
-      document.getElementById('f-slug').addEventListener('input', function () { slugTouched = true; });
-      document.getElementById('f-name').addEventListener('input', function () {
-        if (slugTouched) return;
-        document.getElementById('f-slug').value = this.value
-          .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-          .toLowerCase().trim()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/^-+|-+$/g, '');
-      });
-      // WhatsApp de ventas: máximo 10 dígitos, solo números
-      var wa = document.querySelector('input[name=whatsapp]');
-      if (wa) wa.addEventListener('input', function () {
-        var v = this.value.replace(/[^0-9]/g, '');
-        if (v.length > 10) v = v.slice(0, 10);
-        this.value = v;
-      });
-    })();
-  </script>
+  <script src="/js/register.js?v=20260914"></script>
 </body>
 </html>

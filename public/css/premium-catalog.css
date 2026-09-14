@@ -1,258 +1,185 @@
 /* =======================================================================
-   CAPA PREMIUM — CATÁLOGO PÚBLICO
-   Cargar DESPUÉS de design.ejs / constructor.ejs / components.ejs
-   No toca estructura, solo redefine tokens y refina componentes existentes.
+   CAPA DE MOVIMIENTO — CATÁLOGO PÚBLICO (constructor.ejs)
+   Fuente única de animaciones del catálogo: se carga después del <style>
+   inline de constructor.ejs y usa SOLO los tokens de tema que cada tienda
+   ya define (--accent, --bg-card, --border, --radius, --shadow, etc.) —
+   nunca colores fijos, para no imponer el estilo de una tienda a todas.
+   Dirección de movimiento: "una vitrina que abre, responde y prepara el
+   pedido". Consolida heroLogoIn/heroTextIn/badgeBounce/fadeInScale/fade-up
+   y las entradas de tarjeta que antes estaban duplicadas en el <style>
+   inline — esa duplicación ya se quitó de ahí; esto es lo único que queda.
    ======================================================================= */
-
-/* Google Fonts — añadir también como <link> en el <head> para mejor
-   rendimiento (preconnect + preload); el @import queda como fallback. */
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  /* ---- Paleta: mercado premium (verde esmeralda + dorado, uso comedido) ---- */
-  --accent: #146356;              /* antes #2563eb */
-  --accent-hover: #0f4d43;        /* hover state del accent */
-  --accent2: #C89B3C;             /* antes #7c3aed — reservado a precios/ofertas */
-  --accent2-hover: #b08930;       /* hover del dorado */
-  --accent-deep: #0D3A31;         /* para gradientes de header */
-  --font: 'Inter', system-ui, sans-serif;
-  --font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
-
-  --bg: #FAF9F6;                  /* blanco cálido, no cream genérico */
-  --text: #1A2420;                /* tinta con matiz verde, no negro puro */
-  --muted: #5C6B64;
-  --card: #FFFFFF;
-  --border: #E5E1D6;              /* borde con matiz cálido */
-  --radius: 18px;
-
-  --header: linear-gradient(135deg, var(--accent-deep), var(--accent));
-  --header-text: #FFFFFF;
-  --badge: var(--accent);
-
-  /* Sombras con tinte cálido en vez de negro puro */
-  --shadow-sm: 0 1px 2px rgba(26,36,32,0.05), 0 1px 3px rgba(26,36,32,0.07);
-  --shadow-md: 0 4px 10px rgba(26,36,32,0.06), 0 2px 4px rgba(26,36,32,0.08);
-  --shadow-lg: 0 14px 30px rgba(26,36,32,0.08), 0 4px 12px rgba(26,36,32,0.05);
-  --shadow-xl: 0 24px 55px rgba(26,36,32,0.10), 0 8px 22px rgba(26,36,32,0.06);
-  --shadow-accent: 0 4px 16px rgba(20,99,86,0.20);
+  --ease-premium: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-body {
-  font-family: var(--font);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
+/* ============================================================
+   1) APERTURA DEL CATÁLOGO — un solo momento focal (≤700ms)
+   Orden: banner/superficie → logo → nombre/descripción/estado.
+   Recorte con clip-path (no solo fade+translate genérico).
+   Si JS falla, .hero-reveal ya no tiene el estado "pending" en el
+   HTML base — el contenido nace visible (ver constructor.ejs).
+   ============================================================ */
+/* Pura CSS, sin depender de una clase que agregue JS: si el script nunca
+   corre, la animación igual se dispara sola al pintar la página y termina
+   en el estado final visible (fill-mode both) — nunca se queda oculto. */
+.hero img.bg {
+  transition: transform .4s var(--ease-premium);
+  animation: heroSurfaceIn .38s var(--ease-premium) both;
+}
+@keyframes heroSurfaceIn { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
+
+.hero-logo { animation: heroLogoIn .26s .2s var(--ease-premium) both; }
+@keyframes heroLogoIn { from { opacity: 0; transform: scale(.82) translateY(10px); } to { opacity: 1; transform: none; } }
+
+.hero-name { animation: heroTextIn .26s .3s var(--ease-premium) both; }
+.hero-desc { animation: heroTextIn .26s .38s var(--ease-premium) both; }
+.hero-status { animation: heroTextIn .24s .46s var(--ease-premium) both; }
+@keyframes heroTextIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+/* Total: ~700ms desde que pinta hasta que el estado (abierto/cerrado) termina de entrar. */
+
+/* ============================================================
+   2) HEADER STICKY — transición suave hero → barra compacta
+   ============================================================ */
+.hdr { transition: box-shadow .3s var(--ease-premium), background-color .3s var(--ease-premium); }
+.hdr.hdr-compact { box-shadow: 0 2px 16px rgba(0,0,0,.06); }
+.hdr-logo {
+  transform-origin: left center;
+  opacity: 0; transform: scale(.6);
+  transition: opacity .3s var(--ease-premium), transform .3s var(--ease-premium);
+}
+.hdr.hdr-compact .hdr-logo,
+.hdr:not(:has(.hero)) .hdr-logo,
+body:not(:has(.hero)) .hdr-logo { opacity: 1; transform: none; }
+.hdr-title { transition: font-size .3s var(--ease-premium); }
+
+/* ============================================================
+   3) CATEGORÍAS / FILTROS — indicador que se mueve, no on/off
+   ============================================================ */
+.filter-cat { position: relative; transition: background-color .22s var(--ease-premium), color .22s var(--ease-premium), border-color .22s var(--ease-premium); }
+.cat-pill { transition: background-color .22s var(--ease-premium), color .22s var(--ease-premium), border-color .22s var(--ease-premium), box-shadow .22s var(--ease-premium), transform .15s var(--ease-premium); }
+
+/* Contador de resultados: transición numérica discreta (solo opacidad/leve escala) */
+#prodCount { display: inline-block; transition: opacity .15s var(--ease-premium); }
+#prodCount.counting { opacity: .35; }
+
+/* Estado sin resultados: entrada clara */
+#noResults { animation: noResultsIn .28s var(--ease-premium) both; }
+@keyframes noResultsIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* ============================================================
+   4) PRODUCTOS — stagger de colección nueva (≤240ms total),
+   sin fade-up genérico repetido en cada tarjeta.
+   ============================================================ */
+.prod-card, .oferta-card {
+  opacity: 1; transform: none;
+  transition: transform .3s var(--ease-premium), box-shadow .3s var(--ease-premium), border-color .3s var(--ease-premium);
+}
+.prod-card.card-enter, .oferta-card.card-enter {
+  animation: cardEnter .32s var(--ease-premium) both;
+  animation-delay: var(--card-delay, 0ms);
+}
+@keyframes cardEnter { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: none; } }
+
+/* FLIP: al reordenar por filtro, las tarjetas que se mueven lo hacen con transform, sin animar layout */
+.prod-card.flip-move { transition: transform .28s var(--ease-premium); }
+
+/* Confirmación táctil (móvil): escala breve, sin rebote */
+.prod-card.tap-press, .oferta-card.tap-press { transform: scale(.98); transition: transform .1s var(--ease-premium); }
+
+/* Imagen: fade-in suave cuando termina de cargar (evita flash de fondo) */
+.prod-img-wrap img, .oferta-img-wrap img, .pd-img-col img { opacity: 0; transition: opacity .35s var(--ease-premium), transform .6s var(--ease-premium); background: var(--bg); }
+.prod-img-wrap img.img-loaded, .oferta-img-wrap img.img-loaded, .pd-img-col img.img-loaded { opacity: 1; }
+
+/* Badges: entrada corta, sin bounce/rotación */
+.prod-badge-offer, .prod-badge-promo, .oferta-badge-pct, .oferta-badge-tag, .pd-badge-offer {
+  animation: badgeIn .22s var(--ease-premium) both;
+}
+@keyframes badgeIn { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: none; } }
+
+/* ============================================================
+   5) OFERTAS — carrusel manipulable, snap, sin autoplay infinito
+   ============================================================ */
+.ofertas-track { scroll-snap-type: x proximity; }
+.ofertas-track .oferta-card { scroll-snap-align: start; }
+.ofertas-arrow:active { transform: scale(.92); }
+
+/* ============================================================
+   6) AGREGAR AL CARRITO — segundo momento importante
+   ============================================================ */
+.prod-btn.added, .oferta-add-btn.added { transition: background-color .2s var(--ease-premium); }
+.cart-fly {
+  position: fixed; z-index: 10002; border-radius: 10px; object-fit: cover;
+  pointer-events: none; will-change: transform, opacity;
+  box-shadow: 0 8px 24px rgba(0,0,0,.25);
+}
+#cart-count, .cart-count-bump { transition: transform .18s var(--ease-premium); }
+.cart-count-bump { animation: cartCountBump .32s var(--ease-premium); }
+@keyframes cartCountBump { 0% { transform: scale(1); } 40% { transform: scale(1.35); } 100% { transform: scale(1); } }
+
+/* ============================================================
+   7) SELECTOR DE VARIANTES — overlay y panel por separado
+   ============================================================ */
+.vp-overlay { opacity: 0; transition: opacity .14s var(--ease-premium); }
+.vp-overlay.vp-in { opacity: 1; }
+.vp-panel { opacity: 0; transform: translateY(24px) scale(.98); transition: opacity .3s var(--ease-premium), transform .3s var(--ease-premium); }
+.vp-overlay.vp-in .vp-panel { opacity: 1; transform: none; }
+@media (min-width: 640px) {
+  .vp-panel { transform: translateY(0) scale(.94); }
+  .vp-overlay.vp-in .vp-panel { transform: none; }
+}
+.vp-val { transition: background-color .18s var(--ease-premium), color .18s var(--ease-premium), border-color .18s var(--ease-premium), transform .12s var(--ease-premium); }
+.vp-val:active { transform: scale(.96); }
+
+/* ============================================================
+   8) CARRITO (panel) — continuación de agregar, no pantalla aparte
+   ============================================================ */
+#chat-panel { opacity: 0; transform: translateY(16px) scale(.98); transition: opacity .26s var(--ease-premium), transform .26s var(--ease-premium); }
+#chat-panel.chat-in { opacity: 1; transform: none; }
+.chat-row-enter { animation: chatRowIn .22s var(--ease-premium) both; }
+@keyframes chatRowIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.chat-row-leaving { transition: opacity .18s var(--ease-premium), transform .18s var(--ease-premium); opacity: 0; transform: translateX(12px); }
+
+/* Nota: el timing de .pd-overlay/.pd-modal (detalle de producto) se fijó
+   directamente en el <style> de constructor.ejs — ese bloque se carga
+   después de esta hoja, así que una regla aquí quedaría sin efecto. */
+
+/* ============================================================
+   10) SCROLL REVEAL — solo secciones con significado real
+   ============================================================ */
+.anim-in { opacity: 0; transform: translateY(24px); transition: opacity .5s var(--ease-premium), transform .5s var(--ease-premium); }
+.anim-in.visible { opacity: 1; transform: none; }
+
+/* ============================================================
+   11) MÓVIL — controles táctiles ≥44px, safe areas
+   ============================================================ */
+.filter-fab, .cart-fab { padding-bottom: max(0px, env(safe-area-inset-bottom)); }
+@media (max-width: 900px) {
+  .prod-btn, .prod-view-btn, .ofertas-arrow, .cat-pill, .filter-cat { min-height: 40px; }
 }
 
-/* ---- Selección de texto con paleta ---- */
-::selection { background: rgba(20,99,86,0.12); color: var(--text); }
-::-moz-selection { background: rgba(20,99,86,0.12); color: var(--text); }
-
-/* ---- Focus visible global ---- */
-:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-/* ---- Scrollbar global ---- */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: var(--muted); }
-
-/* ---- Tipografía de exhibición: títulos, precios, nombres de producto ---- */
-.cat-title,
-.pv-banner h2,
-.pv-section-title,
-.p-card .p-name,
-.p-card .p-price,
-.sponsored-card .sc-name,
-.sponsored-card .sc-price,
-.pv-cat-cards .cat-card {
-  font-family: var(--font-display);
-  letter-spacing: -0.01em;
-  text-wrap: balance;
-}
-
-/* ---- Header ---- */
-.header-gradient {
-  background: var(--header) !important;
-  position: relative;
-  overflow: hidden;
-}
-/* textura sutil de trama diagonal, muy discreta, no compite con el contenido */
-.header-gradient::after {
-  content: '';
-  position: absolute; inset: 0; pointer-events: none;
-  background-image: repeating-linear-gradient(
-    135deg, rgba(255,255,255,.035) 0 2px, transparent 2px 14px
-  );
-}
-
-/* ---- Chips: sólido, sin degradado verde→dorado (se ve sucio) ---- */
-.chip-active {
-  background: var(--accent) !important;
-  color: #fff !important;
-  border-color: transparent !important;
-  box-shadow: 0 2px 8px rgba(20,99,86,0.25), 0 0 0 1px rgba(255,255,255,0.1) inset;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.chip-active:hover {
-  background: var(--accent-hover) !important;
-  transform: translateY(-1px);
-}
-.chip-idle:hover { border-color: var(--accent) !important; }
-
-/* ---- Botones ---- */
-.btn-accent {
-  background: var(--accent) !important;
-  box-shadow: 0 2px 10px rgba(20,99,86,0.22);
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.btn-accent:hover {
-  background: var(--accent-hover) !important;
-  filter: brightness(1.05);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(20,99,86,0.28);
-}
-.btn-accent:active {
-  transform: scale(0.97);
-}
-
-/* ---- Búsqueda ---- */
-.search-input {
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-.search-input:focus {
-  border-color: var(--accent) !important;
-  box-shadow: 0 0 0 3px rgba(20,99,86,0.12), var(--shadow-md);
-  outline: none;
-}
-
-/* ---- Precios ---- */
-.price-accent { color: var(--accent) !important; font-family: var(--font-display); font-weight: 700; }
-.price-sale { color: #B5461C !important; font-family: var(--font-display); font-weight: 700; } /* rojo-teja, no rojo genérico */
-
-/* =======================================================================
-   TARJETA DE PRODUCTO — motivo "ticket de mercado"
-   Firma visual: el único lugar donde el diseño se permite un capricho.
-   ======================================================================= */
-
-.product-card, .offer-card, .p-card {
-  border-radius: var(--radius) !important;
-  box-shadow: var(--shadow-sm) !important;
-  transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-}
-.product-card:hover, .offer-card:hover, .p-card:hover {
-  box-shadow: var(--shadow-lg) !important;
-  transform: translateY(-4px);
-}
-
-/* Insignias con corte de "etiqueta de precio" (clip-path — sin trucos frágiles) */
-.p-card .p-feat,
-.p-card .p-off,
-.prev .badge-offer {
-  clip-path: polygon(9px 0, 100% 0, 100% 100%, 9px 100%, 0 50%);
-  padding-left: 13px !important;
-  font-family: var(--font-display);
-  letter-spacing: 0.02em;
-  font-weight: 700;
-}
-.p-card .p-feat {
-  background: var(--accent2) !important;
-  color: #3D2B06 !important;
-}
-.p-card .p-off, .prev .badge-offer {
-  background: #B5461C !important;
-  color: #fff !important;
-}
-
-/* Línea de "desprender aquí" sobre el botón de compra — punteado sutil */
-.p-card .pv-product-action {
-  position: relative;
-  margin-top: 12px !important;
-}
-.p-card .pv-product-action::before {
-  content: '';
-  display: block;
-  height: 1px;
-  margin: 0 0 10px;
-  background-image: repeating-linear-gradient(
-    to right, var(--border) 0 4px, transparent 4px 8px
-  );
-}
-.p-card .pv-product-action {
-  background: var(--accent) !important;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.p-card .pv-product-action:hover {
-  background: var(--accent-hover) !important;
-  filter: brightness(1.05);
-  transform: translateY(-1px);
-}
-.p-card .pv-product-action:active {
-  transform: scale(0.97);
-}
-
-.p-card .p-cat { color: var(--muted); font-weight: 700; letter-spacing: 0.02em; }
-.p-card .p-name { font-weight: 600; }
-
-/* ---- Grid de categorías ---- */
-.pv-cat-cards .cat-card-mark { background: var(--accent); opacity: 1; }
-.pv-cat-cards .cat-card:hover { border-color: var(--accent); }
-
-/* ---- Paginación ---- */
-.prev .prod-pager button.on, .pv-pager button.on {
-  background: var(--accent) !important;
-  border-color: var(--accent) !important;
-  box-shadow: 0 4px 12px -2px rgba(20,99,86,0.4);
-}
-.prev .prod-pager button, .pv-pager button {
-  transition: all 0.2s ease;
-}
-.prev .prod-pager button:hover, .pv-pager button:hover {
-  border-color: var(--accent) !important;
-  color: var(--accent) !important;
-}
-
-/* ---- Patrocinados: etiqueta de tienda en dorado, no verde (jerarquía) ---- */
-.sponsored-card .sc-store { color: var(--accent2) !important; font-weight: 700; }
-.sponsored-card .sc-price { color: var(--accent) !important; font-weight: 700; }
-.sponsored-card {
-  transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-}
-.sponsored-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-3px); }
-
-/* ---- Slider hero ---- */
-.ct-sld { box-shadow: var(--shadow-xl); }
-.ct-sld-arrow {
-  background: rgba(13,58,49,0.55);
-  transition: all 0.2s ease;
-}
-.ct-sld-arrow:hover { background: rgba(13,58,49,0.85); }
-.ct-sld-dot {
-  transition: all 0.2s ease;
-}
-.ct-sld-dot.active { background: var(--accent2); }
-
-/* ---- Respeta reduced-motion (ya heredado del original, se mantiene) ---- */
+/* ============================================================
+   ACCESIBILIDAD: prefers-reduced-motion
+   Quita recorridos espaciales, FLIP, zoom y loops; conserva
+   confirmaciones por color/borde/opacidad.
+   ============================================================ */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
+  .hero img.bg, .hero-logo, .hero-name, .hero-desc, .hero-status,
+  .prod-card, .oferta-card, .prod-img-wrap img, .oferta-img-wrap img, .pd-img-col img,
+  .prod-badge-offer, .prod-badge-promo, .oferta-badge-pct, .oferta-badge-tag, .pd-badge-offer,
+  #chat-panel, .vp-overlay, .vp-panel, .pd-modal, #prodCount, .cart-count-bump {
+    animation: none !important;
+    transition-duration: .01ms !important;
+    clip-path: none !important;
+    transform: none !important;
+    opacity: 1 !important;
   }
+  .prod-card.flip-move { transition: none !important; }
+  .cart-fly { display: none !important; }
 }
 
-/* ---- Print styles ---- */
+/* ---- Print ---- */
 @media print {
-  .chip-active, .btn-accent, .search-input { display: none; }
-  .product-card, .offer-card, .p-card { box-shadow: none; border: 1px solid #ccc; }
-}
-
-/* ---- High contrast mode ---- */
-@media (forced-colors: active) {
-  .chip-active { border: 2px solid ButtonText; }
-  .btn-accent { border: 2px solid ButtonText; }
-  .p-card .p-feat, .p-card .p-off { border: 1px solid ButtonText; }
+  .cart-fab, .filter-fab, .install-pill, .wa-pill { display: none !important; }
 }

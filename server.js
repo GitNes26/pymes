@@ -1356,6 +1356,15 @@ const VIBE_OPTIONS = [
   { estilo: 'fresco', color: 'esmeralda', nombre: 'Fresco y natural' },
   { estilo: 'tech', color: 'neon', nombre: 'Tech y audaz' }
 ];
+// Recomienda un diseño real de CAT_DESIGNS (el mismo catálogo de 25 estilos
+// que se elige en Configuración) según el "estilo" del giro elegido en el
+// asistente de bienvenida — para que la vibra sugerida ya sea uno de los
+// diseños que de verdad existen, no una paleta aparte que nunca se aplicaba.
+const GIRO_ESTILO_TO_DESIGN = {
+  cafe: 'muebles', fresco: 'vivero', dulce: 'postres', moderno: 'minimalista',
+  elegancia: 'elegante', boho: 'bohemio', lujo: 'joyeria', vintage: 'retro',
+  retro: 'rustico', tech: 'futurista', nocturno: 'eventos', viaje: 'tropical'
+};
 
 // ================= DIVISAS (ISO 4217) =================
 const CURRENCIES = [
@@ -1805,7 +1814,7 @@ app.get('/:slug/admin/bienvenida', requireAuth, (req, res) => {
   if (req.role !== 'owner') return res.redirect('/' + req.params.slug + '/admin/panel');
   if (req.biz.onboarding_done) return res.redirect('/' + req.params.slug + '/admin/panel');
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
-  res.render('bienvenida', { biz: req.biz, GIRO_PRESETS, VIBE_OPTIONS, COLORS, GIRO_CATEGORIAS, error: null });
+  res.render('bienvenida', { biz: req.biz, GIRO_PRESETS, VIBE_OPTIONS, COLORS, GIRO_CATEGORIAS, CAT_DESIGNS, GIRO_ESTILO_TO_DESIGN, error: null });
 });
 
 app.post('/:slug/admin/bienvenida', requireAuth, (req, res) => {
@@ -1816,6 +1825,12 @@ app.post('/:slug/admin/bienvenida', requireAuth, (req, res) => {
     return res.redirect('/' + req.params.slug + '/admin/panel');
   }
   const preset = GIRO_PRESETS.find(p => p.id === req.body.giro_preset) || GIRO_PRESETS.find(p => p.id === 'otros');
+  // El diseño real del catálogo (el mismo que se elige en Configuración → 25
+  // estilos con paleta/tipografía propias) — antes el paso 2 elegía una
+  // "vibra" que solo tocaba campos (estilo/color) que el catálogo público
+  // nunca lee; catalog_design es el campo que de verdad pinta constructor.ejs.
+  const chosenDesign = CAT_DESIGNS.find(d => d.id === req.body.catalog_design);
+  const designId = chosenDesign ? chosenDesign.id : (GIRO_ESTILO_TO_DESIGN[preset.estilo] || CAT_DESIGNS[0].id);
   const vibe = VIBE_OPTIONS.find(v => v.estilo === req.body.estilo && v.color === req.body.color);
   const estiloId = vibe ? vibe.estilo : preset.estilo;
   const colorObj = getColor(vibe ? vibe.color : preset.color);
@@ -1824,10 +1839,10 @@ app.post('/:slug/admin/bienvenida', requireAuth, (req, res) => {
   // negocios complementarios y las demos por giro (GIRO_DEMO), que buscan por
   // este campo.
   db.prepare(
-    `UPDATE businesses SET template = ?, estilo = ?, color = ?, color_hex = ?, color_hex2 = ?, color_mode = ?, grid_cols = ?, giro_preset = ?, giro = ?, onboarding_done = 1 WHERE id = ?`
+    `UPDATE businesses SET template = ?, estilo = ?, color = ?, color_hex = ?, color_hex2 = ?, color_mode = ?, grid_cols = ?, giro_preset = ?, giro = ?, catalog_design = ?, onboarding_done = 1 WHERE id = ?`
   ).run(
     preset.template, estiloId, colorObj.id, colorObj.c1, colorObj.c2, preset.color_mode, preset.grid_cols,
-    preset.id, preset.id, biz.id
+    preset.id, preset.id, designId, biz.id
   );
   db.crearPaginasSugeridas(biz.id, preset.paginas_sugeridas);
   db.crearCategoriasSugeridas(biz.id, GIRO_CATEGORIAS[preset.id] || GIRO_CATEGORIAS.otros);

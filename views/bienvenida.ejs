@@ -7,24 +7,41 @@
 
   <main class="max-w-2xl mx-auto px-4 py-10 md:py-16">
 
-    <!-- Progreso -->
-    <div class="flex items-center justify-center gap-2 mb-10" id="wz-dots">
-      <span class="wz-dot" data-dot="1"></span>
-      <span class="wz-dot" data-dot="2"></span>
-      <span class="wz-dot" data-dot="3"></span>
+    <!-- Progreso: línea que avanza (giro elegido → estilo definido → catálogo preparado) -->
+    <div class="wz-progress" id="wz-progress">
+      <div class="wz-progress-track" aria-hidden="true"><span class="wz-progress-fill" id="wz-progress-fill"></span></div>
+      <ol class="wz-progress-steps" aria-hidden="true">
+        <li class="wz-progress-step" data-progress-step="1">
+          <span class="wz-progress-marker"><svg class="wz-check-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg></span>
+          <span class="wz-progress-text">Giro elegido</span>
+        </li>
+        <li class="wz-progress-step" data-progress-step="2">
+          <span class="wz-progress-marker"><svg class="wz-check-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg></span>
+          <span class="wz-progress-text">Estilo definido</span>
+        </li>
+        <li class="wz-progress-step" data-progress-step="3">
+          <span class="wz-progress-marker"><svg class="wz-check-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg></span>
+          <span class="wz-progress-text">Catálogo preparado</span>
+        </li>
+      </ol>
     </div>
+    <p class="wz-sr-only" id="wz-step-announce" aria-live="polite"></p>
 
     <form method="POST" action="/<%= biz.slug %>/admin/bienvenida" id="wz-form">
       <input type="hidden" name="_csrf" value="<%= csrf %>">
       <input type="hidden" name="giro_preset" id="wz-giro-preset" value="">
       <input type="hidden" name="estilo" id="wz-estilo" value="">
       <input type="hidden" name="color" id="wz-color" value="">
+      <!-- El diseño real del catálogo — los mismos 25 estilos de Configuración
+           → Diseño del catálogo. Este es el campo que constructor.ejs usa de
+           verdad para pintar colores/tipografía (catalog_design → catDesignTokens). -->
+      <input type="hidden" name="catalog_design" id="wz-catalog-design" value="">
 
       <!-- ===== Paso 1: giro ===== -->
       <section class="wz-step" data-step="1">
         <div class="text-center mb-8">
           <p class="text-[11px] font-semibold uppercase tracking-[0.14em]" style="color:var(--ap-text-sec)">Paso 1 de 3</p>
-          <h1 class="text-2xl md:text-3xl font-bold tracking-tight mt-2" style="color:var(--ap-text)">Hola, <%= biz.name %> 👋</h1>
+          <h1 class="text-2xl md:text-3xl font-bold tracking-tight mt-2" tabindex="-1" style="color:var(--ap-text);outline:none">Hola, <%= biz.name %> 👋</h1>
           <p class="mt-3 text-[15px] max-w-md mx-auto" style="color:var(--ap-text-sec)">Cuéntanos a qué te dedicas y preparamos tu catálogo a tu medida — diseño, categorías y todo listo para que solo agregues tus productos.</p>
         </div>
 
@@ -32,10 +49,11 @@
           <input type="text" id="wz-giro-search" placeholder="Busca tu giro (ej: panadería, ropa, taller...)" class="w-full text-sm rounded-full px-4 py-2.5 outline-none" style="border:1px solid var(--ap-border);background:var(--ap-card);color:var(--ap-text)">
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" id="wz-giro-grid">
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" id="wz-giro-grid" role="radiogroup" aria-label="Elige el giro de tu negocio">
           <% GIRO_PRESETS.forEach(p => { %>
-            <button type="button" class="wz-card" data-giro="<%= p.id %>" data-search="<%= (p.nombre + ' ' + p.descripcion).toLowerCase() %>">
-              <span class="text-2xl"><%= p.emoji %></span>
+            <button type="button" class="wz-card" role="radio" aria-checked="false" data-giro="<%= p.id %>" data-search="<%= (p.nombre + ' ' + p.descripcion).toLowerCase() %>">
+              <span class="wz-card-check" aria-hidden="true"><svg class="wz-check-icon" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></span>
+              <span class="text-2xl wz-pictogram" aria-hidden="true"><%= p.emoji %></span>
               <span class="wz-card-title"><%= p.nombre %></span>
               <span class="wz-card-desc"><%= p.descripcion %></span>
             </button>
@@ -52,21 +70,58 @@
       </section>
 
       <!-- ===== Paso 2: vibra / estilo ===== -->
-      <section class="wz-step hidden" data-step="2">
+      <section class="wz-step" data-step="2" hidden>
         <div class="text-center mb-8">
           <p class="text-[11px] font-semibold uppercase tracking-[0.14em]" style="color:var(--ap-text-sec)">Paso 2 de 3</p>
-          <h1 class="text-2xl md:text-3xl font-bold tracking-tight mt-2" style="color:var(--ap-text)">¿Qué vibra quieres transmitir?</h1>
-          <p class="mt-3 text-[15px] max-w-md mx-auto" style="color:var(--ap-text-sec)">Ya elegimos algo que suele funcionar para tu giro. Si prefieres otra onda, tú decides.</p>
+          <h1 class="text-2xl md:text-3xl font-bold tracking-tight mt-2" tabindex="-1" style="color:var(--ap-text);outline:none">¿Qué diseño quieres para tu catálogo?</h1>
+          <p class="mt-3 text-[15px] max-w-md mx-auto" style="color:var(--ap-text-sec)">Son los mismos estilos de Configuración → Diseño del catálogo. Ya elegimos uno que suele funcionar para tu giro; puedes cambiarlo cuando quieras.</p>
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" id="wz-vibe-grid">
-          <% VIBE_OPTIONS.forEach(v => { %>
-            <button type="button" class="wz-card wz-vibe-card" data-estilo="<%= v.estilo %>" data-color="<%= v.color %>">
-              <span class="wz-swatch" data-swatch="<%= v.color %>"></span>
-              <span class="wz-card-title"><%= v.nombre %></span>
+        <!-- Vista previa en vivo: el teléfono cambia de color al instante con cada vibra que se elige -->
+        <div class="wz-phone-wrap wz-phone-wrap-sm" aria-hidden="true">
+          <div class="wz-phone" id="wz-phone-2">
+            <div class="wz-phone-notch"></div>
+            <div class="wz-phone-screen">
+              <header class="wz-phone-header" id="wz-phone-header-2">
+                <div class="wz-phone-nav">
+                  <span class="wz-phone-logo" id="wz-phone-logo-2"></span>
+                  <h3 id="wz-phone-name-2"><%= biz.name %></h3>
+                  <span class="wz-phone-menu"><svg viewBox="0 0 24 24"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg></span>
+                </div>
+                <p class="wz-phone-status">● Catálogo disponible</p>
+              </header>
+              <div class="wz-phone-body">
+                <div class="wz-phone-search">Buscar en tu tienda</div>
+                <div class="wz-phone-cats" id="wz-phone-cats-2"></div>
+                <div class="wz-phone-products">
+                  <div class="wz-phone-product"><span class="wz-phone-product-img wz-ppi-1"></span></div>
+                  <div class="wz-phone-product"><span class="wz-phone-product-img wz-ppi-2"></span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="text-center text-[12px] mb-6" style="color:var(--ap-text-sec)">Así se verá tu catálogo con este diseño</p>
+
+        <div class="relative max-w-sm mx-auto mb-5">
+          <input type="text" id="wz-design-search" placeholder="Busca un estilo (ej: elegante, industrial, pastel...)" class="w-full text-sm rounded-full px-4 py-2.5 outline-none" style="border:1px solid var(--ap-border);background:var(--ap-card);color:var(--ap-text)">
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" id="wz-vibe-grid" role="radiogroup" aria-label="Elige el diseño de tu catálogo">
+          <% CAT_DESIGNS.forEach(d => { var t = d.tokens; %>
+            <button type="button" class="wz-card wz-vibe-card" role="radio" aria-checked="false" data-design="<%= d.id %>" data-search="<%= (d.name + ' ' + d.desc).toLowerCase() %>">
+              <span class="wz-card-check" aria-hidden="true"><svg class="wz-check-icon" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></span>
+              <span class="wz-design-preview" aria-hidden="true" style="background:<%= t.bg %>">
+                <span class="wz-design-preview-card" style="background:<%= t.card %>;border-radius:<%= Math.min(t.radius,12) %>px;border:1px solid <%= t.border %>">
+                  <span class="wz-design-preview-thumb" style="background:<%= t.accentGlow %>;border-radius:<%= Math.max(0,Math.min(t.radius,12)-3) %>px"></span>
+                </span>
+                <span class="wz-design-preview-btn" style="background:<%= t.accent %>;border-radius:<%= Math.min(t.radius,8) %>px"></span>
+              </span>
+              <span class="wz-card-title"><%= d.emoji %> <%= d.name %></span>
               <span class="wz-card-badge" data-recommended-badge hidden>Recomendado</span>
             </button>
           <% }) %>
+          <p class="text-sm text-center col-span-2 sm:col-span-3 hidden" id="wz-design-empty" style="color:var(--ap-text-sec)">Ningún estilo coincide — prueba con otra palabra.</p>
         </div>
 
         <div class="text-center mt-8 flex items-center justify-center gap-3">
@@ -76,46 +131,86 @@
       </section>
 
       <!-- ===== Paso 3: resumen ===== -->
-      <section class="wz-step hidden" data-step="3">
+      <section class="wz-step" data-step="3" hidden>
         <div class="text-center mb-8">
           <p class="text-[11px] font-semibold uppercase tracking-[0.14em]" style="color:var(--ap-text-sec)">Paso 3 de 3</p>
-          <h1 class="text-2xl md:text-3xl font-bold tracking-tight mt-2" style="color:var(--ap-text)">Así vamos a preparar tu catálogo</h1>
+          <h1 class="text-2xl md:text-3xl font-bold tracking-tight mt-2" tabindex="-1" style="color:var(--ap-text);outline:none">Así vamos a preparar tu catálogo</h1>
           <p class="mt-3 text-[15px] max-w-md mx-auto" style="color:var(--ap-text-sec)">Puedes cambiar cualquier cosa después, desde tu panel.</p>
         </div>
 
-        <div class="rounded-2xl p-6 md:p-8" style="background:var(--ap-card);border:1px solid var(--ap-border);box-shadow:var(--ap-shadow)">
-          <div class="flex items-center gap-4 pb-5" style="border-bottom:1px solid var(--ap-border)">
-            <span class="text-3xl" id="wz-summary-emoji"></span>
+        <!-- El teléfono es lo primero que se arma: "así se va a ver" antes de leer los detalles -->
+        <div class="wz-phone-wrap wz-assemble-row wz-assemble-phone" aria-hidden="true">
+          <div class="wz-phone" id="wz-phone-3">
+            <div class="wz-phone-notch"></div>
+            <div class="wz-phone-screen">
+              <header class="wz-phone-header" id="wz-phone-header-3">
+                <div class="wz-phone-nav">
+                  <span class="wz-phone-logo" id="wz-phone-logo-3"></span>
+                  <h3 id="wz-phone-name-3"><%= biz.name %></h3>
+                  <span class="wz-phone-menu"><svg viewBox="0 0 24 24"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg></span>
+                </div>
+                <p class="wz-phone-status">● Catálogo disponible</p>
+              </header>
+              <div class="wz-phone-body">
+                <div class="wz-phone-search">Buscar en tu tienda</div>
+                <div class="wz-phone-cats" id="wz-phone-cats-3"></div>
+                <div class="wz-phone-products">
+                  <div class="wz-phone-product"><span class="wz-phone-product-img wz-ppi-1"></span></div>
+                  <div class="wz-phone-product"><span class="wz-phone-product-img wz-ppi-2"></span></div>
+                </div>
+                <div class="wz-phone-wa">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.4-4A8 8 0 1 1 20 11.5Z"/></svg>
+                  Haz tu pedido
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="text-center text-[12px] mb-6 wz-assemble-row wz-assemble-phone" style="color:var(--ap-text-sec)">Así se va a ver tu sitio, listo para recibir pedidos</p>
+
+        <div class="rounded-2xl p-6 md:p-8 wz-assemble-card" id="wz-assemble-card" style="background:var(--ap-card);border:1px solid var(--ap-border);box-shadow:var(--ap-shadow)">
+          <div class="flex items-center gap-4 pb-5 wz-assemble-row wz-assemble-giro" style="border-bottom:1px solid var(--ap-border)">
+            <span class="text-3xl" id="wz-summary-emoji" aria-hidden="true"></span>
             <div>
               <p class="text-[11px] font-semibold uppercase tracking-[0.1em]" style="color:var(--ap-text-sec)">Giro</p>
               <p class="font-semibold text-[15px]" id="wz-summary-giro" style="color:var(--ap-text)"></p>
             </div>
           </div>
-          <div class="flex items-center gap-4 py-5" style="border-bottom:1px solid var(--ap-border)">
+          <div class="flex items-center gap-4 py-5 wz-assemble-row wz-assemble-vibe" style="border-bottom:1px solid var(--ap-border)">
             <span class="wz-swatch" id="wz-summary-swatch"></span>
             <div>
-              <p class="text-[11px] font-semibold uppercase tracking-[0.1em]" style="color:var(--ap-text-sec)">Vibra</p>
+              <p class="text-[11px] font-semibold uppercase tracking-[0.1em]" style="color:var(--ap-text-sec)">Estilo</p>
               <p class="font-semibold text-[15px]" id="wz-summary-vibe" style="color:var(--ap-text)"></p>
             </div>
           </div>
-          <div class="pt-5">
+          <div class="py-5 wz-assemble-row wz-assemble-cats" style="border-bottom:1px solid var(--ap-border)">
             <p class="text-[11px] font-semibold uppercase tracking-[0.1em] mb-2" style="color:var(--ap-text-sec)">Categorías que crearemos por ti</p>
             <div class="flex flex-wrap gap-1.5" id="wz-summary-cats"></div>
           </div>
+          <div class="flex items-center gap-4 pt-5 wz-assemble-row wz-assemble-canal">
+            <span class="wz-canal-check" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path id="wz-canal-check-path" d="M5 13l4 4L19 7"/></svg>
+            </span>
+            <div>
+              <p class="text-[11px] font-semibold uppercase tracking-[0.1em]" style="color:var(--ap-text-sec)">Canal de pedidos</p>
+              <p class="font-semibold text-[15px]" id="wz-summary-canal" style="color:var(--ap-text)">WhatsApp conectado</p>
+            </div>
+          </div>
         </div>
 
-        <!-- Demo animada: con el plan gratis, el catálogo muestra productos de
-             otras tiendas ("también te puede interesar") — se enseña aquí para
-             que el dueño vea cómo se ve en vez de solo leerlo. -->
+        <!-- Demo: con el plan gratis, el catálogo muestra productos de otras
+             tiendas ("también te puede interesar") — se enseña aquí para que
+             el dueño vea cómo se ve en vez de solo leerlo. Se anima una sola
+             vez, la primera vez que se llega a este paso. -->
         <div class="rounded-2xl p-5 md:p-6 mt-4" style="background:var(--ap-card);border:1px solid var(--ap-border);box-shadow:var(--ap-shadow)">
           <div class="flex items-center gap-2 mb-1">
-            <span class="text-lg">📣</span>
+            <span class="wz-inline-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 11v2a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1Zm13.5-4.5a7 7 0 0 1 0 11M14 9a3 3 0 0 1 0 6"/></svg></span>
             <p class="font-semibold text-[15px]" style="color:var(--ap-text)">Así se verán los anuncios de otras tiendas</p>
           </div>
           <p class="text-[13px] mb-4" style="color:var(--ap-text-sec)">Con el plan gratis, tu catálogo incluye una franja "También te puede interesar" con productos de otras tiendas — te ayuda a empezar sin costo. Puedes quitarla cuando quieras con el plan Pro.</p>
           <div class="wz-ad-demo" id="wz-ad-demo">
             <div class="wz-ad-demo-label">También te puede interesar</div>
-            <div class="wz-ad-demo-track">
+            <div class="wz-ad-demo-track" id="wz-ad-demo-track">
               <% const wzAdDemo = [
                 { c1: '#fb923c', c2: '#ef4444', store: 'Ferretería El Toro', price: '$189.00' },
                 { c1: '#34d399', c2: '#0ea5e9', store: 'Cafetería Aroma', price: '$65.00' },
@@ -123,7 +218,7 @@
                 { c1: '#fbbf24', c2: '#f97316', store: 'Dulcería Sol', price: '$45.00' }
               ]; %>
               <% wzAdDemo.forEach((ad, i) => { %>
-                <div class="wz-ad-demo-card" style="animation-delay:<%= i * 0.18 %>s">
+                <div class="wz-ad-demo-card" data-ad-index="<%= i %>">
                   <div class="wz-ad-demo-img" style="background:linear-gradient(135deg,<%= ad.c1 %>,<%= ad.c2 %>)"></div>
                   <div class="wz-ad-demo-store"><%= ad.store %></div>
                   <div class="wz-ad-demo-price"><%= ad.price %></div>
@@ -135,7 +230,10 @@
 
         <div class="text-center mt-8 flex items-center justify-center gap-3">
           <button type="button" class="m-btn m-btn-outlined px-6" id="wz-back-3">← Atrás</button>
-          <button type="submit" class="m-btn m-btn-filled px-8" id="wz-submit">Crear mi catálogo 🚀</button>
+          <button type="submit" class="m-btn m-btn-filled px-8" id="wz-submit">
+            <span class="wz-submit-label">Crear mi catálogo 🚀</span>
+            <span class="wz-submit-loading" hidden><svg class="wz-spinner" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke-width="3"/></svg>Preparando tu catálogo…</span>
+          </button>
         </div>
       </section>
 
@@ -143,24 +241,124 @@
   </main>
 
   <style>
-    .wz-dot { width: 8px; height: 8px; border-radius: 999px; background: var(--ap-border); transition: background .2s, width .2s; }
-    .wz-dot.wz-dot-active { background: var(--ap-accent); width: 22px; }
-    .wz-dot.wz-dot-done { background: var(--ap-accent); opacity: .4; }
+    /* ============================================================
+       Utilidades base
+       ============================================================ */
+    .wz-sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
+    .wz-card:focus-visible, .wz-cta-bar button:focus-visible, #wz-back-2:focus-visible,
+    #wz-back-3:focus-visible, #wz-next-2:focus-visible, #wz-submit:focus-visible,
+    #wz-giro-search:focus-visible {
+      outline: 2px solid var(--ap-accent); outline-offset: 2px;
+    }
+    .wz-check-icon { fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
 
+    /* ============================================================
+       Progreso superior: línea que avanza
+       ============================================================ */
+    .wz-progress { max-width: 460px; margin: 0 auto 2.75rem; }
+    .wz-progress-track {
+      position: relative; height: 4px; border-radius: 999px; overflow: hidden;
+      background: var(--ap-border);
+    }
+    .wz-progress-fill {
+      position: absolute; inset: 0; width: 100%; transform-origin: left center;
+      transform: scaleX(0); background: var(--ap-accent); border-radius: 999px;
+      transition: transform .45s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .wz-progress-steps { display: flex; justify-content: space-between; margin-top: 10px; list-style: none; padding: 0; }
+    .wz-progress-step { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--ap-text-sec); }
+    .wz-progress-marker {
+      position: relative; width: 16px; height: 16px; border-radius: 999px; flex: none;
+      border: 1.5px solid var(--ap-border); background: var(--ap-card);
+      transition: border-color .3s cubic-bezier(0.16, 1, 0.3, 1), background-color .3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .wz-progress-step.is-active .wz-progress-marker { border-color: var(--ap-accent); }
+    .wz-progress-step.is-done .wz-progress-marker { border-color: var(--ap-accent); background: var(--ap-accent); }
+    .wz-progress-marker .wz-check-icon {
+      position: absolute; inset: 0; margin: auto; width: 11px; height: 11px; color: #fff;
+      opacity: 0; transform: scale(.5);
+      transition: opacity .2s cubic-bezier(0.16, 1, 0.3, 1), transform .2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .wz-progress-step.is-done .wz-progress-marker .wz-check-icon { opacity: 1; transform: none; }
+    .wz-progress-text { display: none; }
+    @media (min-width: 480px) { .wz-progress-text { display: inline; } }
+
+    /* ============================================================
+       Transición entre pasos — solo transform + opacity
+       ============================================================ */
+    .wz-step { animation-fill-mode: both; }
+    .wz-step[hidden] { display: none; }
+    .wz-step-exit-fwd  { animation: wzExitFwd  140ms cubic-bezier(0.16, 1, 0.3, 1); }
+    .wz-step-exit-back { animation: wzExitBack 140ms cubic-bezier(0.16, 1, 0.3, 1); }
+    .wz-step-enter-fwd  { animation: wzEnterFwd  320ms cubic-bezier(0.16, 1, 0.3, 1); }
+    .wz-step-enter-back { animation: wzEnterBack 320ms cubic-bezier(0.16, 1, 0.3, 1); }
+    @keyframes wzExitFwd  { from { opacity: 1; transform: translateX(0);   } to { opacity: 0; transform: translateX(-18px); } }
+    @keyframes wzExitBack { from { opacity: 1; transform: translateX(0);   } to { opacity: 0; transform: translateX(18px);  } }
+    @keyframes wzEnterFwd  { from { opacity: 0; transform: translateX(18px);  } to { opacity: 1; transform: translateX(0); } }
+    @keyframes wzEnterBack { from { opacity: 0; transform: translateX(-18px); } to { opacity: 1; transform: translateX(0); } }
+
+    /* ============================================================
+       Tarjetas de selección (giro / vibra)
+       ============================================================ */
     .wz-card {
-      display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px;
+      position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px;
       padding: 18px 10px; border-radius: var(--ap-radius); border: 1px solid var(--ap-border);
-      background: var(--ap-card); cursor: pointer; transition: border-color .15s, box-shadow .15s;
+      background: var(--ap-card); cursor: pointer;
+      transition: border-color .18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow .18s cubic-bezier(0.16, 1, 0.3, 1),
+                  opacity .18s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .wz-card:hover { border-color: rgba(44,44,46,.3); }
     .wz-card.wz-card-selected { border-color: var(--ap-accent); box-shadow: 0 0 0 1px var(--ap-accent); }
+    .wz-card[data-recommended="1"]:not(.wz-card-selected) { box-shadow: 0 0 0 1px rgba(37,99,235,.22); }
+    /* Al haber una selección, las demás tarjetas bajan de énfasis sin desaparecer */
+    #wz-giro-grid.has-selection .wz-card:not(.wz-card-selected),
+    #wz-vibe-grid.has-selection .wz-card:not(.wz-card-selected) { opacity: .62; }
+    #wz-giro-grid.has-selection .wz-card:not(.wz-card-selected):hover,
+    #wz-vibe-grid.has-selection .wz-card:not(.wz-card-selected):hover { opacity: .85; }
+
     .wz-card-title { font-size: 13px; font-weight: 600; color: var(--ap-text); }
     .wz-card-desc { font-size: 11px; color: var(--ap-text-sec); }
     .wz-card-badge {
       font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
       color: var(--ap-accent-text); background: rgba(44,44,46,.08); border-radius: 999px; padding: 2px 8px; margin-top: 2px;
+      opacity: 0; transform: scale(.85); transition: opacity .2s cubic-bezier(0.16, 1, 0.3, 1), transform .2s cubic-bezier(0.16, 1, 0.3, 1);
     }
+    .wz-card-badge:not([hidden]) { opacity: 1; transform: none; }
+
+    .wz-card-check {
+      position: absolute; top: 8px; right: 8px; width: 18px; height: 18px; border-radius: 999px;
+      background: var(--ap-accent); color: #fff; display: flex; align-items: center; justify-content: center;
+      opacity: 0; transform: scale(.4);
+      transition: opacity .18s cubic-bezier(0.16, 1, 0.3, 1), transform .18s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .wz-card-check svg { width: 11px; height: 11px; }
+    .wz-card-selected .wz-card-check { opacity: 1; transform: none; }
+
+    .wz-pictogram { display: inline-block; transition: transform .2s cubic-bezier(0.16, 1, 0.3, 1); }
+    .wz-card-selected .wz-pictogram.wz-pictogram-pop { animation: wzPictogramPop .22s cubic-bezier(0.16, 1, 0.3, 1); }
+    @keyframes wzPictogramPop { 0% { transform: scale(1); } 55% { transform: scale(1.14); } 100% { transform: scale(1); } }
+
     .wz-swatch { width: 28px; height: 28px; border-radius: 8px; display: inline-block; flex: none; }
+
+    /* Miniatura del diseño real (paleta + tipografía + formas del estilo elegido) */
+    .wz-design-preview {
+      display: flex; align-items: center; gap: 6px; width: 100%; padding: 8px;
+      border-radius: calc(var(--ap-radius) - 6px); margin-bottom: 4px;
+      transform: scale(.98); opacity: .88;
+      transition: transform .2s cubic-bezier(0.16, 1, 0.3, 1), opacity .2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .wz-card-selected .wz-design-preview, .wz-card:hover .wz-design-preview { transform: scale(1); opacity: 1; }
+    .wz-design-preview-card { flex: 1; min-width: 0; display: flex; align-items: center; padding: 5px; }
+    .wz-design-preview-thumb { display: block; width: 18px; height: 18px; flex: none; }
+    .wz-design-preview-btn { width: 16px; height: 16px; flex: none; }
+
+    /* Filtro de búsqueda: stagger corto para las tarjetas que permanecen visibles */
+    .wz-card-filtered-in { animation: wzCardFilterIn .16s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    @keyframes wzCardFilterIn { from { opacity: .35; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+
     #wz-giro-search:focus { border-color: var(--ap-accent); }
     /* El paso 1 muestra 100 giros — sin esto, el botón "Siguiente" solo se
        ve hasta scrollear toda la cuadrícula. Al quedar sticky, siempre está
@@ -171,147 +369,532 @@
       margin-left: -16px; margin-right: -16px; padding-left: 16px; padding-right: 16px;
     }
 
-    /* Demo animada de la franja de anuncios (paso 3) */
+    /* ============================================================
+       Paso 3 — ensamblaje del resumen
+       ============================================================ */
+    .wz-assemble-row {
+      opacity: 0; transform: translateY(6px);
+      clip-path: inset(0 100% 0 0);
+      transition: opacity .28s cubic-bezier(0.16, 1, 0.3, 1), transform .28s cubic-bezier(0.16, 1, 0.3, 1), clip-path .28s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .wz-assemble-row.wz-assemble-in { opacity: 1; transform: none; clip-path: inset(0 0 0 0); }
+    .wz-assemble-vibe #wz-summary-swatch, #wz-summary-swatch {
+      transform: scale(.5); opacity: 0; transition: transform .26s cubic-bezier(0.16, 1, 0.3, 1), opacity .26s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .wz-assemble-vibe.wz-assemble-in #wz-summary-swatch { transform: none; opacity: 1; }
+    .wz-summary-cat-chip { opacity: 0; transform: scale(.85); transition: opacity .16s cubic-bezier(0.16, 1, 0.3, 1), transform .16s cubic-bezier(0.16, 1, 0.3, 1); }
+    .wz-summary-cat-chip.wz-chip-in { opacity: 1; transform: none; }
+
+    .wz-canal-check {
+      display: flex; align-items: center; justify-content: center; width: 28px; height: 28px;
+      border-radius: 999px; background: rgba(16,185,129,.14); color: #059669; flex: none;
+    }
+    .wz-canal-check svg { width: 15px; height: 15px; overflow: visible; }
+    .wz-canal-check path { stroke: currentColor; stroke-width: 2.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+
+    /* Icono inline (reemplaza emoji como control/ícono) */
+    .wz-inline-icon { display: inline-flex; width: 18px; height: 18px; color: var(--ap-accent-text); flex: none; }
+    .wz-inline-icon svg { width: 100%; height: 100%; stroke: currentColor; stroke-width: 1.8; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+
+    /* ============================================================
+       Vista previa del teléfono — cambia de color con la vibra elegida
+       ============================================================ */
+    .wz-phone-wrap { display: flex; justify-content: center; margin-bottom: 18px; }
+    .wz-phone-wrap-sm { transform: scale(.82); transform-origin: top center; margin-bottom: 2px; margin-top: -6px; }
+    .wz-phone {
+      width: 220px; padding: 7px; background: #17191d; border-radius: 30px;
+      box-shadow: 0 20px 40px -14px rgba(20,24,31,.35), 0 4px 10px rgba(20,24,31,.08);
+      transition: box-shadow .3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .wz-phone-notch {
+      position: relative; width: 56px; height: 15px; margin: 0 auto 4px; background: #17191d;
+      border-radius: 0 0 12px 12px;
+    }
+    .wz-phone-screen { overflow: hidden; background: var(--ap-bg); border-radius: 23px; }
+    /* El header real (.hdr en constructor.ejs) es una barra clara translúcida
+       —background:var(--bg-card) con blur—, NUNCA un banner de color sólido.
+       El acento solo aparece en detalles chicos (logo, categoría activa). */
+    .wz-phone-header {
+      padding: 12px 14px; color: var(--ap-text); background: var(--ap-card);
+      border-bottom: 1px solid var(--ap-border);
+      transition: background .38s cubic-bezier(0.16, 1, 0.3, 1), color .38s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .wz-phone-nav { display: flex; align-items: center; gap: 8px; }
+    .wz-phone-logo {
+      display: grid; place-items: center; flex: none; width: 20px; height: 20px; border-radius: 6px;
+      background: var(--ap-accent); color: #fff; font-size: 9px; font-weight: 900;
+      transition: background .38s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .wz-phone-header h3 { margin: 0; flex: 1; overflow: hidden; font-size: 13px; font-weight: 700; letter-spacing: -.02em; white-space: nowrap; text-overflow: ellipsis; color: var(--ap-text); }
+    .wz-phone-menu { display: grid; place-content: center; flex: none; width: 20px; height: 20px; border-radius: 999px; background: var(--ap-bg); border: 1px solid var(--ap-border); }
+    .wz-phone-menu svg { width: 10px; height: 10px; stroke: var(--ap-text-sec); fill: none; stroke-width: 1.8; }
+    .wz-phone-status { margin: 8px 0 0; font-size: 7px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; color: var(--ap-text-sec); }
+    .wz-phone-body { padding: 11px; }
+    .wz-phone-search { height: 24px; display: flex; align-items: center; padding: 0 9px; color: var(--ap-text-sec); background: var(--ap-card); border: 1px solid var(--ap-border); border-radius: 999px; font-size: 7px; }
+    .wz-phone-cats { display: flex; gap: 4px; margin: 8px 0 9px; }
+    .wz-phone-cats span { padding: 4px 7px; border-radius: 5px; font-size: 6px; font-weight: 700; background: var(--ap-card); border: 1px solid var(--ap-border); color: var(--ap-text-sec); }
+    .wz-phone-cats span:first-child { color: #fff; background: var(--ap-accent); border-color: transparent; transition: background .38s cubic-bezier(0.16, 1, 0.3, 1); }
+    .wz-phone-products { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 6px; }
+    .wz-phone-product { overflow: hidden; background: var(--ap-bg); border: 1px solid var(--ap-border); border-radius: 9px; }
+    .wz-phone-product-img { display: block; height: 46px; background: var(--ap-accent); opacity: .16; transition: background .38s cubic-bezier(0.16, 1, 0.3, 1); }
+    .wz-phone-wa {
+      display: flex; align-items: center; gap: 6px; height: 26px; margin-top: 8px; padding: 0 9px;
+      color: #fff; background: #25d366; border-radius: 8px; font-size: 7px; font-weight: 700;
+    }
+    .wz-phone-wa svg { width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+
+    .wz-assemble-phone.wz-assemble-row { clip-path: inset(0 0 100% 0); }
+    .wz-assemble-phone.wz-assemble-row.wz-assemble-in { clip-path: inset(0 0 0 0); }
+
+    /* ============================================================
+       Demo de anuncios (paso 3) — una sola vez, sin loops
+       ============================================================ */
     .wz-ad-demo { border-radius: var(--ap-radius); background: var(--ap-bg); padding: 14px; overflow: hidden; }
     .wz-ad-demo-label { font-size: 11px; font-weight: 700; color: var(--ap-text-sec); margin-bottom: 10px; }
     .wz-ad-demo-track { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 2px; }
-    .wz-ad-demo-card {
-      flex: 0 0 100px; opacity: 0; transform: translateY(10px) scale(.94);
-      animation: wzAdIn .5s cubic-bezier(.22,1,.36,1) forwards;
-    }
-    .wz-ad-demo-img {
-      width: 100px; height: 72px; border-radius: 12px; margin-bottom: 6px;
-      box-shadow: 0 6px 16px -6px rgba(0,0,0,.25);
-      background-size: 200% 200%; animation: wzAdGlow 3.5s ease-in-out infinite;
-    }
+    .wz-ad-demo-card { flex: 0 0 100px; opacity: 0; }
+    .wz-ad-demo-img { width: 100px; height: 72px; border-radius: 12px; margin-bottom: 6px; box-shadow: 0 6px 16px -6px rgba(0,0,0,.25); }
     .wz-ad-demo-store { font-size: 10px; font-weight: 700; color: var(--ap-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .wz-ad-demo-price { font-size: 11px; font-weight: 800; color: var(--ap-accent-text); }
-    @keyframes wzAdIn { to { opacity: 1; transform: none; } }
-    @keyframes wzAdGlow { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
-    /* Al reentrar al paso 3 se reinicia la animación quitando y reponiendo la clase */
-    .wz-ad-demo-replay .wz-ad-demo-card { animation: none; }
+
+    /* ============================================================
+       Envío
+       ============================================================ */
+    #wz-submit { position: relative; }
+    #wz-submit[disabled] { opacity: .85; cursor: default; }
+    .wz-submit-loading:not([hidden]) { display: inline-flex; align-items: center; gap: 7px; }
+    .wz-spinner { width: 14px; height: 14px; animation: wzSpin .7s linear infinite; }
+    .wz-spinner circle { stroke: currentColor; stroke-dasharray: 42; stroke-dashoffset: 14; opacity: .85; }
+    @keyframes wzSpin { to { transform: rotate(360deg); } }
+
+    /* ============================================================
+       Accesibilidad: respeta prefers-reduced-motion
+       ============================================================ */
+    @media (prefers-reduced-motion: reduce) {
+      .wz-step-exit-fwd, .wz-step-exit-back, .wz-step-enter-fwd, .wz-step-enter-back { animation: none !important; }
+      .wz-card, .wz-card-check, .wz-card-badge, .wz-design-preview, .wz-progress-fill, .wz-progress-marker,
+      .wz-progress-marker .wz-check-icon, .wz-assemble-row, .wz-assemble-vibe #wz-summary-swatch,
+      .wz-summary-cat-chip { transition-duration: .01ms !important; }
+      .wz-pictogram.wz-pictogram-pop { animation: none !important; }
+      .wz-card-filtered-in { animation: none !important; }
+      .wz-spinner { animation-duration: 1.4s; }
+    }
   </style>
 
   <script>
     var GIRO_PRESETS = <%- safeJson(GIRO_PRESETS) %>;
     var VIBE_OPTIONS = <%- safeJson(VIBE_OPTIONS) %>;
-    var COLORS_SWATCH = <%- safeJson(COLORS.map(function (c) { return { id: c.id, c1: c.c1, c2: c.c2 }; })) %>;
+    var CAT_DESIGNS = <%- safeJson(CAT_DESIGNS) %>;
+    var GIRO_ESTILO_TO_DESIGN = <%- safeJson(GIRO_ESTILO_TO_DESIGN) %>;
     var GIRO_CATEGORIAS = <%- safeJson(GIRO_CATEGORIAS) %>;
 
-    function swatchGradient(colorId) {
-      var c = COLORS_SWATCH.find(function (x) { return x.id === colorId; });
-      if (!c) return '#e2e8f0';
-      return 'linear-gradient(135deg,' + c.c1 + ',' + c.c2 + ')';
+    function designOf(id) { return CAT_DESIGNS.find(function (d) { return d.id === id; }) || CAT_DESIGNS[0]; }
+    function designGradient(id) {
+      var t = designOf(id).tokens;
+      return 'linear-gradient(135deg,' + t.accent + ',' + t.accentGlow + ')';
     }
-    document.querySelectorAll('[data-swatch]').forEach(function (el) {
-      el.style.background = swatchGradient(el.getAttribute('data-swatch'));
-    });
-
-    var state = { giro: null, estilo: null, color: null };
-
-    function setDot(step) {
-      document.querySelectorAll('.wz-dot').forEach(function (d) {
-        var n = parseInt(d.getAttribute('data-dot'), 10);
-        d.classList.toggle('wz-dot-active', n === step);
-        d.classList.toggle('wz-dot-done', n < step);
+    // Pinta la vista previa del teléfono con el diseño real elegido (los
+    // mismos tokens de Configuración → Diseño del catálogo) — "que cuando
+    // pique [un estilo] la pantalla cambie a ese estilo", de verdad.
+    var BIZ_NAME = <%- safeJson(biz.name || '') %>;
+    function paintPhone(suffix, designId) {
+      var header = document.getElementById('wz-phone-header-' + suffix);
+      if (!header) return;
+      var t = designOf(designId).tokens;
+      var screen = document.getElementById('wz-phone-' + suffix).querySelector('.wz-phone-screen');
+      if (screen) { screen.style.background = t.bg; }
+      // El header real es una barra clara translúcida (background:var(--bg-card)),
+      // no un banner de color — el acento solo vive en detalles chicos (logo, chip activo).
+      header.style.background = t.card;
+      header.style.borderBottomColor = t.border;
+      document.querySelectorAll('#wz-phone-' + suffix + ' .wz-phone-product').forEach(function (card) {
+        card.style.background = t.card; card.style.borderColor = t.border;
       });
-    }
-    function goStep(step) {
-      document.querySelectorAll('.wz-step').forEach(function (s) {
-        s.classList.toggle('hidden', parseInt(s.getAttribute('data-step'), 10) !== step);
+      document.querySelectorAll('#wz-phone-' + suffix + ' .wz-phone-product-img').forEach(function (img) {
+        img.style.background = t.bg; img.style.opacity = '1';
       });
-      setDot(step);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      // Reinicia la animación de la demo de anuncios cada vez que se vuelve al paso 3
-      if (step === 3) {
-        var demo = document.getElementById('wz-ad-demo');
-        if (demo) {
-          demo.classList.add('wz-ad-demo-replay');
-          void demo.offsetWidth; // fuerza reflow para que el navegador "olvide" el estado anterior
-          demo.classList.remove('wz-ad-demo-replay');
-        }
+      document.querySelectorAll('#wz-phone-' + suffix + ' .wz-phone-search').forEach(function (s) {
+        s.style.background = t.card; s.style.borderColor = t.border; s.style.color = t.textSec;
+      });
+      var nameEl = document.getElementById('wz-phone-name-' + suffix);
+      if (nameEl) { nameEl.style.fontFamily = t.font.heading; nameEl.style.color = t.text; }
+      var statusEl = header.querySelector('.wz-phone-status');
+      if (statusEl) statusEl.style.color = t.textSec;
+      var logo = document.getElementById('wz-phone-logo-' + suffix);
+      if (logo) { logo.textContent = (BIZ_NAME || 'N').trim().charAt(0).toUpperCase(); logo.style.background = t.accent; }
+      var catsWrap = document.getElementById('wz-phone-cats-' + suffix);
+      if (catsWrap) {
+        var cats = (GIRO_CATEGORIAS[state.giro] || GIRO_CATEGORIAS.otros || []).slice(0, 3);
+        if (!cats.length) cats = ['Todo', 'Novedades', 'Favoritos'];
+        catsWrap.innerHTML = '';
+        cats.forEach(function (name) {
+          var span = document.createElement('span');
+          span.textContent = name;
+          span.style.background = t.card; span.style.borderColor = t.border; span.style.color = t.textSec;
+          catsWrap.appendChild(span);
+        });
+        if (catsWrap.firstElementChild) { catsWrap.firstElementChild.style.background = t.accent; catsWrap.firstElementChild.style.color = '#fff'; catsWrap.firstElementChild.style.borderColor = 'transparent'; }
       }
     }
 
-    // Buscador del paso 1: filtra los 100 giros por nombre/descripción para
-    // no obligar a scrollear toda la cuadrícula buscando el propio.
+    var reducedMotionMQ = window.matchMedia('(prefers-reduced-motion: reduce)');
+    var reducedMotion = reducedMotionMQ.matches;
+    if (reducedMotionMQ.addEventListener) reducedMotionMQ.addEventListener('change', function (e) { reducedMotion = e.matches; });
+
+    var state = { giro: null, design: null };
+    var currentStep = 1;
+
+    // ===== Progreso superior =====
+    var STEP_ANNOUNCE = {
+      1: 'Paso 1 de 3: elige el giro de tu negocio',
+      2: 'Paso 2 de 3: elige la vibra de tu catálogo',
+      3: 'Paso 3 de 3: así quedará preparado tu negocio'
+    };
+    function setDot(step) {
+      var fill = document.getElementById('wz-progress-fill');
+      if (fill) fill.style.transform = 'scaleX(' + (step / 3) + ')';
+      document.querySelectorAll('.wz-progress-step').forEach(function (li) {
+        var n = parseInt(li.getAttribute('data-progress-step'), 10);
+        li.classList.toggle('is-active', n === step);
+        li.classList.toggle('is-done', n < step);
+      });
+      var live = document.getElementById('wz-step-announce');
+      if (live) live.textContent = STEP_ANNOUNCE[step] || '';
+    }
+
+    // ===== Transición entre pasos =====
+    var stepTimers = [];
+    function clearStepTimers() { stepTimers.forEach(clearTimeout); stepTimers = []; }
+    function resetStepAnim(el) {
+      el.classList.remove('wz-step-exit-fwd', 'wz-step-exit-back', 'wz-step-enter-fwd', 'wz-step-enter-back');
+    }
+    function maybeScrollToTop() {
+      var main = document.querySelector('main');
+      if (!main) return;
+      var rect = main.getBoundingClientRect();
+      // Si el encabezado ya está a la vista (o arriba), no forzar otro scroll.
+      if (rect.top > 24) {
+        window.scrollTo({ top: window.scrollY + rect.top - 16, behavior: reducedMotion ? 'auto' : 'smooth' });
+      }
+    }
+    function focusStepHeading(section) {
+      var h1 = section.querySelector('h1');
+      if (h1 && h1.focus) h1.focus({ preventScroll: true });
+    }
+    function goStep(step, dir) {
+      dir = dir || (step > currentStep ? 'fwd' : 'back');
+      var current = document.querySelector('.wz-step:not([hidden])');
+      var next = document.querySelector('.wz-step[data-step="' + step + '"]');
+      // Importante: siempre limpia cualquier transición pendiente aquí también.
+      // Si no, un cambio de paso muy rápido puede dejar un temporizador viejo
+      // vivo (de una transición cancelada a medias) que termina ocultando el
+      // paso correcto más tarde y desincroniza currentStep del DOM real.
+      if (!next || current === next) { clearStepTimers(); currentStep = step; setDot(step); return; }
+
+      clearStepTimers();
+      currentStep = step;
+      setDot(step);
+      maybeScrollToTop();
+
+      if (reducedMotion) {
+        if (current) { resetStepAnim(current); current.hidden = true; }
+        resetStepAnim(next);
+        next.hidden = false;
+        focusStepHeading(next);
+        if (step === 3) playAssembly();
+        return;
+      }
+
+      if (current) {
+        resetStepAnim(current);
+        current.classList.add(dir === 'fwd' ? 'wz-step-exit-fwd' : 'wz-step-exit-back');
+      }
+      stepTimers.push(setTimeout(function () {
+        if (current) { resetStepAnim(current); current.hidden = true; }
+        resetStepAnim(next);
+        next.hidden = false;
+        next.classList.add(dir === 'fwd' ? 'wz-step-enter-fwd' : 'wz-step-enter-back');
+        focusStepHeading(next);
+        if (step === 3) playAssembly();
+        stepTimers.push(setTimeout(function () { resetStepAnim(next); }, 330));
+      }, current ? 145 : 0));
+    }
+
+    // Buscador del paso 1: filtra los 100 giros por nombre/descripción, con un
+    // stagger corto (≤250ms en total) para las tarjetas que permanecen visibles.
     (function () {
       var search = document.getElementById('wz-giro-search');
       var empty = document.getElementById('wz-giro-empty');
       if (!search) return;
       search.addEventListener('input', function () {
         var q = search.value.trim().toLowerCase();
-        var cards = document.querySelectorAll('#wz-giro-grid .wz-card');
-        var visible = 0;
+        var cards = Array.prototype.slice.call(document.querySelectorAll('#wz-giro-grid .wz-card'));
+        var visible = [];
         cards.forEach(function (card) {
           var match = !q || (card.getAttribute('data-search') || '').indexOf(q) !== -1;
-          // Ojo: .wz-card ya define display:flex en su propia regla, así que
-          // la clase utilitaria "hidden" de Tailwind pierde el empate de
-          // especificidad y no ocultaba nada — por eso se fuerza inline.
+          // .wz-card ya define display:flex en su propia regla, así que la clase
+          // utilitaria "hidden" de Tailwind pierde el empate de especificidad y
+          // no ocultaba nada — por eso se fuerza inline.
           card.style.display = match ? '' : 'none';
-          if (match) visible++;
+          if (match) visible.push(card);
         });
-        if (empty) empty.classList.toggle('hidden', visible !== 0);
+        if (empty) empty.classList.toggle('hidden', visible.length !== 0);
+        if (!reducedMotion && visible.length) {
+          var n = visible.length;
+          var step = n > 1 ? Math.min(14, 110 / (n - 1)) : 0;
+          visible.forEach(function (card, i) {
+            card.classList.remove('wz-card-filtered-in');
+            card.style.animationDelay = '';
+          });
+          requestAnimationFrame(function () {
+            visible.forEach(function (card, i) {
+              card.style.animationDelay = Math.round(i * step) + 'ms';
+              card.classList.add('wz-card-filtered-in');
+            });
+          });
+        }
       });
     })();
 
-    // Paso 1: elegir giro
-    document.querySelectorAll('#wz-giro-grid .wz-card').forEach(function (card) {
-      card.addEventListener('click', function () {
-        document.querySelectorAll('#wz-giro-grid .wz-card').forEach(function (c) { c.classList.remove('wz-card-selected'); });
-        card.classList.add('wz-card-selected');
-        state.giro = card.getAttribute('data-giro');
-        document.getElementById('wz-giro-preset').value = state.giro;
-        document.getElementById('wz-next-1').disabled = false;
+    // ===== Paso 1: elegir giro =====
+    function selectGiro(card) {
+      document.querySelectorAll('#wz-giro-grid .wz-card').forEach(function (c) {
+        c.classList.remove('wz-card-selected');
+        c.setAttribute('aria-checked', 'false');
       });
+      card.classList.add('wz-card-selected');
+      card.setAttribute('aria-checked', 'true');
+      document.getElementById('wz-giro-grid').classList.add('has-selection');
+      var pic = card.querySelector('.wz-pictogram');
+      if (pic && !reducedMotion) {
+        pic.classList.remove('wz-pictogram-pop');
+        void 0;
+        requestAnimationFrame(function () { pic.classList.add('wz-pictogram-pop'); });
+      }
+      state.giro = card.getAttribute('data-giro');
+      document.getElementById('wz-giro-preset').value = state.giro;
+      document.getElementById('wz-next-1').disabled = false;
+    }
+    document.querySelectorAll('#wz-giro-grid .wz-card').forEach(function (card) {
+      card.addEventListener('click', function () { selectGiro(card); });
     });
     document.getElementById('wz-next-1').addEventListener('click', function () {
       if (!state.giro) return;
       var preset = GIRO_PRESETS.find(function (p) { return p.id === state.giro; });
-      // Preselecciona la vibra recomendada para este giro (si existe entre las opciones)
-      var rec = VIBE_OPTIONS.find(function (v) { return v.estilo === preset.estilo; }) || VIBE_OPTIONS[0];
+      // Preselecciona el diseño real recomendado para este giro.
+      var recId = GIRO_ESTILO_TO_DESIGN[preset.estilo] || CAT_DESIGNS[0].id;
       document.querySelectorAll('#wz-vibe-grid .wz-card').forEach(function (c) {
-        var isRec = c.getAttribute('data-estilo') === rec.estilo && c.getAttribute('data-color') === rec.color;
+        var isRec = c.getAttribute('data-design') === recId;
         c.querySelector('[data-recommended-badge]').hidden = !isRec;
+        if (isRec) c.setAttribute('data-recommended', '1'); else c.removeAttribute('data-recommended');
       });
-      selectVibe(rec.estilo, rec.color);
-      goStep(2);
+      selectDesign(recId);
+      goStep(2, 'fwd');
     });
 
-    // Paso 2: elegir vibra
-    function selectVibe(estilo, color) {
-      state.estilo = estilo; state.color = color;
-      document.getElementById('wz-estilo').value = estilo;
-      document.getElementById('wz-color').value = color;
+    // ===== Paso 2: elegir diseño real del catálogo =====
+    function selectDesign(id) {
+      state.design = id;
+      document.getElementById('wz-catalog-design').value = id;
+      document.getElementById('wz-vibe-grid').classList.add('has-selection');
       document.querySelectorAll('#wz-vibe-grid .wz-card').forEach(function (c) {
-        c.classList.toggle('wz-card-selected', c.getAttribute('data-estilo') === estilo && c.getAttribute('data-color') === color);
+        var selected = c.getAttribute('data-design') === id;
+        c.classList.toggle('wz-card-selected', selected);
+        c.setAttribute('aria-checked', selected ? 'true' : 'false');
       });
+      paintPhone('2', id);
     }
     document.querySelectorAll('#wz-vibe-grid .wz-card').forEach(function (card) {
       card.addEventListener('click', function () {
-        selectVibe(card.getAttribute('data-estilo'), card.getAttribute('data-color'));
+        selectDesign(card.getAttribute('data-design'));
       });
     });
-    document.getElementById('wz-back-2').addEventListener('click', function () { goStep(1); });
+    // Buscador del paso 2: filtra los 25 diseños por nombre/descripción, con
+    // el mismo stagger corto que el paso 1.
+    (function () {
+      var search = document.getElementById('wz-design-search');
+      var empty = document.getElementById('wz-design-empty');
+      if (!search) return;
+      search.addEventListener('input', function () {
+        var q = search.value.trim().toLowerCase();
+        var cards = Array.prototype.slice.call(document.querySelectorAll('#wz-vibe-grid .wz-card'));
+        var visible = [];
+        cards.forEach(function (card) {
+          var match = !q || (card.getAttribute('data-search') || '').indexOf(q) !== -1;
+          card.style.display = match ? '' : 'none';
+          if (match) visible.push(card);
+        });
+        if (empty) empty.classList.toggle('hidden', visible.length !== 0);
+        if (!reducedMotion && visible.length) {
+          var n = visible.length;
+          var step = n > 1 ? Math.min(14, 110 / (n - 1)) : 0;
+          visible.forEach(function (card) { card.classList.remove('wz-card-filtered-in'); card.style.animationDelay = ''; });
+          requestAnimationFrame(function () {
+            visible.forEach(function (card, i) {
+              card.style.animationDelay = Math.round(i * step) + 'ms';
+              card.classList.add('wz-card-filtered-in');
+            });
+          });
+        }
+      });
+    })();
+    document.getElementById('wz-back-2').addEventListener('click', function () { goStep(1, 'back'); });
     document.getElementById('wz-next-2').addEventListener('click', function () {
       var preset = GIRO_PRESETS.find(function (p) { return p.id === state.giro; });
-      var vibe = VIBE_OPTIONS.find(function (v) { return v.estilo === state.estilo && v.color === state.color; });
+      var design = designOf(state.design);
       document.getElementById('wz-summary-emoji').textContent = preset.emoji;
       document.getElementById('wz-summary-giro').textContent = preset.nombre;
-      document.getElementById('wz-summary-vibe').textContent = vibe.nombre;
-      document.getElementById('wz-summary-swatch').style.background = swatchGradient(state.color);
+      document.getElementById('wz-summary-vibe').textContent = design.emoji + ' ' + design.name;
+      document.getElementById('wz-summary-swatch').style.background = designGradient(state.design);
       var cats = GIRO_CATEGORIAS[state.giro] || GIRO_CATEGORIAS.otros;
       var catsWrap = document.getElementById('wz-summary-cats');
       catsWrap.innerHTML = '';
       cats.forEach(function (name) {
         var chip = document.createElement('span');
-        chip.className = 'm-badge m-badge-neutral';
+        chip.className = 'm-badge m-badge-neutral wz-summary-cat-chip';
         chip.textContent = name;
         catsWrap.appendChild(chip);
       });
-      goStep(3);
+      var wa = (<%- safeJson(biz.whatsapp || '') %> || '').replace(/\D/g, '');
+      var waLabel = wa.length === 10 ? wa.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3') : 'conectado';
+      document.getElementById('wz-summary-canal').textContent = wa ? ('WhatsApp ' + waLabel) : 'WhatsApp conectado';
+      paintPhone('3', state.design);
+      goStep(3, 'fwd');
     });
-    document.getElementById('wz-back-3').addEventListener('click', function () { goStep(2); });
+    document.getElementById('wz-back-3').addEventListener('click', function () { goStep(2, 'back'); });
+
+    // ===== Paso 3: ensamblaje del resumen ("mi tienda cobra vida paso a paso") =====
+    // Secuencia completa ≤700ms: teléfono → giro → vibra → categorías → canal de pedidos.
+    var assembleTimers = [];
+    function playAssembly() {
+      assembleTimers.forEach(clearTimeout); assembleTimers = [];
+      var rows = document.querySelectorAll('.wz-step[data-step="3"] .wz-assemble-row');
+      rows.forEach(function (r) { r.classList.remove('wz-assemble-in'); });
+      var chips = document.querySelectorAll('.wz-summary-cat-chip');
+      chips.forEach(function (c) { c.classList.remove('wz-chip-in'); });
+      var canalPath = document.getElementById('wz-canal-check-path');
+      if (canalPath) {
+        try {
+          var len = canalPath.getTotalLength();
+          canalPath.style.strokeDasharray = len;
+          canalPath.style.strokeDashoffset = reducedMotion ? 0 : len;
+          canalPath.style.transition = 'none';
+        } catch (e) {}
+      }
+      if (reducedMotion) {
+        rows.forEach(function (r) { r.classList.add('wz-assemble-in'); });
+        chips.forEach(function (c) { c.classList.add('wz-chip-in'); });
+        return;
+      }
+      var phoneRows = document.querySelectorAll('.wz-assemble-phone');
+      var giroRow = document.querySelector('.wz-assemble-giro');
+      var vibeRow = document.querySelector('.wz-assemble-vibe');
+      var catsRow = document.querySelector('.wz-assemble-cats');
+      var canalRow = document.querySelector('.wz-assemble-canal');
+
+      // El teléfono es lo primero en materializarse — "así se va a ver" antes de leer los detalles.
+      phoneRows.forEach(function (r) { assembleTimers.push(setTimeout(function () { r.classList.add('wz-assemble-in'); }, 0)); });
+      if (giroRow) assembleTimers.push(setTimeout(function () { giroRow.classList.add('wz-assemble-in'); }, 60));
+      if (vibeRow) assembleTimers.push(setTimeout(function () { vibeRow.classList.add('wz-assemble-in'); }, 160));
+      if (catsRow) assembleTimers.push(setTimeout(function () {
+        catsRow.classList.add('wz-assemble-in');
+        var n = chips.length;
+        var step = n > 1 ? Math.min(14, 110 / (n - 1)) : 0;
+        chips.forEach(function (chip, i) {
+          assembleTimers.push(setTimeout(function () { chip.classList.add('wz-chip-in'); }, i * step));
+        });
+      }, 240));
+      if (canalRow) assembleTimers.push(setTimeout(function () {
+        canalRow.classList.add('wz-assemble-in');
+        if (canalPath) {
+          requestAnimationFrame(function () {
+            canalPath.style.transition = 'stroke-dashoffset .26s cubic-bezier(0.16, 1, 0.3, 1)';
+            canalPath.style.strokeDashoffset = '0';
+          });
+        }
+      }, 400));
+    }
+
+    // ===== Demo de anuncios: una sola vez, movimiento sutil, respeta la pestaña oculta =====
+    var adDemoPlayed = false;
+    var adDemoAnimations = [];
+    function playAdDemoOnce() {
+      if (adDemoPlayed) return;
+      adDemoPlayed = true;
+      var cards = document.querySelectorAll('#wz-ad-demo-track .wz-ad-demo-card');
+      var track = document.getElementById('wz-ad-demo-track');
+      if (reducedMotion || !window.Element.prototype.animate) {
+        cards.forEach(function (c) { c.style.opacity = '1'; });
+        return;
+      }
+      cards.forEach(function (card, i) {
+        var anim = card.animate(
+          [
+            { opacity: 0, transform: 'translateY(8px) scale(.96)' },
+            { opacity: 1, transform: 'translateY(0) scale(1)' }
+          ],
+          { duration: 360, delay: i * 90, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'both' }
+        );
+        adDemoAnimations.push(anim);
+        card.style.opacity = '1';
+      });
+      // Muestra unos pocos píxeles de recorrido horizontal, como probando el
+      // carrusel, y queda quieto — una sola vez.
+      if (track) {
+        var trackAnim = track.animate(
+          [
+            { transform: 'translateX(0)' },
+            { transform: 'translateX(-10px)' },
+            { transform: 'translateX(0)' }
+          ],
+          { duration: 520, delay: cards.length * 90 + 120, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'both' }
+        );
+        adDemoAnimations.push(trackAnim);
+      }
+    }
+    document.addEventListener('visibilitychange', function () {
+      adDemoAnimations.forEach(function (a) {
+        if (!a) return;
+        if (document.hidden) { try { a.pause(); } catch (e) {} }
+        else { try { a.play(); } catch (e) {} }
+      });
+    });
+
+    // Dispara la demo de anuncios la primera vez que el paso 3 queda visible.
+    var wzAdDemoEl = document.getElementById('wz-ad-demo');
+    if (wzAdDemoEl && 'IntersectionObserver' in window) {
+      var adObserver = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) { playAdDemoOnce(); adObserver.disconnect(); }
+        });
+      }, { threshold: 0.4 });
+      adObserver.observe(wzAdDemoEl);
+    }
+    // Respaldo: si por lo que sea el observer no dispara (paso oculto vía [hidden]
+    // no intersecta nunca hasta mostrarse), también se dispara al entrar al paso 3.
+    var _origGoStep = goStep;
+    goStep = function (step, dir) {
+      _origGoStep(step, dir);
+      if (step === 3) setTimeout(playAdDemoOnce, reducedMotion ? 0 : 500);
+    };
+
+    // ===== Envío: evita doble submit y muestra estado de carga =====
+    (function () {
+      var form = document.getElementById('wz-form');
+      var submitBtn = document.getElementById('wz-submit');
+      var submitting = false;
+      form.addEventListener('submit', function (e) {
+        if (submitting) { e.preventDefault(); return; }
+        submitting = true;
+        if (e.submitter === submitBtn || !e.submitter) {
+          submitBtn.disabled = true;
+          submitBtn.querySelector('.wz-submit-label').hidden = true;
+          submitBtn.querySelector('.wz-submit-loading').hidden = false;
+        }
+      });
+    })();
+
+    window.addEventListener('beforeunload', function () { clearStepTimers(); assembleTimers.forEach(clearTimeout); });
 
     setDot(1);
   </script>
