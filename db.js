@@ -59,6 +59,12 @@ addColumnIfMissing('businesses', 'demo', "TEXT DEFAULT ''"); // contenido de eje
 addColumnIfMissing('businesses', 'pin_hash', "TEXT DEFAULT ''"); // hash del PIN (scrypt), vacío = legado sin migrar
 addColumnIfMissing('businesses', 'horario', "TEXT DEFAULT ''"); // horario de atención (JSON [{d:1..7,o:'HH:MM',c:'HH:MM'}])
 addColumnIfMissing('businesses', 'horario_msg', "TEXT DEFAULT ''"); // mensaje cuando la tienda está cerrada
+// Pago en línea con Mercado Pago (Checkout Pro): cada tienda usa su propia
+// cuenta — pega su Access Token de producción en Configuración. mp_enabled
+// controla si el botón de pago aparece en el catálogo (el token puede quedar
+// guardado pero desactivado sin borrarlo).
+addColumnIfMissing('businesses', 'mp_access_token', "TEXT DEFAULT ''");
+addColumnIfMissing('businesses', 'mp_enabled', 'INTEGER DEFAULT 0');
 
 // Sesiones con token aleatorio (el dueño y el maestro). Ya no se usa cookie estática.
 db.exec(`
@@ -260,6 +266,11 @@ CREATE TABLE IF NOT EXISTS tracking (
 // Cuándo se cobró/liquidó el pedido (para calcular ingresos reales por periodo: abonos + contado cobrado)
 addColumnIfMissing('orders', 'paid_at', 'TEXT');
 db.prepare("UPDATE orders SET paid_at = created_at WHERE paid = 1 AND (paid_at IS NULL OR paid_at = '')").run();
+// Pago en línea con Mercado Pago: id de pago y estado que reporta su API,
+// para no volver a marcar pagado un pedido ya confirmado (webhook duplicado)
+// y para poder mostrar "pendiente/rechazado" en vez de solo pagado/no pagado.
+addColumnIfMissing('orders', 'mp_payment_id', "TEXT DEFAULT ''");
+addColumnIfMissing('orders', 'mp_status', "TEXT DEFAULT ''");
 
 // ================= PLANES (creados por el administrador maestro) =================
 db.exec(`

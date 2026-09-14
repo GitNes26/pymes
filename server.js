@@ -1738,7 +1738,18 @@ app.get('/manifest.webmanifest', (req, res) => {
 
 // ================= LANDING =================
 app.get('/', (req, res) => {
-  const stores = db.prepare('SELECT * FROM businesses WHERE active = 1 AND listed = 1 ORDER BY created_at DESC LIMIT 12').all();
+  const stores = db.prepare(`
+    SELECT b.*,
+      COUNT(t.id) AS visits_count
+    FROM businesses b
+    LEFT JOIN tracking t
+      ON t.business_id = b.id
+      AND t.type = 'visit'
+    WHERE b.active = 1 AND b.listed = 1
+    GROUP BY b.id
+    ORDER BY visits_count DESC, b.created_at DESC
+    LIMIT 6
+  `).all();
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
   res.render('landing', { stores, TEMPLATES, COLORS });
 });
@@ -2292,6 +2303,91 @@ app.get('/:slug/pedir', (req, res) => {
 
   res.redirect(waLink(biz, message));
 });
+
+// ================= PAGO EN LÍNEA (MERCADO PAGO — CHECKOUT PRO) =================
+// Cada tienda usa su propia cuenta/Access Token (guardado en businesses.mp_access_token,
+// ver Configuración → Pagos en línea) — nunca una cuenta central compartida.
+function mpAbsUrl(req, path) {
+  return (BASE_URL ? BASE_URL : req.protocol + '://' + req.get('host')) + path;
+}
+async function mpFetch(token, path, options) {
+  const resp = await fetch('https://api.mercadopago.com' + path, Object.assign({
+    headers: Object.assign({ 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, (options && options.headers) || {})
+  }, options || {}));
+  const data = await resp.json().catch(() => ({}));
+  return { ok: resp.ok, status: resp.status, data };
+}
+
+app.get('/:slug/pagar-mp', async (req, res) => {
+  const biz = getBusiness(req.params.slug);
+  if (!biz) return res.status(404).json({ error: 'Tienda no encontrada' });
+  if (!biz.mp_enabled || !biz.mp_access_token) return res.status(400).json({ error: 'Esta tienda no tiene pago en línea activado' });
+
+  let items = [];
+  try { items = JSON.parse(req.query.items || '[]'); } catch (e) { items = []; }
+  const customerName = (req.query.nombre || '').toString().trim();
+  const customerPhone = (req.query.telefono || '').toString().trim().replace(/[^0-9]/g, '');
+  let total = 0;
+  const mpItems = [];
+  const lines = items.map((it) => {
+    const p = db.prepare('SELECT * FROM products WHERE id = ? AND business_id = ?').get(it.id, biz.id);
+    if (!p) return null;
+    const qty = Math.max(1, parseInt(it.qty) || 1);
+    const sub = p.price * qty;
+    total += sub;
+    const variant = it.variant ? ` (${it.variant})` : '';
+    mpItems.push({ title: (p.name + variant).slice(0, 250), quantity: qty, unit_price: Number(p.price), currency_id: biz.currency || 'MXN' });
+    return `• ${qty} x ${p.name}${variant} = ${currencyInfo(biz.currency).symbol}${sub.toFixed(2)}`;
+  }).filter(Boolean);
+  if (lines.length === 0) return res.redirect('/' + req.params.slug);
+
+  const customerData = customerName ? (customerName + (customerPhone ? ' (' + customerPhone + ')' : '')) : (customerPhone || '');
+  const orderId = db.prepare(
+    `INSERT INTO orders (business_id, items, total, customer_name, customer_phone, status) VALUES (?, ?, ?, ?, ?, 'nuevo')`
+  ).run(biz.id, lines.join(' | '), total, customerData, customerPhone).lastInsertRowid;
+  upsertCustomer(biz.id, customerName, customerPhone);
+
+  const storeUrl = mpAbsUrl(req, '/' + biz.slug);
+  const pref = {
+    items: mpItems,
+    external_reference: String(orderId),
+    back_urls: { success: storeUrl + '?pago=exito', failure: storeUrl + '?pago=fallo', pending: storeUrl + '?pago=pendiente' },
+    auto_return: 'approved',
+    notification_url: mpAbsUrl(req, '/webhooks/mercadopago?slug=' + encodeURIComponent(biz.slug))
+  };
+  const { ok, data } = await mpFetch(biz.mp_access_token, '/checkout/preferences', { method: 'POST', body: JSON.stringify(pref) });
+  if (!ok || !data.init_point) {
+    console.error('Error creando preferencia de Mercado Pago:', data);
+    return res.redirect('/' + req.params.slug + '?pago=error');
+  }
+  track(biz.id, 'mp', 'pedido');
+  res.redirect(data.init_point);
+});
+
+// Notificación de pago de Mercado Pago — confirma vía su API (nunca se confía
+// en el body del webhook a secas: cualquiera podría mandar un POST falso).
+app.post('/webhooks/mercadopago', async (req, res) => {
+  res.sendStatus(200); // ack inmediato — MP reintenta si tarda o si no responde 2xx
+  try {
+    const slug = String(req.query.slug || '').trim();
+    const biz = slug ? getBusiness(slug) : null;
+    if (!biz || !biz.mp_access_token) return;
+    const paymentId = (req.body && req.body.data && req.body.data.id) || req.query['data.id'] || req.query.id;
+    if (!paymentId) return;
+    const { ok, data: payment } = await mpFetch(biz.mp_access_token, '/v1/payments/' + paymentId, { method: 'GET' });
+    if (!ok || !payment.external_reference) return;
+    const order = db.prepare('SELECT * FROM orders WHERE id = ? AND business_id = ?').get(payment.external_reference, biz.id);
+    if (!order) return;
+    db.prepare('UPDATE orders SET mp_payment_id = ?, mp_status = ? WHERE id = ?').run(String(paymentId), payment.status || '', order.id);
+    if (payment.status === 'approved' && !order.paid) {
+      db.prepare("UPDATE orders SET paid = 1, paid_at = datetime('now'), status = 'pagado' WHERE id = ?").run(order.id);
+    }
+  } catch (e) {
+    console.error('Error procesando webhook de Mercado Pago:', e);
+  }
+});
+// MP a veces también prueba la notification_url con GET al configurarla.
+app.get('/webhooks/mercadopago', (req, res) => res.sendStatus(200));
 
 // Pedido multi-tienda (chatbox): registra un pedido por tienda y devuelve sus wa.me
 app.post('/api/pedir', (req, res) => {
@@ -3973,8 +4069,14 @@ function applyConfig(biz, body) {
     ? String(body.address || '').trim().slice(0, 300)
     : (biz.address || '');
   const catDesign = CAT_DESIGNS.some(d => d.id === body.catalog_design) ? body.catalog_design : (biz.catalog_design || 'catalogo');
+  // Pagos en línea: campos de su propio <form> (marcador mp_form, igual que
+  // horario_set) — así una vez guardado el access token no se borra solo
+  // porque el dueño mandó otro de los formularios de Configuración.
+  const mpFormPosted = Object.prototype.hasOwnProperty.call(body, 'mp_form');
+  const mpAccessToken = mpFormPosted ? String(body.mp_access_token || '').trim().slice(0, 300) : biz.mp_access_token;
+  const mpEnabled = mpFormPosted ? (body.mp_enabled === '1' ? 1 : 0) : biz.mp_enabled;
   db.prepare(
-    `UPDATE businesses SET name = ?, whatsapp = ?, description = ?, template = ?, color = ?, color_hex = ?, color_hex2 = ?, color_mode = ?, grid_cols = ?, logo = ?, banner = ?, giro = ?, giros = ?, estilo = ?, bg = ?, card = ?, text = ?, muted = ?, border = ?, radius = ?, font = ?, accent = ?, accent2 = ?, header = ?, header_text = ?, wa_message = ?, currency = ?, sections = ?, demo = ?, horario = ?, horario_msg = ?, blocks = ?, page_bg = ?, redes = ?, faq = ?, address = ?, catalog_design = ? WHERE id = ?`
+    `UPDATE businesses SET name = ?, whatsapp = ?, description = ?, template = ?, color = ?, color_hex = ?, color_hex2 = ?, color_mode = ?, grid_cols = ?, logo = ?, banner = ?, giro = ?, giros = ?, estilo = ?, bg = ?, card = ?, text = ?, muted = ?, border = ?, radius = ?, font = ?, accent = ?, accent2 = ?, header = ?, header_text = ?, wa_message = ?, currency = ?, sections = ?, demo = ?, horario = ?, horario_msg = ?, blocks = ?, page_bg = ?, redes = ?, faq = ?, address = ?, catalog_design = ?, mp_access_token = ?, mp_enabled = ? WHERE id = ?`
   ).run(
     name || biz.name,
     cleanWa || biz.whatsapp,
@@ -4013,6 +4115,8 @@ function applyConfig(biz, body) {
     faq,
     address,
     catDesign,
+    mpAccessToken,
+    mpEnabled,
     biz.id
   );
   // Modo fácil: guarda el preset elegido y crea las páginas sugeridas

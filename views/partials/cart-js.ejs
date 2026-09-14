@@ -53,6 +53,10 @@
     <%- safeJson((products || []).filter(p => !p.isAd).map(p => [String(p.id), { name: p.name, price: p.price, stock: p.stock === null || p.stock === undefined ? null : p.stock, image: p.image || '/img/sin-imagen.svg', imgs: (p.imgs && p.imgs.length ? p.imgs : [p.image || '/img/sin-imagen.svg']), variants: (typeof p.variants === 'string' ? p.variants : ''), promoType: p.promo_type || '', promoGift: p.promo_gift || '', promoDesc: p.promo_desc || '' }])) %>
   );
   const CURRENT_STORE = { slug: SLUG, name: STORE_NAME, whatsapp: STORE_WHATSAPP, logo: STORE_LOGO, wa_message: <%- safeJson(biz.wa_message || '') %> };
+  // Pago en línea: solo aplica al carrito de ESTA tienda (no a productos de
+  // otras tiendas que llegaron como anuncio) — cada quien cobra con su propia
+  // cuenta de Mercado Pago, ver Configuración → Pagos en línea.
+  const MP_ENABLED = <%- biz.mp_enabled ? 'true' : 'false' %>;
   const HORARIO_RAW = <%- safeJson(biz.horario || '') %>;
   const HORARIO_MSG = <%- safeJson(biz.horario_msg || '') %>;
 
@@ -542,7 +546,8 @@
             </div>
           </div>
           <div style="padding:0 12px;">${itemsHtml}</div>
-          <div style="padding:10px 12px;">
+          <div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;">
+            ${(MP_ENABLED && g.store.slug === SLUG) ? `<button type="button" onclick="payWithMercadoPago(${jattr(g.store.slug)})" style="width:100%;background:#009ee3;color:#fff;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:14px;cursor:pointer;">💳 Pagar con Mercado Pago</button>` : ''}
             <button type="button" onclick="sendStoreOrder(${jattr(g.store.slug)})" style="width:100%;background:#1e293b;color:#fff;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:14px;cursor:pointer;">Pedir por WhatsApp</button>
           </div>
         </div>`;
@@ -608,6 +613,24 @@
     // El botón ya no existe (renderCart rehace el carrito) — solo se limpia
     // el guard; no hay texto que restaurar.
     setTimeout(() => { _sendingOrder = false; }, 600);
+  }
+  // Pago en línea: arma el pedido igual que sendStoreOrder pero, en vez de
+  // abrir WhatsApp, manda al cliente al checkout de Mercado Pago — el pedido
+  // se crea del lado del servidor (/:slug/pagar-mp) para que el webhook luego
+  // pueda marcarlo como pagado sin depender de nada que pase en el navegador.
+  let _payingOrder = false;
+  function payWithMercadoPago(slug) {
+    if (_payingOrder) return;
+    const g = storeGroups().find(x => x.store.slug === slug);
+    if (!g) return;
+    _payingOrder = true;
+    const btn = document.activeElement && document.activeElement.tagName === 'BUTTON' ? document.activeElement : null;
+    if (btn) { btn.disabled = true; btn.textContent = 'Preparando el pago…'; }
+    const nombre = (document.getElementById('chat-nombre') || {}).value || '';
+    const telefono = (document.getElementById('chat-telefono') || {}).value || '';
+    const items = g.items.map(it => ({ id: it.id, qty: it.qty, variant: it.variant || '' }));
+    const qs = new URLSearchParams({ items: JSON.stringify(items), nombre, telefono });
+    window.location.href = '/' + slug + '/pagar-mp?' + qs.toString();
   }
   let _chatOpener = null;
   let _chatFirstRender = true;
@@ -1200,6 +1223,21 @@
     img.addEventListener('click', (e) => { e.stopPropagation(); location.href = '/' + SLUG + '/p/' + id; });
   }
 
+  // Vuelta del checkout de Mercado Pago: el webhook es quien de verdad marca
+  // el pedido como pagado (puede tardar unos segundos) — esto solo avisa al
+  // cliente en pantalla y limpia el carrito si el pago salió bien.
+  (function () {
+    const params = new URLSearchParams(window.location.search);
+    const pago = params.get('pago');
+    if (!pago) return;
+    if (pago === 'exito') { toast('¡Pago recibido! Ya puedes pasar por tu pedido 🎉', true); try { localStorage.removeItem(CART_KEY); } catch (e) {} }
+    else if (pago === 'pendiente') toast('Tu pago está en proceso — te avisamos cuando se confirme', true);
+    else if (pago === 'fallo') toast('El pago no se completó, intenta de nuevo', false);
+    else if (pago === 'error') toast('No se pudo iniciar el pago, intenta de nuevo', false);
+    params.delete('pago');
+    const qs = params.toString();
+    window.history.replaceState({}, '', window.location.pathname + (qs ? '?' + qs : ''));
+  })();
   document.addEventListener('DOMContentLoaded', () => {
     buildChat();
     renderCart();

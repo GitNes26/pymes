@@ -288,90 +288,99 @@
               <input name="price" id="f-price" required type="number" step="0.01" min="0" placeholder="0.00">
               <p id="f-price-note" class="hidden text-[11px] font-bold text-amber-600 mt-1">Con variantes, el precio se pone por cada variante en el paso 2 (Variantes) — es obligatorio en todas.</p>
             </div>
-            <div class="m-field md:col-span-2">
-              <label for="f-promo-type">Promoción <span class="font-normal text-slate-400">(opcional)</span></label>
-              <select name="promo_type" id="f-promo-type" onchange="onPromoTypeChange()">
-                <option value="">Sin promoción</option>
-                <option value="descuento">💵 Precio rebajado (antes/ahora)</option>
-                <option value="porcentaje">📉 Porcentaje de descuento</option>
-                <option value="2x1">🛍️ 2x1 · lleva 2 paga 1</option>
-                <option value="3x2">🛍️ 3x2 · lleva 3 paga 2</option>
-                <option value="regalo">🎁 Lleva de regalo</option>
-              </select>
-            </div>
-            <div id="promo-desc" class="m-field hidden">
-              <label for="f-old">Precio antes</label>
-              <input name="old_price" id="f-old" type="number" step="0.01" min="0" placeholder="0.00">
-            </div>
-            <div id="promo-pct" class="m-field hidden">
-              <label for="f-promo-value">% de descuento</label>
-              <input name="promo_value" id="f-promo-value" type="number" min="1" max="99" placeholder="20">
-            </div>
-            <div id="promo-gift" class="m-field hidden">
-              <label for="f-promo-gift">¿Qué regalas?</label>
-              <input name="promo_gift" id="f-promo-gift" placeholder="Ej: Martillo de uña 16oz">
-            </div>
-            <div id="promo-ends" class="m-field hidden">
-              <label for="f-promo">La promo vence el… (opcional)</label>
-              <input name="promo_ends_at" id="f-promo" type="date" placeholder=" ">
-            </div>
             <div class="m-field" id="f-stock-wrap">
               <label for="f-stock" id="f-stock-label">Stock * <span class="font-normal text-slate-400">(0 = agotado)</span></label>
               <input name="stock" id="f-stock" type="number" min="0" placeholder="Piezas disponibles">
               <p id="f-stock-note" class="hidden text-[11px] font-bold text-amber-600 mt-1">Con variantes, el stock se llena por cada variante en el paso 2 (Variantes) — 0 significa agotada.</p>
             </div>
-            <div class="m-field">
-              <label for="f-sku">SKU / código interno <span class="font-normal text-slate-400">(opcional)</span></label>
-              <input name="sku" id="f-sku" placeholder="Ej: TAL-001">
-            </div>
-            <div class="m-field">
-              <label for="f-barcode">Código de barras <span class="font-normal text-slate-400">(opcional)</span></label>
-              <input name="barcode" id="f-barcode" placeholder="Ej: 7501234567890">
-            </div>
-            <div class="m-field md:col-span-2">
-              <label for="f-tags">Etiquetas <span class="font-normal text-slate-400">(separadas por coma — mejoran la búsqueda)</span></label>
-              <input name="tags" id="f-tags" placeholder="Ej: taladro, inalámbrico, batería">
-            </div>
-            <div class="m-field md:col-span-2">
-              <label for="f-video">Video <span class="font-normal text-slate-400">(opcional, 1 por producto — pega una URL)</span></label>
-              <input name="video" id="f-video" placeholder="https://… (YouTube, Vimeo o .mp4)">
-            </div>
-            <div class="m-field md:col-span-2">
-              <label for="f-specs">Características <span class="font-normal text-slate-400">(una por línea: "Marca: Bosch")</span></label>
-              <textarea name="specs" id="f-specs" rows="3" placeholder="Marca: Bosch&#10;Material: Acero&#10;Garantía: 1 año"></textarea>
-            </div>
             <div class="m-field md:col-span-2">
               <label for="f-desc">Descripción atractiva</label>
               <textarea name="description" id="f-desc" rows="2" placeholder="Describe los beneficios…"></textarea>
             </div>
-            <div class="md:col-span-2 rounded-2xl border border-slate-200 p-3">
-              <label class="flex items-center gap-2.5 cursor-pointer">
-                <input type="checkbox" name="allow_installments" id="f-installments" value="1" class="w-4 h-4 accent-emerald-500" onchange="toggleInstallmentFields()">
-                <span class="text-sm font-bold text-slate-700">Vender por abonos</span>
-              </label>
-              <div id="installment-fields" class="hidden mt-3 grid md:grid-cols-3 gap-3">
-                <div class="m-field">
-                  <label for="f-inst-count">N&uacute;mero de abonos</label>
-                  <input name="installment_count" id="f-inst-count" type="number" min="2" max="48" value="6" placeholder="6">
-                </div>
-                <div class="m-field">
-                  <label for="f-inst-down">Enganche m&iacute;nimo</label>
-                  <input name="installment_min_down" id="f-inst-down" type="number" min="0" step="0.01" placeholder="0">
-                </div>
-                <div class="m-field">
-                  <label for="f-inst-freq">Frecuencia</label>
-                  <select name="installment_frequency" id="f-inst-freq">
-                    <option value="semanal">Semanal</option>
-                    <option value="quincenal">Quincenal</option>
-                    <option value="mensual">Mensual</option>
+
+            <!-- Todo lo demás es opcional/poco usado — se guarda colapsado para
+                 no abrumar con 10+ campos de golpe; se abre solo (o al editar
+                 un producto que ya trae algo aquí, o si algo falla al validar). -->
+            <details class="md:col-span-2 pf-advanced" id="pf-advanced">
+              <summary>+ Más detalles <span class="font-normal text-slate-400">(promoción, SKU, video, abonos…)</span></summary>
+              <div class="grid md:grid-cols-2 gap-x-4 pf-advanced-body">
+                <div class="m-field md:col-span-2">
+                  <label for="f-promo-type">Promoción <span class="font-normal text-slate-400">(opcional)</span></label>
+                  <select name="promo_type" id="f-promo-type" onchange="onPromoTypeChange()">
+                    <option value="">Sin promoción</option>
+                    <option value="descuento">💵 Precio rebajado (antes/ahora)</option>
+                    <option value="porcentaje">📉 Porcentaje de descuento</option>
+                    <option value="2x1">🛍️ 2x1 · lleva 2 paga 1</option>
+                    <option value="3x2">🛍️ 3x2 · lleva 3 paga 2</option>
+                    <option value="regalo">🎁 Lleva de regalo</option>
                   </select>
                 </div>
+                <div id="promo-desc" class="m-field hidden">
+                  <label for="f-old">Precio antes</label>
+                  <input name="old_price" id="f-old" type="number" step="0.01" min="0" placeholder="0.00">
+                </div>
+                <div id="promo-pct" class="m-field hidden">
+                  <label for="f-promo-value">% de descuento</label>
+                  <input name="promo_value" id="f-promo-value" type="number" min="1" max="99" placeholder="20">
+                </div>
+                <div id="promo-gift" class="m-field hidden">
+                  <label for="f-promo-gift">¿Qué regalas?</label>
+                  <input name="promo_gift" id="f-promo-gift" placeholder="Ej: Martillo de uña 16oz">
+                </div>
+                <div id="promo-ends" class="m-field hidden">
+                  <label for="f-promo">La promo vence el… (opcional)</label>
+                  <input name="promo_ends_at" id="f-promo" type="date" placeholder=" ">
+                </div>
+                <div class="m-field">
+                  <label for="f-sku">SKU / código interno <span class="font-normal text-slate-400">(opcional)</span></label>
+                  <input name="sku" id="f-sku" placeholder="Ej: TAL-001">
+                </div>
+                <div class="m-field">
+                  <label for="f-barcode">Código de barras <span class="font-normal text-slate-400">(opcional)</span></label>
+                  <input name="barcode" id="f-barcode" placeholder="Ej: 7501234567890">
+                </div>
+                <div class="m-field md:col-span-2">
+                  <label for="f-tags">Etiquetas <span class="font-normal text-slate-400">(separadas por coma — mejoran la búsqueda)</span></label>
+                  <input name="tags" id="f-tags" placeholder="Ej: taladro, inalámbrico, batería">
+                </div>
+                <div class="m-field md:col-span-2">
+                  <label for="f-video">Video <span class="font-normal text-slate-400">(opcional, 1 por producto — pega una URL)</span></label>
+                  <input name="video" id="f-video" placeholder="https://… (YouTube, Vimeo o .mp4)">
+                </div>
+                <div class="m-field md:col-span-2">
+                  <label for="f-specs">Características <span class="font-normal text-slate-400">(una por línea: "Marca: Bosch")</span></label>
+                  <textarea name="specs" id="f-specs" rows="3" placeholder="Marca: Bosch&#10;Material: Acero&#10;Garantía: 1 año"></textarea>
+                </div>
+                <div class="md:col-span-2 rounded-2xl border border-slate-200 p-3">
+                  <label class="flex items-center gap-2.5 cursor-pointer">
+                    <input type="checkbox" name="allow_installments" id="f-installments" value="1" class="w-4 h-4 accent-emerald-500" onchange="toggleInstallmentFields()">
+                    <span class="text-sm font-bold text-slate-700">Vender por abonos</span>
+                  </label>
+                  <div id="installment-fields" class="hidden mt-3 grid md:grid-cols-3 gap-3">
+                    <div class="m-field">
+                      <label for="f-inst-count">N&uacute;mero de abonos</label>
+                      <input name="installment_count" id="f-inst-count" type="number" min="2" max="48" value="6" placeholder="6">
+                    </div>
+                    <div class="m-field">
+                      <label for="f-inst-down">Enganche m&iacute;nimo</label>
+                      <input name="installment_min_down" id="f-inst-down" type="number" min="0" step="0.01" placeholder="0">
+                    </div>
+                    <div class="m-field">
+                      <label for="f-inst-freq">Frecuencia</label>
+                      <select name="installment_frequency" id="f-inst-freq">
+                        <option value="semanal">Semanal</option>
+                        <option value="quincenal">Quincenal</option>
+                        <option value="mensual">Mensual</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <label class="md:col-span-2 flex items-center gap-2.5 bg-slate-50 rounded-xl px-4 py-3 text-sm font-bold text-slate-600 cursor-pointer">
+                  <input type="checkbox" name="featured" id="f-featured" value="1" class="w-4.5 h-4.5 accent-amber-500">
+                  ⭐ Producto destacado
+                </label>
               </div>
-            </div>
-            <label class="md:col-span-2 flex items-center gap-2.5 bg-slate-50 rounded-xl px-4 py-3 text-sm font-bold text-slate-600 cursor-pointer">
-              <input type="checkbox" name="featured" id="f-featured" value="1" class="w-4.5 h-4.5 accent-amber-500">
-              ⭐ Producto destacado
-            </label>
+            </details>
           </div>
 
           <div data-step-pane="2" class="md:col-span-2 hidden">
@@ -493,6 +502,14 @@
     .pf-tipo-card:hover .pf-tipo-ico { transform:scale(1.12) rotate(-4deg); }
     .pf-tipo-tit { display:block; font-size:13px; font-weight:800; color:#1e293b; }
     .pf-tipo-sub { display:block; font-size:10px; font-weight:600; color:#64748b; margin-top:1px; }
+    .pf-advanced { border:1px dashed #e2e8f0; border-radius:14px; padding:10px 12px; margin-top:4px; }
+    .pf-advanced[open] { padding-bottom:14px; }
+    .pf-advanced summary { list-style:none; cursor:pointer; font-size:12px; font-weight:800; color:#475569; padding:2px 0; user-select:none; }
+    .pf-advanced summary::-webkit-details-marker { display:none; }
+    .pf-advanced summary::before { content:'›'; display:inline-block; margin-right:6px; font-size:15px; font-weight:900; transition:transform .2s cubic-bezier(.22,1,.36,1); }
+    .pf-advanced[open] summary::before { transform:rotate(90deg); }
+    .pf-advanced summary:hover { color:#1e293b; }
+    .pf-advanced-body { margin-top:12px; }
     /* Tabs: Productos | Categorías | Atributos */
     .prod-tabs { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; background:var(--ap-card); border:1px solid var(--ap-border); padding:6px; border-radius:var(--ap-radius); box-shadow:var(--ap-shadow); }
     .prod-tab { display:inline-flex; align-items:center; gap:8px; padding:8px 14px; border-radius:12px; font-size:12px; font-weight:800; color:var(--ap-text-sec); background:transparent; border:none; cursor:pointer; transition:all .25s cubic-bezier(.22,1,.36,1); }
@@ -1503,10 +1520,29 @@
       document.getElementById('nuevo-producto').scrollIntoView({ behavior: 'auto', block: 'start' });
     }
 
+    // Campos "avanzados" — colapsados por defecto para no abrumar con 10+
+    // campos de golpe (queja de dueños: "el formulario de producto es muy
+    // complicado"). Se abren solos si el producto que se edita ya trae algo
+    // ahí, o si un error de validación cae dentro.
+    function openAdvancedIfHasData() {
+      var det = document.getElementById('pf-advanced');
+      if (!det) return;
+      var ids = ['f-promo-type', 'f-sku', 'f-barcode', 'f-tags', 'f-video', 'f-specs'];
+      var hasText = ids.some(function (id) {
+        var el = document.getElementById(id);
+        return el && (el.value || '').trim();
+      });
+      var featuredEl = document.getElementById('f-featured');
+      var installEl = document.getElementById('f-installments');
+      if (hasText || (featuredEl && featuredEl.checked) || (installEl && installEl.checked)) det.open = true;
+    }
+
     // ====== Validación con hints inline en cada campo ======
     function setError(id, msg) {
       var el = document.getElementById(id);
       if (!el) return;
+      var det = el.closest && el.closest('#pf-advanced');
+      if (det) det.open = true;
       clearError(id);
       el.style.borderColor = '#f87171';
       el.style.boxShadow = '0 0 0 3px rgba(248,113,113,.15)';
@@ -1769,6 +1805,7 @@
       setVal('f-inst-freq', card.getAttribute('data-edit-inst-freq') || 'semanal');
       toggleInstallmentFields();
       onPromoTypeChange();
+      openAdvancedIfHasData();
       initVariantes('f', decodeURIComponent(card.getAttribute('data-edit-variants') || ''));
       initFotos('f', card.getAttribute('data-edit-image'), card.getAttribute('data-edit-galeria'));
       var edTipo = window.VAR_EDITORS && window.VAR_EDITORS.f;
@@ -1829,6 +1866,8 @@
       document.getElementById('f-installments').checked = false;
       toggleInstallmentFields();
       onPromoTypeChange();
+      var det = document.getElementById('pf-advanced');
+      if (det) det.open = false;
       goStep(1);
     }
 
@@ -1951,6 +1990,7 @@
         setVal('f-inst-freq', fd.installment_frequency || 'semanal');
         toggleInstallmentFields();
         onPromoTypeChange();
+        openAdvancedIfHasData();
         // Restaurar tipo de producto y variantes (si el usuario iba con variantes, no perderlas)
         initVariantes('f', fd.variants || '');
         var edFd = window.VAR_EDITORS && window.VAR_EDITORS.f;
@@ -2273,63 +2313,115 @@
   <style>
     #tp-modal { display:none; }
     #tp-modal.open { display:flex; }
-    #tp-preview canvas { width:100%; height:auto; display:block; }
-    #tp-preview { cursor: pointer; transition: background-color .18s ease; }
-    #tp-preview[data-format="story"] { padding-inline: clamp(3rem, 16vw, 6.5rem); }
-    #tp-preview[data-format="landscape"] { padding-block: clamp(1.5rem, 10vw, 3rem); }
-    .tp-format-btn { min-height:52px; border-radius:10px; color:#64748b; font-size:11px; font-weight:750; line-height:1.3; padding:6px 4px; transition:background-color .18s ease,color .18s ease,box-shadow .18s ease; }
-    .tp-format-btn small { display:block; font-size:9px; font-weight:650; opacity:.7; margin-top:1px; }
-    .tp-format-btn.is-active { background:#fff; color:#0f172a; box-shadow:0 2px 8px rgba(15,23,42,.09); }
+    #tp-preview canvas { width:auto; max-width:100%; height:auto; max-height:calc(92vh - 150px); display:block; }
+    #tp-preview { cursor:pointer; background:#F7F7F8; transition:background-color .18s ease; }
+    #tp-preview[data-format="story"] { padding-inline:clamp(3rem,10vw,7rem); }
+    #tp-preview[data-format="landscape"] { padding-block:clamp(2rem,7vw,4rem); }
+    .tp-format-btn { min-height:58px; border:1px solid #E5E1D6; border-radius:12px; background:#fff; color:#61666e; font-size:10px; font-weight:750; line-height:1.25; padding:8px; text-align:left; transition:border-color .18s ease,color .18s ease,background-color .18s ease; }
+    .tp-format-btn small { display:block; font-size:10px; font-weight:600; color:#858991; margin-top:3px; }
+    .tp-format-btn.is-active { border-color:#2c2c2e; background:#2c2c2e; color:#fff; }
+    .tp-format-btn.is-active small { color:rgba(255,255,255,.7); }
+    .tp-format-btn:focus-visible { outline:2px solid #2c2c2e; outline-offset:2px; }
+    .tp-editor-grid { display:grid; grid-template-columns:minmax(0,1.25fr) minmax(280px,.75fr); }
+    .tp-color-field { display:flex; align-items:center; gap:9px; border:1px solid #E5E1D6; border-radius:12px; padding:7px 10px; cursor:pointer; transition:border-color .18s ease,background-color .18s ease; }
+    .tp-color-field:hover { border-color:#c9c4b4; background:#FAF9F5; }
+    .tp-color-swatch { position:relative; width:26px; height:26px; border-radius:9px; overflow:hidden; flex:none; box-shadow:inset 0 0 0 1px rgba(0,0,0,.08); }
+    .tp-color-swatch input[type="color"] { position:absolute; inset:-4px; width:calc(100% + 8px); height:calc(100% + 8px); border:none; padding:0; cursor:pointer; }
+    .tp-color-info { display:flex; flex-direction:column; min-width:0; }
+    .tp-color-name { font-size:11px; font-weight:750; color:#2c2c2e; }
+    .tp-color-hex { font-size:9px; font-weight:600; color:#9a9d95; text-transform:uppercase; letter-spacing:.02em; }
     @media (max-width:640px) {
       #tp-modal { align-items:flex-end; padding:0; }
-      #tp-modal > .tp-sheet { max-width:none; max-height:94dvh; border-radius:20px 20px 0 0; }
+      #tp-modal > .tp-sheet { max-width:none; max-height:94dvh; border-radius:18px 18px 0 0; }
+      .tp-editor-grid { grid-template-columns:1fr; }
+      .tp-preview-pane { padding:14px; }
+      #tp-preview canvas { max-height:42dvh; }
     }
   </style>
   <div id="tp-modal" class="fixed inset-0 z-[200] items-center justify-center p-4">
     <div class="absolute inset-0 bg-slate-950/65" onclick="cerrarTarjetaProducto()"></div>
-    <div class="tp-sheet relative bg-white rounded-2xl shadow-2xl w-full max-w-[430px] max-h-[92vh] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="tp-title">
+    <div class="tp-sheet relative bg-white rounded-2xl shadow-2xl w-full max-w-[940px] max-h-[92vh] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="tp-title">
       <div class="flex items-center justify-between px-4 py-3 border-b border-slate-200 sticky top-0 z-10 bg-white">
         <div>
-          <p id="tp-title" class="font-extrabold text-sm text-slate-900">Contenido para redes</p>
-          <p class="text-[11px] text-slate-500 mt-0.5">Listo para publicar y vender</p>
+          <p id="tp-title" class="font-extrabold text-sm text-slate-900">Publicidad del producto</p>
+          <p class="text-[10px] text-slate-500 mt-0.5">Una pieza lista para publicar, con enlace de compra</p>
         </div>
         <button type="button" onclick="cerrarTarjetaProducto()" aria-label="Cerrar" class="w-9 h-9 grid place-items-center rounded-xl hover:bg-slate-100 text-slate-600">
           <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
         </button>
       </div>
-      <div class="p-4 space-y-4">
-        <div class="grid grid-cols-2 gap-1 p-1 rounded-xl bg-slate-100" role="group" aria-label="Formato de publicación">
-          <button id="tp-format-square" type="button" class="tp-format-btn is-active" onclick="seleccionarFormatoTarjeta('square')">Cuadrada 1:1<small>Feed universal</small></button>
-          <button id="tp-format-feed" type="button" class="tp-format-btn" onclick="seleccionarFormatoTarjeta('feed')">Publicación 4:5<small>Máximo alcance</small></button>
-          <button id="tp-format-story" type="button" class="tp-format-btn" onclick="seleccionarFormatoTarjeta('story')">Historia 9:16<small>Stories / Estados</small></button>
-          <button id="tp-format-landscape" type="button" class="tp-format-btn" onclick="seleccionarFormatoTarjeta('landscape')">Horizontal 1.91:1<small>Anuncio de enlace</small></button>
-        </div>
-        <div id="tp-preview" data-format="feed" class="rounded-xl overflow-hidden bg-slate-100 flex items-center justify-center min-h-[260px]" title="Abrir página del producto">
-          <span class="w-8 h-8 border-[3px] border-[var(--md-primary,#2563eb)] border-t-transparent rounded-full animate-spin"></span>
-        </div>
-
-        <div>
-          <button id="tp-download" type="button" onclick="descargarFormatoTarjeta()" class="m-btn m-btn-filled w-full !text-xs !h-11">
-            <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14"/></svg>
-            Descargar publicación
-          </button>
-          <button type="button" onclick="compartirTarjetaProducto()" class="m-btn m-btn-outlined w-full mt-2 !text-xs !h-11">
-            <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 10.7 6.8-4.4m-6.8 7 6.8 4.4"/></svg>
-            Compartir tarjeta
-          </button>
-        </div>
-
-        <div class="pt-3 border-t border-slate-200">
-          <p class="text-xs font-bold text-slate-800 mb-2">Enlace directo al producto</p>
-          <div class="flex gap-2">
-            <input id="tp-link" aria-label="Enlace del producto" readonly onclick="this.select()" class="flex-1 min-w-0 text-xs text-slate-700 bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-[var(--md-primary,#2563eb)]/20" value="">
-            <button type="button" onclick="copiarEnlaceProducto()" aria-label="Copiar enlace" class="m-btn m-btn-outlined !px-3">
-              <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-            </button>
+      <div class="tp-editor-grid">
+        <div class="tp-preview-pane bg-neutral-100 p-6 flex items-center justify-center min-h-[420px]">
+          <div id="tp-preview" data-format="square" class="w-full max-w-[520px] rounded-xl overflow-hidden flex items-center justify-center min-h-[260px] shadow-[0_18px_50px_rgba(15,23,42,.18)]" title="Abrir página del producto">
+            <span class="w-8 h-8 border-[3px] border-neutral-700 border-t-transparent rounded-full animate-spin"></span>
           </div>
         </div>
-
-        <p id="tp-size-note" class="text-[11px] text-slate-500 text-center">1080 × 1350 px · Optimizada para publicaciones</p>
+        <div class="p-5 space-y-5 border-l border-neutral-200">
+          <div>
+            <p class="text-xs font-extrabold text-neutral-900 mb-1">Elige dónde publicar</p>
+            <p class="text-[10px] text-neutral-500 mb-3">El diseño se recompone para cada proporción.</p>
+            <div class="grid grid-cols-2 gap-2" role="group" aria-label="Formato de publicación">
+              <button id="tp-format-square" type="button" class="tp-format-btn is-active" onclick="seleccionarFormatoTarjeta('square')">Cuadrada 1:1<small>Instagram · Facebook</small></button>
+              <button id="tp-format-feed" type="button" class="tp-format-btn" onclick="seleccionarFormatoTarjeta('feed')">Vertical 4:5<small>Más espacio en feed</small></button>
+              <button id="tp-format-story" type="button" class="tp-format-btn" onclick="seleccionarFormatoTarjeta('story')">Historia 9:16<small>Stories · Estados</small></button>
+              <button id="tp-format-landscape" type="button" class="tp-format-btn" onclick="seleccionarFormatoTarjeta('landscape')">Horizontal<small>Enlaces · Banners</small></button>
+            </div>
+          </div>
+          <p id="tp-size-note" class="text-[10px] text-neutral-500">1080 × 1080 px · Feed universal</p>
+          <div>
+            <p class="text-xs font-extrabold text-neutral-900 mb-1">Elige un estilo</p>
+            <p class="text-[10px] text-neutral-500 mb-3">Cambia la composición sin perder tu foto ni tu precio.</p>
+            <div class="grid grid-cols-2 gap-2" role="group" aria-label="Estilo de la pieza">
+              <button id="tp-style-diagonal" type="button" class="tp-format-btn is-active" onclick="seleccionarEstiloTarjeta('diagonal')">Impacto diagonal<small>Panel cortado sobre la foto</small></button>
+              <button id="tp-style-gigante" type="button" class="tp-format-btn" onclick="seleccionarEstiloTarjeta('gigante')">Producto gigante<small>Nombre enorme detrás</small></button>
+              <button id="tp-style-spotlight" type="button" class="tp-format-btn" onclick="seleccionarEstiloTarjeta('spotlight')">Spotlight premium<small>Fondo oscuro, luz dirigida</small></button>
+              <button id="tp-style-collage" type="button" class="tp-format-btn" onclick="seleccionarEstiloTarjeta('collage')">Collage + sticker<small>Precio como etiqueta</small></button>
+              <button id="tp-style-editorial" type="button" class="tp-format-btn" onclick="seleccionarEstiloTarjeta('editorial')">Editorial elegante<small>Mucho aire, tipografía serif</small></button>
+              <button id="tp-style-pop" type="button" class="tp-format-btn" onclick="seleccionarEstiloTarjeta('pop')">Pop energético<small>Colores intensos, texto enorme</small></button>
+              <button id="tp-style-duotono" type="button" class="tp-format-btn" onclick="seleccionarEstiloTarjeta('duotono')">Duotono<small>Foto en dos tonos de marca</small></button>
+              <button id="tp-style-glow" type="button" class="tp-format-btn" onclick="seleccionarEstiloTarjeta('glow')">Glow neón<small>Resplandor de color alrededor</small></button>
+              <button id="tp-style-levitacion" type="button" class="tp-format-btn" onclick="seleccionarEstiloTarjeta('levitacion')">Levitación<small>Producto flotando, aire limpio</small></button>
+              <button id="tp-style-patron" type="button" class="tp-format-btn" onclick="seleccionarEstiloTarjeta('patron')">Patrón de marca<small>Fondo con figuras repetidas</small></button>
+            </div>
+          </div>
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <p class="text-xs font-extrabold text-neutral-900">Colores de la pieza</p>
+              <button id="tp-color-reset" type="button" onclick="restablecerColoresTarjeta()" class="text-[10px] font-bold text-neutral-500 hover:text-neutral-800 underline decoration-dotted">Restablecer</button>
+            </div>
+            <p class="text-[10px] text-neutral-500 mb-3">Empiezan con los de tu tienda — cámbialos solo para esta pieza.</p>
+            <div class="grid grid-cols-2 gap-2">
+              <label class="tp-color-field">
+                <span class="tp-color-swatch"><input id="tp-color-accent" type="color" onchange="cambiarColorTarjeta('accent', this.value)"></span>
+                <span class="tp-color-info"><span class="tp-color-name">Principal</span><span class="tp-color-hex" id="tp-color-accent-hex">—</span></span>
+              </label>
+              <label class="tp-color-field">
+                <span class="tp-color-swatch"><input id="tp-color-accent2" type="color" onchange="cambiarColorTarjeta('accent2', this.value)"></span>
+                <span class="tp-color-info"><span class="tp-color-name">Secundario</span><span class="tp-color-hex" id="tp-color-accent2-hex">—</span></span>
+              </label>
+            </div>
+          </div>
+          <div>
+            <button id="tp-download" type="button" onclick="descargarFormatoTarjeta()" class="m-btn m-btn-filled w-full !text-xs !h-11">
+              <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14"/></svg>
+              Descargar cuadrada 1:1
+            </button>
+            <button type="button" onclick="compartirTarjetaProducto()" class="m-btn m-btn-outlined w-full mt-2 !text-xs !h-11">
+              <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 10.7 6.8-4.4m-6.8 7 6.8 4.4"/></svg>
+              Compartir imagen
+            </button>
+          </div>
+          <div class="pt-4 border-t border-neutral-200">
+            <p class="text-xs font-bold text-neutral-800 mb-1">Enlace directo incluido</p>
+            <p class="text-[10px] text-neutral-500 mb-2">La pieza lleva un QR que abre este producto.</p>
+            <div class="flex gap-2">
+              <input id="tp-link" aria-label="Enlace del producto" readonly onclick="this.select()" class="flex-1 min-w-0 text-xs text-neutral-700 bg-neutral-50 border border-neutral-300 rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-neutral-700/20" value="">
+              <button type="button" onclick="copiarEnlaceProducto()" aria-label="Copiar enlace" class="m-btn m-btn-outlined !px-3">
+                <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -2337,6 +2429,10 @@
   <script>
     // ===== Tarjeta de producto para redes (canvas → PNG) =====
     var TPCARD_BIZ = <%- safeJson({ name: biz.name, slug: biz.slug, cur: biz.currency || 'MXN', accent: biz.color_hex || '#17324a', accent2: biz.color_hex2 || biz.color_hex || '#2c2c2e' }) %>;
+    // Colores de fábrica (los de la tienda) — para el botón "Restablecer" del
+    // selector de colores de la pieza. TPCARD_BIZ.accent/accent2 SÍ se mutan
+    // al elegir un color (todos los estilos ya leen de ahí), esto no.
+    var TPCARD_DEFAULT_COLORS = { accent: TPCARD_BIZ.accent, accent2: TPCARD_BIZ.accent2 };
     // Cuatro formatos con las proporciones que de verdad se usan en pauta y
     // redes (nada de improvisar tamaños): cuadrado 1:1 es el más compatible
     // entre plataformas, 4:5 es el que más alto ocupa en el feed (más
@@ -2348,7 +2444,7 @@
       story:     { label: 'Historia 9:16',     note: '1080 × 1920 px · Historias y estados de WhatsApp',      w: 1080, h: 1920 },
       landscape: { label: 'Horizontal 1.91:1', note: '1200 × 628 px · Anuncios de enlace y banners',          w: 1200, h: 628 }
     };
-    var TPCARD = { row: null, url: '', photo: '', photoImg: null, canvases: {}, format: 'square', opener: null };
+    var TPCARD = { row: null, url: '', photo: '', photoImg: null, qrImg: null, canvases: {}, format: 'square', style: 'diagonal', opener: null };
 
     function tpSym(n) {
       var SYM = { MXN:'$', USD:'$', EUR:'€', COP:'$', ARS:'$', CLP:'$', PEN:'S/', GBP:'£', BRL:'R$' };
@@ -2396,19 +2492,43 @@
     }
     function abrirTarjetaProducto(row) {
       if (!row) return;
-      TPCARD.row = row; TPCARD.url = ''; TPCARD.photo = ''; TPCARD.photoImg = null; TPCARD.canvases = {}; TPCARD.opener = document.activeElement;
+      TPCARD.row = row; TPCARD.url = ''; TPCARD.photo = ''; TPCARD.photoImg = null; TPCARD.qrImg = null; TPCARD.canvases = {}; TPCARD.opener = document.activeElement;
+      TPCARD.style = 'diagonal';
+      TPCARD_BIZ.accent = TPCARD_DEFAULT_COLORS.accent; TPCARD_BIZ.accent2 = TPCARD_DEFAULT_COLORS.accent2;
+      tpSyncColorInputs();
+      Object.keys(TP_STYLE_BUILDERS).forEach(function (key) {
+        var b = document.getElementById('tp-style-' + key);
+        if (b) b.classList.toggle('is-active', key === 'diagonal');
+      });
       seleccionarFormatoTarjeta('square');
       document.getElementById('tp-modal').classList.add('open');
       document.getElementById('tp-preview').innerHTML = '<span class="w-8 h-8 border-[3px] border-[var(--md-primary,#2563eb)] border-t-transparent rounded-full animate-spin"></span>';
       fetch('/<%= biz.slug %>/admin/producto/' + row.getAttribute('data-edit-id') + '/qr')
-        .then(function (r) { return r.json(); })
+        .then(function (r) {
+          // Si la sesión expiró o el servidor truena, esto no regresa JSON
+          // (regresa la página de login u otra HTML) — antes eso tronaba en
+          // r.json() y siempre se veía el mismo mensaje genérico sin pista.
+          if (!r.ok && r.status === 401) throw new Error('Tu sesión expiró — recarga la página e inicia sesión de nuevo.');
+          var ct = r.headers.get('content-type') || '';
+          if (ct.indexOf('application/json') === -1) throw new Error('El servidor no respondió correctamente (código ' + r.status + ') — recarga la página e intenta de nuevo.');
+          return r.json();
+        })
         .then(function (d) {
-          if (!d.ok) throw new Error(d.error || 'Error');
+          if (!d.ok) throw new Error(d.error || 'No se pudo preparar la tarjeta');
           TPCARD.url = d.url;
           var li = document.getElementById('tp-link'); if (li) li.value = d.url;
           tpPintar();
+          if (d.qr) {
+            var qr = new Image();
+            qr.onload = function () { TPCARD.qrImg = qr; tpDibujar(TPCARD.photoImg); };
+            qr.src = d.qr;
+          }
         })
-        .catch(function () { mostrarToast('No se pudo preparar la tarjeta', 'error'); cerrarTarjetaProducto(); });
+        .catch(function (err) {
+          console.error('tarjeta-producto:', err);
+          mostrarToast((err && err.message) || 'No se pudo preparar la tarjeta', 'error');
+          cerrarTarjetaProducto();
+        });
     }
     function cerrarTarjetaProducto() {
       document.getElementById('tp-modal').classList.remove('open');
@@ -2474,66 +2594,110 @@
       ctx.fillStyle = '#6B6860'; ctx.font = '700 25px Inter, "Segoe UI", Arial, sans-serif'; ctx.textAlign = 'center';
       ctx.fillText('Agrega una foto para destacar tu producto', x + w/2, y + h*.69); ctx.textAlign = 'left';
     }
-    function tpDrawPrice(ctx, row, x, y, size) {
+    function tpDrawPrice(ctx, row, x, y, size, color) {
       var price = parseFloat(row.getAttribute('data-edit-price')) || 0;
       var old = parseFloat(row.getAttribute('data-edit-old')) || 0;
-      ctx.fillStyle = '#101828'; ctx.font = '900 ' + size + 'px Inter, "Segoe UI", Arial, sans-serif';
+      ctx.fillStyle = color || '#151816'; ctx.font = '900 ' + size + 'px Inter, "Segoe UI", Arial, sans-serif';
       var ptxt = tpSym(price); ctx.fillText(ptxt, x, y);
       if (old > price && old > 0) {
         var pw = ctx.measureText(ptxt).width;
-        ctx.fillStyle = '#777A82'; ctx.font = '600 ' + Math.round(size*.43) + 'px Inter, "Segoe UI", Arial, sans-serif';
-        var otxt = tpSym(old), ox = x + pw + 26; ctx.fillText(otxt, ox, y - 4);
-        ctx.strokeStyle = '#777A82'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(ox-3, y-size*.2); ctx.lineTo(ox+ctx.measureText(otxt).width+3, y-size*.2); ctx.stroke();
+        ctx.fillStyle = (color === '#FFFFFF' || color === '#F9FAFB') ? 'rgba(255,255,255,.68)' : '#5C655F';
+        ctx.font = '650 ' + Math.round(size*.38) + 'px Inter, "Segoe UI", Arial, sans-serif';
+        var otxt = tpSym(old), ox = x + pw + 24; ctx.fillText(otxt, ox, y - 5);
+        ctx.strokeStyle = ctx.fillStyle; ctx.lineWidth = Math.max(3, Math.round(size*.045)); ctx.beginPath(); ctx.moveTo(ox-2, y-size*.18); ctx.lineTo(ox+ctx.measureText(otxt).width+2, y-size*.18); ctx.stroke();
       }
     }
-    function tpDrawOffer(ctx, row, x, y) {
+    function tpDrawOffer(ctx, row, x, y, size) {
       var price = parseFloat(row.getAttribute('data-edit-price')) || 0;
       var old = parseFloat(row.getAttribute('data-edit-old')) || 0;
       if (!(old > price && old > 0)) return;
-      var label = 'AHORRA ' + Math.round((1-price/old)*100) + '%';
-      ctx.font = '800 27px Inter, "Segoe UI", Arial, sans-serif';
-      var w = ctx.measureText(label).width + 42;
-      ctx.fillStyle = '#D92D20'; tpRR(ctx, x, y, w, 54, 12); ctx.fill();
-      ctx.fillStyle = '#FFFFFF'; ctx.textBaseline = 'middle'; ctx.fillText(label, x+21, y+28); ctx.textBaseline = 'alphabetic';
+      size = size || 28;
+      var label = '−' + Math.round((1-price/old)*100) + '%  OFERTA';
+      ctx.font = '850 ' + size + 'px Inter, "Segoe UI", Arial, sans-serif';
+      var h = Math.round(size*2), w = ctx.measureText(label).width + Math.round(size*1.55);
+      // Antes era un naranja fijo (#B5461C) sin importar el color elegido —
+      // por eso el badge de oferta "no cambiaba" aunque se cambiara todo lo
+      // demás. El borde blanco es solo por seguridad de contraste, para que
+      // se siga leyendo aunque quede sobre un fondo parecido al acento.
+      tpRR(ctx, x, y, w, h, Math.round(h*.24));
+      ctx.fillStyle = TPCARD_BIZ.accent2 || TPCARD_BIZ.accent; ctx.fill();
+      ctx.lineWidth = Math.max(2, size*.05); ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.stroke();
+      ctx.fillStyle = tpText(TPCARD_BIZ.accent2 || TPCARD_BIZ.accent); ctx.textBaseline = 'middle'; ctx.fillText(label, x+Math.round(size*.78), y+h/2+1); ctx.textBaseline = 'alphabetic';
+    }
+    function tpDrawBrand(ctx, x, y, maxW, light, size) {
+      var color = light ? '#FFFFFF' : '#151816';
+      var label = String(TPCARD_BIZ.name || 'Mi tienda');
+      size = size || 30;
+      ctx.fillStyle = color; ctx.font = '850 ' + size + 'px Inter, "Segoe UI", Arial, sans-serif';
+      while (ctx.measureText(label).width > maxW && label.length > 8) label = label.slice(0,-2).trim() + '…';
+      ctx.fillText(label, x, y);
+      ctx.fillStyle = light ? 'rgba(255,255,255,.82)' : '#5C655F';
+      ctx.font = '750 ' + Math.round(size*.4) + 'px Inter, "Segoe UI", Arial, sans-serif';
+      ctx.fillText('PIDE DIRECTO', x, y + Math.round(size*.8));
+    }
+    function tpDrawQR(ctx, x, y, size, lightLabel) {
+      ctx.fillStyle = '#FFFFFF'; tpRR(ctx,x,y,size,size,Math.round(size*.12)); ctx.fill();
+      if (TPCARD.qrImg) ctx.drawImage(TPCARD.qrImg,x+Math.round(size*.09),y+Math.round(size*.09),Math.round(size*.82),Math.round(size*.82));
+      else {
+        ctx.strokeStyle='#D1D5D1';ctx.lineWidth=4;tpRR(ctx,x+18,y+18,size-36,size-36,10);ctx.stroke();
+      }
+      ctx.fillStyle = lightLabel ? 'rgba(255,255,255,.78)' : '#5C655F';
+      ctx.font = '750 ' + Math.max(15,Math.round(size*.12)) + 'px Inter, "Segoe UI", Arial, sans-serif';
+      ctx.textAlign='center';ctx.fillText('ESCANEA',x+size/2,y+size+Math.round(size*.18));ctx.textAlign='left';
+    }
+    function tpDrawImage(ctx, photo, x, y, w, h, r) {
+      ctx.save(); tpRR(ctx,x,y,w,h,r); ctx.clip();
+      if(photo) tpCover(ctx,photo,x,y,w,h); else tpDrawPlaceholder(ctx,x,y,w,h);
+      ctx.restore();
+    }
+    function tpCampaignPhoto(ctx, photo, w, h, darkFrom) {
+      if (photo) tpCover(ctx,photo,0,0,w,h); else tpDrawPlaceholder(ctx,0,0,w,h);
+      var shade=ctx.createLinearGradient(0,0,0,h);
+      shade.addColorStop(0,'rgba(8,12,10,.52)');
+      shade.addColorStop(Math.max(.2,Math.min(.8,darkFrom||.48)),'rgba(8,12,10,.04)');
+      shade.addColorStop(1,'rgba(8,12,10,.68)');
+      ctx.fillStyle=shade;ctx.fillRect(0,0,w,h);
+    }
+    function tpCampaignPanel(ctx, points, alpha) {
+      ctx.save();ctx.globalAlpha=(alpha == null ? 0.96 : alpha);ctx.fillStyle=TPCARD_BIZ.accent;
+      ctx.beginPath();ctx.moveTo(points[0][0],points[0][1]);
+      for(var i=1;i<points.length;i++)ctx.lineTo(points[i][0],points[i][1]);
+      ctx.closePath();ctx.fill();ctx.restore();
+    }
+    function tpCampaignName(ctx, name, x, y, maxW, size, lineH, lines, color) {
+      ctx.fillStyle=color;ctx.font='900 '+size+'px Inter, "Segoe UI", Arial, sans-serif';
+      return tpWrap(ctx,String(name||'').toUpperCase(),x,y,maxW,lineH,lines);
+    }
+    function tpCampaignCTA(ctx,x,y,color) {
+      ctx.fillStyle=color;ctx.font='850 21px Inter, "Segoe UI", Arial, sans-serif';
+      ctx.fillText('MÍRALO. ESCANEA. PÍDELO.',x,y);
     }
     function tpBuildFeed(photo) {
       var W=1080,H=1350,row=TPCARD.row,c=document.createElement('canvas'); c.width=W;c.height=H;
       var ctx=c.getContext('2d'), name=row.getAttribute('data-edit-name')||'', desc=row.getAttribute('data-edit-desc')||'';
-      ctx.fillStyle='#F4F2EC';ctx.fillRect(0,0,W,H);
-      ctx.fillStyle=TPCARD_BIZ.accent;ctx.fillRect(0,0,W,218);
-      ctx.fillStyle=tpText(TPCARD_BIZ.accent);ctx.font='800 42px Inter, "Segoe UI", Arial, sans-serif';ctx.fillText(TPCARD_BIZ.name,64,120);
-      ctx.font='650 22px Inter, "Segoe UI", Arial, sans-serif';ctx.globalAlpha=.78;ctx.fillText('Pide en línea · Entrega fácil',64,158);ctx.globalAlpha=1;
-      var px=56,py=178,pw=968,ph=640;ctx.save();tpRR(ctx,px,py,pw,ph,26);ctx.clip(); if(photo)tpCover(ctx,photo,px,py,pw,ph);else tpDrawPlaceholder(ctx,px,py,pw,ph);ctx.restore();
-      tpDrawOffer(ctx,row,82,206);
-      ctx.fillStyle='#101828';ctx.font='850 56px Inter, "Segoe UI", Arial, sans-serif';var lines=tpWrap(ctx,name,64,904,952,66,2);
-      var descY=904+(lines-1)*66+55;
-      if(desc){ctx.fillStyle='#535862';ctx.font='500 29px Inter, "Segoe UI", Arial, sans-serif';tpWrap(ctx,desc,64,descY,720,40,2);}
-      tpDrawPrice(ctx,row,64,1145,78);
-      ctx.fillStyle=TPCARD_BIZ.accent;tpRR(ctx,56,1207,968,103,20);ctx.fill();
-      ctx.fillStyle=tpText(TPCARD_BIZ.accent);ctx.textAlign='center';
-      ctx.font='800 33px Inter, "Segoe UI", Arial, sans-serif';ctx.fillText('PIDE AHORA',540,1249);
-      ctx.font='600 21px Inter, "Segoe UI", Arial, sans-serif';ctx.globalAlpha=.85;ctx.fillText('Enlace directo en la descripción',540,1281);ctx.globalAlpha=1;
-      ctx.textAlign='left';
+      tpCampaignPhoto(ctx,photo,W,H,.42);
+      tpCampaignPanel(ctx,[[0,715],[1080,570],[1080,1350],[0,1350]],.96);
+      var ink=tpText(TPCARD_BIZ.accent);
+      tpDrawBrand(ctx,62,82,590,true,30);tpDrawOffer(ctx,row,770,54,30);
+      var lines=tpCampaignName(ctx,name,62,830,880,76,82,3,ink);
+      var descY=830+(lines-1)*82+56;
+      if(desc){ctx.fillStyle=ink;ctx.globalAlpha=.76;ctx.font='600 27px Inter, "Segoe UI", Arial, sans-serif';tpWrap(ctx,desc,64,descY,700,38,2);ctx.globalAlpha=1;}
+      tpDrawPrice(ctx,row,62,1190,102,ink);
+      tpCampaignCTA(ctx,64,1281,ink);tpDrawQR(ctx,854,1110,150,ink==='#F9FAFB');
       return c;
     }
     function tpBuildStory(photo) {
       var W=1080,H=1920,row=TPCARD.row,c=document.createElement('canvas'); c.width=W;c.height=H;
       var ctx=c.getContext('2d'),name=row.getAttribute('data-edit-name')||'',desc=row.getAttribute('data-edit-desc')||'';
-      ctx.fillStyle=TPCARD_BIZ.accent;ctx.fillRect(0,0,W,H);
-      ctx.fillStyle=tpText(TPCARD_BIZ.accent);ctx.font='800 44px Inter, "Segoe UI", Arial, sans-serif';ctx.fillText(TPCARD_BIZ.name,64,140);
-      ctx.font='650 23px Inter, "Segoe UI", Arial, sans-serif';ctx.globalAlpha=.78;ctx.fillText('Disponible para pedir en línea',64,177);ctx.globalAlpha=1;
-      var px=48,py=232,pw=984,ph=930;ctx.save();tpRR(ctx,px,py,pw,ph,30);ctx.clip();if(photo)tpCover(ctx,photo,px,py,pw,ph);else tpDrawPlaceholder(ctx,px,py,pw,ph);ctx.restore();
-      tpDrawOffer(ctx,row,78,264);
-      ctx.fillStyle='#F4F2EC';ctx.fillRect(0,1128,W,792);
-      ctx.fillStyle='#101828';ctx.font='850 64px Inter, "Segoe UI", Arial, sans-serif';var lines=tpWrap(ctx,name,64,1252,952,76,3);
-      var descY=1252+(lines-1)*76+58;
-      if(desc){ctx.fillStyle='#535862';ctx.font='500 31px Inter, "Segoe UI", Arial, sans-serif';tpWrap(ctx,desc,64,descY,880,43,2);}
-      tpDrawPrice(ctx,row,64,1585,82);
-      ctx.fillStyle=TPCARD_BIZ.accent;tpRR(ctx,56,1652,968,204,24);ctx.fill();
-      ctx.fillStyle=tpText(TPCARD_BIZ.accent);ctx.textAlign='center';
-      ctx.font='850 42px Inter, "Segoe UI", Arial, sans-serif';ctx.fillText('PÍDELO HOY',540,1742);
-      ctx.font='550 25px Inter, "Segoe UI", Arial, sans-serif';ctx.globalAlpha=.85;ctx.fillText('Abre el enlace directo para pedir',540,1790);ctx.globalAlpha=1;
-      ctx.textAlign='left';
+      tpCampaignPhoto(ctx,photo,W,H,.46);
+      tpCampaignPanel(ctx,[[0,1050],[1080,850],[1080,1920],[0,1920]],.96);
+      var ink=tpText(TPCARD_BIZ.accent);
+      tpDrawBrand(ctx,64,152,660,true,34);tpDrawOffer(ctx,row,748,112,30);
+      var lines=tpCampaignName(ctx,name,64,1210,890,86,94,4,ink);
+      var descY=1210+(lines-1)*94+62;
+      if(desc){ctx.fillStyle=ink;ctx.globalAlpha=.76;ctx.font='600 29px Inter, "Segoe UI", Arial, sans-serif';tpWrap(ctx,desc,66,descY,710,42,2);ctx.globalAlpha=1;}
+      tpDrawPrice(ctx,row,64,1538,128,ink);tpDrawQR(ctx,836,1388,168,ink==='#F9FAFB');
+      tpCampaignCTA(ctx,66,1784,ink);
       return c;
     }
     // Cuadrada 1:1 — misma composición que la publicación 4:5 pero recortada
@@ -2542,21 +2706,15 @@
     function tpBuildSquare(photo) {
       var W=1080,H=1080,row=TPCARD.row,c=document.createElement('canvas'); c.width=W;c.height=H;
       var ctx=c.getContext('2d'), name=row.getAttribute('data-edit-name')||'', desc=row.getAttribute('data-edit-desc')||'';
-      ctx.fillStyle='#F4F2EC';ctx.fillRect(0,0,W,H);
-      ctx.fillStyle=TPCARD_BIZ.accent;ctx.fillRect(0,0,W,178);
-      ctx.fillStyle=tpText(TPCARD_BIZ.accent);ctx.font='800 38px Inter, "Segoe UI", Arial, sans-serif';ctx.fillText(TPCARD_BIZ.name,54,100);
-      ctx.font='650 20px Inter, "Segoe UI", Arial, sans-serif';ctx.globalAlpha=.78;ctx.fillText('Pide en línea · Entrega fácil',54,134);ctx.globalAlpha=1;
-      var px=48,py=146,pw=984,ph=468;ctx.save();tpRR(ctx,px,py,pw,ph,24);ctx.clip(); if(photo)tpCover(ctx,photo,px,py,pw,ph);else tpDrawPlaceholder(ctx,px,py,pw,ph);ctx.restore();
-      tpDrawOffer(ctx,row,74,172);
-      ctx.fillStyle='#101828';ctx.font='800 44px Inter, "Segoe UI", Arial, sans-serif';var lines=tpWrap(ctx,name,54,684,972,52,2);
-      var descY=684+(lines-1)*52+42;
-      if(desc){ctx.fillStyle='#535862';ctx.font='500 25px Inter, "Segoe UI", Arial, sans-serif';tpWrap(ctx,desc,54,descY,700,34,1);}
-      tpDrawPrice(ctx,row,54,868,62);
-      ctx.fillStyle=TPCARD_BIZ.accent;tpRR(ctx,48,918,984,86,18);ctx.fill();
-      ctx.fillStyle=tpText(TPCARD_BIZ.accent);ctx.textAlign='center';
-      ctx.font='800 27px Inter, "Segoe UI", Arial, sans-serif';ctx.fillText('PIDE AHORA',540,955);
-      ctx.font='600 18px Inter, "Segoe UI", Arial, sans-serif';ctx.globalAlpha=.85;ctx.fillText('Enlace directo en la descripción',540,982);ctx.globalAlpha=1;
-      ctx.textAlign='left';
+      tpCampaignPhoto(ctx,photo,W,H,.43);
+      tpCampaignPanel(ctx,[[0,625],[1080,490],[1080,1080],[0,1080]],.96);
+      var ink=tpText(TPCARD_BIZ.accent);
+      tpDrawBrand(ctx,58,78,590,true,29);tpDrawOffer(ctx,row,772,50,28);
+      var lines=tpCampaignName(ctx,name,58,738,850,66,72,3,ink);
+      var descY=738+(lines-1)*72+45;
+      if(desc){ctx.fillStyle=ink;ctx.globalAlpha=.75;ctx.font='600 24px Inter, "Segoe UI", Arial, sans-serif';tpWrap(ctx,desc,60,descY,650,34,1);ctx.globalAlpha=1;}
+      tpDrawPrice(ctx,row,58,982,91,ink);tpDrawQR(ctx,850,838,144,ink==='#F9FAFB');
+      tpCampaignCTA(ctx,60,1042,ink);
       return c;
     }
     // Horizontal 1.91:1 — composición partida (foto a un lado, texto al otro)
@@ -2566,29 +2724,469 @@
     function tpBuildLandscape(photo) {
       var W=1200,H=628,row=TPCARD.row,c=document.createElement('canvas'); c.width=W;c.height=H;
       var ctx=c.getContext('2d'), name=row.getAttribute('data-edit-name')||'', desc=row.getAttribute('data-edit-desc')||'';
-      ctx.fillStyle='#F4F2EC';ctx.fillRect(0,0,W,H);
-      var pw=560;
-      ctx.save();ctx.beginPath();ctx.rect(0,0,pw,H);ctx.clip(); if(photo)tpCover(ctx,photo,0,0,pw,H);else tpDrawPlaceholder(ctx,0,0,pw,H);ctx.restore();
-      tpDrawOffer(ctx,row,26,26);
-      var tx=pw+48,tw=W-pw-48-48;
-      ctx.fillStyle='#101828';ctx.font='800 28px Inter, "Segoe UI", Arial, sans-serif';ctx.fillText(TPCARD_BIZ.name,tx,68);
-      ctx.fillStyle='#535862';ctx.font='650 17px Inter, "Segoe UI", Arial, sans-serif';ctx.fillText('Pide en línea · Entrega fácil',tx,94);
-      ctx.fillStyle='#101828';ctx.font='800 42px Inter, "Segoe UI", Arial, sans-serif';var lines=tpWrap(ctx,name,tx,192,tw,48,2);
-      var descY=192+(lines-1)*48+38;
-      if(desc){ctx.fillStyle='#535862';ctx.font='500 22px Inter, "Segoe UI", Arial, sans-serif';tpWrap(ctx,desc,tx,descY,tw,30,2);}
-      tpDrawPrice(ctx,row,tx,432,54);
-      ctx.fillStyle=TPCARD_BIZ.accent;tpRR(ctx,tx,478,tw,70,16);ctx.fill();
-      ctx.fillStyle=tpText(TPCARD_BIZ.accent);ctx.font='800 21px Inter, "Segoe UI", Arial, sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('PIDE AHORA · ENLACE DIRECTO',tx+tw/2,478+35);ctx.textAlign='left';ctx.textBaseline='alphabetic';
+      tpCampaignPhoto(ctx,photo,W,H,.36);
+      tpCampaignPanel(ctx,[[540,0],[1200,0],[1200,628],[450,628]],.96);
+      var ink=tpText(TPCARD_BIZ.accent),tx=650,tw=485;
+      tpDrawBrand(ctx,tx,68,tw,ink==='#F9FAFB',27);tpDrawOffer(ctx,row,42,42,23);
+      var lines=tpCampaignName(ctx,name,tx,190,tw,48,53,3,ink);
+      var descY=190+(lines-1)*53+35;
+      if(desc){ctx.fillStyle=ink;ctx.globalAlpha=.74;ctx.font='600 19px Inter, "Segoe UI", Arial, sans-serif';tpWrap(ctx,desc,tx,descY,390,27,2);ctx.globalAlpha=1;}
+      tpDrawPrice(ctx,row,tx,493,66,ink);tpCampaignCTA(ctx,tx,565,ink);tpDrawQR(ctx,1032,430,118,ink==='#F9FAFB');
       return c;
     }
 
-    var TP_BUILDERS = { square: tpBuildSquare, feed: tpBuildFeed, story: tpBuildStory, landscape: tpBuildLandscape };
+    // ============================================================
+    // Estilos adicionales — "diagonal" (arriba) tiene un diseño afinado a mano
+    // por formato; estos tres son UNA sola función cada uno que se adapta al
+    // ancho/alto que le toque (cuadrada, feed, historia u horizontal) en vez
+    // de repetir 4 variantes — mismo resultado, un tercio del código.
+    // ============================================================
+    // Texto centrado que se encoge hasta caber en maxW (para el nombre
+    // gigante de fondo — si no, un nombre largo se desbordaba del lienzo).
+    function tpFitCenterText(ctx, text, cx, y, maxW, startSize, minSize, weight) {
+      var size = startSize;
+      ctx.textAlign = 'center';
+      do {
+        ctx.font = (weight || 900) + ' ' + Math.round(size) + 'px Inter, "Segoe UI", Arial, sans-serif';
+        if (ctx.measureText(text).width <= maxW || size <= minSize) break;
+        size -= 4;
+      } while (true);
+      ctx.fillText(text, cx, y);
+      ctx.textAlign = 'left';
+      return size;
+    }
+    function tpBuildGigante(photo, W, H) {
+      var row = TPCARD.row, c = document.createElement('canvas'); c.width = W; c.height = H;
+      var ctx = c.getContext('2d'), name = row.getAttribute('data-edit-name') || '';
+      var wide = W > H * 1.3;
+      // Antes el color secundario no se usaba aquí — el fondo solo mezclaba
+      // el principal con negro, así que "Secundario" no cambiaba nada visible.
+      var bg = ctx.createLinearGradient(0, 0, wide ? W : 0, wide ? 0 : H);
+      bg.addColorStop(0, tpMix(TPCARD_BIZ.accent, '#0B0D10', .8));
+      bg.addColorStop(1, tpMix(TPCARD_BIZ.accent2 || TPCARD_BIZ.accent, '#0B0D10', .85));
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+
+      // Tipografía enorme detrás del producto — solo la primera palabra (efecto
+      // póster) y se encoge hasta caber, nunca se desborda del lienzo.
+      var bigWord = String(name || 'PRODUCTO').trim().split(/\s+/)[0].toUpperCase();
+      ctx.save(); ctx.globalAlpha = .15; ctx.fillStyle = '#FFFFFF';
+      tpFitCenterText(ctx, bigWord, W / 2, wide ? H * .58 : H * .28, W * .92, (wide ? H : W) * .34, 40, 900);
+      ctx.restore();
+
+      var ink = '#FFFFFF';
+      if (wide) {
+        tpDrawBrand(ctx, W * .05, H * .14, W * .34, true, Math.round(H * .06));
+        var ph = H * 1.14, pw = ph, px = W * .52, py = (H - ph) / 2;
+        ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.55)'; ctx.shadowBlur = H * .1;
+        tpDrawImage(ctx, photo, px, py, pw, pw, Math.round(H * .05));
+        ctx.restore();
+        tpDrawOffer(ctx, row, px, H * .06, Math.round(H * .05));
+        tpDrawPrice(ctx, row, W * .05, H * .92, Math.round(H * .16), ink);
+      } else {
+        var pw2 = W * 1.08, ph2 = H * .48, px2 = (W - pw2) / 2, py2 = H * .32;
+        ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.55)'; ctx.shadowBlur = W * .06;
+        tpDrawImage(ctx, photo, px2, py2, pw2, ph2, Math.round(H * .03));
+        ctx.restore();
+        tpDrawBrand(ctx, W * .055, H * .09, W * .55, true, Math.round(W * .03));
+        tpDrawOffer(ctx, row, W * .055, py2 - H * .07, Math.round(W * .026));
+        tpDrawPrice(ctx, row, W * .055, py2 + ph2 + H * .11, Math.round(W * .1), ink);
+        tpDrawQR(ctx, W - W * .055 - H * .1, py2 + ph2 + H * .03, Math.round(H * .1), true);
+      }
+      return c;
+    }
+
+    function tpBuildSpotlight(photo, W, H) {
+      var row = TPCARD.row, c = document.createElement('canvas'); c.width = W; c.height = H;
+      var ctx = c.getContext('2d'), name = row.getAttribute('data-edit-name') || '';
+      var wide = W > H * 1.3;
+      ctx.fillStyle = '#0A0A0C'; ctx.fillRect(0, 0, W, H);
+      var cx = wide ? W * .68 : W * .5, cy = wide ? H * .5 : H * .4;
+      // Antes el color secundario no se usaba aquí — el resplandor solo
+      // salía del principal, "Secundario" no cambiaba nada visible.
+      var glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(W, H) * .42);
+      glow.addColorStop(0, tpRgba(TPCARD_BIZ.accent, .5));
+      glow.addColorStop(.55, tpRgba(TPCARD_BIZ.accent2 || TPCARD_BIZ.accent, .28));
+      glow.addColorStop(1, 'rgba(10,10,12,0)');
+      ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
+
+      var box = (wide ? H : Math.min(W, H)) * .6;
+      var bx = cx - box / 2, by = cy - box / 2;
+      ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = box * .12;
+      tpDrawImage(ctx, photo, bx, by, box, box, Math.round(box * .06));
+      ctx.restore();
+
+      var tx = wide ? W * .06 : W / 2, ta = wide ? 'left' : 'center';
+      ctx.textAlign = ta;
+      ctx.fillStyle = 'rgba(255,255,255,.72)'; ctx.font = '750 ' + Math.round((wide ? H : W) * .026) + 'px Inter, "Segoe UI", Arial, sans-serif';
+      ctx.fillText(String(TPCARD_BIZ.name || 'Mi tienda').toUpperCase(), tx, wide ? H * .16 : H * .08);
+
+      var nameY = wide ? H * .32 : by + box + H * .1;
+      ctx.fillStyle = '#FFFFFF'; ctx.font = '800 ' + Math.round((wide ? H : W) * .055) + 'px Inter, "Segoe UI", Arial, sans-serif';
+      var nLines = tpWrap(ctx, String(name || '').toUpperCase(), tx, nameY, wide ? W * .38 : W * .82, Math.round((wide ? H : W) * .062), 2);
+
+      var priceY = nameY + nLines * Math.round((wide ? H : W) * .062) + (wide ? H * .08 : H * .05);
+      ctx.fillStyle = TPCARD_BIZ.accent; ctx.font = '900 ' + Math.round((wide ? H : W) * .075) + 'px Inter, "Segoe UI", Arial, sans-serif';
+      ctx.fillText(tpSym(parseFloat(row.getAttribute('data-edit-price')) || 0), tx, priceY);
+      ctx.textAlign = 'left';
+      var qrSize = Math.round((wide ? H : Math.min(W, H)) * .12);
+      tpDrawQR(ctx, wide ? W * .06 : W - qrSize - W * .06, wide ? H * .74 : H - qrSize - H * .05, qrSize, true);
+      return c;
+    }
+
+    function tpBuildCollage(photo, W, H) {
+      var row = TPCARD.row, c = document.createElement('canvas'); c.width = W; c.height = H;
+      var ctx = c.getContext('2d'), name = row.getAttribute('data-edit-name') || '';
+      var wide = W > H * 1.3;
+      ctx.fillStyle = TPCARD_BIZ.accent2 || TPCARD_BIZ.accent; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = TPCARD_BIZ.accent;
+      if (wide) ctx.fillRect(0, 0, W * .56, H); else ctx.fillRect(0, 0, W, H * .56);
+      ctx.save(); ctx.globalAlpha = .07; ctx.fillStyle = '#FFFFFF';
+      for (var i = -H; i < W + H; i += Math.round(W * .09)) { ctx.save(); ctx.translate(i, 0); ctx.rotate(-.4); ctx.fillRect(0, -H, Math.round(W * .026), H * 3); ctx.restore(); }
+      ctx.restore();
+
+      var boxW = wide ? W * .38 : W * .7, boxH = wide ? H * .76 : boxW * .8;
+      var bx = wide ? W * .54 : (W - boxW) / 2, by = wide ? (H - boxH) / 2 : H * .16;
+      ctx.save();
+      ctx.translate(bx + boxW / 2, by + boxH / 2); ctx.rotate(-3 * Math.PI / 180); ctx.translate(-(bx + boxW / 2), -(by + boxH / 2));
+      var pad = Math.round(W * .014);
+      ctx.fillStyle = '#FFFFFF'; tpRR(ctx, bx - pad, by - pad, boxW + pad * 2, boxH + pad * 2, Math.round(W * .02)); ctx.fill();
+      tpDrawImage(ctx, photo, bx, by, boxW, boxH, Math.round(W * .015));
+      ctx.restore();
+
+      var price = parseFloat(row.getAttribute('data-edit-price')) || 0;
+      var stickerR = Math.round(Math.min(W, H) * .13);
+      var sx = bx + boxW - stickerR * .35, sy = by + boxH - stickerR * .35;
+      ctx.save(); ctx.translate(sx, sy); ctx.rotate(8 * Math.PI / 180);
+      // Antes era un rosa fijo (#E11D48) — no cambiaba aunque se eligiera
+      // otro color. Usa el acento principal (el fondo ya usa el secundario
+      // por bloques) para que el sticker sí responda al selector de colores.
+      ctx.fillStyle = TPCARD_BIZ.accent; ctx.beginPath(); ctx.arc(0, 0, stickerR, 0, Math.PI * 2); ctx.fill();
+      var stickerInk = tpText(TPCARD_BIZ.accent);
+      ctx.fillStyle = stickerInk; ctx.textAlign = 'center';
+      ctx.font = '800 ' + Math.round(stickerR * .2) + 'px Inter, "Segoe UI", Arial, sans-serif'; ctx.fillText('¡OFERTA!', 0, -Math.round(stickerR * .3));
+      ctx.font = '900 ' + Math.round(stickerR * .4) + 'px Inter, "Segoe UI", Arial, sans-serif'; ctx.fillText(tpSym(price), 0, Math.round(stickerR * .18));
+      ctx.restore(); ctx.textAlign = 'left';
+
+      tpDrawBrand(ctx, W * .05, H * .09, W * .55, true, Math.round(W * .03));
+      var nameY = wide ? H * .84 : by + boxH + H * .1, nameX = wide ? W * .05 : W * .06;
+      ctx.fillStyle = '#FFFFFF'; ctx.font = '900 ' + Math.round(W * .042) + 'px Inter, "Segoe UI", Arial, sans-serif';
+      tpWrap(ctx, String(name || '').toUpperCase(), nameX, nameY, wide ? W * .42 : W * .88, Math.round(W * .047), 2);
+
+      var qrSize = Math.round(H * .11);
+      tpDrawQR(ctx, W - qrSize - W * .05, H * .06, qrSize, true);
+      return c;
+    }
+
+    // Editorial elegante: mucho aire en blanco, tipografía serif, composición
+    // asimétrica (foto a un lado, texto al otro) — nada de paneles de color.
+    function tpBuildEditorial(photo, W, H) {
+      var row = TPCARD.row, c = document.createElement('canvas'); c.width = W; c.height = H;
+      var ctx = c.getContext('2d'), name = row.getAttribute('data-edit-name') || '', desc = row.getAttribute('data-edit-desc') || '';
+      var wide = W > H * 1.3, ink = '#20221F', margin = W * .07;
+      ctx.fillStyle = '#F7F4EE'; ctx.fillRect(0, 0, W, H);
+      var serif = 'Georgia, "Times New Roman", serif';
+      if (wide) {
+        var pw = W * .4, ph = H * .72, px = W - margin - pw, py = (H - ph) / 2;
+        tpDrawImage(ctx, photo, px, py, pw, ph, Math.round(W * .006));
+        ctx.fillStyle = ink; ctx.font = '650 ' + Math.round(H * .05) + 'px ' + serif;
+        ctx.fillText(String(TPCARD_BIZ.name || 'Mi tienda').toUpperCase(), margin, H * .18);
+        // Antes la línea era solo del color principal — el secundario no se
+        // veía en este estilo. Un degradado usa los dos sin perder la
+        // sobriedad del diseño editorial (nada de bloques de color grandes).
+        var ruleGrad = ctx.createLinearGradient(margin, 0, margin + W * .14, 0);
+        ruleGrad.addColorStop(0, TPCARD_BIZ.accent); ruleGrad.addColorStop(1, TPCARD_BIZ.accent2 || TPCARD_BIZ.accent);
+        ctx.strokeStyle = ruleGrad; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(margin, H * .23); ctx.lineTo(margin + W * .14, H * .23); ctx.stroke();
+        ctx.font = '500 ' + Math.round(H * .09) + 'px ' + serif; ctx.fillStyle = ink;
+        var lines = tpWrap(ctx, name, margin, H * .42, W * .42, Math.round(H * .1), 3);
+        var priceY = H * .42 + lines * Math.round(H * .1) + H * .12;
+        ctx.font = '400 ' + Math.round(H * .055) + 'px ' + serif; ctx.fillStyle = TPCARD_BIZ.accent;
+        ctx.fillText(tpSym(parseFloat(row.getAttribute('data-edit-price')) || 0), margin, priceY);
+        tpDrawQR(ctx, margin, H * .78, Math.round(H * .13), false);
+      } else {
+        var pw2 = W * .6, ph2 = H * .4, px2 = W - margin - pw2, py2 = H * .1;
+        tpDrawImage(ctx, photo, px2, py2, pw2, ph2, Math.round(W * .006));
+        ctx.fillStyle = ink; ctx.font = '650 ' + Math.round(W * .026) + 'px ' + serif;
+        ctx.fillText(String(TPCARD_BIZ.name || 'Mi tienda').toUpperCase(), margin, H * .08);
+        var ruleGrad2 = ctx.createLinearGradient(margin, 0, W - margin, 0);
+        ruleGrad2.addColorStop(0, TPCARD_BIZ.accent); ruleGrad2.addColorStop(1, TPCARD_BIZ.accent2 || TPCARD_BIZ.accent);
+        ctx.strokeStyle = ruleGrad2; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(margin, py2 + ph2 + H * .05); ctx.lineTo(W - margin, py2 + ph2 + H * .05); ctx.stroke();
+        ctx.font = '500 ' + Math.round(W * .06) + 'px ' + serif; ctx.fillStyle = ink;
+        var lines2 = tpWrap(ctx, name, margin, py2 + ph2 + H * .11, W * .86, Math.round(W * .066), 2);
+        var descY = py2 + ph2 + H * .11 + lines2 * Math.round(W * .066) + H * .025;
+        if (desc) { ctx.globalAlpha = .62; ctx.font = '400 ' + Math.round(W * .026) + 'px ' + serif; tpWrap(ctx, desc, margin, descY, W * .86, Math.round(W * .038), 2); ctx.globalAlpha = 1; }
+        ctx.font = '400 ' + Math.round(W * .07) + 'px ' + serif; ctx.fillStyle = TPCARD_BIZ.accent;
+        ctx.fillText(tpSym(parseFloat(row.getAttribute('data-edit-price')) || 0), margin, H * .93);
+        tpDrawQR(ctx, W - margin - Math.round(W * .12), H * .82, Math.round(W * .12), false);
+      }
+      return c;
+    }
+
+    // Pop energético: bloques de color intensos, formas dinámicas y texto
+    // extragrande — la vitrina "ruidosa" a propósito, opuesta a la editorial.
+    function tpBuildPop(photo, W, H) {
+      var row = TPCARD.row, c = document.createElement('canvas'); c.width = W; c.height = H;
+      var ctx = c.getContext('2d'), name = row.getAttribute('data-edit-name') || '';
+      var wide = W > H * 1.3, mn = Math.min(W, H);
+      ctx.fillStyle = TPCARD_BIZ.accent; ctx.fillRect(0, 0, W, H);
+      var grad = ctx.createLinearGradient(0, 0, W, H);
+      grad.addColorStop(0, tpRgba(TPCARD_BIZ.accent2 || TPCARD_BIZ.accent, .85));
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+      ctx.save(); ctx.globalAlpha = .16; ctx.fillStyle = '#FFFFFF';
+      [[.1, .12, .1], [.92, .2, .07], [.06, .88, .08], [.92, .88, .06]].forEach(function (p) {
+        ctx.beginPath(); ctx.arc(W * p[0], H * p[1], mn * p[2], 0, Math.PI * 2); ctx.fill();
+      });
+      ctx.restore();
+
+      var box = wide ? H * .68 : mn * .56;
+      var bx = wide ? W * .56 : (W - box) / 2, by = wide ? (H - box) / 2 : H * .18;
+      ctx.save();
+      ctx.translate(bx + box / 2, by + box / 2); ctx.rotate(2.5 * Math.PI / 180); ctx.translate(-(bx + box / 2), -(by + box / 2));
+      var pad = Math.round(mn * .018);
+      ctx.fillStyle = '#FFFFFF'; tpRR(ctx, bx - pad, by - pad, box + pad * 2, box + pad * 2, Math.round(mn * .03)); ctx.fill();
+      tpDrawImage(ctx, photo, bx, by, box, box, Math.round(mn * .025));
+      ctx.restore();
+
+      var bigWord = String(name || 'PRODUCTO').trim().split(/\s+/)[0].toUpperCase();
+      ctx.fillStyle = '#FFFFFF';
+      if (wide) {
+        ctx.save(); ctx.translate(W * .27, H * .2); ctx.rotate(-3 * Math.PI / 180);
+        tpFitCenterText(ctx, bigWord, 0, 0, W * .46, H * .3, 40, 900);
+        ctx.restore();
+        tpDrawBrand(ctx, W * .05, H * .84, W * .3, true, Math.round(H * .05));
+        tpDrawPrice(ctx, row, bx, by + box + H * .07, Math.round(H * .12), '#FFFFFF');
+      } else {
+        ctx.save(); ctx.translate(W * .5, by * .82); ctx.rotate(-2 * Math.PI / 180);
+        tpFitCenterText(ctx, bigWord, 0, 0, W * .86, W * .19, 36, 900);
+        ctx.restore();
+        tpDrawBrand(ctx, W * .06, H * .09, W * .5, true, Math.round(W * .03));
+        tpDrawPrice(ctx, row, W * .06, by + box + H * .1, Math.round(W * .095), '#FFFFFF');
+        tpDrawQR(ctx, W - W * .06 - Math.round(H * .095), by + box + H * .02, Math.round(H * .095), true);
+      }
+      return c;
+    }
+
+    // Duotono: la foto se pinta en gris y se tiñe con los dos tonos de la
+    // tienda (blend "color") — mismo truco que usan las portadas de disco.
+    function tpBuildDuotono(photo, W, H) {
+      var row = TPCARD.row, c = document.createElement('canvas'); c.width = W; c.height = H;
+      var ctx = c.getContext('2d'), name = row.getAttribute('data-edit-name') || '';
+      var wide = W > H * 1.3;
+      ctx.save();
+      try { ctx.filter = 'grayscale(1) contrast(1.05)'; } catch (e) {}
+      if (photo) tpCover(ctx, photo, 0, 0, W, H); else tpDrawPlaceholder(ctx, 0, 0, W, H);
+      ctx.filter = 'none'; ctx.restore();
+      var duo = ctx.createLinearGradient(0, 0, W, H);
+      duo.addColorStop(0, TPCARD_BIZ.accent); duo.addColorStop(1, TPCARD_BIZ.accent2 || TPCARD_BIZ.accent);
+      ctx.save(); ctx.globalCompositeOperation = 'color'; ctx.fillStyle = duo; ctx.fillRect(0, 0, W, H); ctx.restore();
+      var shade = ctx.createLinearGradient(0, 0, 0, H);
+      shade.addColorStop(wide ? 0 : .55, 'rgba(0,0,0,0)'); shade.addColorStop(1, 'rgba(0,0,0,.62)');
+      ctx.fillStyle = shade; ctx.fillRect(0, 0, W, H);
+
+      var margin = W * .06;
+      tpDrawBrand(ctx, margin, H * .09, W * .5, true, Math.round((wide ? H : W) * .03));
+      var nameY = wide ? H * .62 : H * .78;
+      ctx.fillStyle = '#FFFFFF'; ctx.font = '800 ' + Math.round((wide ? H : W) * .056) + 'px Inter, "Segoe UI", Arial, sans-serif';
+      var lines = tpWrap(ctx, String(name || '').toUpperCase(), margin, nameY, W * .84, Math.round((wide ? H : W) * .062), 2);
+      var priceY = nameY + lines * Math.round((wide ? H : W) * .062) + H * .06;
+      ctx.font = '900 ' + Math.round((wide ? H : W) * .075) + 'px Inter, "Segoe UI", Arial, sans-serif';
+      ctx.fillText(tpSym(parseFloat(row.getAttribute('data-edit-price')) || 0), margin, priceY);
+      var qrSize = Math.round((wide ? H : W) * .11);
+      tpDrawQR(ctx, W - margin - qrSize, H - qrSize - H * .06, qrSize, true);
+      return c;
+    }
+
+    // Glow neón: fondo casi negro, resplandor de color detrás del producto y
+    // texto con el mismo resplandor — efecto vitrina de antro/gaming.
+    function tpBuildGlow(photo, W, H) {
+      var row = TPCARD.row, c = document.createElement('canvas'); c.width = W; c.height = H;
+      var ctx = c.getContext('2d'), name = row.getAttribute('data-edit-name') || '';
+      var wide = W > H * 1.3, mn = Math.min(W, H);
+      ctx.fillStyle = '#070708'; ctx.fillRect(0, 0, W, H);
+      var cx = wide ? W * .68 : W * .5, cy = wide ? H * .5 : H * .4;
+      var r = (wide ? H : mn) * .42;
+      var glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+      glow.addColorStop(0, tpRgba(TPCARD_BIZ.accent, .85));
+      glow.addColorStop(.6, tpRgba(TPCARD_BIZ.accent2 || TPCARD_BIZ.accent, .3));
+      glow.addColorStop(1, 'rgba(7,7,8,0)');
+      ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
+
+      var box = (wide ? H : mn) * .48;
+      ctx.save(); ctx.shadowColor = TPCARD_BIZ.accent; ctx.shadowBlur = box * .3;
+      tpDrawImage(ctx, photo, cx - box / 2, cy - box / 2, box, box, Math.round(box * .08));
+      ctx.restore();
+
+      var tx = wide ? W * .06 : W / 2, ta = wide ? 'left' : 'center';
+      ctx.textAlign = ta;
+      ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.font = '750 ' + Math.round((wide ? H : W) * .026) + 'px Inter, "Segoe UI", Arial, sans-serif';
+      ctx.fillText(String(TPCARD_BIZ.name || 'Mi tienda').toUpperCase(), tx, wide ? H * .16 : H * .08);
+
+      var nameY = wide ? H * .86 : cy + box / 2 + H * .1;
+      ctx.save(); ctx.shadowColor = TPCARD_BIZ.accent; ctx.shadowBlur = box * .12;
+      ctx.fillStyle = '#FFFFFF'; ctx.font = '800 ' + Math.round((wide ? H : W) * .046) + 'px Inter, "Segoe UI", Arial, sans-serif';
+      var lines = tpWrap(ctx, String(name || '').toUpperCase(), tx, nameY, wide ? W * .34 : W * .8, Math.round((wide ? H : W) * .052), 2);
+      ctx.restore();
+
+      var priceY = nameY + lines * Math.round((wide ? H : W) * .052) + H * .06;
+      ctx.save(); ctx.shadowColor = TPCARD_BIZ.accent2 || TPCARD_BIZ.accent; ctx.shadowBlur = box * .14;
+      ctx.fillStyle = TPCARD_BIZ.accent2 || TPCARD_BIZ.accent; ctx.font = '900 ' + Math.round((wide ? H : W) * .065) + 'px Inter, "Segoe UI", Arial, sans-serif';
+      ctx.fillText(tpSym(parseFloat(row.getAttribute('data-edit-price')) || 0), tx, priceY);
+      ctx.restore(); ctx.textAlign = 'left';
+      var qrSize = Math.round((wide ? H : mn) * .1);
+      tpDrawQR(ctx, wide ? W * .06 : W - qrSize - W * .06, wide ? H * .68 : H - qrSize - H * .05, qrSize, true);
+      return c;
+    }
+
+    // Levitación: fondo claro y aireado, el producto "flota" sobre una sombra
+    // suave en vez de apoyarse en algo — sensación limpia, casi de spa.
+    function tpBuildLevitacion(photo, W, H) {
+      var row = TPCARD.row, c = document.createElement('canvas'); c.width = W; c.height = H;
+      var ctx = c.getContext('2d'), name = row.getAttribute('data-edit-name') || '';
+      var wide = W > H * 1.3, mn = Math.min(W, H);
+      var bg = ctx.createLinearGradient(0, 0, 0, H);
+      bg.addColorStop(0, '#FFFFFF'); bg.addColorStop(1, tpRgba(TPCARD_BIZ.accent, .1));
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+
+      var cx = wide ? W * .68 : W * .5, cy = wide ? H * .42 : H * .32;
+      var box = (wide ? H : mn) * .42;
+      var shadowGrad = ctx.createRadialGradient(cx, cy + box * .62, box * .05, cx, cy + box * .62, box * .55);
+      shadowGrad.addColorStop(0, 'rgba(20,20,25,.2)'); shadowGrad.addColorStop(1, 'rgba(20,20,25,0)');
+      ctx.fillStyle = shadowGrad;
+      ctx.beginPath(); ctx.ellipse(cx, cy + box * .62, box * .5, box * .12, 0, 0, Math.PI * 2); ctx.fill();
+
+      ctx.save(); ctx.shadowColor = 'rgba(20,20,25,.16)'; ctx.shadowBlur = box * .1; ctx.shadowOffsetY = box * .05;
+      tpDrawImage(ctx, photo, cx - box / 2, cy - box / 2, box, box, Math.round(box * .07));
+      ctx.restore();
+
+      // Antes los dos círculos flotantes usaban el mismo color principal —
+      // el secundario no se veía reflejado en ningún lado de este estilo.
+      ctx.save(); ctx.globalAlpha = .45; ctx.fillStyle = TPCARD_BIZ.accent;
+      ctx.beginPath(); ctx.arc(cx - box * .56, cy - box * .48, box * .045, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = .32; ctx.fillStyle = TPCARD_BIZ.accent2 || TPCARD_BIZ.accent;
+      ctx.beginPath(); ctx.arc(cx + box * .58, cy - box * .34, box * .03, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+
+      var tx = wide ? W * .06 : W / 2, ta = wide ? 'left' : 'center';
+      ctx.textAlign = ta;
+      ctx.fillStyle = 'rgba(23,24,26,.55)'; ctx.font = '700 ' + Math.round((wide ? H : W) * .024) + 'px Inter, "Segoe UI", Arial, sans-serif';
+      ctx.fillText(String(TPCARD_BIZ.name || 'Mi tienda').toUpperCase(), tx, wide ? H * .16 : H * .08);
+
+      var nameY = wide ? H * .32 : cy + box * .68 + H * .1;
+      ctx.fillStyle = '#17181A'; ctx.font = '800 ' + Math.round((wide ? H : W) * .05) + 'px Inter, "Segoe UI", Arial, sans-serif';
+      var lines = tpWrap(ctx, String(name || '').toUpperCase(), tx, nameY, wide ? W * .32 : W * .8, Math.round((wide ? H : W) * .056), 2);
+
+      var priceY = nameY + lines * Math.round((wide ? H : W) * .056) + H * .055;
+      ctx.fillStyle = TPCARD_BIZ.accent; ctx.font = '900 ' + Math.round((wide ? H : W) * .062) + 'px Inter, "Segoe UI", Arial, sans-serif';
+      ctx.fillText(tpSym(parseFloat(row.getAttribute('data-edit-price')) || 0), tx, priceY);
+      ctx.textAlign = 'left';
+      var qrSize = Math.round((wide ? H : mn) * .1);
+      tpDrawQR(ctx, wide ? W * .06 : W - qrSize - W * .06, wide ? H * .72 : H - qrSize - H * .05, qrSize, false);
+      return c;
+    }
+
+    // Patrón de marca: fondo texturizado con círculos repetidos en los tonos
+    // de la tienda, foto en tarjeta blanca flotante — se siente "de catálogo".
+    function tpBuildPatron(photo, W, H) {
+      var row = TPCARD.row, c = document.createElement('canvas'); c.width = W; c.height = H;
+      var ctx = c.getContext('2d'), name = row.getAttribute('data-edit-name') || '';
+      var wide = W > H * 1.3, mn = Math.min(W, H);
+      ctx.fillStyle = '#F4F1EA'; ctx.fillRect(0, 0, W, H);
+      var step = Math.round(mn * .09);
+      ctx.save();
+      for (var yy = 0; yy < H + step; yy += step) {
+        for (var xx = 0; xx < W + step; xx += step) {
+          var offset = (Math.round(yy / step) % 2) ? step / 2 : 0;
+          ctx.globalAlpha = .12;
+          ctx.fillStyle = (Math.round((xx + offset) / step + yy / step) % 2) ? TPCARD_BIZ.accent : (TPCARD_BIZ.accent2 || TPCARD_BIZ.accent);
+          ctx.beginPath(); ctx.arc(xx + offset, yy, step * .16, 0, Math.PI * 2); ctx.fill();
+        }
+      }
+      ctx.restore();
+
+      var box = wide ? H * .58 : mn * .5, ink = '#20221F';
+      var bx = wide ? W * .56 : (W - box) / 2, by = wide ? (H - box) / 2 : H * .16;
+      ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.14)'; ctx.shadowBlur = box * .08; ctx.shadowOffsetY = box * .03;
+      var pad = Math.round(box * .05);
+      ctx.fillStyle = '#FFFFFF'; tpRR(ctx, bx - pad, by - pad, box + pad * 2, box + pad * 2, Math.round(box * .06)); ctx.fill();
+      ctx.restore();
+      tpDrawImage(ctx, photo, bx, by, box, box, Math.round(box * .05));
+
+      var tx = W * .07;
+      if (wide) {
+        tpDrawBrand(ctx, tx, H * .16, W * .4, false, Math.round(H * .045));
+        ctx.fillStyle = ink; ctx.font = '800 ' + Math.round(H * .06) + 'px Inter, "Segoe UI", Arial, sans-serif';
+        var lines = tpWrap(ctx, String(name || '').toUpperCase(), tx, H * .38, W * .4, Math.round(H * .07), 3);
+        var priceY = H * .38 + lines * Math.round(H * .07) + H * .09;
+        tpDrawPrice(ctx, row, tx, priceY, Math.round(H * .12), TPCARD_BIZ.accent);
+        tpDrawQR(ctx, tx, H * .82, Math.round(H * .12), false);
+      } else {
+        tpDrawBrand(ctx, tx, H * .09, W * .5, false, Math.round(W * .03));
+        var nameY = by + box + H * .1;
+        ctx.fillStyle = ink; ctx.font = '800 ' + Math.round(W * .052) + 'px Inter, "Segoe UI", Arial, sans-serif';
+        var lines2 = tpWrap(ctx, String(name || '').toUpperCase(), tx, nameY, W * .84, Math.round(W * .058), 2);
+        var priceY2 = nameY + lines2 * Math.round(W * .058) + H * .03;
+        tpDrawPrice(ctx, row, tx, priceY2, Math.round(W * .085), TPCARD_BIZ.accent);
+        tpDrawQR(ctx, W - tx - Math.round(H * .095), H * .06, Math.round(H * .095), false);
+      }
+      return c;
+    }
+
+    // Formato → { w, h } ya vive en TP_FORMATS; el estilo "diagonal" conserva
+    // sus 4 funciones afinadas a mano, los demás usan la misma función
+    // adaptativa para los 4 formatos.
+    var TP_STYLE_FNS = {
+      gigante: tpBuildGigante, spotlight: tpBuildSpotlight, collage: tpBuildCollage,
+      editorial: tpBuildEditorial, pop: tpBuildPop, duotono: tpBuildDuotono,
+      glow: tpBuildGlow, levitacion: tpBuildLevitacion, patron: tpBuildPatron
+    };
+    var TP_STYLE_BUILDERS = {
+      diagonal: { square: tpBuildSquare, feed: tpBuildFeed, story: tpBuildStory, landscape: tpBuildLandscape }
+    };
+    Object.keys(TP_STYLE_FNS).forEach(function (style) {
+      var fn = TP_STYLE_FNS[style];
+      var byFormat = {};
+      Object.keys(TP_FORMATS).forEach(function (fmt) {
+        byFormat[fmt] = function (photo) { return fn(photo, TP_FORMATS[fmt].w, TP_FORMATS[fmt].h); };
+      });
+      TP_STYLE_BUILDERS[style] = byFormat;
+    });
 
     function tpDibujar(photo) {
       if (!TPCARD.row) return;
       TPCARD.canvases = {};
-      Object.keys(TP_BUILDERS).forEach(function (key) { TPCARD.canvases[key] = TP_BUILDERS[key](photo); });
+      var builders = TP_STYLE_BUILDERS[TPCARD.style] || TP_STYLE_BUILDERS.diagonal;
+      Object.keys(builders).forEach(function (key) { TPCARD.canvases[key] = builders[key](photo); });
       tpRenderPreview();
+    }
+    function seleccionarEstiloTarjeta(style) {
+      TPCARD.style = TP_STYLE_BUILDERS[style] ? style : 'diagonal';
+      Object.keys(TP_STYLE_BUILDERS).forEach(function (key) {
+        var b = document.getElementById('tp-style-' + key);
+        if (b) b.classList.toggle('is-active', TPCARD.style === key);
+      });
+      tpDibujar(TPCARD.photoImg);
+    }
+    // Colores de la pieza — se mutan directo en TPCARD_BIZ porque los 10
+    // estilos ya leen sus colores de ahí; así no hay que tocar cada builder.
+    function tpSyncColorInputs() {
+      var a = document.getElementById('tp-color-accent'), a2 = document.getElementById('tp-color-accent2');
+      var ah = document.getElementById('tp-color-accent-hex'), a2h = document.getElementById('tp-color-accent2-hex');
+      if (a) a.value = TPCARD_BIZ.accent; if (a2) a2.value = TPCARD_BIZ.accent2;
+      if (ah) ah.textContent = TPCARD_BIZ.accent; if (a2h) a2h.textContent = TPCARD_BIZ.accent2;
+    }
+    function cambiarColorTarjeta(cual, hex) {
+      if (!/^#[0-9a-fA-F]{6}$/.test(hex || '')) return;
+      TPCARD_BIZ[cual] = hex;
+      tpSyncColorInputs();
+      tpDibujar(TPCARD.photoImg);
+    }
+    function restablecerColoresTarjeta() {
+      TPCARD_BIZ.accent = TPCARD_DEFAULT_COLORS.accent;
+      TPCARD_BIZ.accent2 = TPCARD_DEFAULT_COLORS.accent2;
+      tpSyncColorInputs();
+      tpDibujar(TPCARD.photoImg);
     }
     function tpRenderPreview() {
       var prev=document.getElementById('tp-preview'); if(!prev)return;
