@@ -77,51 +77,60 @@
           <p class="mt-3 text-[15px] max-w-md mx-auto" style="color:var(--ap-text-sec)">Son los mismos estilos de Configuración → Diseño del catálogo. Ya elegimos uno que suele funcionar para tu giro; puedes cambiarlo cuando quieras.</p>
         </div>
 
-        <!-- Vista previa en vivo: el teléfono cambia de color al instante con cada vibra que se elige -->
-        <div class="wz-phone-wrap wz-phone-wrap-sm" aria-hidden="true">
-          <div class="wz-phone" id="wz-phone-2">
-            <div class="wz-phone-notch"></div>
-            <div class="wz-phone-screen">
-              <header class="wz-phone-header" id="wz-phone-header-2">
-                <div class="wz-phone-nav">
-                  <span class="wz-phone-logo" id="wz-phone-logo-2"></span>
-                  <h3 id="wz-phone-name-2"><%= biz.name %></h3>
-                  <span class="wz-phone-menu"><svg viewBox="0 0 24 24"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg></span>
-                </div>
-                <p class="wz-phone-status">● Catálogo disponible</p>
-              </header>
-              <div class="wz-phone-body">
-                <div class="wz-phone-search">Buscar en tu tienda</div>
-                <div class="wz-phone-cats" id="wz-phone-cats-2"></div>
-                <div class="wz-phone-products">
-                  <div class="wz-phone-product"><span class="wz-phone-product-img wz-ppi-1"></span></div>
-                  <div class="wz-phone-product"><span class="wz-phone-product-img wz-ppi-2"></span></div>
+        <!-- En escritorio hay espacio de sobra: el teléfono se queda fijo a la
+             izquierda mientras se eligen los diseños a la derecha, en vez de
+             quedar apilado arriba como en móvil (donde sí funciona bien así). -->
+        <div class="wz-vibe-layout lg:flex lg:items-start lg:gap-10">
+          <div class="wz-vibe-phone-col lg:flex-none lg:sticky lg:top-10">
+            <!-- Vista previa en vivo: el teléfono cambia de color al instante con cada vibra que se elige -->
+            <div class="wz-phone-wrap wz-phone-wrap-sm" aria-hidden="true">
+              <div class="wz-phone" id="wz-phone-2">
+                <div class="wz-phone-notch"></div>
+                <div class="wz-phone-screen">
+                  <header class="wz-phone-header" id="wz-phone-header-2">
+                    <div class="wz-phone-nav">
+                      <span class="wz-phone-logo" id="wz-phone-logo-2"></span>
+                      <h3 id="wz-phone-name-2"><%= biz.name %></h3>
+                      <span class="wz-phone-menu"><svg viewBox="0 0 24 24"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg></span>
+                    </div>
+                    <p class="wz-phone-status">● Catálogo disponible</p>
+                  </header>
+                  <div class="wz-phone-body">
+                    <div class="wz-phone-search">Buscar en tu tienda</div>
+                    <div class="wz-phone-cats" id="wz-phone-cats-2"></div>
+                    <div class="wz-phone-products">
+                      <div class="wz-phone-product"><span class="wz-phone-product-img wz-ppi-1"></span></div>
+                      <div class="wz-phone-product"><span class="wz-phone-product-img wz-ppi-2"></span></div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
+            <p class="text-center text-[12px] mb-6 lg:mb-0" style="color:var(--ap-text-sec)">Así se verá tu catálogo con este diseño</p>
           </div>
-        </div>
-        <p class="text-center text-[12px] mb-6" style="color:var(--ap-text-sec)">Así se verá tu catálogo con este diseño</p>
 
-        <div class="relative max-w-sm mx-auto mb-5">
-          <input type="text" id="wz-design-search" placeholder="Busca un estilo (ej: elegante, industrial, pastel...)" class="w-full text-sm rounded-full px-4 py-2.5 outline-none" style="border:1px solid var(--ap-border);background:var(--ap-card);color:var(--ap-text)">
-        </div>
+          <div class="wz-vibe-designs-col lg:flex-1 lg:min-w-0">
+            <div class="relative max-w-sm mx-auto mb-5 lg:mx-0">
+              <input type="text" id="wz-design-search" placeholder="Busca un estilo (ej: elegante, industrial, pastel...)" class="w-full text-sm rounded-full px-4 py-2.5 outline-none" style="border:1px solid var(--ap-border);background:var(--ap-card);color:var(--ap-text)">
+            </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4" id="wz-vibe-grid" role="radiogroup" aria-label="Elige el diseño de tu catálogo">
-          <% CAT_DESIGNS.forEach(d => { var t = d.tokens; %>
-            <button type="button" class="wz-card wz-vibe-card" role="radio" aria-checked="false" data-design="<%= d.id %>" data-search="<%= (d.name + ' ' + d.desc).toLowerCase() %>">
-              <span class="wz-card-check" aria-hidden="true"><svg class="wz-check-icon" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></span>
-              <span class="wz-design-preview" aria-hidden="true" style="background:<%= t.bg %>">
-                <span class="wz-design-preview-card" style="background:<%= t.card %>;border-radius:<%= Math.min(t.radius,12) %>px;border:1px solid <%= t.border %>">
-                  <span class="wz-design-preview-thumb" style="background:<%= t.accentGlow %>;border-radius:<%= Math.max(0,Math.min(t.radius,12)-3) %>px"></span>
-                </span>
-                <span class="wz-design-preview-btn" style="background:<%= t.accent %>;border-radius:<%= Math.min(t.radius,8) %>px"></span>
-              </span>
-              <span class="wz-card-title"><%= d.emoji %> <%= d.name %></span>
-              <span class="wz-card-badge" data-recommended-badge hidden>Recomendado</span>
-            </button>
-          <% }) %>
-          <p class="text-sm text-center col-span-2 sm:col-span-3 hidden" id="wz-design-empty" style="color:var(--ap-text-sec)">Ningún estilo coincide — prueba con otra palabra.</p>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 lg:gap-4" id="wz-vibe-grid" role="radiogroup" aria-label="Elige el diseño de tu catálogo">
+              <% CAT_DESIGNS.forEach(d => { var t = d.tokens; %>
+                <button type="button" class="wz-card wz-vibe-card" role="radio" aria-checked="false" data-design="<%= d.id %>" data-search="<%= (d.name + ' ' + d.desc).toLowerCase() %>">
+                  <span class="wz-card-check" aria-hidden="true"><svg class="wz-check-icon" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></span>
+                  <span class="wz-design-preview" aria-hidden="true" style="background:<%= t.bg %>">
+                    <span class="wz-design-preview-card" style="background:<%= t.card %>;border-radius:<%= Math.min(t.radius,12) %>px;border:1px solid <%= t.border %>">
+                      <span class="wz-design-preview-thumb" style="background:<%= t.accentGlow %>;border-radius:<%= Math.max(0,Math.min(t.radius,12)-3) %>px"></span>
+                    </span>
+                    <span class="wz-design-preview-btn" style="background:<%= t.accent %>;border-radius:<%= Math.min(t.radius,8) %>px"></span>
+                  </span>
+                  <span class="wz-card-title"><%= d.emoji %> <%= d.name %></span>
+                  <span class="wz-card-badge" data-recommended-badge hidden>Recomendado</span>
+                </button>
+              <% }) %>
+              <p class="text-sm text-center col-span-2 sm:col-span-3 hidden" id="wz-design-empty" style="color:var(--ap-text-sec)">Ningún estilo coincide — prueba con otra palabra.</p>
+            </div>
+          </div>
         </div>
 
         <div class="text-center mt-8 flex items-center justify-center gap-3">
