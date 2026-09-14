@@ -36,6 +36,10 @@
            → Diseño del catálogo. Este es el campo que constructor.ejs usa de
            verdad para pintar colores/tipografía (catalog_design → catDesignTokens). -->
       <input type="hidden" name="catalog_design" id="wz-catalog-design" value="">
+      <!-- Categorías sugeridas para el giro elegido, editables en el paso 3
+           (quitar/agregar) — se envía como JSON para no depender del giro
+           en el servidor, que ya no sabe qué tocó el dueño. -->
+      <input type="hidden" name="categorias_final" id="wz-categorias-final" value="">
 
       <!-- ===== Paso 1: giro ===== -->
       <section class="wz-step" data-step="1">
@@ -194,7 +198,12 @@
           </div>
           <div class="py-5 wz-assemble-row wz-assemble-cats" style="border-bottom:1px solid var(--ap-border)">
             <p class="text-[11px] font-semibold uppercase tracking-[0.1em] mb-2" style="color:var(--ap-text-sec)">Categorías que crearemos por ti</p>
-            <div class="flex flex-wrap gap-1.5" id="wz-summary-cats"></div>
+            <p class="text-[12px] mb-2" style="color:var(--ap-text-sec)">Quita las que no uses o agrega las tuyas — puedes cambiarlas después.</p>
+            <div class="flex flex-wrap gap-1.5 mb-2" id="wz-summary-cats"></div>
+            <div class="flex items-center gap-2">
+              <input type="text" id="wz-cat-add-input" maxlength="40" placeholder="Agregar categoría..." class="text-[13px] rounded-full px-3 py-1.5 outline-none" style="border:1px solid var(--ap-border);background:var(--ap-bg);color:var(--ap-text)">
+              <button type="button" id="wz-cat-add-btn" class="text-[13px] font-semibold rounded-full px-3 py-1.5" style="border:1px solid var(--ap-border);background:var(--ap-card);color:var(--ap-text)">+ Agregar</button>
+            </div>
           </div>
           <div class="flex items-center gap-4 pt-5 wz-assemble-row wz-assemble-canal">
             <span class="wz-canal-check" aria-hidden="true">
@@ -387,6 +396,16 @@
       transition: opacity .28s cubic-bezier(0.16, 1, 0.3, 1), transform .28s cubic-bezier(0.16, 1, 0.3, 1), clip-path .28s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .wz-assemble-row.wz-assemble-in { opacity: 1; transform: none; clip-path: inset(0 0 0 0); }
+    .wz-summary-cat-chip { display: inline-flex; align-items: center; gap: 5px; }
+    .wz-cat-remove {
+      display: grid; place-items: center; width: 14px; height: 14px; margin: -1px -2px -1px 0;
+      border: none; border-radius: 999px; background: rgba(0,0,0,.12); color: inherit;
+      font-size: 12px; line-height: 1; cursor: pointer; padding: 0;
+      transition: background-color .15s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .wz-cat-remove:hover { background: rgba(0,0,0,.22); }
+    #wz-cat-add-input { width: 160px; }
+    #wz-cat-add-btn:hover { border-color: rgba(44,44,46,.3); }
     .wz-assemble-vibe #wz-summary-swatch, #wz-summary-swatch {
       transform: scale(.5); opacity: 0; transition: transform .26s cubic-bezier(0.16, 1, 0.3, 1), opacity .26s cubic-bezier(0.16, 1, 0.3, 1);
     }
@@ -580,7 +599,52 @@
     var reducedMotion = reducedMotionMQ.matches;
     if (reducedMotionMQ.addEventListener) reducedMotionMQ.addEventListener('change', function (e) { reducedMotion = e.matches; });
 
-    var state = { giro: null, design: null };
+    var state = { giro: null, design: null, cats: null, catsGiro: null };
+
+    // Chips de categorías del paso 3 — editables: quitar con la x, agregar
+    // con el campo de abajo. `instant` evita esperar la animación de
+    // ensamblaje cuando el cambio lo hace el dueño (no al armar el resumen).
+    function renderCatsChips(instant) {
+      var catsWrap = document.getElementById('wz-summary-cats');
+      if (!catsWrap) return;
+      catsWrap.innerHTML = '';
+      (state.cats || []).forEach(function (name) {
+        var chip = document.createElement('span');
+        chip.className = 'm-badge m-badge-neutral wz-summary-cat-chip' + (instant ? ' wz-chip-in' : '');
+        var label = document.createElement('span');
+        label.textContent = name;
+        chip.appendChild(label);
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'wz-cat-remove';
+        btn.setAttribute('aria-label', 'Quitar categoría ' + name);
+        btn.textContent = '×';
+        btn.addEventListener('click', function () {
+          state.cats = state.cats.filter(function (c) { return c !== name; });
+          renderCatsChips(true);
+        });
+        chip.appendChild(btn);
+        catsWrap.appendChild(chip);
+      });
+      var hidden = document.getElementById('wz-categorias-final');
+      if (hidden) hidden.value = JSON.stringify(state.cats || []);
+    }
+    function addCatFromInput() {
+      var input = document.getElementById('wz-cat-add-input');
+      if (!input) return;
+      var val = (input.value || '').trim().slice(0, 40);
+      if (!val) return;
+      var exists = (state.cats || []).some(function (c) { return c.toLocaleLowerCase('es') === val.toLocaleLowerCase('es'); });
+      if (!exists) { state.cats = (state.cats || []).concat([val]); renderCatsChips(true); }
+      input.value = '';
+      input.focus();
+    }
+    var wzCatAddBtn = document.getElementById('wz-cat-add-btn');
+    var wzCatAddInput = document.getElementById('wz-cat-add-input');
+    if (wzCatAddBtn) wzCatAddBtn.addEventListener('click', addCatFromInput);
+    if (wzCatAddInput) wzCatAddInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); addCatFromInput(); }
+    });
     var currentStep = 1;
 
     // ===== Progreso superior =====
@@ -785,15 +849,14 @@
       document.getElementById('wz-summary-giro').textContent = preset.nombre;
       document.getElementById('wz-summary-vibe').textContent = design.emoji + ' ' + design.name;
       document.getElementById('wz-summary-swatch').style.background = designGradient(state.design);
-      var cats = GIRO_CATEGORIAS[state.giro] || GIRO_CATEGORIAS.otros;
-      var catsWrap = document.getElementById('wz-summary-cats');
-      catsWrap.innerHTML = '';
-      cats.forEach(function (name) {
-        var chip = document.createElement('span');
-        chip.className = 'm-badge m-badge-neutral wz-summary-cat-chip';
-        chip.textContent = name;
-        catsWrap.appendChild(chip);
-      });
+      // Solo se reinician las categorías si cambió el giro — si el dueño ya
+      // quitó/agregó algo y vuelve a "Atrás" y "Siguiente" sin cambiar de
+      // giro, sus ediciones se conservan.
+      if (!state.cats || state.catsGiro !== state.giro) {
+        state.cats = (GIRO_CATEGORIAS[state.giro] || GIRO_CATEGORIAS.otros).slice();
+        state.catsGiro = state.giro;
+      }
+      renderCatsChips(false);
       var wa = (<%- safeJson(biz.whatsapp || '') %> || '').replace(/\D/g, '');
       var waLabel = wa.length === 10 ? wa.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3') : 'conectado';
       document.getElementById('wz-summary-canal').textContent = wa ? ('WhatsApp ' + waLabel) : 'WhatsApp conectado';

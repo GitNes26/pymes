@@ -1845,7 +1845,18 @@ app.post('/:slug/admin/bienvenida', requireAuth, (req, res) => {
     preset.id, preset.id, designId, biz.id
   );
   db.crearPaginasSugeridas(biz.id, preset.paginas_sugeridas);
-  db.crearCategoriasSugeridas(biz.id, GIRO_CATEGORIAS[preset.id] || GIRO_CATEGORIAS.otros);
+  // El paso 3 del asistente deja quitar/agregar categorías sugeridas antes de
+  // crear la tienda — si el dueño editó la lista llega como JSON en
+  // categorias_final; si no llega (JS deshabilitado, o vacía) se usa la
+  // lista completa del giro como respaldo, igual que antes.
+  let categoriasFinal = null;
+  try {
+    const parsed = JSON.parse(req.body.categorias_final || '[]');
+    if (Array.isArray(parsed) && parsed.length) {
+      categoriasFinal = parsed.map(c => String(c || '').trim().slice(0, 60)).filter(Boolean).slice(0, 30);
+    }
+  } catch (e) { /* JSON inválido: se usa el respaldo por giro */ }
+  db.crearCategoriasSugeridas(biz.id, categoriasFinal && categoriasFinal.length ? categoriasFinal : (GIRO_CATEGORIAS[preset.id] || GIRO_CATEGORIAS.otros));
   db.crearAtributosSugeridos(biz.id, GIRO_ATTRS[preset.id] || {});
   res.redirect('/' + req.params.slug + '/admin/panel?bienvenida=1');
 });
