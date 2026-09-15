@@ -578,15 +578,6 @@
               <input id="config-whatsapp" name="whatsapp" value="<%= biz.whatsapp %>" type="tel" inputmode="numeric" maxlength="10" class="config-input" placeholder="8712345678" required>
               <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Los pedidos llegarán a este número.</p>
             </div>
-            <div>
-              <label class="config-label">Moneda</label>
-              <select name="currency" class="config-input">
-                <% CURRENCIES.forEach(c => { %>
-                  <option value="<%= c.code %>" <%= biz.currency === c.code ? 'selected' : '' %>><%= c.symbol %> · <%= c.name %> (<%= c.code %>)</option>
-                <% }) %>
-              </select>
-              <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Los precios de tu catálogo y los pedidos usan esta moneda.</p>
-            </div>
           </div>
 
           <% var _redes = {}; try { _redes = JSON.parse(biz.redes || '{}'); } catch(e) {} %>
