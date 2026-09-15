@@ -247,6 +247,14 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   background: var(--md-surface-container-low);
+  /* Arriba ya no compite con el valor del campo, así que un label largo
+     (p.ej. "Costo del proveedor (opcional — para tus reportes...)") puede
+     mostrarse completo en vez de cortarse en "Costo del prov…". */
+  max-width: calc(100% - 0.6rem);
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  line-height: 1.25;
 }
 .m-field:has(input:focus) label,
 .m-field:has(textarea:focus) label,
