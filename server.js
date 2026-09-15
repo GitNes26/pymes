@@ -1770,17 +1770,17 @@ app.get('/', (req, res) => {
       COUNT(t.id) AS visits_count,
       (
         SELECT p.image FROM products p
-        WHERE p.business_id = b.id AND p.visible = 1 AND p.image IS NOT NULL AND p.image <> ''
+        WHERE p.business_id = b.id AND p.active = 1 AND p.image IS NOT NULL AND p.image <> ''
         ORDER BY p.id DESC LIMIT 1
       ) AS cover_image,
       (
         SELECT p.name FROM products p
-        WHERE p.business_id = b.id AND p.visible = 1
+        WHERE p.business_id = b.id AND p.active = 1
         ORDER BY p.id DESC LIMIT 1
       ) AS featured_product,
       (
         SELECT p.price FROM products p
-        WHERE p.business_id = b.id AND p.visible = 1
+        WHERE p.business_id = b.id AND p.active = 1
         ORDER BY p.id DESC LIMIT 1
       ) AS featured_price
     FROM businesses b
