@@ -1739,13 +1739,13 @@ function getStats(businessId) {
   };
 }
 
-// Manifest PWA de la landing (para instalar el sitio de Nessik, no una tienda en particular)
+// Manifest PWA de la landing (para instalar el sitio de Catálogo Fácil, no una tienda en particular)
 app.get('/manifest.webmanifest', (req, res) => {
   res.set('Content-Type', 'application/manifest+json');
   res.set('Cache-Control', 'no-store');
   res.json({
-    name: 'Nessik · Tu tienda en línea con WhatsApp',
-    short_name: 'Nessik',
+    name: 'Catálogo Fácil · Tu tienda en línea con WhatsApp',
+    short_name: 'Cat. Fácil',
     description: 'Crea y administra tu catálogo en línea con pedidos por WhatsApp',
     id: '/',
     start_url: '/',
@@ -4511,7 +4511,7 @@ app.listen(PORT, () => {
   setInterval(() => {
     db.prepare("DELETE FROM sessions WHERE expires_at IS NOT NULL AND expires_at < datetime('now')").run();
   }, 60 * 60 * 1000);
-  console.log(`Nessik corriendo en http://localhost:${PORT}`);
+  console.log(`Catálogo Fácil corriendo en http://localhost:${PORT}`);
   console.log(`Landing:      http://localhost:${PORT}/`);
   console.log(`Registrar:    http://localhost:${PORT}/registrar  (código maestro: ${MASTER_KEY})`);
   console.log(`Demo tienda:  http://localhost:${PORT}/ferreteria-demo`);
