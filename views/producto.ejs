@@ -383,13 +383,14 @@
         else if (stock <= 5) { el.textContent = '🔥 ¡Quedan ' + stock + '!'; el.style.color = '#ea580c'; }
         else { el.textContent = stock + ' disponibles'; el.style.color = 'var(--text-sec)'; }
       }
+      function fmtMoney(n) { return n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
       function updatePrice() {
         var key = comboKey();
         var price = (vm.prices && vm.prices[key] !== undefined && vm.prices[key] !== '') ? Number(vm.prices[key]) : <%- product.price %>;
         var pe = document.getElementById('sticky-price');
-        if (pe) pe.textContent = '$' + price.toFixed(2);
+        if (pe) pe.textContent = '$' + fmtMoney(price);
         var pm = document.getElementById('prod-price-main');
-        if (pm) pm.textContent = '$' + price.toFixed(2);
+        if (pm) pm.textContent = '$' + fmtMoney(price);
       }
       // Al elegir Talla/Color, si esa combinación tiene su propia foto, la
       // vista principal cambia a esa — antes se quedaba pegada en la foto

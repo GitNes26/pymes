@@ -852,7 +852,7 @@
     showFooter: _sectionsObj.showFooter !== false
   };
 
-  function fmtMoney(n){ return CUR + Number(n || 0).toFixed(2); }
+  function fmtMoney(n){ return CUR + Number(n || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
 
   /* ===== ESTADO ===== */
   function nuevoId(prefijo){

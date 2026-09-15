@@ -10,7 +10,7 @@
     : 'https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap';
   var _cats = categories || [];
   var _prods = products || [];
-  var _rawMoney = (typeof money === "function") ? money : function(n){ return "$" + Number(n||0).toFixed(2); };
+  var _rawMoney = (typeof money === "function") ? money : function(n){ return "$" + Number(n||0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); };
   var _money = function(p){ return _rawMoney(typeof p === "object" ? (p.price||0) : p); };
   var _whatsapp = biz.whatsapp ? (biz.whatsapp.startsWith('52') ? biz.whatsapp : '52' + biz.whatsapp) : '';
   var _horario = null;
@@ -1517,7 +1517,8 @@
       var skuHtml = p.sku ? '<div class="pd-meta">SKU: ' + p.sku + '</div>' : '';
       var descHtml = p.desc ? '<p class="pd-desc">' + p.desc + '</p>' : '';
       var catHtml = catName ? '<div class="pd-cat">' + catName + '</div>' : '';
-      var oldPriceHtml = p.oldPrice ? '<span class="pd-old">$' + p.oldPrice.toFixed(2) + '</span>' : '';
+      var fmtMoney = function(n){ return Number(n||0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); };
+      var oldPriceHtml = p.oldPrice ? '<span class="pd-old">$' + fmtMoney(p.oldPrice) + '</span>' : '';
       var prodImg = p.image || '/img/sin-imagen.svg';
       var prodNameSafe = p.name.replace(/'/g, "\\'");
       var prodImgSafe = prodImg.replace(/'/g, "\\'");
@@ -1532,7 +1533,7 @@
         + '<div class="pd-info-col">'
         + catHtml
         + '<h2 class="pd-title">' + p.name + '</h2>'
-        + '<div class="pd-prices"><span class="pd-price">$' + p.price.toFixed(2) + '</span>' + oldPriceHtml + '</div>'
+        + '<div class="pd-prices"><span class="pd-price">$' + fmtMoney(p.price) + '</span>' + oldPriceHtml + '</div>'
         + (p.stock !== null && p.stock !== undefined ? (p.stock <= 0 ? '<div style="font-size:12px;font-weight:800;color:#ef4444;margin:2px 0 6px;">Agotado</div>' : p.stock <= 5 ? '<div style="font-size:12px;font-weight:800;color:#ea580c;margin:2px 0 6px;">🔥 ¡Quedan ' + p.stock + '!</div>' : '<div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin:2px 0 6px;">' + p.stock + ' disponibles</div>') : '')
         + promoHtml + descHtml + skuHtml + tagsHtml + specsTable
         + '<div class="pd-actions">'

@@ -15,6 +15,17 @@
     });
   }
 
+  // "1234.5" -> "1,234.5" (separador de miles solo en la parte entera,
+  // para no tocar los decimales ni romper números negativos).
+  function fmtThousands(n, decimals) {
+    var s = n.toFixed(decimals);
+    var neg = s.charAt(0) === '-';
+    if (neg) s = s.slice(1);
+    var parts = s.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return (neg ? '-' : '') + parts.join('.');
+  }
+
   // Contadores animados: <span data-count="123.45" data-prefix="$" data-decimals="2">
   function animateCounts() {
     document.querySelectorAll('[data-count]').forEach(function (el) {
@@ -28,9 +39,9 @@
         var p = Math.min((ts - start) / dur, 1);
         var ease = 1 - Math.pow(1 - p, 3);
         var val = target * ease;
-        el.textContent = prefix + val.toFixed(decimals);
+        el.textContent = prefix + fmtThousands(val, decimals);
         if (p < 1) requestAnimationFrame(frame);
-        else el.textContent = prefix + target.toFixed(decimals);
+        else el.textContent = prefix + fmtThousands(target, decimals);
       }
       requestAnimationFrame(frame);
     });

@@ -292,6 +292,7 @@
     PRODS.forEach(p => prodById[p.id] = p);
 
     function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    function fmtMoney(n){ return Number(n||0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
     function norm(s){ return String(s==null?'':s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
 
     var childOf = new WeakMap(); // fila maestra -> [filas hijas (combinaciones extra)]
@@ -417,7 +418,7 @@
           '<b class="text-slate-800">' + esc(p.name) + '</b>' +
           (p.sku ? ' <span class="text-slate-400 text-xs">(' + esc(p.sku) + ')</span>' : '') +
           (p.variantOpts && p.variantOpts.length ? ' <span class="text-amber-700 text-xs">' + UI_ICONS.sliders + p.variantOpts.length + '</span>' : '') +
-          (p.price ? ' <span class="text-slate-400 text-xs">$' + Number(p.price).toFixed(2) + '</span>' : '') +
+          (p.price ? ' <span class="text-slate-400 text-xs">$' + fmtMoney(p.price) + '</span>' : '') +
         '</button>';
       }).join('');
       if (q) html += '<button type="button" class="po-ac-new w-full text-left px-3 py-2 text-xs font-bold text-neutral-700 hover:bg-neutral-100">' + UI_ICONS.plus + 'Usar "' + esc(inp.value.trim()) + '" como producto nuevo</button>';
@@ -703,9 +704,9 @@
         var cost = parseFloat(r.querySelector('.po-cost').value) || 0;
         var sub = qty * cost;
         total += sub;
-        r.querySelector('.po-sub').textContent = '$' + sub.toFixed(2);
+        r.querySelector('.po-sub').textContent = '$' + fmtMoney(sub);
       });
-      document.getElementById('po-total').textContent = '$' + total.toFixed(2);
+      document.getElementById('po-total').textContent = '$' + fmtMoney(total);
       document.getElementById('po-items-json').value = JSON.stringify(poSerialize());
     }
 

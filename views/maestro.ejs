@@ -578,7 +578,7 @@
                   <div class="flex items-center gap-1.5 mt-1 flex-wrap">
                     <% if (b.giro) { %><span class="badge-status giro clickable" onclick="filtrarPorGiro('<%= b.giro %>')" title="Filtrar por este giro">🏪 <%= b.giro %></span><% } %>
                     <span class="badge-status <%= b.plan === 'pro' ? 'pro' : 'free' %>"><%= b.plan_name.toUpperCase() %></span>
-                    <span class="badge-status neutral">$<%= Number(b.plan_price || 0).toFixed(2) %></span>
+                    <span class="badge-status neutral">$<%= Number(b.plan_price || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') %></span>
                     <% if (b.plan_ends_at) { %>
                       <span class="badge-status <%= b.expired ? 'expired' : 'warning' %>">
                         Vence <%= fmtFecha(b.plan_ends_at, 'fecha') %> <%= b.expired ? '· VENCIDO' : '' %>
@@ -664,7 +664,7 @@
                   <span class="text-[10px] font-black px-2 py-0.5 rounded-full <%= p.ads ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600' %>">📣 <%= p.ads ? 'con publicidad' : 'sin publicidad' %></span>
                 </div>
               </div>
-              <p class="text-xs text-slate-500 mt-1">$<%= p.price.toFixed(2) %> · <%= p.days ? p.days + ' días' : 'sin vencimiento' %> · <%= p.max_products === -1 ? '∞ productos' : p.max_products + ' productos' %></p>
+              <p class="text-xs text-slate-500 mt-1">$<%= p.price.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') %> · <%= p.days ? p.days + ' días' : 'sin vencimiento' %> · <%= p.max_products === -1 ? '∞ productos' : p.max_products + ' productos' %></p>
               <p class="text-[10px] text-slate-400 mt-0.5"><%= planUsage[p.key] || 0 %> tiendas usándolo</p>
               <% if (p.key !== 'free' && p.key !== 'pro') { %>
                 <form method="POST" action="/maestro/plan/<%= p.id %>/eliminar" data-confirm="¿Eliminar el plan <%= p.name.replace(/'/g, "\\'") %>?" class="mt-2">
