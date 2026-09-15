@@ -57,7 +57,7 @@
           </a>
 
           <% if (perms.includes('productos.crear')) { %>
-          <a href="#nuevo-producto" class="m-btn m-btn-filled m-btn-sm">
+          <a href="#nuevo-producto" class="m-btn m-btn-filled m-btn-sm" onclick="return irNuevoProducto(event)">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
             Nuevo
           </a>
@@ -141,7 +141,7 @@
           <div class="text-center py-6 border-2 border-dashed border-slate-200 rounded-xl">
             <p class="text-2xl mb-1">📦</p>
             <p class="text-xs text-slate-500 font-semibold mb-3">Aún no tienes productos</p>
-            <% if (perms.includes('productos.crear')) { %><a href="#nuevo-producto" class="m-btn m-btn-filled m-btn-sm">Agregar mi primer producto</a><% } %>
+            <% if (perms.includes('productos.crear')) { %><a href="#nuevo-producto" class="m-btn m-btn-filled m-btn-sm" onclick="return irNuevoProducto(event)">Agregar mi primer producto</a><% } %>
           </div>
         <% } else { %>
           <div id="prod-grid" class="product-grid">
@@ -971,7 +971,11 @@
       if (e && e.preventDefault) e.preventDefault();
       switchCrudTab('productos');
       var w = document.getElementById('nuevo-producto');
-      if (w) setTimeout(function () { w.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60);
+      if (w) setTimeout(function () {
+        w.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        var nameEl = document.getElementById('f-name');
+        if (nameEl) setTimeout(function () { nameEl.focus(); }, 220);
+      }, 60);
       return false;
     }
 
@@ -1011,6 +1015,7 @@
         inp.type = 'file'; inp.accept = 'image/*';
         inp.onchange = function () {
           var f = inp.files && inp.files[0]; if (!f) return;
+          pfUploadStart();
           comprimirImagen(f).then(function (finalFile) {
             var fd = new FormData(); fd.append('foto', finalFile, finalFile.name || f.name || 'combo.jpg');
             var tok = (window.__csrfValue && window.__csrfValue()) || '';
@@ -1022,7 +1027,8 @@
               if (d.url) { model.images[key] = d.url; save(); renderCombos(); }
               else if (window.mostrarToast) mostrarToast('No se pudo subir la foto', 'error');
             })
-            .catch(function () { if (window.mostrarToast) mostrarToast('Error al subir la foto', 'error'); });
+            .catch(function () { if (window.mostrarToast) mostrarToast('Error al subir la foto', 'error'); })
+            .finally(pfUploadEnd);
         };
         inp.click();
       }
@@ -1303,6 +1309,7 @@
       var pending = files.length, done = 0;
       if (window.mostrarToast) mostrarToast('Subiendo ' + files.length + ' foto(s)…', 'info');
       files.forEach(function (file) {
+        pfUploadStart();
         comprimirImagen(file).then(function (finalFile) {
           var fd = new FormData();
           fd.append('foto', finalFile, finalFile.name || file.name || 'foto.jpg');
@@ -1330,6 +1337,7 @@
           .catch(function () { if (window.mostrarToast) mostrarToast('Error al subir una foto.', 'error'); })
           .finally(function () {
             pending--;
+            pfUploadEnd();
             if (pending === 0) {
               renderFotos(pref);
               input.value = '';
@@ -1446,7 +1454,25 @@
     var pfMode = 'crear';
     var pfTipo = 'unico';
 
-    function setVal(id, v) { var el = document.getElementById(id); if (el) el.value = v; }
+    // Cuenta fotos que se están subiendo (galería o por variante) para no
+    // dejar avanzar/guardar a medias — si no, el resumen podía mostrarse sin
+    // la foto porque la subida (fetch async) aún no había terminado.
+    var pfUploadsPending = 0;
+    function pfUploadStart() { pfUploadsPending++; }
+    function pfUploadEnd() {
+      pfUploadsPending = Math.max(0, pfUploadsPending - 1);
+      if (pfUploadsPending === 0 && pfStep === PF_STEPS.length) renderResumen();
+    }
+
+    function setVal(id, v) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.value = v;
+      // Los <select> mejorados por searchable-select.js muestran su propio botón
+      // (no el <select> nativo); ese botón solo se resincroniza escuchando
+      // "change", así que hay que dispararlo a mano cuando el valor se pone por JS.
+      if (el.tagName === 'SELECT') el.dispatchEvent(new Event('change', { bubbles: true }));
+    }
 
     function setTipo(t) {
       pfTipo = t;
@@ -1853,6 +1879,7 @@
       pfMode = 'crear';
       var form = document.getElementById('pf-form');
       form.reset();
+      setVal('f-cat', '');
       form.action = '/<%= biz.slug %>/admin/producto';
       document.getElementById('pf-title').textContent = 'Agregar producto';
       document.getElementById('pf-cancel').classList.add('hidden');
@@ -1886,7 +1913,20 @@
     function initStepper() {
       document.getElementById('pf-next').onclick = function () { goStep(pfStep + 1); };
       document.getElementById('pf-back').onclick = function () { goStep(pfStep - 1); };
+      // Al abrir "+ Más detalles" el contenido nuevo puede quedar por debajo
+      // del viewport sin que el navegador reajuste el scroll solo — se fuerza
+      // aquí para que siempre se pueda bajar a verlo.
+      var advDet = document.getElementById('pf-advanced');
+      if (advDet) advDet.addEventListener('toggle', function () {
+        if (advDet.open) setTimeout(function () { advDet.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 80);
+      });
       document.getElementById('pf-form').addEventListener('submit', function (e) {
+        if (pfUploadsPending > 0) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (window.mostrarToast) window.mostrarToast('⏳ Espera a que terminen de subirse las fotos', 'error');
+          return;
+        }
         if (pfTipo !== 'variantes') return;
         var ed = window.VAR_EDITORS && window.VAR_EDITORS.f;
         // Sin al menos un atributo con valores, "Con variantes" no genera
