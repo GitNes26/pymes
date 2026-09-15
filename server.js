@@ -4083,7 +4083,8 @@ function applyConfig(biz, body) {
   const girosRaw = Array.isArray(body.giros) ? body.giros : (body.giros ? [body.giros] : []);
   const girosList = girosRaw.filter(g => getGiros().includes(g));
   const primaryGiro = (girosList.length ? girosList[0] : giro) || biz.giro;
-  const cleanWa = (whatsapp || '').replace(/[^0-9]/g, '');
+  const cleanWaRaw = (whatsapp || '').replace(/[^0-9]/g, '');
+  const cleanWa = /^\d{10}$/.test(cleanWaRaw) ? cleanWaRaw : '';
   const cleanHex = /^#[0-9a-fA-F]{6}$/.test(color_hex || '') ? color_hex : biz.color_hex;
   const cleanHex2 = /^#[0-9a-fA-F]{6}$/.test(color_hex2 || '') ? color_hex2 : biz.color_hex2;
   const colorObj = COLORS.find(c => c.id === color);
@@ -4130,7 +4131,14 @@ function applyConfig(biz, body) {
   // comprobante por WhatsApp, sin pasarela de por medio.
   const transferFormPosted = Object.prototype.hasOwnProperty.call(body, 'transfer_form');
   const transferBank = transferFormPosted ? String(body.transfer_bank || '').trim().slice(0, 120) : biz.transfer_bank;
-  const transferAccount = transferFormPosted ? String(body.transfer_account || '').trim().slice(0, 60) : biz.transfer_account;
+  // CLABE (18 dígitos) o número de tarjeta/cuenta (10-20 dígitos) — se limpian
+  // espacios/guiones que el dueño pudo copiar y pegar, y si lo que queda no
+  // parece una cuenta real se descarta el cambio (se conserva la que ya
+  // tenía) en vez de guardar algo que no sirve para recibir transferencias.
+  const transferAccountRaw = String(body.transfer_account || '').trim().replace(/[\s-]/g, '');
+  const transferAccount = transferFormPosted
+    ? (transferAccountRaw === '' ? '' : (/^\d{10,20}$/.test(transferAccountRaw) ? transferAccountRaw : biz.transfer_account))
+    : biz.transfer_account;
   const transferHolder = transferFormPosted ? String(body.transfer_holder || '').trim().slice(0, 120) : biz.transfer_holder;
   const transferEnabled = transferFormPosted ? (body.transfer_enabled === '1' ? 1 : 0) : biz.transfer_enabled;
   db.prepare(

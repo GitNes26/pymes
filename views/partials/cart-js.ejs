@@ -460,10 +460,10 @@
       </div>
       <div id="chat-body" style="overflow-y:auto;padding:8px 12px;flex:1;"></div>
       <div style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:10px 16px;">
-        <p style="font-size:11px;color:#64748b;margin-bottom:6px;">Déjanos tu nombre para confirmar tu pedido (opcional)</p>
+        <p style="font-size:11px;color:#64748b;margin-bottom:6px;">Déjanos tu nombre y teléfono para confirmar tu pedido</p>
         <div style="display:flex;gap:8px;margin-bottom:8px;">
-          <input id="chat-nombre" type="text" placeholder="Tu nombre" style="flex:1;min-width:0;border:1px solid #e2e8f0;border-radius:10px;padding:9px 12px;font-size:13px;outline:none;">
-          <input id="chat-telefono" type="tel" inputmode="numeric" placeholder="Teléfono" style="flex:1;min-width:0;border:1px solid #e2e8f0;border-radius:10px;padding:9px 12px;font-size:13px;outline:none;">
+          <input id="chat-nombre" type="text" required placeholder="Tu nombre *" style="flex:1;min-width:0;border:1px solid #e2e8f0;border-radius:10px;padding:9px 12px;font-size:13px;outline:none;">
+          <input id="chat-telefono" type="tel" inputmode="numeric" maxlength="10" pattern="[0-9]{10}" required placeholder="Teléfono *" style="flex:1;min-width:0;border:1px solid #e2e8f0;border-radius:10px;padding:9px 12px;font-size:13px;outline:none;">
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;">
           <div id="chat-total" style="font-size:13px;color:#64748b;">Total: <b style="color:#0f172a;">$0.00</b></div>
@@ -581,9 +581,31 @@
     }
     return 'Hola ' + store.name + '! 👋 Quiero pedir:\n\n' + lista + '\n\nTotal: ' + totalStr + '\n\n¿Me confirmas disponibilidad y envío?';
   }
+  // Nombre y teléfono ahora son obligatorios para pedir: sin ellos el pedido
+  // nunca se podía asociar a un cliente real (quedaba "anónimo" en Clientes,
+  // o de plano no se guardaba ahí), así que no había con quién dar
+  // seguimiento ni a quién mandarle la próxima promoción.
+  function validarDatosCliente() {
+    const nombreEl = document.getElementById('chat-nombre');
+    const telefonoEl = document.getElementById('chat-telefono');
+    const nombre = (nombreEl && nombreEl.value || '').trim();
+    const telDigits = (telefonoEl && telefonoEl.value || '').replace(/[^0-9]/g, '');
+    if (!nombre) {
+      toast('Escribe tu nombre para continuar', false);
+      if (nombreEl) nombreEl.focus();
+      return false;
+    }
+    if (telDigits.length !== 10) {
+      toast('Escribe tu teléfono a 10 dígitos para continuar', false);
+      if (telefonoEl) telefonoEl.focus();
+      return false;
+    }
+    return true;
+  }
   let _sendingOrder = false;
   function sendStoreOrder(slug) {
     if (_sendingOrder) return; // evita doble clic / doble envío
+    if (!validarDatosCliente()) return;
     const g = storeGroups().find(x => x.store.slug === slug);
     if (!g) return;
     _sendingOrder = true;
@@ -632,6 +654,7 @@
   let _payingOrder = false;
   function payWithMercadoPago(slug) {
     if (_payingOrder) return;
+    if (!validarDatosCliente()) return;
     const g = storeGroups().find(x => x.store.slug === slug);
     if (!g) return;
     _payingOrder = true;

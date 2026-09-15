@@ -575,7 +575,7 @@
             </div>
             <div>
               <label class="config-label">WhatsApp (10 dígitos) *</label>
-              <input id="config-whatsapp" name="whatsapp" value="<%= biz.whatsapp %>" type="tel" inputmode="numeric" maxlength="10" class="config-input" placeholder="8712345678" required>
+              <input id="config-whatsapp" name="whatsapp" value="<%= biz.whatsapp %>" type="tel" inputmode="numeric" maxlength="10" pattern="[0-9]{10}" title="10 dígitos, sin espacios ni guiones" class="config-input" placeholder="8712345678" required>
               <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Los pedidos llegarán a este número.</p>
             </div>
           </div>
@@ -801,7 +801,7 @@
             </div>
             <div>
               <label class="config-label">Cuenta / CLABE</label>
-              <input name="transfer_account" value="<%= biz.transfer_account || '' %>" maxlength="60" class="config-input" placeholder="Ej: 012180001234567895">
+              <input name="transfer_account" value="<%= biz.transfer_account || '' %>" maxlength="20" inputmode="numeric" pattern="[0-9]{10,20}" title="Solo números, de 10 a 20 dígitos (la CLABE tiene 18)" class="config-input" placeholder="Ej: 012180001234567895">
             </div>
           </div>
           <div>
