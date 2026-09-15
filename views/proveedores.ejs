@@ -158,7 +158,7 @@
         </div>
         <form method="POST" action="/<%= biz.slug %>/admin/proveedor" class="supplier-form">
           <div class="m-field"><label>Nombre *</label><input name="name" required placeholder="Ej: Distribuidora Torres" value="<%= old.name %>"></div>
-          <div class="m-field"><label>WhatsApp</label><input name="phone" type="tel" inputmode="numeric" maxlength="10" pattern="[0-9]{10}" title="10 dígitos, sin espacios ni guiones" placeholder="Ej: 8712345678" value="<%= old.phone %>"></div>
+          <div class="m-field"><label>WhatsApp</label><input name="phone" type="tel" inputmode="numeric" maxlength="12" pattern="[0-9]{3} [0-9]{3} [0-9]{4}" data-mask="phone" title="10 dígitos" placeholder="Ej: 871 234 5678" value="<%= old.phone %>"></div>
           <div class="m-field"><label>Email</label><input name="email" type="email" placeholder="ventas@torres.mx" value="<%= old.email %>"></div>
           <div class="m-field supplier-notes"><label>Notas</label><input name="notes" placeholder="Ej: entrega los martes" value="<%= old.notes %>"></div>
           <div class="supplier-submit-wrap"><button class="supplier-submit m-btn m-btn-filled !min-h-11">Guardar proveedor</button></div>

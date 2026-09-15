@@ -2802,10 +2802,13 @@ app.get('/:slug/admin/productos', requireAuth, can('productos.ver'), (req, res) 
 
 // ================= CRUD PRODUCTOS =================
 function parsePrices(body) {
-  const price = parseFloat(body.price) || 0;
+  // El campo llega con separador de miles (máscara del lado del cliente,
+  // ver public/js/masks.js) — parseFloat("1,234.56") daría 1 sin esto.
+  const clean = (v) => String(v == null ? '' : v).replace(/,/g, '');
+  const price = parseFloat(clean(body.price)) || 0;
   let old_price = null;
-  if (body.old_price && body.old_price !== '') {
-    old_price = parseFloat(body.old_price) || null;
+  if (body.old_price && clean(body.old_price) !== '') {
+    old_price = parseFloat(clean(body.old_price)) || null;
     if (old_price !== null && old_price <= price) old_price = null;
   }
   return { price, old_price };
@@ -2968,7 +2971,7 @@ function parseStock(v) {
 // Costo de compra: opcional, nunca obligatorio (muchos dueños no lo saben o
 // no quieren capturarlo aún) — a diferencia de precio/stock, 0 = "no capturado".
 function parseCost(v) {
-  const n = parseFloat(v);
+  const n = parseFloat(String(v || '').replace(/,/g, ''));
   return isNaN(n) || n < 0 ? 0 : n;
 }
 

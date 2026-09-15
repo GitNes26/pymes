@@ -285,7 +285,7 @@
             </div>
             <div class="m-field" id="f-price-wrap">
               <label for="f-price" id="f-price-label">Precio *</label>
-              <input name="price" id="f-price" required type="number" step="0.01" min="0" placeholder="0.00">
+              <input name="price" id="f-price" required type="text" inputmode="decimal" data-mask="money" placeholder="0.00">
               <p id="f-price-note" class="hidden text-[11px] font-bold text-amber-600 mt-1">Con variantes, el precio se pone por cada variante en el paso 2 (Variantes) — es obligatorio en todas.</p>
             </div>
             <div class="m-field" id="f-stock-wrap">
@@ -295,7 +295,7 @@
             </div>
             <div class="m-field">
               <label for="f-cost">Costo del proveedor <span class="font-normal text-slate-400">(opcional — para tus reportes de ganancia)</span></label>
-              <input name="cost" id="f-cost" type="number" step="0.01" min="0" placeholder="0.00">
+              <input name="cost" id="f-cost" type="text" inputmode="decimal" data-mask="money" placeholder="0.00">
             </div>
             <div class="m-field md:col-span-2">
               <label for="f-desc">Descripción atractiva</label>
@@ -321,7 +321,7 @@
                 </div>
                 <div id="promo-desc" class="m-field hidden">
                   <label for="f-old">Precio antes</label>
-                  <input name="old_price" id="f-old" type="number" step="0.01" min="0" placeholder="0.00">
+                  <input name="old_price" id="f-old" type="text" inputmode="decimal" data-mask="money" placeholder="0.00">
                 </div>
                 <div id="promo-pct" class="m-field hidden">
                   <label for="f-promo-value">% de descuento</label>
@@ -1601,7 +1601,7 @@
       else clearError('f-name');
 
       var priceEl = document.getElementById('f-price');
-      var pnum = parseFloat(priceEl.value);
+      var pnum = parseFloat((priceEl.value || '').replace(/,/g, ''));
       var priceWrap = document.getElementById('f-price-wrap');
       var hasVarsPrice = priceWrap && priceWrap.classList.contains('price-hidden');
       if (hasVarsPrice) { clearError('f-price'); }
@@ -1612,7 +1612,7 @@
       var tipo = document.getElementById('f-promo-type').value;
       if (tipo === 'descuento') {
         var oldEl = document.getElementById('f-old');
-        var oldV = parseFloat(oldEl.value);
+        var oldV = parseFloat((oldEl.value || '').replace(/,/g, ''));
         if (!oldEl.value || isNaN(oldV)) { setError('f-old', 'Escribe el precio anterior'); ok = false; }
         else if (!isNaN(pnum) && oldV <= pnum) { setError('f-old', 'Debe ser mayor al precio actual'); ok = false; }
         else clearError('f-old');
@@ -1694,7 +1694,7 @@
       var box = document.getElementById('pf-resumen');
       if (!box) return;
       var name = document.getElementById('f-name').value || '(sin nombre)';
-      var old = Number(document.getElementById('f-old').value) || 0;
+      var old = Number(document.getElementById('f-old').value.replace(/,/g, '')) || 0;
       var catSel = document.getElementById('f-cat');
       var catName = (catSel && catSel.options[catSel.selectedIndex]) ? catSel.options[catSel.selectedIndex].text : 'Sin categoría';
       var desc = document.getElementById('f-desc').value || '';
@@ -1726,7 +1726,7 @@
         var prc = (ed && ed.model && ed.model.prices) || {};
         Object.keys(prc).forEach(function (k) { var v = Number(prc[k]); if (!isNaN(v)) priceVals.push(v); });
       }
-      var price = hasVariantes ? (priceVals.length ? Math.min.apply(null, priceVals) : 0) : (Number(document.getElementById('f-price').value) || 0);
+      var price = hasVariantes ? (priceVals.length ? Math.min.apply(null, priceVals) : 0) : (Number(document.getElementById('f-price').value.replace(/,/g, '')) || 0);
 
       var titulo = pfMode === 'editar' ? '✏️ Editando producto' : pfMode === 'duplicar' ? '📄 Duplicando producto' : '🛒 Producto listo para guardar';
 
@@ -1846,6 +1846,7 @@
       initFotos('f', card.getAttribute('data-edit-image'), card.getAttribute('data-edit-galeria'));
       var edTipo = window.VAR_EDITORS && window.VAR_EDITORS.f;
       setTipo((edTipo && edTipo.model && edTipo.model.attrs.length) ? 'variantes' : 'unico');
+      if (window.applyMasks) window.applyMasks();
     }
 
     function editarProducto(card) {

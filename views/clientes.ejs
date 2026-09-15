@@ -24,7 +24,7 @@
         <h2 class="font-extrabold text-sm mb-3" style="color:var(--ap-text)">Nuevo cliente</h2>
         <form method="POST" action="/<%= biz.slug %>/admin/cliente" class="grid sm:grid-cols-3 gap-3">
           <div class="m-field"><label>Nombre *</label><input name="name" required placeholder="Ej: María González"></div>
-          <div class="m-field"><label>Teléfono</label><input name="phone" type="tel" inputmode="numeric" maxlength="10" pattern="[0-9]{10}" title="10 dígitos, sin espacios ni guiones" placeholder="Ej: 8712345678"></div>
+          <div class="m-field"><label>Teléfono</label><input name="phone" type="tel" inputmode="numeric" maxlength="12" pattern="[0-9]{3} [0-9]{3} [0-9]{4}" data-mask="phone" title="10 dígitos" placeholder="Ej: 871 234 5678"></div>
           <div class="m-field"><label>Notas</label><input name="notes" placeholder="Ej: prefiere WhatsApp"></div>
           <div class="sm:col-span-3"><button class="m-btn m-btn-filled w-full !min-h-11">Guardar cliente</button></div>
         </form>

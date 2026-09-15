@@ -463,7 +463,7 @@
         <p style="font-size:11px;color:#64748b;margin-bottom:6px;">Déjanos tu nombre y teléfono para confirmar tu pedido</p>
         <div style="display:flex;gap:8px;margin-bottom:8px;">
           <input id="chat-nombre" type="text" required placeholder="Tu nombre *" style="flex:1;min-width:0;border:1px solid #e2e8f0;border-radius:10px;padding:9px 12px;font-size:13px;outline:none;">
-          <input id="chat-telefono" type="tel" inputmode="numeric" maxlength="10" pattern="[0-9]{10}" required placeholder="Teléfono *" style="flex:1;min-width:0;border:1px solid #e2e8f0;border-radius:10px;padding:9px 12px;font-size:13px;outline:none;">
+          <input id="chat-telefono" type="tel" inputmode="numeric" maxlength="12" pattern="[0-9]{3} [0-9]{3} [0-9]{4}" data-mask="phone" required placeholder="Teléfono *" style="flex:1;min-width:0;border:1px solid #e2e8f0;border-radius:10px;padding:9px 12px;font-size:13px;outline:none;">
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;">
           <div id="chat-total" style="font-size:13px;color:#64748b;">Total: <b style="color:#0f172a;">$0.00</b></div>
