@@ -20,9 +20,9 @@
 .ss-wrap.ss-block{display:block;width:100%;}\
 .ss-native{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;opacity:0!important;pointer-events:none!important;}\
 .ss-btn{display:flex;width:100%;max-width:100%;min-width:0;box-sizing:border-box;align-items:center;justify-content:space-between;gap:6px;margin:0;appearance:none;-webkit-appearance:none;text-transform:none;cursor:pointer;user-select:none;background:var(--md-surface-container-low,#fff);}\
-.m-field .ss-btn{width:100%;min-height:36px;padding:.5rem .7rem;border:1px solid var(--md-outline);border-radius:var(--md-radius-sm);background:var(--md-surface-container-low);font-size:.85rem;font-family:var(--md-font-family);font-weight:400;line-height:1.5;color:var(--md-on-surface);outline:none;box-shadow:none;transition:border-color var(--md-motion),background var(--md-motion);}\
+.m-field .ss-btn{width:100%;min-height:38px;padding:.65rem .75rem;border:1.5px solid var(--md-outline);border-radius:var(--md-radius-sm);background:var(--md-surface-container-low);font-size:.85rem;font-family:var(--md-font-family);font-weight:400;line-height:1.5;color:var(--md-on-surface);outline:none;box-shadow:none;transition:border-color var(--md-motion),background var(--md-motion),box-shadow var(--md-motion);}\
 .m-field .ss-btn:hover{border-color:var(--md-outline);background:var(--md-surface-container-low);}\
-.m-field .ss-btn:focus-visible,.m-field .ss-wrap.ss-open .ss-btn{border-color:var(--md-primary);background:var(--md-surface);outline:none;box-shadow:none;}\
+.m-field .ss-btn:focus-visible,.m-field .ss-wrap.ss-open .ss-btn{border-color:var(--md-primary);background:var(--md-surface);outline:none;box-shadow:0 0 0 3px color-mix(in srgb, var(--md-primary) 15%, transparent);}\
 .ss-btn.ss-disabled{cursor:not-allowed;opacity:.55;}\
 .ss-btn-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;text-align:left;}\
 .ss-btn-label.ss-placeholder{opacity:.55;}\

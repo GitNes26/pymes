@@ -219,7 +219,7 @@
     .employee-search > .employee-icon { position:absolute; inset-inline-start:12px; top:50%; transform:translateY(-50%); color:#596a75; font-size:13px; pointer-events:none; }
     .employee-search input { width:100%; min-height:36px; padding:8px 12px 8px 34px; border:1px solid rgba(44,44,46,.12); border-radius:999px; outline:none; background:rgba(255,255,255,.78); color:var(--ee-ink); font:500 12px/1.4 Inter,system-ui,sans-serif; box-shadow:0 3px 10px rgba(20,24,31,.05); }
     .employee-search input:focus { border-color:rgba(44,44,46,.58); box-shadow:0 0 0 3px rgba(44,44,46,.10); }
-    .employee-search input::placeholder,.employees-admin-page .m-field input::placeholder { color:#65737c; opacity:1; }
+    .employee-search input::placeholder { color:#65737c; opacity:1; }
     .employee-list { display:grid; gap:10px; margin-top:12px; }
     .employee-row { display:grid; grid-template-columns:44px minmax(0,1fr) auto; align-items:center; gap:12px; min-width:0; padding:13px 14px; border-radius:14px; background:var(--ee-card); box-shadow:0 7px 20px rgba(20,24,31,.08),0 2px 5px rgba(20,24,31,.04); transition:transform .22s cubic-bezier(.22,1,.36,1),box-shadow .22s ease; }
     .employee-row:hover { transform:translateY(-2px); box-shadow:0 13px 25px rgba(20,24,31,.12),0 3px 7px rgba(20,24,31,.05); }
@@ -256,10 +256,11 @@
     .employee-cancel.hidden { display:none; }
     #emp-form { padding:15px 16px 16px; }
     .employee-identity-fields { display:grid; gap:12px; }
-    .employees-admin-page .m-field label { margin-bottom:5px; color:#42525e; font-size:10px; font-weight:750; letter-spacing:.025em; text-transform:uppercase; }
-    .employees-admin-page .m-field > input,.employee-pin-field { width:100%; min-height:39px; border:1px solid rgba(44,44,46,.16); border-radius:8px; background:rgba(255,255,255,.78); transition:border-color .18s ease,background .18s ease,box-shadow .18s ease; }
-    .employees-admin-page .m-field > input { padding:8px 11px; color:var(--ee-ink); font:400 13.6px/1.5 Inter,system-ui,sans-serif; }
-    .employees-admin-page .m-field > input:focus,.employee-pin-field:focus-within { outline:none; border-color:rgba(44,44,46,.58); background:#fff; box-shadow:0 0 0 3px rgba(44,44,46,.10); }
+    /* El label flotante y los estados de foco de .m-field ahora viven en
+       material.css (diseño compartido) — solo queda aquí lo que sí es
+       propio de esta página (el campo compuesto del PIN). */
+    .employee-pin-field { width:100%; min-height:39px; border:1px solid rgba(44,44,46,.16); border-radius:8px; background:rgba(255,255,255,.78); transition:border-color .18s ease,background .18s ease,box-shadow .18s ease; }
+    .employee-pin-field:focus-within { outline:none; border-color:rgba(44,44,46,.58); background:#fff; box-shadow:0 0 0 3px rgba(44,44,46,.10); }
     .employee-pin-field { display:grid; grid-template-columns:30px minmax(0,1fr) 34px; align-items:center; padding:0 3px 0 7px; }
     .employee-pin-field > .employee-icon { color:#596a75; justify-self:center; }
     .employee-pin-field input { min-width:0; height:37px; padding:7px 5px; border:0; outline:0; background:transparent; color:var(--ee-ink); font:400 13.6px/1.5 Inter,system-ui,sans-serif; }

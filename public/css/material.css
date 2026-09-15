@@ -169,38 +169,48 @@
 .m-btn-icon:hover { background: rgba(27,27,31,.06); }
 
 /* ============================================================
-   📝 CAMPOS DE TEXTO (minimalistas y compactos)
+   📝 CAMPOS DE TEXTO — Material, label flotante de verdad
+   El label vive encima del input (position:absolute) sea cual sea
+   el orden en el HTML — :has() detecta focus/contenido sin
+   depender de que <label> venga antes o después de <input> en el
+   markup (el proyecto no es consistente en eso entre vistas).
    ============================================================ */
 .m-field {
   position: relative;
-  margin-top: 0.5rem;
+  margin-top: 1.35rem;
 }
 .m-field label {
-  display: block;
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  position: absolute;
+  left: 0.65rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.85rem;
+  font-weight: 500;
   color: var(--md-on-surface-variant);
-  margin-bottom: 0.2rem;
   background: transparent;
-  padding: 0;
-  position: static;
-  transform: none;
-  transition: none;
+  padding: 0 0.3rem;
+  pointer-events: none;
+  max-width: calc(100% - 1.3rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transform-origin: left center;
+  transition: top .16s cubic-bezier(.2,0,0,1), font-size .16s cubic-bezier(.2,0,0,1),
+              color .16s ease, background-color .16s ease;
+  z-index: 1;
 }
 .m-field input,
 .m-field textarea,
 .m-field select {
   width: 100%;
-  padding: 0.5rem 0.7rem;
-  border: 1px solid var(--md-outline);
+  padding: 0.65rem 0.75rem;
+  border: 1.5px solid var(--md-outline);
   border-radius: var(--md-radius-sm);
   background: var(--md-surface-container-low);
   font-size: 0.85rem;
   font-family: var(--md-font-family);
   color: var(--md-on-surface);
-  transition: border-color var(--md-motion), background var(--md-motion);
+  transition: border-color var(--md-motion), box-shadow var(--md-motion), background var(--md-motion);
   outline: none;
 }
 .m-field select { background: var(--md-surface-container-low); }
@@ -210,33 +220,39 @@
 .m-field select:focus {
   border-color: var(--md-primary);
   background: var(--md-surface);
-  box-shadow: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--md-primary) 15%, transparent);
 }
 .m-field input::placeholder,
 .m-field textarea::placeholder {
+  color: transparent;
+  transition: color .12s ease;
+}
+.m-field input:focus::placeholder,
+.m-field textarea:focus::placeholder {
   color: var(--md-outline);
-  opacity: 0.6;
+  opacity: 0.7;
 }
-/* Eliminamos el label flotante que subía */
-.m-field input:focus + label,
-.m-field input:not(:placeholder-shown) + label,
-.m-field textarea:focus + label,
-.m-field textarea:not(:placeholder-shown) + label {
-  top: auto;
-  font-size: 0.65rem;
+/* Sube y se encoge: al enfocar o si ya tiene texto (inputs/textareas).
+   Los <select> —nativos o mejorados por searchable-select.js (.ss-btn)—
+   siempre traen un valor elegido, así que su label vive arriba fijo. */
+.m-field:has(input:focus) label,
+.m-field:has(input:not(:placeholder-shown)) label,
+.m-field:has(textarea:focus) label,
+.m-field:has(textarea:not(:placeholder-shown)) label,
+.m-field:has(select) label,
+.m-field:has(.ss-btn) label {
+  top: 0;
+  font-size: 0.68rem;
   font-weight: 700;
-  color: var(--md-on-surface-variant);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  transform: none;
+  background: var(--md-surface-container-low);
 }
-.m-field select + label {
-  top: auto;
-  font-size: 0.65rem;
-  font-weight: 700;
-  color: var(--md-on-surface-variant);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+.m-field:has(input:focus) label,
+.m-field:has(textarea:focus) label,
+.m-field:has(select:focus) label,
+.m-field:has(.ss-wrap.ss-open) label {
+  color: var(--md-primary);
 }
 
 /* ============================================================
@@ -405,6 +421,57 @@
 .m-switch input:focus-visible + .track {
   outline: 2px solid var(--md-primary);
   outline-offset: 2px;
+}
+
+/* ============================================================
+   ☑️ CHECKBOX — cualquier <input type="checkbox"> del sitio se
+   moderniza solo (sin tocar cada vista); para dejar uno con su
+   estilo nativo, agrégale la clase "no-m-checkbox". El interruptor
+   .m-switch ya tiene su propio diseño y queda fuera de esta regla.
+   ============================================================ */
+input[type="checkbox"]:not(.m-switch input):not(.no-m-checkbox) {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 19px;
+  height: 19px;
+  flex: none;
+  margin: 0;
+  border: 1.5px solid var(--md-outline);
+  border-radius: 5px;
+  background: var(--md-surface-container-low);
+  display: inline-grid;
+  place-content: center;
+  cursor: pointer;
+  vertical-align: middle;
+  transition: background var(--md-motion), border-color var(--md-motion), box-shadow var(--md-motion);
+}
+input[type="checkbox"]:not(.m-switch input):not(.no-m-checkbox)::after {
+  content: '';
+  width: 5px;
+  height: 9px;
+  margin-top: -2px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg) scale(0);
+  transition: transform .14s cubic-bezier(.2,0,0,1);
+}
+input[type="checkbox"]:not(.m-switch input):not(.no-m-checkbox):hover {
+  border-color: var(--md-primary);
+}
+input[type="checkbox"]:not(.m-switch input):not(.no-m-checkbox):checked {
+  background: var(--md-primary);
+  border-color: var(--md-primary);
+}
+input[type="checkbox"]:not(.m-switch input):not(.no-m-checkbox):checked::after {
+  transform: rotate(45deg) scale(1);
+}
+input[type="checkbox"]:not(.m-switch input):not(.no-m-checkbox):focus-visible {
+  outline: 2px solid var(--md-primary);
+  outline-offset: 2px;
+}
+input[type="checkbox"]:not(.m-switch input):not(.no-m-checkbox):disabled {
+  opacity: .5;
+  cursor: not-allowed;
 }
 
 /* ============================================================
@@ -587,8 +654,8 @@ body.dark .m-field textarea:focus {
   border-color: #8ab4f8;
   background: #161b22;
 }
-body.dark .m-field input::placeholder,
-body.dark .m-field textarea::placeholder {
+body.dark .m-field input:focus::placeholder,
+body.dark .m-field textarea:focus::placeholder {
   color: #6e7681;
 }
 body.dark .m-field label {

@@ -857,26 +857,9 @@
     }
     .products-admin-page #nuevo-producto::before { display:none; }
     .products-admin-page #nuevo-producto:hover { transform:none; }
-    .products-admin-page #nuevo-producto .m-field label {
-      color:#45545e;
-      font-size:10px;
-      letter-spacing:.025em;
-    }
-    .products-admin-page #nuevo-producto .m-field input,
-    .products-admin-page #nuevo-producto .m-field select,
-    .products-admin-page #nuevo-producto .m-field textarea,
-    .products-admin-page #nuevo-producto .m-field .ss-btn {
-      background:rgba(255,255,255,.78);
-      border-color:rgba(44,44,46,.16);
-    }
-    .products-admin-page #nuevo-producto .m-field input:focus,
-    .products-admin-page #nuevo-producto .m-field select:focus,
-    .products-admin-page #nuevo-producto .m-field textarea:focus,
-    .products-admin-page #nuevo-producto .m-field .ss-btn:focus-visible,
-    .products-admin-page #nuevo-producto .m-field .ss-wrap.ss-open .ss-btn {
-      border-color:#315f84;
-      box-shadow:0 0 0 3px rgba(49,95,132,.10);
-    }
+    /* El label flotante y los estados de foco de .m-field ahora viven en
+       material.css (diseño compartido) — este bloque quedó vacío a
+       propósito, ya no hay que pisar esos estilos aquí. */
     .products-admin-page .pf-tipo-card {
       min-height:76px;
       padding:10px;

@@ -31,11 +31,13 @@
     .supplier-count{min-width:28px;height:28px;padding:0 8px;border-radius:8px;background:var(--sp-soft);color:var(--sp-petrol);font-size:11px;font-weight:850;display:grid;place-items:center;}
     .supplier-form{display:grid;gap:11px;}
     .suppliers-admin-page .m-field{min-width:0;}
-    .suppliers-admin-page .m-field label{display:block;margin-bottom:5px;color:#40515d;font-size:10px;font-weight:750;letter-spacing:.055em;text-transform:uppercase;}
-    .suppliers-admin-page .m-field input,.suppliers-admin-page .m-field select,.suppliers-admin-page textarea,
+    /* El label flotante y los estados de foco de .m-field ahora viven en
+       material.css (diseño compartido); aquí solo queda lo que no es
+       .m-field: el textarea suelto y las filas de la tabla de compra. */
+    .suppliers-admin-page textarea,
     .suppliers-admin-page .po-row input{width:100%;max-width:100%;min-height:41px;box-sizing:border-box;border:1px solid rgba(44,44,46,.16);border-radius:9px;background:#fff;color:var(--sp-ink);font:500 13px/1.3 Inter,system-ui,sans-serif;outline:0;}
-    .suppliers-admin-page .m-field input:focus,.suppliers-admin-page .m-field select:focus,.suppliers-admin-page textarea:focus,
-    .suppliers-admin-page .po-row input:focus{border-color:var(--sp-petrol-2)!important;box-shadow:0 0 0 3px rgba(44,44,46,.11)!important;}
+    .suppliers-admin-page textarea:focus,
+    .suppliers-admin-page .po-row input:focus{border-color:var(--sp-petrol-2);box-shadow:0 0 0 3px rgba(44,44,46,.11);}
     .supplier-submit{width:100%;margin-top:2px;background:var(--sp-petrol)!important;color:#fff!important;}
     .supplier-list{display:grid;gap:8px;margin-top:16px;padding-top:15px;border-top:1px solid var(--sp-line);}
     .supplier-item{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:11px;border-radius:11px;background:#f7f9fa;border:1px solid rgba(44,44,46,.08);}
