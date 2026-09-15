@@ -38,7 +38,7 @@
           <h1>Empleados</h1>
           <p>Asigna un PIN individual y decide exactamente qué puede gestionar cada persona.</p>
         </div>
-        <a href="#employee-editor" class="m-btn m-btn-filled m-btn-sm employee-add-shortcut">
+        <a href="#employee-editor" class="m-btn m-btn-filled m-btn-sm employee-add-shortcut" onclick="setTimeout(function () { document.getElementById('emp-name').focus(); }, 280)">
           <svg class="employee-icon" aria-hidden="true"><use href="#ee-person-add"/></svg>
           <span>Nuevo empleado</span>
         </a>
@@ -137,7 +137,7 @@
                 <label for="emp-name">Nombre *</label>
                 <input name="name" id="emp-name" required value="<%= formName || '' %>" placeholder="Ej: Ana García" autocomplete="name">
               </div>
-              <div class="m-field">
+              <div class="m-field employee-pin-wrap">
                 <label for="emp-pin">PIN de acceso *</label>
                 <div class="employee-pin-field">
                   <svg class="employee-icon" aria-hidden="true"><use href="#ee-lock"/></svg>
@@ -264,6 +264,13 @@
     .employee-pin-field { display:grid; grid-template-columns:30px minmax(0,1fr) 34px; align-items:center; padding:0 3px 0 7px; }
     .employee-pin-field > .employee-icon { color:#596a75; justify-self:center; }
     .employee-pin-field input { min-width:0; height:37px; padding:7px 5px; border:0; outline:0; background:transparent; color:var(--ee-ink); font:400 13.6px/1.5 Inter,system-ui,sans-serif; }
+    .employee-pin-field input:focus-visible { outline:none; }
+    /* El label flotante de .m-field parte del borde izquierdo (0.65rem),
+       pero aquí ese espacio ya lo ocupa el ícono del candado: se recorre
+       en reposo y regresa a su lugar habitual al flotar arriba. */
+    .employee-pin-wrap label { left:2.5rem; }
+    .employee-pin-wrap:has(.employee-pin-field input:focus) label,
+    .employee-pin-wrap:has(.employee-pin-field input:not(:placeholder-shown)) label { left:0.65rem; }
     .employee-pin-toggle { display:grid; place-items:center; width:30px; height:30px; border-radius:8px; color:#5f707c; }
     .employee-pin-toggle:hover { color:var(--ee-petrol); background:rgba(44,44,46,.08); }
     .employee-field-hint { margin:4px 1px 0; color:#586975; font-size:10px; line-height:1.45; }
