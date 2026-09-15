@@ -1490,6 +1490,21 @@
             document.querySelectorAll('#f-tipo-cards .pf-tipo-card').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-tipo') === 'variantes'); });
             return;
           }
+          // Al pasar de "con variantes" a "único" los campos Precio/Stock se
+          // muestran de nuevo pero se habían quedado vacíos (con variantes
+          // viven ocultos y en blanco — el precio real está por combinación).
+          // Se rescata algo razonable de las combinaciones que se están por
+          // borrar: el precio de la primera y la suma de todo el stock.
+          var fPrice = document.getElementById('f-price');
+          var fStock = document.getElementById('f-stock');
+          if (fPrice && !fPrice.value) {
+            var priceVals = Object.keys(ed.model.prices || {}).map(function (k) { return parseFloat(ed.model.prices[k]); }).filter(function (v) { return !isNaN(v); });
+            if (priceVals.length) fPrice.value = Math.min.apply(null, priceVals);
+          }
+          if (fStock && !fStock.value) {
+            var stockVals = Object.keys(ed.model.stock || {}).map(function (k) { return parseInt(ed.model.stock[k], 10); }).filter(function (v) { return !isNaN(v); });
+            if (stockVals.length) fStock.value = stockVals.reduce(function (a, b) { return a + b; }, 0);
+          }
           ed.model.attrs = [];
           ed.model.stock = {}; ed.model.prices = {}; ed.model.costs = {}; ed.model.images = {}; ed.model.skus = {}; ed.model.barcodes = {};
           if (typeof ed.save === 'function') ed.save();
