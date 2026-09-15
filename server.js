@@ -18,6 +18,7 @@ const { MASCARA_SIZES, SHAPE_DEFS, getShapeClip, MASCARA_CSS, EDITOR_ONLY_CSS } 
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
+const sharp = require('sharp');
 const XLSX = require('xlsx');
 const ExcelJS = require('exceljs');
 const QRCode = require('qrcode');
@@ -345,6 +346,33 @@ const upload = multer({
     cb(null, allowed.includes(ext) && okMime);
   }
 });
+// Comprime cualquier foto que suban (producto, logo, banner, categoría…) para
+// que no pesen varios MB cada una — antes solo se comprimía del lado del
+// cliente en el formulario de productos; el resto de subidas (logo, banner,
+// imágenes del constructor) llegaban tal cual las tomó la cámara del celular.
+// Se reescribe el mismo archivo ya guardado por multer con un tamaño y
+// calidad razonables; si algo falla (archivo raro, sharp no lo puede leer)
+// se deja el original tal cual en vez de tronar la subida.
+async function compressUploadedImage(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  if (ext === '.gif') return; // se respeta tal cual para no perder la animación
+  try {
+    // Se lee a un buffer en vez de pasarle la ruta a sharp directo: en
+    // Windows, escribir sobre un archivo que sharp todavía tiene abierto
+    // para lectura falla (EBUSY/UNKNOWN) — con el buffer no queda ningún
+    // handle sobre filePath mientras se procesa.
+    const before = fs.statSync(filePath).size;
+    const inBuf = fs.readFileSync(filePath);
+    const img = sharp(inBuf, { failOn: 'none' }).rotate().resize({ width: 1600, height: 1600, fit: 'inside', withoutEnlargement: true });
+    let buf;
+    if (ext === '.png') buf = await img.png({ compressionLevel: 9, palette: true }).toBuffer();
+    else if (ext === '.webp') buf = await img.webp({ quality: 80 }).toBuffer();
+    else buf = await img.jpeg({ quality: 78, mozjpeg: true }).toBuffer();
+    if (buf.length < before) fs.writeFileSync(filePath, buf);
+  } catch (e) {
+    console.error('compressUploadedImage:', e.message);
+  }
+}
 
 const uploadExcel = multer({
   storage: multer.memoryStorage(),
@@ -514,8 +542,9 @@ function loginRateLimit(req, res, next) {
   next();
 }
 
-app.post('/:slug/admin/upload', requireAuth, upload.single('foto'), verifyBodyCsrf, (req, res) => {
+app.post('/:slug/admin/upload', requireAuth, upload.single('foto'), verifyBodyCsrf, async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Archivo no válido' });
+  await compressUploadedImage(req.file.path);
   res.json({ url: '/uploads/' + req.file.filename });
 });
 
@@ -532,8 +561,9 @@ app.post('/maestro/:id/uploadvideo', maestroAuth, uploadVideo.single('video'), v
 });
 
 // Subida de logo/banner desde el editor de diseño del maestro
-app.post('/maestro/:id/upload', maestroAuth, upload.single('foto'), verifyBodyCsrf, (req, res) => {
+app.post('/maestro/:id/upload', maestroAuth, upload.single('foto'), verifyBodyCsrf, async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Archivo no válido' });
+  await compressUploadedImage(req.file.path);
   res.json({ url: '/uploads/' + req.file.filename });
 });
 
