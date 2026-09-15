@@ -19,6 +19,8 @@ const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const sharp = require('sharp');
+const ffmpeg = require('fluent-ffmpeg');
+ffmpeg.setFfmpegPath(require('@ffmpeg-installer/ffmpeg').path);
 const XLSX = require('xlsx');
 const ExcelJS = require('exceljs');
 const QRCode = require('qrcode');
@@ -403,6 +405,43 @@ const uploadVideo = multer({
     cb(null, allowed.includes(ext) && okMime);
   }
 });
+// Igual que compressUploadedImage pero para video: los que suben desde el
+// celular llegan pesadísimos (a veces 50-100 MB) sin ningún tratamiento.
+// Reescala a máximo 1280px de ancho (sin agrandar los que ya son chicos) y
+// reencoda con un CRF razonable — mp4/mov/m4v a H.264+AAC, webm a VP9+Opus
+// (su propio códec nativo; mezclar H.264 dentro de un contenedor .webm no
+// es válido). .ogg se deja tal cual: es un formato raro hoy en día y no
+// vale la pena la complejidad extra. Escribe a un archivo temporal (ffmpeg
+// no puede leer y escribir el mismo archivo a la vez) y solo lo reemplaza
+// si de verdad quedó más chico.
+async function compressUploadedVideo(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  if (ext === '.ogg') return;
+  const before = fs.statSync(filePath).size;
+  const tmpPath = filePath + '.compressing' + ext;
+  try {
+    await new Promise((resolve, reject) => {
+      const cmd = ffmpeg(filePath)
+        .videoFilters("scale='min(1280,iw)':-2")
+        .outputOptions(['-movflags +faststart'])
+        .on('end', resolve)
+        .on('error', reject);
+      if (ext === '.webm') cmd.videoCodec('libvpx-vp9').audioCodec('libopus').outputOptions(['-crf 34', '-b:v 0', '-deadline good']);
+      else cmd.videoCodec('libx264').audioCodec('aac').outputOptions(['-crf 28', '-preset veryfast']).audioBitrate('96k');
+      cmd.save(tmpPath);
+    });
+    const after = fs.statSync(tmpPath).size;
+    if (after > 0 && after < before) {
+      fs.unlinkSync(filePath);
+      fs.renameSync(tmpPath, filePath);
+    } else {
+      fs.unlinkSync(tmpPath);
+    }
+  } catch (e) {
+    console.error('compressUploadedVideo:', e.message);
+    try { if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath); } catch (e2) {}
+  }
+}
 
 const fileStorage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, path.join(__dirname, 'public', 'uploads')),
@@ -549,14 +588,16 @@ app.post('/:slug/admin/upload', requireAuth, upload.single('foto'), verifyBodyCs
 });
 
 // Subida de video desde el constructor (owner)
-app.post('/:slug/admin/uploadvideo', requireAuth, uploadVideo.single('video'), verifyBodyCsrf, (req, res) => {
+app.post('/:slug/admin/uploadvideo', requireAuth, uploadVideo.single('video'), verifyBodyCsrf, async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Video no válido' });
+  await compressUploadedVideo(req.file.path);
   res.json({ url: '/uploads/' + req.file.filename });
 });
 
 // Subida de video desde el maestro
-app.post('/maestro/:id/uploadvideo', maestroAuth, uploadVideo.single('video'), verifyBodyCsrf, (req, res) => {
+app.post('/maestro/:id/uploadvideo', maestroAuth, uploadVideo.single('video'), verifyBodyCsrf, async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Video no válido' });
+  await compressUploadedVideo(req.file.path);
   res.json({ url: '/uploads/' + req.file.filename });
 });
 
