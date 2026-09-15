@@ -4236,6 +4236,11 @@ function getEmployees(bizId) {
 function pinInUse(biz, pin, excludeEmpId) {
   if (!pin) return false;
   if (biz.pin_hash && verifyPin(pin, biz.pin_hash)) return true;
+  // Tiendas viejas que aún no migraron pueden tener el PIN real del dueño
+  // solo en la columna legacy "pin" (ver el login en POST /:slug/admin) —
+  // sin este fallback, un empleado nuevo podía quedarse con el mismo PIN
+  // que el dueño porque aquí nunca se revisaba esa columna.
+  if (biz.pin && verifyPin(pin, biz.pin)) return true;
   const emps = excludeEmpId
     ? db.prepare("SELECT pin_hash FROM employees WHERE business_id = ? AND id != ?").all(biz.id, excludeEmpId)
     : db.prepare("SELECT pin_hash FROM employees WHERE business_id = ?").all(biz.id);

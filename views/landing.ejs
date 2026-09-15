@@ -301,10 +301,46 @@
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14"/></svg>
           Descargar app móvil
         </button>
+        <button type="button" onclick="abrirLoginTienda()" class="btn-outline text-sm py-1.5 px-4">Iniciar sesión</button>
         <a href="/registrar" class="btn-solid text-sm py-1.5 px-4">Registrar tienda</a>
       </div>
     </div>
   </nav>
+
+  <!-- Modal: ir al login de tu tienda (no hay login global — cada tienda tiene el suyo en /:slug/admin) -->
+  <div id="login-tienda-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4" style="background:rgba(20,18,16,.55)" onclick="if(event.target===this) cerrarLoginTienda()">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+      <h3 class="font-extrabold text-lg text-[#141210]">Entrar a tu tienda</h3>
+      <p class="text-sm text-slate-500 mt-1 mb-4">Escribe el enlace de tu tienda para ir a su panel de acceso.</p>
+      <form onsubmit="return irALoginTienda(event)">
+        <label for="login-tienda-slug" class="sr-only">Enlace de tu tienda</label>
+        <div class="flex items-center border border-slate-200 rounded-xl overflow-hidden focus-within:border-[#141210] transition">
+          <span class="pl-3 text-sm text-slate-400 select-none">cadi.nessik.net/</span>
+          <input id="login-tienda-slug" type="text" required autofocus autocomplete="off" spellcheck="false" placeholder="tu-tienda" class="flex-1 min-w-0 py-2.5 pr-3 text-sm outline-none">
+        </div>
+        <div class="flex gap-2 mt-4">
+          <button type="button" onclick="cerrarLoginTienda()" class="btn-outline text-sm py-2 px-4 flex-1">Cancelar</button>
+          <button type="submit" class="btn-solid text-sm py-2 px-4 flex-1">Continuar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <script>
+    function abrirLoginTienda() {
+      document.getElementById('login-tienda-modal').classList.remove('hidden');
+      setTimeout(function () { document.getElementById('login-tienda-slug').focus(); }, 30);
+    }
+    function cerrarLoginTienda() {
+      document.getElementById('login-tienda-modal').classList.add('hidden');
+    }
+    function irALoginTienda(e) {
+      e.preventDefault();
+      var slug = document.getElementById('login-tienda-slug').value.trim().toLowerCase().replace(/^\/+|\/+$/g, '');
+      if (!slug) return false;
+      window.location.href = '/' + encodeURIComponent(slug) + '/admin';
+      return false;
+    }
+  </script>
 
   <!-- ============================================================
   HERO (más compacto y con glow)
