@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/register.css?v=20260914">
+  <link rel="stylesheet" href="/css/register.css?v=20260915b">
 </head>
 <body>
   <nav class="register-nav" aria-label="Navegación principal">
@@ -48,27 +48,22 @@
       <form id="register-form" method="POST" action="/registrar" novalidate>
         <div class="field-group">
           <div class="field-heading"><span class="field-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 10h16M6 10v10h12V10M5 4h14l1 6H4l1-6Zm5 16v-5h4v5"/></svg></span><div><h2>La identidad de tu negocio</h2><p>Así aparecerá frente a tus clientes.</p></div></div>
-          <label for="f-name">Nombre del negocio <span>*</span></label>
-          <div class="input-shell"><input id="f-name" name="name" required maxlength="80" value="<%= form ? form.name : '' %>" placeholder="Ej. Ferretería El Toro" autocomplete="organization"><span class="field-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 12 4 4 8-9"/></svg></span></div>
-          <label for="f-description">¿Qué encontrará la gente?</label>
-          <textarea id="f-description" name="description" rows="2" maxlength="160" placeholder="Ej. Todo para tu obra y hogar en Torreón."><%= form ? form.description : '' %></textarea>
+          <div class="input-shell"><label for="f-name">Nombre del negocio <span>*</span></label><input id="f-name" name="name" required maxlength="80" value="<%= form ? form.name : '' %>" placeholder="Ej. Ferretería El Toro" autocomplete="organization"><span class="field-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 12 4 4 8-9"/></svg></span></div>
+          <div class="input-shell textarea-shell"><label for="f-description">¿Qué encontrará la gente?</label><textarea id="f-description" name="description" rows="2" maxlength="160" placeholder="Ej. Todo para tu obra y hogar en Torreón."><%= form ? form.description : '' %></textarea></div>
           <div class="field-meta"><span>Una frase corta basta</span><span id="description-count">0/160</span></div>
         </div>
 
         <div class="field-group">
           <div class="field-heading"><span class="field-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.07.07l2-2A5 5 0 0 0 12 4M14 11a5 5 0 0 0-7.07-.07l-2 2A5 5 0 0 0 12 20"/></svg></span><div><h2>Tu dirección en internet</h2><p>Se crea sola; puedes personalizarla.</p></div></div>
-          <label for="f-slug">Enlace público <span>*</span></label>
-          <div class="input-shell url-shell"><span>cadi.nessik.net/</span><input id="f-slug" name="slug" required pattern="[a-z0-9\-]+" maxlength="60" value="<%= form ? form.slug : '' %>" placeholder="ferreteria-el-toro" autocomplete="off" spellcheck="false"><span class="field-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 12 4 4 8-9"/></svg></span></div>
+          <div class="input-shell url-shell"><label for="f-slug">Enlace público <span>*</span></label><span>cadi.nessik.net/</span><input id="f-slug" name="slug" required pattern="[a-z0-9\-]+" maxlength="60" value="<%= form ? form.slug : '' %>" placeholder="ferreteria-el-toro" autocomplete="off" spellcheck="false"><span class="field-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 12 4 4 8-9"/></svg></span></div>
           <p class="field-help">Este es el enlace que compartirás por WhatsApp y redes.</p>
         </div>
 
         <div class="field-group">
           <div class="field-heading"><span class="field-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8.5 3h7A2.5 2.5 0 0 1 18 5.5v13a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 6 18.5v-13A2.5 2.5 0 0 1 8.5 3ZM10 6h4m-3 12h2"/></svg></span><div><h2>Donde llegarán tus pedidos</h2><p>Conectamos cada producto con tu WhatsApp.</p></div></div>
-          <label for="f-whatsapp">WhatsApp de ventas <span>*</span></label>
-          <div class="input-shell phone-shell"><span>+52</span><input id="f-whatsapp" name="whatsapp" required type="tel" inputmode="numeric" maxlength="10" value="<%= form ? form.whatsapp : '' %>" placeholder="871 992 0338" autocomplete="tel-national"><span class="field-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 12 4 4 8-9"/></svg></span></div>
+          <div class="input-shell phone-shell"><label for="f-whatsapp">WhatsApp de ventas <span>*</span></label><span>+52</span><input id="f-whatsapp" name="whatsapp" required type="tel" inputmode="numeric" maxlength="10" value="<%= form ? form.whatsapp : '' %>" placeholder="871 992 0338" autocomplete="tel-national"><span class="field-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 12 4 4 8-9"/></svg></span></div>
           <p class="field-help">Escribe los 10 dígitos de tu número.</p>
-          <label for="f-pin">Crea tu PIN de acceso <span>*</span></label>
-          <div class="input-shell pin-shell"><input id="f-pin" name="pin" type="password" inputmode="numeric" minlength="6" maxlength="12" required value="<%= form ? form.pin : '' %>" placeholder="6 a 12 dígitos" autocomplete="new-password"><button type="button" class="pin-toggle" aria-label="Mostrar PIN" aria-pressed="false"><svg class="eye-open" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg><svg class="eye-closed" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 3 18 18M10.6 6.1A10.7 10.7 0 0 1 12 6c6 0 9.5 6 9.5 6a16.6 16.6 0 0 1-2.1 2.7M6.2 6.2C3.8 7.8 2.5 12 2.5 12s3.5 6 9.5 6c1 0 2-.2 2.8-.5M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg></button><span class="field-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 12 4 4 8-9"/></svg></span></div>
+          <div class="input-shell pin-shell"><label for="f-pin">Crea tu PIN de acceso <span>*</span></label><input id="f-pin" name="pin" type="password" inputmode="numeric" minlength="6" maxlength="12" required value="<%= form ? form.pin : '' %>" placeholder="6 a 12 dígitos" autocomplete="new-password"><button type="button" class="pin-toggle" aria-label="Mostrar PIN" aria-pressed="false"><svg class="eye-open" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg><svg class="eye-closed" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 3 18 18M10.6 6.1A10.7 10.7 0 0 1 12 6c6 0 9.5 6 9.5 6a16.6 16.6 0 0 1-2.1 2.7M6.2 6.2C3.8 7.8 2.5 12 2.5 12s3.5 6 9.5 6c1 0 2-.2 2.8-.5M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg></button><span class="field-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 12 4 4 8-9"/></svg></span></div>
           <p class="field-help">Será la llave para administrar tu catálogo.</p>
         </div>
 
