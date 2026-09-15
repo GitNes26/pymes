@@ -2,7 +2,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="csrf" content="<%= csrf %>">
 <meta name="theme-color" content="#f7f7f8">
-<meta name="color-scheme" content="light dark">
+<meta name="color-scheme" content="light">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -362,6 +362,17 @@
   }
 
   /* ===== DARK MODE ===== */
+  /* El tema del panel lo decide el switch de la app (clase body.dark), no el
+     SO — pero los controles nativos (inputs, checkboxes, selects, date
+     pickers) pintan sus colores por defecto según color-scheme, y esa
+     propiedad heredaba "light dark" del <meta> de arriba, es decir seguía
+     al SO. Con el celular/PC en modo oscuro del sistema pero la app en modo
+     claro, algunos inputs salían oscuros "de la nada" aunque el resto de la
+     UI se viera clara. Se ata explícitamente al mismo interruptor.
+     El <meta color-scheme> de la cabecera ya quedó fijo en "light"; aquí solo
+     se activa "dark" cuando la propia app lo pide. */
+  body.dark { color-scheme: dark; }
+  body:not(.dark) { color-scheme: light; }
   body.dark {
     --ap-bg: #0d1117;
     --ap-card: #161b22;
