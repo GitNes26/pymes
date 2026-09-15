@@ -102,7 +102,6 @@
       #po-grid tr.po-row td[data-label] input,#po-grid tr.po-row td[data-label] .po-sub{width:auto!important;min-width:0;flex:1 1 auto;text-align:right;}
       #po-grid tr.po-row td:last-child{position:absolute;top:8px;right:8px;padding:0!important;width:auto!important;}
       #po-grid tr.po-row td:nth-child(2){align-items:flex-start;}
-      #po-grid tr.po-row .po-vlist{left:auto;right:0;width:auto;max-width:min(256px,calc(100vw - 64px));}
       body.dark #po-grid tr.po-row{background:#151c23;}
     }
     body.dark.suppliers-admin-page{background:#0d1117;color:#e7eef3;}
@@ -334,6 +333,43 @@
       inp.classList.toggle('bg-neutral-100/50', unlinked);
     }
 
+    // ===== Lista de variantes por fila: mismo truco que el autocomplete =====
+    // #po-grid tiene overflow-x-auto (necesario para la tabla en móvil), pero
+    // eso obliga al navegador a tratar overflow-y como auto también (regla
+    // del CSS: si un eje no es "visible", el otro deja de serlo aunque no se
+    // haya pedido) — cualquier hijo position:absolute quedaba recortado o
+    // generaba su propio scroll DENTRO de la tabla en vez de flotar encima.
+    // Se ancla a <body> igual que el autocomplete de productos.
+    function placeVList(vsum, vlist) {
+      var r = vsum.getBoundingClientRect();
+      var vv = window.visualViewport;
+      var offX = (vv && vv.offsetLeft) || 0;
+      var offY = (vv && vv.offsetTop) || 0;
+      var vw = (vv && vv.width) || window.innerWidth;
+      var vh = (vv && vv.height) || window.innerHeight;
+      var w = Math.min(256, vw - 16);
+      var H = Math.min(vlist.scrollHeight || 208, vh - 16);
+      var left = Math.max(8, Math.min(r.left - offX, vw - w - 8));
+      var below = (r.bottom - offY) + 4;
+      var top = (below + H <= vh - 8) ? below : Math.max(8, (r.top - offY) - H - 4);
+      vlist.style.left = left + 'px';
+      vlist.style.top = top + 'px';
+      vlist.style.width = w + 'px';
+    }
+    var openVDet = null, openVList = null, openVSum = null;
+    function vdetReposition() { if (openVDet && openVDet.open) placeVList(openVSum, openVList); }
+    window.addEventListener('scroll', vdetReposition, true);
+    window.addEventListener('resize', vdetReposition);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', vdetReposition);
+      window.visualViewport.addEventListener('scroll', vdetReposition);
+    }
+    document.addEventListener('click', function (e) {
+      if (!openVDet || !openVDet.open) return;
+      if (openVSum.contains(e.target) || openVList.contains(e.target)) return;
+      openVDet.open = false;
+    });
+
     // ===== Autocomplete de productos (estilo Excel) =====
     // Un solo dropdown anclado al <body>: ningún transform/overflow del panel lo desplaza o recorta
     var poAc = document.createElement('div');
@@ -411,7 +447,7 @@
       if (!p) return;
       var hadChildren = (childOf.get(row) || []).length > 0;
       if (row.dataset.pid && row.dataset.pid !== String(id) && hadChildren) {
-        (childOf.get(row) || []).forEach(function(ch){ ch.remove(); });
+        (childOf.get(row) || []).forEach(function(ch){ dropRowVList(ch); ch.remove(); });
         childOf.set(row, []);
         row.dataset.var = '';
       }
@@ -444,8 +480,8 @@
         '<td class="px-2 py-1.5 align-middle" data-label="Variante">' +
           '<span class="po-vstatic hidden bg-amber-100 text-amber-800 rounded-lg px-2 py-1.5 text-xs font-bold whitespace-nowrap"></span>' +
           '<details class="po-vdet hidden relative text-xs">' +
-            '<summary tabindex="-1" class="po-vsum bg-amber-50 border border-amber-300 text-amber-800 rounded-lg px-2 py-1.5 font-bold cursor-pointer select-none">' + UI_ICONS.sliders + 'Variantes <span class="po-vcount text-amber-600"></span></summary>' +
-            '<div class="po-vlist absolute z-30 mt-1 w-64 max-h-52 overflow-auto bg-white border border-slate-200 rounded-xl shadow-xl p-2 space-y-1"></div>' +
+            '<summary tabindex="-1" class="po-vsum bg-amber-50 border border-amber-300 text-amber-800 rounded-lg px-2 py-1.5 font-bold cursor-pointer select-none whitespace-nowrap overflow-hidden">' + UI_ICONS.sliders + '<span class="po-vlabel overflow-hidden text-ellipsis">Variantes</span><span class="po-vcount text-amber-600"></span></summary>' +
+            '<div class="po-vlist hidden fixed z-[70] max-h-52 overflow-auto bg-white border border-slate-200 rounded-xl shadow-xl p-2 space-y-1"></div>' +
           '</details>' +
           '<input type="text" tabindex="-1" class="po-vname w-full border border-amber-300 bg-amber-50 rounded-lg px-2 py-1.5 text-sm hidden" placeholder="Atributo (ej: XS / Azul)">' +
         '</td>' +
@@ -460,6 +496,23 @@
       var qty = row.querySelector('.po-qty');
       var cost = row.querySelector('.po-cost');
       var price = row.querySelector('.po-price');
+
+      var vdet = row.querySelector('.po-vdet');
+      var vsum = row.querySelector('.po-vsum');
+      var vlist = row.querySelector('.po-vlist');
+      document.body.appendChild(vlist);
+      row._vlist = vlist; // ya no es descendiente de row (ver arriba) — se guarda la referencia porque row.querySelector('.po-vlist') dejaría de encontrarlo
+      vdet.addEventListener('toggle', function () {
+        if (vdet.open) {
+          if (openVDet && openVDet !== vdet) openVDet.open = false;
+          openVDet = vdet; openVList = vlist; openVSum = vsum;
+          vlist.classList.remove('hidden');
+          placeVList(vsum, vlist);
+        } else {
+          vlist.classList.add('hidden');
+          if (openVDet === vdet) { openVDet = null; openVList = null; openVSum = null; }
+        }
+      });
 
       // Navegación tipo Excel en las celdas numéricas
       [qty, cost, price].forEach(function(cell){
@@ -540,15 +593,38 @@
       else poFocusCell(rows[rows.indexOf(row) + 1], rows[rows.indexOf(row) + 1].querySelector('.po-name'));
     }
 
+    // El po-vlist de la fila vive aparte en <body> (ver poAddRow) — al
+    // borrar la fila hay que quitarlo también o se queda huérfano ahí.
+    function dropRowVList(r) {
+      var vl = r._vlist;
+      if (vl && vl.parentNode) vl.parentNode.removeChild(vl);
+      var vd = r.querySelector('.po-vdet');
+      if (openVDet === vd) { openVDet = null; openVList = null; openVSum = null; }
+    }
     function removeRow(row) {
-      (childOf.get(row) || []).forEach(function(ch){ ch.remove(); });
+      (childOf.get(row) || []).forEach(function(ch){ dropRowVList(ch); ch.remove(); });
       childOf.delete(row);
+      dropRowVList(row);
       row.remove();
       poRecalc();
     }
 
+    // El botón decía siempre "Variantes (n)" sin importar cuál se hubiera
+    // marcado — con 1 sola marcada mostraba lo mismo que con ninguna, y
+    // había que abrir el desplegable para saber cuál era. Ahora muestra el
+    // nombre real cuando hay una sola, o "nombre +N" cuando hay varias.
+    function updateVSummary(row) {
+      var label = row.querySelector('.po-vlabel');
+      var count = row.querySelector('.po-vcount');
+      if (!label || !count || !row._vlist) return;
+      var checked = Array.prototype.slice.call(row._vlist.querySelectorAll('.po-vchk:checked')).map(function (cb) { return cb.value; });
+      if (checked.length === 0) { label.textContent = 'Variantes'; count.textContent = ''; }
+      else if (checked.length === 1) { label.textContent = checked[0]; count.textContent = ''; }
+      else { label.textContent = checked[0]; count.textContent = ' +' + (checked.length - 1); }
+    }
+
     function buildVList(row) {
-      var vlist = row.querySelector('.po-vlist');
+      var vlist = row._vlist;
       var p = row.dataset.pid ? prodById[parseInt(row.dataset.pid)] : null;
       var combos = (p && p.variantOpts && p.variantOpts.length) ? p.variantOpts : [];
       vlist.innerHTML = combos.map(function(c){
@@ -573,7 +649,7 @@
 
       // Si la fila maestra cambia de producto, se limpian los hijos y la variante elegida
       if (!isChild && row.dataset.prevPid && row.dataset.prevPid !== row.dataset.pid) {
-        (childOf.get(row) || []).forEach(function(ch){ ch.remove(); });
+        (childOf.get(row) || []).forEach(function(ch){ dropRowVList(ch); ch.remove(); });
         childOf.set(row, []);
         row.dataset.var = '';
       }
@@ -589,8 +665,7 @@
         vname.classList.add('hidden');
         vdet.classList.remove('hidden');
         buildVList(row);
-        var n = row.querySelectorAll('.po-vchk:checked').length;
-        row.querySelector('.po-vcount').textContent = n ? '(' + n + ')' : '';
+        updateVSummary(row);
       } else if (pid) {
         vstatic.classList.add('hidden');
         vdet.classList.add('hidden'); vdet.open = false;
@@ -605,11 +680,11 @@
 
     // La fila maestra guarda la 1ª combinación; el resto se agregan solas como filas hijas.
     function poVChanged(master) {
-      (childOf.get(master) || []).forEach(function(ch){ ch.remove(); });
+      (childOf.get(master) || []).forEach(function(ch){ dropRowVList(ch); ch.remove(); });
       childOf.set(master, []);
-      var checked = Array.prototype.slice.call(master.querySelectorAll('.po-vchk:checked')).map(function(cb){ return cb.value; });
+      var checked = Array.prototype.slice.call(master._vlist.querySelectorAll('.po-vchk:checked')).map(function(cb){ return cb.value; });
       master.dataset.var = checked[0] || '';
-      master.querySelector('.po-vcount').textContent = checked.length ? '(' + checked.length + ')' : '';
+      updateVSummary(master);
       var baseQty = parseInt(master.querySelector('.po-qty').value) || 1;
       var mCost = master.querySelector('.po-cost').value;
       var mPrice = master.querySelector('.po-price').value;

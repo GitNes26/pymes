@@ -28,10 +28,10 @@
 .ss-btn-label.ss-placeholder{opacity:.55;}\
 .ss-caret{flex-shrink:0;width:14px;height:14px;transition:transform .18s cubic-bezier(.22,1,.36,1);opacity:.55;}\
 .ss-wrap.ss-open .ss-caret{transform:rotate(180deg);}\
-.ss-panel{position:absolute;top:calc(100% + 4px);left:0;width:100%;min-width:100%;max-width:100%;box-sizing:border-box;z-index:2000;background:var(--md-surface,#fff);border:1px solid var(--md-outline-soft,#e2e8f0);border-radius:12px;box-shadow:0 12px 32px rgba(15,23,42,.14);overflow:hidden;opacity:0;transform:translateY(-4px) scale(.98);transform-origin:top center;pointer-events:none;transition:opacity .15s ease,transform .15s cubic-bezier(.22,1,.36,1);}\
-.ss-wrap.ss-open .ss-panel{opacity:1;transform:none;pointer-events:auto;}\
-.ss-wrap.ss-drop-up .ss-panel{top:auto;bottom:calc(100% + 4px);transform:translateY(4px) scale(.98);}\
-.ss-wrap.ss-align-right .ss-panel{left:auto;right:0;}\
+.ss-panel{position:fixed;box-sizing:border-box;z-index:2000;background:var(--md-surface,#fff);border:1px solid var(--md-outline-soft,#e2e8f0);border-radius:12px;box-shadow:0 12px 32px rgba(15,23,42,.14);overflow:hidden;opacity:0;transform:translateY(-4px) scale(.98);transform-origin:top center;pointer-events:none;transition:opacity .15s ease,transform .15s cubic-bezier(.22,1,.36,1);}\
+.ss-panel.ss-panel-open{opacity:1;transform:none;pointer-events:auto;}\
+.ss-panel.ss-drop-up{transform-origin:bottom center;transform:translateY(4px) scale(.98);}\
+.ss-panel.ss-drop-up.ss-panel-open{transform:none;}\
 .ss-search-wrap{padding:6px;border-bottom:1px solid var(--md-outline-soft,#eef1f6);position:relative;background:var(--md-surface,#fff);}\
 .ss-search{width:100%;min-width:0;padding:.5rem .7rem .5rem 2rem;border:1px solid var(--md-outline,#e2e8f0);border-radius:var(--md-radius-sm,8px);font-size:.85rem;font-family:var(--md-font-family,Inter,system-ui,sans-serif);line-height:1.25;outline:none;box-sizing:border-box;background:var(--md-surface-container-low,#f8fafc);color:var(--md-on-surface,#0f172a);transition:border-color var(--md-motion,.2s ease),background var(--md-motion,.2s ease);}\
 .ss-search::placeholder{color:var(--md-outline,#64748b);opacity:.6;}\
@@ -158,7 +158,13 @@ body.dark .ss-opt:hover,body.dark .ss-opt.ss-hi{background:#2a2a2d;color:#d4d4d4
     wrap.appendChild(select);
     select.classList.add('ss-native');
     wrap.appendChild(btn);
-    wrap.appendChild(panel);
+    // El panel se ancla directo a <body> (no dentro de .ss-wrap): así ningún
+    // overflow/transform de un ancestro (tarjetas con hover, tablas con
+    // scroll horizontal, hojas de modal…) lo recorta o lo desplaza. Su
+    // posición se calcula en cada apertura con las mismas coordenadas de
+    // viewport que ya usa el autocomplete de proveedores.
+    document.body.appendChild(panel);
+    wrap._ssPanel = panel;
 
     var hiIndex = -1;
 
@@ -276,21 +282,61 @@ body.dark .ss-opt:hover,body.dark .ss-opt.ss-hi{background:#2a2a2d;color:#d4d4d4
       btn.focus();
     }
 
+    // Igual que acPlace() en proveedores: getBoundingClientRect() es relativo
+    // al layout viewport, pero en móvil (sobre todo iOS Safari) el teclado
+    // encoge el visual viewport sin mover el layout viewport — sin compensar
+    // ese desfase (offsetLeft/offsetTop de visualViewport) el panel se abre
+    // "movido" respecto a su botón.
+    function place() {
+      var r = btn.getBoundingClientRect();
+      var vv = window.visualViewport;
+      var offX = (vv && vv.offsetLeft) || 0;
+      var offY = (vv && vv.offsetTop) || 0;
+      var vw = (vv && vv.width) || window.innerWidth;
+      var vh = (vv && vv.height) || window.innerHeight;
+      var H = Math.min(panel.offsetHeight || 300, vh - 16);
+      var w = Math.min(Math.max(r.width, 200), vw - 16);
+      var left = Math.max(8, Math.min(r.left - offX, vw - w - 8));
+      var below = (r.bottom - offY) + 4;
+      var top, dropUp;
+      if (below + H <= vh - 8) { top = below; dropUp = false; }
+      else if ((r.top - offY) - H - 4 >= 8) { top = (r.top - offY) - H - 4; dropUp = true; }
+      else { top = Math.max(8, vh - H - 8); dropUp = false; }
+      panel.style.left = left + 'px';
+      panel.style.top = top + 'px';
+      panel.style.width = w + 'px';
+      panel.classList.toggle('ss-drop-up', dropUp);
+    }
+    function onReposition() { if (wrap.classList.contains('ss-open')) place(); }
+
     function open() {
       if (select.disabled) return;
       document.querySelectorAll('.ss-wrap.ss-open').forEach(function (w) { if (w !== wrap) w.classList.remove('ss-open'); });
+      document.querySelectorAll('.ss-panel.ss-panel-open').forEach(function (p) { if (p !== panel) p.classList.remove('ss-panel-open'); });
       wrap.classList.add('ss-open');
       btn.setAttribute('aria-expanded', 'true');
-      var rect = wrap.getBoundingClientRect();
-      wrap.classList.toggle('ss-drop-up', rect.bottom + 260 > window.innerHeight && rect.top > 260);
-      wrap.classList.toggle('ss-align-right', rect.left + 200 > window.innerWidth);
       search.value = '';
       buildList('');
-      setTimeout(function () { search.focus(); }, 0);
+      place();
+      panel.classList.add('ss-panel-open');
+      window.addEventListener('scroll', onReposition, true);
+      window.addEventListener('resize', onReposition);
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', onReposition);
+        window.visualViewport.addEventListener('scroll', onReposition);
+      }
+      setTimeout(function () { place(); search.focus(); }, 0);
     }
     function close() {
       wrap.classList.remove('ss-open');
+      panel.classList.remove('ss-panel-open', 'ss-drop-up');
       btn.setAttribute('aria-expanded', 'false');
+      window.removeEventListener('scroll', onReposition, true);
+      window.removeEventListener('resize', onReposition);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', onReposition);
+        window.visualViewport.removeEventListener('scroll', onReposition);
+      }
     }
     function toggle() { wrap.classList.contains('ss-open') ? close() : open(); }
 
@@ -313,7 +359,7 @@ body.dark .ss-opt:hover,body.dark .ss-opt.ss-hi{background:#2a2a2d;color:#d4d4d4
       else if (e.key === 'Tab') { close(); }
     });
     document.addEventListener('click', function (e) {
-      if (!wrap.contains(e.target)) close();
+      if (!wrap.contains(e.target) && !panel.contains(e.target)) close();
     });
 
     // Intercepta cambios de .value / .selectedIndex hechos por otro código
@@ -354,6 +400,17 @@ body.dark .ss-opt:hover,body.dark .ss-opt.ss-hi{background:#2a2a2d;color:#d4d4d4
           if (node.nodeType !== 1) return;
           if (node.tagName === 'SELECT') enhance(node);
           else if (node.querySelectorAll) enhanceAll(node);
+        });
+        // Vistas tipo SPA (panel-ajax.ejs) reemplazan el innerHTML de <main>
+        // completo: el .ss-wrap muere con ese HTML, pero su panel vive
+        // aparte en <body> y se quedaría huérfano (fugas + paneles fantasma)
+        // si no se limpia aquí también.
+        m.removedNodes && m.removedNodes.forEach(function (node) {
+          if (node.nodeType !== 1) return;
+          var wraps = [];
+          if (node.classList && node.classList.contains('ss-wrap')) wraps.push(node);
+          if (node.querySelectorAll) wraps = wraps.concat(Array.prototype.slice.call(node.querySelectorAll('.ss-wrap')));
+          wraps.forEach(function (w) { if (w._ssPanel && w._ssPanel.parentNode) w._ssPanel.parentNode.removeChild(w._ssPanel); });
         });
       });
     });
