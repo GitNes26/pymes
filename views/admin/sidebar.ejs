@@ -340,3 +340,159 @@ BOTTOM NAV MÓVIL (máx 4 opciones + "Más")
     }
   })();
 </script>
+
+<!-- ============================================================
+AYUDA — chatbot de preguntas frecuentes (guionado, no llama a ninguna
+IA real: solo busca por palabras clave en una lista de respuestas ya
+escritas sobre cómo usar el panel). Vive aquí porque admin/sidebar se
+incluye en TODAS las páginas de administración — un solo lugar, se ve
+en todas partes sin repetir el código en cada vista.
+============================================================ -->
+<style>
+  .help-fab {
+    position: fixed; right: 20px; bottom: 20px; z-index: 70;
+    width: 52px; height: 52px; border-radius: 999px; border: none; cursor: pointer;
+    background: var(--ap-accent); color: #fff; box-shadow: 0 8px 24px rgba(0,0,0,.22);
+    display: flex; align-items: center; justify-content: center;
+    transition: transform .18s cubic-bezier(.22,1,.36,1);
+  }
+  .help-fab:active { transform: scale(.9); }
+  @media (max-width: 767px) { .help-fab { bottom: calc(72px + env(safe-area-inset-bottom, 0px)); right: 14px; width: 48px; height: 48px; } }
+  .help-panel {
+    position: fixed; right: 20px; bottom: 84px; z-index: 71; width: 360px; max-width: calc(100vw - 28px);
+    height: 480px; max-height: 70vh; background: var(--ap-card); border: 1px solid var(--ap-border);
+    border-radius: 18px; box-shadow: 0 20px 60px rgba(0,0,0,.3); display: none; flex-direction: column; overflow: hidden;
+  }
+  .help-panel.open { display: flex; }
+  @media (max-width: 767px) { .help-panel { right: 10px; bottom: calc(128px + env(safe-area-inset-bottom, 0px)); width: calc(100vw - 20px); } }
+  .help-head { background: var(--ap-accent); color: #fff; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; flex: none; }
+  .help-head p { font-size: 13.5px; font-weight: 800; margin: 0; }
+  .help-head span { font-size: 11px; opacity: .85; display: block; margin-top: 1px; }
+  .help-close { background: rgba(255,255,255,.18); border: none; color: #fff; width: 26px; height: 26px; border-radius: 999px; cursor: pointer; display: grid; place-items: center; }
+  .help-body { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+  .help-msg { max-width: 86%; font-size: 12.5px; line-height: 1.5; padding: 9px 12px; border-radius: 12px; white-space: pre-line; }
+  .help-msg.bot { align-self: flex-start; background: var(--ap-bg); color: var(--ap-text); border: 1px solid var(--ap-border); border-bottom-left-radius: 3px; }
+  .help-msg.user { align-self: flex-end; background: var(--ap-accent); color: #fff; border-bottom-right-radius: 3px; }
+  .help-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 14px 12px; flex: none; }
+  .help-chip { border: 1px solid var(--ap-border); background: var(--ap-bg); color: var(--ap-text-sec); font-size: 11px; font-weight: 700; padding: 5px 10px; border-radius: 999px; cursor: pointer; }
+  .help-chip:hover { border-color: var(--ap-accent); color: var(--ap-accent-text); }
+  .help-form { flex: none; display: flex; gap: 8px; padding: 10px; border-top: 1px solid var(--ap-border); }
+  .help-input { flex: 1; min-width: 0; border: 1px solid var(--ap-border); background: var(--ap-bg); color: var(--ap-text); border-radius: 999px; padding: 9px 14px; font-size: 12.5px; outline: none; }
+  .help-send { border: none; background: var(--ap-accent); color: #fff; width: 36px; height: 36px; border-radius: 999px; cursor: pointer; display: grid; place-items: center; flex: none; }
+</style>
+
+<button type="button" class="help-fab" id="help-fab" onclick="toggleHelp()" aria-label="Ayuda" title="Ayuda">
+  <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 9a3 3 0 116 0c0 2-3 2.5-3 4.5M12 17h.01"/></svg>
+</button>
+
+<div class="help-panel" id="help-panel" role="dialog" aria-modal="false" aria-labelledby="help-title">
+  <div class="help-head">
+    <div>
+      <p id="help-title">Ayuda</p>
+      <span>Pregúntame cómo hacer algo en tu panel</span>
+    </div>
+    <button type="button" class="help-close" onclick="toggleHelp(false)" aria-label="Cerrar ayuda">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m2 2 10 10M12 2 2 12"/></svg>
+    </button>
+  </div>
+  <div class="help-body" id="help-body"></div>
+  <div class="help-chips" id="help-chips"></div>
+  <form class="help-form" id="help-form" onsubmit="return helpAsk(event)">
+    <input class="help-input" id="help-input" type="text" placeholder="Ej: ¿cómo agrego un producto?" autocomplete="off">
+    <button type="submit" class="help-send" aria-label="Enviar pregunta">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l17-8-8 17-2-7-7-2z"/></svg>
+    </button>
+  </form>
+</div>
+
+<script>
+  // Base de respuestas: cada tema trae palabras clave (para el buscador simple)
+  // más una pregunta "oficial" que sirve de chip sugerido.
+  var HELP_KB = [
+    { q: 'Cómo agregar un producto', k: ['agregar producto', 'nuevo producto', 'crear producto', 'subir producto', 'añadir producto'],
+      a: 'En Productos → "Nuevo" llena nombre, categoría, precio y stock (lo básico, siempre visible). Todo lo demás (promoción, SKU, video, costo del proveedor, abonos) vive colapsado en "+ Más detalles" para no saturar — se abre solo si el producto que editas ya trae algo ahí.' },
+    { q: 'Cómo vender con tallas o colores', k: ['variante', 'talla', 'color', 'con variantes', 'combinacion', 'combinación'],
+      a: 'Al crear el producto elige "Con variantes" en vez de "Producto único". Ahí eliges los atributos (Talla, Color...) y cada combinación generada tiene su propio precio, stock, foto, SKU y costo — es un solo producto, no varios.' },
+    { q: 'Cómo saber mi ganancia', k: ['ganancia', 'costo', 'costo del proveedor', 'margen', 'utilidad'],
+      a: 'Ponle "Costo del proveedor" a tus productos (junto a Precio/Stock, es opcional). En cuanto al menos un producto tenga costo capturado, el Panel muestra una tarjeta "Ganancia estimada" = ingresos cobrados menos el costo de lo vendido. Si recibes un pedido de compra a un proveedor, el costo se actualiza solo.' },
+    { q: 'Cómo hacer una promoción', k: ['promocion', 'promoción', 'descuento', 'oferta', '2x1', '3x2', 'rebaja'],
+      a: 'Al editar un producto, abre "+ Más detalles" → Promoción: precio rebajado, % de descuento, 2x1, 3x2 o "lleva de regalo". Puedes ponerle fecha de vencimiento opcional.' },
+    { q: 'Cómo vender a abonos', k: ['abono', 'abonos', 'a plazos', 'meses sin intereses', 'apartado'],
+      a: 'En "+ Más detalles" activa "Vender por abonos" y define número de pagos, frecuencia (semanal/quincenal/mensual) y enganche mínimo. El catálogo le muestra al cliente cuánto pagaría por abono.' },
+    { q: 'Cómo crear categorías', k: ['categoria', 'categoría', 'categorias', 'categorías'],
+      a: 'En Productos hay una pestaña "Categorías" donde las creas, y en el asistente de bienvenida ya se sugieren según tu giro (puedes quitar las que no uses o agregar las tuyas antes de terminar el asistente).' },
+    { q: 'Cómo agregar empleados', k: ['empleado', 'empleados', 'permiso', 'permisos', 'trabajador'],
+      a: 'En Empleados creas uno con nombre y PIN (4 a 12 dígitos), y eliges exactamente qué puede hacer (ver/crear/editar productos, gestionar pedidos, reportes, config...). Cada empleado entra con su propio PIN, nunca el tuyo.' },
+    { q: 'Cómo cambiar el diseño del catálogo', k: ['diseno', 'diseño', 'estilo', 'apariencia', 'colores del catalogo', 'plantilla'],
+      a: 'En Configuración → Apariencia eliges entre 25 diseños (colores, tipografía y formas ya combinados). Se aplica a todo tu catálogo público en cuanto lo guardas.' },
+    { q: 'Cómo recibir pagos por transferencia', k: ['transferencia', 'pago', 'pagos', 'cuenta bancaria', 'clabe', 'cobrar'],
+      a: 'En Configuración → Pagos activa "Mostrar mi cuenta en el catálogo" y captura banco, cuenta/CLABE y a nombre de quién. El cliente la ve en el carrito con instrucciones de transferir y mandar su comprobante por WhatsApp — tú confirmas el pago a mano, como ya lo haces hoy.' },
+    { q: 'Cómo hacer publicidad de un producto', k: ['publicidad', 'tarjeta', 'anuncio', 'redes sociales', 'instagram', 'imagen para redes', 'poster', 'póster'],
+      a: 'En cada producto hay un botón para generar una tarjeta lista para redes: elige entre 10 estilos (diagonal, gigante, spotlight, collage, editorial, pop, duotono, glow, levitación, patrón), 4 proporciones (cuadrada, vertical, historia, horizontal) y puedes ajustar los colores de esa pieza sin tocar el diseño de tu catálogo.' },
+    { q: 'Cómo poner mi horario', k: ['horario', 'horarios', 'abierto', 'cerrado', 'atencion', 'atención'],
+      a: 'En Configuración → Negocio, sección Horario de atención: enciende los días que abres y pon su horario. Los días apagados se muestran como "Cerrado" en tu catálogo.' },
+    { q: 'Cómo cambiar el mensaje de WhatsApp', k: ['mensaje de whatsapp', 'whatsapp', 'texto del pedido'],
+      a: 'En Configuración → Negocio puedes escribir un mensaje personalizado que recibe el cliente al pedir, usando {tienda}, {productos} y {total}. Si lo dejas vacío, se usa el mensaje por defecto.' },
+    { q: 'Cómo comparto mi catálogo', k: ['compartir', 'link', 'enlace', 'qr', 'código qr'],
+      a: 'En el Panel, arriba, está tu link (con botón Copiar), botones directos a WhatsApp/Facebook/X y un código QR para imprimir o compartir.' },
+    { q: 'Cómo subo muchos productos de golpe', k: ['carga masiva', 'excel', 'importar', 'varios productos'],
+      a: 'Desde Productos puedes exportar/trabajar en Excel para cargar varios productos de una vez, en vez de capturarlos uno por uno.' }
+  ];
+  var helpOpen = false, helpAsked = false;
+  function toggleHelp(force) {
+    var panel = document.getElementById('help-panel');
+    helpOpen = force !== undefined ? force : !helpOpen;
+    panel.classList.toggle('open', helpOpen);
+    if (helpOpen && !helpAsked) { helpGreet(); helpAsked = true; }
+    if (helpOpen) { var inp = document.getElementById('help-input'); if (inp) setTimeout(function () { inp.focus(); }, 50); }
+  }
+  function helpBubble(text, who) {
+    var body = document.getElementById('help-body');
+    var el = document.createElement('div');
+    el.className = 'help-msg ' + who;
+    el.textContent = text;
+    body.appendChild(el);
+    body.scrollTop = body.scrollHeight;
+  }
+  function helpChips() {
+    var box = document.getElementById('help-chips');
+    box.innerHTML = '';
+    HELP_KB.slice(0, 4).forEach(function (item) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'help-chip'; b.textContent = item.q;
+      b.onclick = function () { helpRespond(item.q); };
+      box.appendChild(b);
+    });
+  }
+  function helpGreet() {
+    helpBubble('¡Hola! Soy la ayuda de tu panel — pregúntame cómo hacer algo (productos, promociones, pagos, empleados, diseño...) o toca uno de estos temas:', 'bot');
+    helpChips();
+  }
+  function norm(s) { return String(s || '').toLowerCase(); }
+  function helpBestMatch(text) {
+    var q = norm(text);
+    var best = null, bestScore = 0;
+    HELP_KB.forEach(function (item) {
+      var score = 0;
+      item.k.concat([item.q]).forEach(function (kw) { if (q.indexOf(norm(kw)) !== -1) score += norm(kw).length; });
+      if (score > bestScore) { bestScore = score; best = item; }
+    });
+    return bestScore > 0 ? best : null;
+  }
+  function helpRespond(text) {
+    helpBubble(text, 'user');
+    var match = helpBestMatch(text);
+    if (match) helpBubble(match.a, 'bot');
+    else helpBubble('No encontré nada sobre eso todavía — prueba con otras palabras, o toca uno de estos temas:', 'bot');
+    document.getElementById('help-chips').style.display = match ? 'none' : 'flex';
+  }
+  function helpAsk(e) {
+    e.preventDefault();
+    var inp = document.getElementById('help-input');
+    var v = (inp.value || '').trim();
+    if (!v) return false;
+    inp.value = '';
+    helpRespond(v);
+    return false;
+  }
+</script>
