@@ -301,27 +301,6 @@ app.get('/sw.js', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'sw.js'));
 });
 app.use(express.static(path.join(__dirname, 'public')));
-// === SUBDOMINIOS DE TIENDA (slug.nessik.net -> misma tienda que /slug) ===
-// El DNS/Dokploy ya apunta *.nessik.net a este mismo contenedor; aquí se
-// reescribe la URL entrante para que las rutas existentes basadas en /:slug
-// sirvan la tienda sin duplicar lógica. Si el subdominio no corresponde a
-// una tienda activa (ej. "www" o uno mal escrito), se deja pasar tal cual
-// para no romper el landing general.
-app.use((req, res, next) => {
-  const host = (req.hostname || '').toLowerCase();
-  const base = 'nessik.net';
-  if (host === base || host === 'www.' + base || !host.endsWith('.' + base)) return next();
-  const sub = host.slice(0, host.length - base.length - 1);
-  if (!sub || sub.includes('.')) return next();
-  const biz = getBusiness(sub);
-  if (!biz || !biz.active) return next();
-  if (req.url === '/' || req.url === '') {
-    req.url = '/' + sub;
-  } else if (req.url !== '/' + sub && !req.url.startsWith('/' + sub + '/') && !req.url.startsWith('/' + sub + '?')) {
-    req.url = '/' + sub + req.url;
-  }
-  next();
-});
 // === RATE LIMITER ===
 var _rateLimit = {};
 function rateLimit(maxPerMin) {

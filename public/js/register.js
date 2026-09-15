@@ -22,7 +22,7 @@
     document.getElementById('mobile-preview-initial').textContent=name?name.charAt(0).toUpperCase():'N';
     document.getElementById('mobile-preview-name').textContent=name||'Tu tienda está tomando forma';
     document.getElementById('preview-description').textContent=description||'Aquí aparecerá lo que hace especial a tu tienda.';
-    document.getElementById('preview-url').textContent=slug?slug+'.nessik.net':'Esperando el nombre';
+    document.getElementById('preview-url').textContent=slug?'cadi.nessik.net/'+slug:'Esperando el nombre';
     document.getElementById('preview-phone').textContent=phone.length===10?'+52 '+phone.replace(/(\d{3})(\d{3})(\d{4})/,'$1 $2 $3'):'Conecta tu WhatsApp';
     document.getElementById('description-count').textContent=descriptionInput.value.length+'/160';
 
