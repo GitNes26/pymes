@@ -128,19 +128,36 @@
     transition: width var(--ap-motion);
   }
   .m-sidebar a, .m-sidebar button {
-    transition: background var(--ap-motion), color var(--ap-motion);
+    transition: background var(--ap-motion), color var(--ap-motion), border-color var(--ap-motion);
     border-radius: var(--ap-radius-sm);
+    border-left: 2.5px solid transparent;
   }
   .m-sidebar a:hover, .m-sidebar button:hover {
     background: rgba(21,24,29,0.05);
   }
+  /* Activo: acento tenue + barra lateral + ícono/texto en el color de marca
+     de la tienda — más sobrio que un bloque sólido, lee "seleccionado" sin
+     gritar, y sigue usando el acento de cada tienda (no un color fijo). */
   .m-sidebar a.m-active-nav {
-    background: var(--ap-accent) !important;
-    color: #fff !important;
+    background: color-mix(in srgb, var(--ap-accent) 10%, transparent) !important;
+    border-left-color: var(--ap-accent);
+    color: var(--ap-accent) !important;
+    font-weight: 700;
   }
   .m-sidebar a.m-active-nav svg {
-    color: #fff !important;
+    color: var(--ap-accent) !important;
   }
+  .m-sidebar-group-label {
+    padding: 0 0.75rem;
+    margin: 1.1rem 0 0.35rem;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ap-text-sec);
+    opacity: .68;
+  }
+  .m-sidebar-group:first-child .m-sidebar-group-label { margin-top: 0; }
 
   /* ===== CARDS ===== */
   .m-card {
@@ -362,8 +379,8 @@
     background: rgba(13,17,23,.9);
     border-bottom-color: rgba(255,255,255,.05);
   }
-  body.dark .m-sidebar a:hover { background: rgba(255,255,255,0.05); }
-  body.dark .m-sidebar a.m-active-nav { background: #454548 !important; }
+  body.dark .m-sidebar a:hover { background: rgba(255,255,255,0.06); }
+  body.dark .m-sidebar a.m-active-nav { background: color-mix(in srgb, var(--ap-accent) 18%, transparent) !important; }
   body.dark .order-row:hover { background: rgba(255,255,255,0.03); }
   body.dark .warning-card { background: #1a1510; border-color: rgba(176,138,78,.2); }
   body.dark .m-bottomnav { background: rgba(22,27,34,.97); }

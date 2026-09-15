@@ -3,15 +3,25 @@
   const has = (p) => permsList.includes(p);
   const hasModule = (m) => permsList.some(p => p === m || p.indexOf(m + '.') === 0);
   const items = [
-    { id: 'panel', label: 'Panel', show: () => has('reportes') || has('pedidos.gestionar'), href: '/' + biz.slug + '/admin/panel', icon: 'M3 12h18M3 6h18M3 18h12M17 18h4' },
-    { id: 'productos', label: 'Productos', show: () => hasModule('productos'), href: '/' + biz.slug + '/admin/productos', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
-    { id: 'importar', label: 'Carga masiva', show: () => false, href: '/' + biz.slug + '/admin/importar', icon: 'M12 4v12m0 0l-4-4m4 4l4-4M4 20h16' },
-    { id: 'empleados', label: 'Empleados', show: () => has('empleados'), href: '/' + biz.slug + '/admin/empleados', icon: 'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zm14 10v-2a4 4 0 00-3-3.87M15 3.13a4 4 0 010 7.75' },
-    { id: 'clientes', label: 'Clientes', show: () => has('clientes'), href: '/' + biz.slug + '/admin/clientes', icon: 'M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m9-6.13a4 4 0 100-8 4 4 0 000 8zM16 7a4 4 0 11-8 0 4 4 0 018 0z' },
-    { id: 'proveedores', label: 'Proveedores', show: () => has('config'), href: '/' + biz.slug + '/admin/proveedores', icon: 'M3 3v18h18M8 14h4m-4-4h4M7 7h10m-7 12h10' },
-    { id: 'config', label: 'Configuración', show: () => has('config'), href: '/' + biz.slug + '/admin/config', icon: 'M4 6h16M4 12h16M4 18h10M14 18h6' },
-    { id: 'planes', label: 'Planes', show: () => has('config'), href: '/' + biz.slug + '/admin/planes', icon: 'M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2zm4 12h6m-6-4h6m-6-4h6' }
+    { id: 'panel', label: 'Panel', group: 'Principal', show: () => has('reportes') || has('pedidos.gestionar'), href: '/' + biz.slug + '/admin/panel', icon: 'M3 12h18M3 6h18M3 18h12M17 18h4' },
+    { id: 'productos', label: 'Productos', group: 'Principal', show: () => hasModule('productos'), href: '/' + biz.slug + '/admin/productos', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
+    { id: 'importar', label: 'Carga masiva', group: 'Principal', show: () => false, href: '/' + biz.slug + '/admin/importar', icon: 'M12 4v12m0 0l-4-4m4 4l4-4M4 20h16' },
+    { id: 'empleados', label: 'Empleados', group: 'Negocio', show: () => has('empleados'), href: '/' + biz.slug + '/admin/empleados', icon: 'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zm14 10v-2a4 4 0 00-3-3.87M15 3.13a4 4 0 010 7.75' },
+    { id: 'clientes', label: 'Clientes', group: 'Negocio', show: () => has('clientes'), href: '/' + biz.slug + '/admin/clientes', icon: 'M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m9-6.13a4 4 0 100-8 4 4 0 000 8zM16 7a4 4 0 11-8 0 4 4 0 018 0z' },
+    { id: 'proveedores', label: 'Proveedores', group: 'Negocio', show: () => has('config'), href: '/' + biz.slug + '/admin/proveedores', icon: 'M3 3v18h18M8 14h4m-4-4h4M7 7h10m-7 12h10' },
+    { id: 'config', label: 'Configuración', group: 'Cuenta', show: () => has('config'), href: '/' + biz.slug + '/admin/config', icon: 'M4 6h16M4 12h16M4 18h10M14 18h6' },
+    { id: 'planes', label: 'Planes', group: 'Cuenta', show: () => has('config'), href: '/' + biz.slug + '/admin/planes', icon: 'M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2zm4 12h6m-6-4h6m-6-4h6' }
   ].filter(it => it.show());
+  // Agrupa manteniendo el orden ya definido arriba (no alfabético) — un
+  // pequeño rótulo por grupo es lo que separa un sidebar "lista de links"
+  // de uno que se siente organizado como el de un panel profesional.
+  const groupOrder = [];
+  const groupedItems = {};
+  items.forEach(it => {
+    const g = it.group || 'Principal';
+    if (!groupedItems[g]) { groupedItems[g] = []; groupOrder.push(g); }
+    groupedItems[g].push(it);
+  });
   const avatar = biz.logo || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(biz.name) + '&background=17324a&color=fff');
   const isPro = biz.plan === 'pro';
   const esEmpleado = typeof isEmployee !== 'undefined' && isEmployee;
@@ -40,28 +50,34 @@ SIDEBAR NUEVO (diseño totalmente distinto)
        que es position:fixed y no empuja el layout por sí solo) -->
   <div class="pl-5 pr-14 pt-6 pb-5 shrink-0" style="border-bottom:1px solid var(--ap-border)">
     <div class="flex items-center gap-3">
-      <img src="<%= avatar %>" class="w-9 h-9 rounded-lg object-cover shrink-0" style="border:1px solid var(--ap-border)">
+      <img src="<%= avatar %>" class="w-9 h-9 rounded-lg object-cover shrink-0" style="box-shadow:0 0 0 2px var(--ap-card), 0 0 0 3.5px color-mix(in srgb, var(--ap-accent) 35%, transparent)">
       <div class="min-w-0 flex-1">
         <p class="font-semibold text-[13.5px] truncate leading-tight" style="color:var(--ap-text)"><%= esEmpleado ? (typeof empName !== 'undefined' ? empName : 'Empleado') : biz.name %></p>
-        <p class="text-[10.5px] font-semibold uppercase tracking-[0.1em] mt-1" style="color:<%= isPro ? 'var(--ap-accent-text)' : 'var(--ap-text-sec)' %>">
+        <span class="inline-flex items-center mt-1.5 px-2 py-[3px] rounded-full text-[9.5px] font-bold uppercase tracking-[0.08em]"
+              style="<%= isPro ? 'background:color-mix(in srgb, var(--ap-accent) 16%, transparent);color:var(--ap-accent-text)' : 'background:var(--ap-bg);color:var(--ap-text-sec)' %>">
           <%= esEmpleado ? 'Empleado' : (isPro ? 'Plan Pro' : (biz.plan === 'demo' ? 'Demo' : 'Plan gratis')) %>
-        </p>
+        </span>
       </div>
     </div>
   </div>
 
-  <!-- Enlaces principales -->
+  <!-- Enlaces principales, agrupados por sección -->
   <nav class="m-sidebar flex-1 px-3 py-5 space-y-0.5 overflow-y-auto m-scroll">
-    <% items.forEach(it => { %>
-      <% const act = active === it.id; %>
-      <a href="<%= it.href %>"
-         class="m-ripple group flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13.5px] font-medium transition-colors duration-150
-                <%= act ? 'm-active-nav' : '' %>" style="<%= act ? '' : 'color:var(--ap-text-sec)' %>">
-        <svg class="w-[17px] h-[17px] shrink-0" fill="none" stroke="currentColor" stroke-width="1.75"><path d="<%= it.icon %>"/></svg>
-        <span class="flex-1"><%= it.label %></span>
-        <% if (it.id === 'panel') { %><span id="new-orders-badge" style="display:none" class="min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-black items-center justify-center">0</span><% } %>
-        <% if (it.id === 'productos') { %><span id="low-stock-badge" style="display:<%= (typeof lowStockCount !== 'undefined' && lowStockCount > 0) ? 'flex' : 'none' %>" class="min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-black items-center justify-center" title="Productos con stock bajo o agotado"><%= (typeof lowStockCount !== 'undefined') ? lowStockCount : 0 %></span><% } %>
-      </a>
+    <% groupOrder.forEach(g => { %>
+      <div class="m-sidebar-group">
+        <p class="m-sidebar-group-label"><%= g %></p>
+        <% groupedItems[g].forEach(it => { %>
+          <% const act = active === it.id; %>
+          <a href="<%= it.href %>"
+             class="m-ripple group flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13.5px] font-medium transition-colors duration-150
+                    <%= act ? 'm-active-nav' : '' %>" style="<%= act ? '' : 'color:var(--ap-text-sec)' %>">
+            <svg class="w-[17px] h-[17px] shrink-0" fill="none" stroke="currentColor" stroke-width="1.75"><path d="<%= it.icon %>"/></svg>
+            <span class="flex-1"><%= it.label %></span>
+            <% if (it.id === 'panel') { %><span id="new-orders-badge" style="display:none" class="min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-black items-center justify-center">0</span><% } %>
+            <% if (it.id === 'productos') { %><span id="low-stock-badge" style="display:<%= (typeof lowStockCount !== 'undefined' && lowStockCount > 0) ? 'flex' : 'none' %>" class="min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-black items-center justify-center" title="Productos con stock bajo o agotado"><%= (typeof lowStockCount !== 'undefined') ? lowStockCount : 0 %></span><% } %>
+          </a>
+        <% }) %>
+      </div>
     <% }) %>
   </nav>
 
