@@ -64,7 +64,7 @@
         <% } else { %>
           <div id="cliente-list" class="divide-y" style="border-color:var(--ap-border)">
             <% customers.forEach(c => { %>
-              <div class="m-list-item m-ripple px-2 py-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3" data-search="<%= (c.name + ' ' + c.phone).toLowerCase() %>">
+              <div class="m-list-item m-ripple px-2 py-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3" data-search="<%= (c.name + ' ' + c.phone).toLowerCase() %>" data-cliente-id="<%= c.id %>" data-cliente-name="<%= (c.name || '').replace(/"/g, '&quot;') %>" data-cliente-phone="<%= c.phone || '' %>" data-cliente-ordercount="<%= c.orderCount %>">
                 <div class="flex items-center gap-3 min-w-0">
                 <div class="w-10 h-10 rounded-full font-black flex items-center justify-center shrink-0 text-sm" style="background:rgba(44,44,46,.1);color:var(--ap-accent-text)">
                   <%= (c.name || '?').trim().charAt(0).toUpperCase() %>
@@ -107,7 +107,26 @@
   <%- include('admin/toast') %>
 
   <script>
-    var CLIENTES = <%- safeJson(customers.map(c => ({ id: c.id, name: c.name, phone: c.phone, orderCount: c.orderCount }))) %>;
+    // El panel es SPA-lite: guardar/borrar un cliente reemplaza solo el
+    // <main> (ver admin/panel-ajax.ejs), y este <script> vive AFUERA de
+    // <main> — nunca se vuelve a ejecutar, así que un CLIENTES fijo desde
+    // el primer render se quedaba desactualizado (un cliente nuevo no
+    // aparecía en "Enviar promo" hasta recargar la página a mano). Se
+    // reconstruye leyendo el DOM (que sí queda al día) en vez de depender
+    // de un JSON congelado, y se re-arma solo tras cada swap.
+    var CLIENTES = [];
+    function rebuildClientes() {
+      CLIENTES = Array.prototype.map.call(document.querySelectorAll('#cliente-list [data-cliente-id]'), function (el) {
+        return {
+          id: el.getAttribute('data-cliente-id'),
+          name: el.getAttribute('data-cliente-name') || '',
+          phone: el.getAttribute('data-cliente-phone') || '',
+          orderCount: parseInt(el.getAttribute('data-cliente-ordercount'), 10) || 0
+        };
+      });
+    }
+    rebuildClientes();
+    window.onPanelSwap = rebuildClientes;
     function escHtml(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
     var promoState = { filtro: 'todos', page: 1, list: [] };
     var PROMO_PAGE_SIZE = 8;
