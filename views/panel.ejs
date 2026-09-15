@@ -65,8 +65,6 @@
             <div class="flex flex-wrap gap-1.5 mt-2">
               <a href="https://wa.me/?text=<%= encodeURIComponent('Mira mi catálogo: ' + storeUrl) %>" target="_blank" class="m-btn m-btn-sm !bg-white/15 !text-white hover:!bg-white/25">💬 WhatsApp</a>
               <a href="https://www.facebook.com/sharer/sharer.php?u=<%= encodeURIComponent(storeUrl) %>" target="_blank" class="m-btn m-btn-sm !bg-white/15 !text-white hover:!bg-white/25">📘 Facebook</a>
-              <a href="https://twitter.com/intent/tweet?text=<%= encodeURIComponent('Mira mi catálogo: ' + storeUrl) %>" target="_blank" class="m-btn m-btn-sm !bg-white/15 !text-white hover:!bg-white/25">🐦 X</a>
-              <button type="button" onclick="descargarTarjeta()" class="m-btn m-btn-sm !bg-white/15 !text-white hover:!bg-white/25">🖼️ Tarjeta para redes</button>
             </div>
           </div>
           <% if (typeof qrUrl !== 'undefined' && qrUrl) { %>
