@@ -303,6 +303,11 @@
     }
     function poFocusCell(row, cell) {
       if (!cell) return;
+      // Primero se asienta el scroll (p.ej. fila recién agregada fuera de
+      // vista) y luego se enfoca — así cuando el 'focus' handler mida la
+      // posición del input para el autocomplete, ya no hay un ajuste de
+      // scroll pendiente que la deje desactualizada.
+      cell.scrollIntoView({ block: 'nearest' });
       cell.focus();
       if (cell.select) cell.select();
     }
@@ -535,6 +540,15 @@
         // Si ya tiene un producto vinculado, selecciona el texto para reemplazarlo fácil
         if (row.dataset.pid) requestAnimationFrame(function(){ inp.select(); });
         acUpdate(row);
+        // Al enfocar una fila recién agregada (Enter o "Agregar línea"), el
+        // navegador puede seguir ajustando el scroll para traerla a la vista
+        // DESPUÉS de este evento — si acPlace() ya midió la posición antes de
+        // ese ajuste, el dropdown queda "pegado" donde estaba la fila antes
+        // de desplazarse y termina tapando al input en vez de quedar debajo.
+        // Se recalcula una vez más al asentarse el layout, ya con el scroll final.
+        requestAnimationFrame(function () {
+          if (poAc._row === row && !poAc.classList.contains('hidden')) acPlace(row);
+        });
       });
       inp.addEventListener('blur', function(){
         setTimeout(function(){
@@ -767,9 +781,15 @@
       poPasteText(txt, row);
     });
 
-    // El autocomplete sigue anclado a su celda al hacer scroll (antes se cerraba y por eso "no salía")
+    // El autocomplete sigue anclado a su celda al hacer scroll (antes se cerraba y por eso "no salía").
+    // Es un solo dropdown compartido por todas las filas (poAc): reposicionarlo
+    // contra CADA fila (como antes) lo hacía terminar en la posición de la
+    // ÚLTIMA fila del pedido en vez de la fila que realmente se estaba
+    // editando — con varias líneas, cualquier scroll (o el teclado abriéndose
+    // en móvil) lo mandaba a taparse con una fila que no era, y encima con la
+    // lista escondida detrás del input en vez de debajo.
     function acReposAll(){
-      poRows().forEach(function(r){ var b = acBox(r); if (b && !b.classList.contains('hidden')) acPlace(r); });
+      if (poAc._row && !poAc.classList.contains('hidden')) acPlace(poAc._row);
     }
     window.addEventListener('scroll', acReposAll, { passive: true });
     window.addEventListener('resize', acReposAll, { passive: true });
