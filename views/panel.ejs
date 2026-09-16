@@ -376,7 +376,7 @@
                     <p class="font-bold text-sm" style="color:var(--ap-text)"><%= money(o.total) %></p>
                     <span class="m-badge <%= oBadgeCls %> !h-5 !text-[10px] shrink-0"><%= oBadgeTxt %></span>
                   </div>
-                  <p class="text-[11px] truncate mt-0.5" style="color:var(--ap-text-sec)"><%= o.items %></p>
+                  <p class="text-[11px] mt-0.5" style="color:var(--ap-text-sec);white-space:pre-line;line-height:1.5"><%= (o.items || '').replace(/ \| /g, '\n') %></p>
                   <% if (o.customer_name) { %>
                     <p class="text-[11px] text-neutral-600 font-semibold truncate mt-0.5">👤 <%= o.customer_name %></p>
                   <% } %>
