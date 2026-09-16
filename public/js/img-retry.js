@@ -17,9 +17,15 @@
     var n = tries.get(img) || 0;
     if (n >= MAX_RETRIES) return;
     tries.set(img, n + 1);
-    img.setAttribute('data-retry-src', src.split('?__r=')[0]);
+    var cleanSrc = src.split('?__r=')[0];
+    img.setAttribute('data-retry-src', cleanSrc);
+    // Si un onerror en la propia imagen ya la cambió a un placeholder
+    // mientras esperábamos, no lo pisemos con la URL rota de nuevo.
+    var srcAtSchedule = img.src;
     setTimeout(function () {
-      img.src = src.split('?__r=')[0] + '?__r=' + Date.now();
+      if (img.getAttribute('data-no-retry') !== null) return;
+      if (img.src !== srcAtSchedule) return;
+      img.src = cleanSrc + '?__r=' + Date.now();
     }, RETRY_DELAY_MS * (n + 1));
   }
 
