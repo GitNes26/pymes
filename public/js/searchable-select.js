@@ -308,6 +308,17 @@ body.dark .ss-opt:hover,body.dark .ss-opt.ss-hi{background:#2a2a2d;color:#d4d4d4
       panel.classList.toggle('ss-drop-up', dropUp);
     }
     function onReposition() { if (wrap.classList.contains('ss-open')) place(); }
+    // Este combo autoenfoca su buscador al abrir, así que en móvil el
+    // teclado se abre casi siempre — y el visual viewport va disparando
+    // 'resize'/'scroll' en varios pasos mientras anima esa apertura.
+    // Reposicionar en cada paso (sin esperar a que se asiente) se ve como
+    // el panel "brincando"; se espera un respiro breve antes de recalcular
+    // para que solo se mueva una vez, ya con el teclado asentado.
+    var vvTimer = null;
+    function onRepositionVv() {
+      clearTimeout(vvTimer);
+      vvTimer = setTimeout(onReposition, 80);
+    }
 
     function open() {
       if (select.disabled) return;
@@ -322,8 +333,8 @@ body.dark .ss-opt:hover,body.dark .ss-opt.ss-hi{background:#2a2a2d;color:#d4d4d4
       window.addEventListener('scroll', onReposition, true);
       window.addEventListener('resize', onReposition);
       if (window.visualViewport) {
-        window.visualViewport.addEventListener('resize', onReposition);
-        window.visualViewport.addEventListener('scroll', onReposition);
+        window.visualViewport.addEventListener('resize', onRepositionVv);
+        window.visualViewport.addEventListener('scroll', onRepositionVv);
       }
       setTimeout(function () { place(); search.focus(); }, 0);
     }
@@ -334,8 +345,8 @@ body.dark .ss-opt:hover,body.dark .ss-opt.ss-hi{background:#2a2a2d;color:#d4d4d4
       window.removeEventListener('scroll', onReposition, true);
       window.removeEventListener('resize', onReposition);
       if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', onReposition);
-        window.visualViewport.removeEventListener('scroll', onReposition);
+        window.visualViewport.removeEventListener('resize', onRepositionVv);
+        window.visualViewport.removeEventListener('scroll', onRepositionVv);
       }
     }
     function toggle() { wrap.classList.contains('ss-open') ? close() : open(); }

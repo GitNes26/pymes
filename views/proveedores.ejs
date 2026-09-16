@@ -303,11 +303,11 @@
     }
     function poFocusCell(row, cell) {
       if (!cell) return;
-      // Primero se asienta el scroll (p.ej. fila recién agregada fuera de
-      // vista) y luego se enfoca — así cuando el 'focus' handler mida la
-      // posición del input para el autocomplete, ya no hay un ajuste de
-      // scroll pendiente que la deje desactualizada.
-      cell.scrollIntoView({ block: 'nearest' });
+      // OJO: no forzar scrollIntoView aquí — en móvil compite con el propio
+      // scroll que hace el navegador para subir el input sobre el teclado
+      // (dos scrolls a la vez es justo lo que se veía "moverse feo"). Basta
+      // con enfocar; el reposicionamiento del autocomplete ya se encarga de
+      // seguirlo una vez que todo se asienta (ver acReposAll / focus de .po-name).
       cell.focus();
       if (cell.select) cell.select();
     }
@@ -540,15 +540,11 @@
         // Si ya tiene un producto vinculado, selecciona el texto para reemplazarlo fácil
         if (row.dataset.pid) requestAnimationFrame(function(){ inp.select(); });
         acUpdate(row);
-        // Al enfocar una fila recién agregada (Enter o "Agregar línea"), el
-        // navegador puede seguir ajustando el scroll para traerla a la vista
-        // DESPUÉS de este evento — si acPlace() ya midió la posición antes de
-        // ese ajuste, el dropdown queda "pegado" donde estaba la fila antes
-        // de desplazarse y termina tapando al input en vez de quedar debajo.
-        // Se recalcula una vez más al asentarse el layout, ya con el scroll final.
-        requestAnimationFrame(function () {
-          if (poAc._row === row && !poAc.classList.contains('hidden')) acPlace(row);
-        });
+        // En móvil, enfocar dispara el teclado y el navegador va ajustando el
+        // scroll mientras anima su apertura — eso sigue disparando 'resize'/
+        // 'scroll' del visualViewport varias veces. acReposAll (abajo) ya
+        // reacciona a esos eventos con debounce para no ir saltando de
+        // posición en cada paso de esa animación.
       });
       inp.addEventListener('blur', function(){
         setTimeout(function(){
@@ -794,9 +790,20 @@
     window.addEventListener('scroll', acReposAll, { passive: true });
     window.addEventListener('resize', acReposAll, { passive: true });
     document.getElementById('po-grid').addEventListener('scroll', acReposAll, { passive: true });
+    // El teclado del celular no cambia el viewport de un salto: el visual
+    // viewport va disparando 'resize'/'scroll' en varios pasos mientras
+    // anima su apertura/cierre — reposicionar en CADA paso (sin esperar a
+    // que se asiente) es justo lo que se veía como el dropdown "brincando"
+    // de un lado a otro. Se espera un respiro breve sin más eventos antes
+    // de recalcular, así solo se mueve una vez, ya con el teclado asentado.
+    var acVvTimer = null;
+    function acReposVv(){
+      clearTimeout(acVvTimer);
+      acVvTimer = setTimeout(acReposAll, 80);
+    }
     if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', acReposAll);
-      window.visualViewport.addEventListener('scroll', acReposAll);
+      window.visualViewport.addEventListener('resize', acReposVv);
+      window.visualViewport.addEventListener('scroll', acReposVv);
     }
 
     function copiarPedido(msg) {
