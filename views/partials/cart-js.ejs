@@ -1077,22 +1077,41 @@
 
   // Autocompletado: lista de coincidencias bajo el buscador
   let suggestBox = null;
+  let suggestInput = null;
+  // position:fixed + compensación de visualViewport (igual que el autocomplete
+  // de proveedores/searchable-select): en móvil el teclado encoge el visual
+  // viewport sin mover el layout viewport, así que getBoundingClientRect() y
+  // un elemento anclado al <body> quedan desalineados si no se compensa ese
+  // desfase — era la causa de que la lista "se fuera a otro lado".
+  function placeSuggest() {
+    if (!suggestInput || !suggestBox || suggestBox.classList.contains('hidden')) return;
+    const rect = suggestInput.getBoundingClientRect();
+    const vv = window.visualViewport;
+    const offX = (vv && vv.offsetLeft) || 0;
+    const offY = (vv && vv.offsetTop) || 0;
+    suggestBox.style.top = (rect.bottom - offY + 6) + 'px';
+    suggestBox.style.left = (rect.left - offX) + 'px';
+    suggestBox.style.width = rect.width + 'px';
+  }
   function buildSuggest(key) {
     const r = blockRoot(key);
     const input = r ? r.querySelector('.search-input') : null;
     if (!input) return;
     if (!suggestBox) {
       suggestBox = document.createElement('div');
-      suggestBox.className = 'hidden absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden';
+      suggestBox.className = 'hidden fixed top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden';
       document.body.appendChild(suggestBox);
       document.addEventListener('click', (e) => { if (!e.target.closest('.search-input') && !suggestBox.contains(e.target)) suggestBox.classList.add('hidden'); });
+      window.addEventListener('scroll', placeSuggest, true);
+      window.addEventListener('resize', placeSuggest);
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', placeSuggest);
+        window.visualViewport.addEventListener('scroll', placeSuggest);
+      }
     }
+    suggestInput = input;
     const q = (input.value || '').trim().toLowerCase();
     if (!q) { suggestBox.classList.add('hidden'); return; }
-    const rect = input.getBoundingClientRect();
-    suggestBox.style.top = (rect.bottom + 6) + 'px';
-    suggestBox.style.left = rect.left + 'px';
-    suggestBox.style.width = rect.width + 'px';
     const st = stOf(key);
     const cands = blockCards(key)
       .filter(d => (st.cat === 0 || parseInt(d.dataset.cat || '0') === st.cat) && (d.dataset.search || '').includes(q))
@@ -1107,6 +1126,7 @@
       </button>`;
     }).join('');
     suggestBox.classList.remove('hidden');
+    placeSuggest();
     suggestBox.querySelectorAll('button').forEach(b => {
       b.addEventListener('click', () => {
         input.value = b.getAttribute('data-name');
