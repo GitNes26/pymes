@@ -399,26 +399,18 @@
       var vh = (vv && vv.height) || window.innerHeight;
       var w = Math.min(Math.max(r.width, 280), Math.max(240, vw - 16));
       var left = Math.max(8, Math.min(r.left - offX, vw - w - 8));
-      var inpTop = r.top - offY, inpBottom = r.bottom - offY;
-      // Con el teclado abierto, vh se encoge mucho — si el alto fijo de
-      // siempre (224px) no cabía ni abajo ni arriba del input, el cálculo
-      // anterior caía en un tercer caso que YA NO dependía de la posición
-      // del input (solo de vh), así que CUALQUIER fila terminaba en el mismo
-      // punto de la pantalla en vez de junto a su propio campo. Ahora el
-      // alto de la lista se ajusta al espacio real disponible del lado que
-      // más tenga (abajo o arriba de ESE input), así siempre queda anclada
-      // a la fila correcta así el teclado deje poco aire.
+      var inpBottom = r.bottom - offY;
+      // Siempre debajo del input (nunca encima, aunque quede apretado) — se
+      // achica el alto de la lista al espacio real que quede abajo en vez de
+      // brincar arriba del campo, que es más confuso mientras se escribe.
+      // Con el teclado abierto vh se encoge mucho, así que ese espacio
+      // puede ser poco — se le pone un mínimo (60px) para que siga siendo
+      // usable en vez de quedar casi invisible.
       var margin = 8, gap = 6;
       var spaceBelow = vh - inpBottom - margin - gap;
-      var spaceAbove = inpTop - margin - gap;
-      var desiredH = 224, top, H;
-      if (spaceBelow >= 90 && spaceBelow >= spaceAbove) {
-        H = Math.min(desiredH, spaceBelow);
-        top = inpBottom + gap;
-      } else {
-        H = Math.min(desiredH, Math.max(90, spaceAbove));
-        top = Math.max(margin, inpTop - H - gap);
-      }
+      var desiredH = 224;
+      var H = Math.max(60, Math.min(desiredH, spaceBelow));
+      var top = inpBottom + gap;
       poAc.style.maxHeight = H + 'px';
       poAc.style.left = left + 'px';
       poAc.style.top = top + 'px';
