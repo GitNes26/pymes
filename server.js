@@ -1764,7 +1764,6 @@ function getStats(businessId) {
   ).all(businessId);
   const conv = total > 0 ? ((orders / total) * 100).toFixed(1) : 0;
   const clickRate = total > 0 ? ((waClicks / total) * 100).toFixed(1) : 0;
-  const orderRate = waClicks > 0 ? ((orders / waClicks) * 100).toFixed(1) : 0;
   const pct = (cur, prev) => prev > 0 ? Math.round(((cur - prev) / prev) * 100) : (cur > 0 ? 100 : 0);
   const avgOrder = orders > 0 ? (revenue / orders) : 0;
   // Productos más vendidos (contando apariciones en los pedidos)
@@ -1809,7 +1808,7 @@ function getStats(businessId) {
   return {
     today, week, prevWeek, total, waClicks, orders, paid, revenue, revenueWeek, prevRevenue, avgOrder,
     weekDelta: pct(week, prevWeek), revenueDelta: pct(revenueWeek, prevRevenue),
-    topProducts, topWaProducts, topSellers: topSellersArr, daily, ordersDaily, conv, clickRate, orderRate,
+    topProducts, topWaProducts, topSellers: topSellersArr, daily, ordersDaily, conv, clickRate,
     hasCostData, costTotal, supplierSpend, profit
   };
 }
