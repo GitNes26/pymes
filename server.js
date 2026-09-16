@@ -1800,13 +1800,17 @@ function getStats(businessId) {
       });
     });
   }
-  const profit = revenue - costTotal;
+  // Lo pagado a proveedores también es un gasto real y se descuenta de la
+  // ganancia — sin importar si el pedido ya se marcó "recibido", porque el
+  // dinero ya salió de la tienda al hacer el pedido de compra.
+  const supplierSpend = db.prepare('SELECT COALESCE(SUM(total), 0) AS s FROM purchase_orders WHERE business_id = ?').get(businessId).s;
+  const profit = revenue - costTotal - supplierSpend;
 
   return {
     today, week, prevWeek, total, waClicks, orders, paid, revenue, revenueWeek, prevRevenue, avgOrder,
     weekDelta: pct(week, prevWeek), revenueDelta: pct(revenueWeek, prevRevenue),
     topProducts, topWaProducts, topSellers: topSellersArr, daily, ordersDaily, conv, clickRate, orderRate,
-    hasCostData, costTotal, profit
+    hasCostData, costTotal, supplierSpend, profit
   };
 }
 
