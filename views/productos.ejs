@@ -405,6 +405,10 @@
               <p class="font-bold text-xs text-slate-700 mb-2">1 · Elige los atributos (Talla, Color…)</p>
               <div id="f-tpl-pills" class="flex flex-wrap gap-2 items-center"></div>
               <p id="f-tpl-empty" class="text-[11px] text-slate-400 mt-1.5"></p>
+              <div class="flex items-center gap-2 mt-2">
+                <input type="text" id="f-tpl-new-name" placeholder="+ Nuevo atributo al momento (ej: Color)" class="flex-1 min-w-[140px] text-xs border border-dashed border-slate-300 rounded-full px-3 py-1.5 bg-white focus:outline-none focus:border-neutral-500">
+                <button type="button" id="f-tpl-new-add" class="shrink-0 text-xs font-bold text-white bg-neutral-800 hover:bg-neutral-700 rounded-full px-3 py-1.5">Agregar</button>
+              </div>
             </div>
 
             <div class="mb-4">
@@ -1042,9 +1046,11 @@
             '</div>' +
             '<div class="var-values flex flex-wrap gap-1.5 items-center">' +
               '<input type="text" placeholder="Valor + Enter (ej: XS)" class="var-val-input flex-1 min-w-[90px] text-xs bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-neutral-500">' +
+              '<button type="button" class="var-val-add shrink-0 text-xs font-bold text-white bg-neutral-800 hover:bg-neutral-700 rounded-lg px-2.5 py-1.5">+</button>' +
             '</div>';
           var valuesWrap = row.querySelector('.var-values');
           var valInput = row.querySelector('.var-val-input');
+          var valAddBtn = row.querySelector('.var-val-add');
           function renderValues() {
             valuesWrap.querySelectorAll('.var-chip').forEach(function (c) { c.remove(); });
             attr.values.forEach(function (v, vi) {
@@ -1055,15 +1061,22 @@
               valuesWrap.insertBefore(chip, valInput);
             });
           }
+          // Botón "+" además de Enter/coma: en algunos teclados de celular
+          // (con autocompletar/predictivo) el Enter no siempre dispara un
+          // keydown normal, así que no conviene depender solo de eso.
+          function addValueFromInput() {
+            var v = valInput.value.trim();
+            if (v && attr.values.indexOf(v) === -1) attr.values.push(v);
+            valInput.value = '';
+            renderValues(); renderCombos(); save();
+          }
           valInput.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter' || e.key === ',') {
+            if (e.key === 'Enter' || e.key === ',' || e.keyCode === 13 || e.keyCode === 188) {
               e.preventDefault();
-              var v = valInput.value.trim();
-              if (v && attr.values.indexOf(v) === -1) attr.values.push(v);
-              valInput.value = '';
-              renderValues(); renderCombos(); save();
+              addValueFromInput();
             }
           });
+          valAddBtn.addEventListener('click', addValueFromInput);
           row.querySelector('.var-attr-del').onclick = function () { model.attrs.splice(ai, 1); render(); save(); renderTplPills(pref); };
           renderValues();
           box.appendChild(row);
@@ -1933,6 +1946,34 @@
       if (advDet) advDet.addEventListener('toggle', function () {
         if (advDet.open) setTimeout(function () { advDet.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 80);
       });
+      // Agregar un atributo nuevo (ej: "Color") al momento, sin tener que
+      // salirse a la pestaña Atributos primero — solo aplica a este
+      // producto; si además quiere reutilizarlo luego, ya lo guarda aparte.
+      // Botón "Agregar" además de Enter: en algunos teclados de celular
+      // (sobre todo con autocompletar/predictivo activo) la tecla Enter no
+      // siempre manda un keydown normal, así que no conviene depender solo
+      // de eso.
+      var tplNewInput = document.getElementById('f-tpl-new-name');
+      var tplNewAdd = document.getElementById('f-tpl-new-add');
+      function agregarAtributoAlMomento() {
+        if (!tplNewInput) return;
+        var name = tplNewInput.value.trim();
+        if (!name) return;
+        var ed = window.VAR_EDITORS && window.VAR_EDITORS.f;
+        if (!ed) return;
+        var yaExiste = (ed.model.attrs || []).some(function (a) { return (a.name || '').toLowerCase() === name.toLowerCase(); });
+        if (yaExiste) { if (window.mostrarToast) mostrarToast('Ya tienes un atributo "' + name + '" en este producto', 'error'); return; }
+        ed.toggleAttr(name, []);
+        renderTplPills('f');
+        tplNewInput.value = '';
+        if (window.mostrarToast) mostrarToast('Atributo "' + name + '" agregado — escribe sus valores abajo', 'ok');
+      }
+      if (tplNewInput) tplNewInput.addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter' && e.keyCode !== 13) return;
+        e.preventDefault();
+        agregarAtributoAlMomento();
+      });
+      if (tplNewAdd) tplNewAdd.addEventListener('click', agregarAtributoAlMomento);
       document.getElementById('pf-form').addEventListener('submit', function (e) {
         if (pfUploadsPending > 0) {
           e.preventDefault();
