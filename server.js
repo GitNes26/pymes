@@ -1836,6 +1836,23 @@ app.get('/manifest.webmanifest', (req, res) => {
 
 // ================= LANDING =================
 app.get('/', (req, res) => {
+  // Si ya hay una sesión activa (dueño, empleado o maestro — no cerró
+  // sesión la última vez), abrir la app directo en su panel en vez de
+  // mandarlo siempre al landing genérico.
+  const sess = findSession(req.cookies && req.cookies.sid);
+  if (sess) {
+    if (sess.kind === 'maestro') {
+      touchSession(res, sess.token);
+      return res.redirect('/maestro/panel');
+    }
+    if (sess.biz_id) {
+      const sessBiz = db.prepare('SELECT slug FROM businesses WHERE id = ? AND active = 1').get(sess.biz_id);
+      if (sessBiz) {
+        touchSession(res, sess.token);
+        return res.redirect('/' + sessBiz.slug + '/admin/panel');
+      }
+    }
+  }
   const stores = db.prepare(`
     SELECT b.*,
       COUNT(t.id) AS visits_count,
