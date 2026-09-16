@@ -294,14 +294,30 @@ body.dark .ss-opt:hover,body.dark .ss-opt.ss-hi{background:#2a2a2d;color:#d4d4d4
       var offY = (vv && vv.offsetTop) || 0;
       var vw = (vv && vv.width) || window.innerWidth;
       var vh = (vv && vv.height) || window.innerHeight;
-      var H = Math.min(panel.offsetHeight || 300, vh - 16);
       var w = Math.min(Math.max(r.width, 200), vw - 16);
       var left = Math.max(8, Math.min(r.left - offX, vw - w - 8));
-      var below = (r.bottom - offY) + 4;
-      var top, dropUp;
-      if (below + H <= vh - 8) { top = below; dropUp = false; }
-      else if ((r.top - offY) - H - 4 >= 8) { top = (r.top - offY) - H - 4; dropUp = true; }
-      else { top = Math.max(8, vh - H - 8); dropUp = false; }
+      var btnTop = r.top - offY, btnBottom = r.bottom - offY;
+      // Con el teclado abierto vh se encoge mucho: si el panel (con su alto
+      // deseado) no cabía ni abajo ni arriba del botón, este cálculo caía en
+      // un tercer caso que solo dependía de vh — así que CUALQUIER combo
+      // abierto terminaba en el mismo punto de la pantalla en vez de junto a
+      // su propio botón. Ahora el alto se ajusta al espacio real disponible
+      // del lado que más tenga (abajo o arriba de ESE botón), siempre
+      // anclado a él así el teclado deje poco aire.
+      var desired = panel.offsetHeight || 300, margin = 8, gap = 4;
+      var spaceBelow = vh - btnBottom - margin - gap;
+      var spaceAbove = btnTop - margin - gap;
+      var top, H, dropUp;
+      if (spaceBelow >= 90 && spaceBelow >= spaceAbove) {
+        H = Math.min(desired, spaceBelow);
+        top = btnBottom + gap;
+        dropUp = false;
+      } else {
+        H = Math.min(desired, Math.max(90, spaceAbove));
+        top = Math.max(margin, btnTop - H - gap);
+        dropUp = true;
+      }
+      panel.style.maxHeight = H + 'px';
       panel.style.left = left + 'px';
       panel.style.top = top + 'px';
       panel.style.width = w + 'px';
