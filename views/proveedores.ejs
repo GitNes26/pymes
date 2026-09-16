@@ -35,11 +35,9 @@
        material.css (diseño compartido); aquí solo queda lo que no es
        .m-field: el textarea suelto y las filas de la tabla de compra. */
     .suppliers-admin-page textarea,
-    .suppliers-admin-page .po-row input,
-    .suppliers-admin-page .po-row select{width:100%;max-width:100%;min-height:41px;box-sizing:border-box;border:1px solid rgba(44,44,46,.16);border-radius:9px;background:#fff;color:var(--sp-ink);font:500 13px/1.3 Inter,system-ui,sans-serif;outline:0;}
+    .suppliers-admin-page .po-row input{width:100%;max-width:100%;min-height:41px;box-sizing:border-box;border:1px solid rgba(44,44,46,.16);border-radius:9px;background:#fff;color:var(--sp-ink);font:500 13px/1.3 Inter,system-ui,sans-serif;outline:0;}
     .suppliers-admin-page textarea:focus,
-    .suppliers-admin-page .po-row input:focus,
-    .suppliers-admin-page .po-row select:focus{border-color:var(--sp-petrol-2);box-shadow:0 0 0 3px rgba(44,44,46,.11);}
+    .suppliers-admin-page .po-row input:focus{border-color:var(--sp-petrol-2);box-shadow:0 0 0 3px rgba(44,44,46,.11);}
     .supplier-submit{width:100%;margin-top:2px;background:var(--sp-petrol)!important;color:#fff!important;}
     .supplier-list{display:grid;gap:8px;margin-top:16px;padding-top:15px;border-top:1px solid var(--sp-line);}
     .supplier-item{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:11px;border-radius:11px;background:#f7f9fa;border:1px solid rgba(44,44,46,.08);}
@@ -63,8 +61,7 @@
     #po-grid thead tr{background:#edf3f6!important;color:#5f707b!important;border-color:var(--sp-line)!important;}
     #po-grid th{height:38px;vertical-align:middle;}
     .po-row td{background:#fff;border-color:rgba(44,44,46,.08)!important;}
-    .po-row input,.po-row select{min-height:36px!important;padding:7px 9px!important;}
-    .po-name-wrap{display:flex;flex-direction:column;gap:6px;min-width:0;}
+    .po-row input{min-height:36px!important;padding:7px 9px!important;}
     .po-invalid{border-color:#dc2626!important;box-shadow:0 0 0 3px rgba(220,38,38,.13)!important;}
     .po-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:11px 0 16px;}
     .ui-icon{width:15px;height:15px;flex:0 0 auto;}
@@ -74,6 +71,8 @@
     .purchase-total span:first-child{color:#536670;font-size:11px;font-weight:750;}
     .purchase-total strong{color:var(--sp-ink);font-size:21px;font-weight:880;letter-spacing:-.025em;font-variant-numeric:tabular-nums;}
     .purchase-submit{width:100%;min-height:44px!important;background:var(--sp-petrol)!important;color:#fff!important;}
+    .po-ac{max-width:calc(100vw - 16px)!important;box-sizing:border-box;border-color:rgba(44,44,46,.16)!important;border-radius:11px!important;box-shadow:0 16px 34px rgba(20,24,31,.18),0 3px 8px rgba(20,24,31,.08)!important;}
+    .po-ac-it{white-space:normal;overflow-wrap:anywhere;}
     .purchase-history{margin-top:18px;}
     .history-list{display:grid;gap:10px;}
     .history-item{padding:14px;border:1px solid var(--sp-line);border-radius:12px;background:#fff;}
@@ -100,8 +99,7 @@
       #po-grid tr.po-row{position:relative;display:block;width:100%;background:#fff;border:1px solid var(--sp-line)!important;border-radius:12px;padding:10px 44px 10px 10px;margin-bottom:8px;}
       #po-grid tr.po-row td{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%!important;min-width:0;padding:6px 0!important;border:0!important;text-align:left;}
       #po-grid tr.po-row td[data-label]::before{content:attr(data-label);flex:0 0 auto;color:#7a8992;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;}
-      #po-grid tr.po-row td[data-label] input,#po-grid tr.po-row td[data-label] select,#po-grid tr.po-row td[data-label] .po-sub,#po-grid tr.po-row td[data-label] .po-name-wrap{width:auto!important;min-width:0;flex:1 1 auto;text-align:right;}
-      #po-grid tr.po-row td[data-label] .po-name-wrap{text-align:left;}
+      #po-grid tr.po-row td[data-label] input,#po-grid tr.po-row td[data-label] .po-sub{width:auto!important;min-width:0;flex:1 1 auto;text-align:right;}
       #po-grid tr.po-row td:last-child{position:absolute;top:8px;right:8px;padding:0!important;width:auto!important;}
       #po-grid tr.po-row td:nth-child(2){align-items:flex-start;}
       body.dark #po-grid tr.po-row{background:#151c23;}
@@ -110,7 +108,7 @@
     body.dark .suppliers-title,body.dark .panel-title,body.dark .supplier-item-name,body.dark .history-name,body.dark .history-total{color:#edf4f8;}
     body.dark .supplier-panel,body.dark .history-item,body.dark .po-row td{background:#151c23;border-color:#2b3741;}
     body.dark .supplier-item,body.dark #po-grid,body.dark .paste-panel{background:#101820;border-color:#303d47;}
-    body.dark.suppliers-admin-page .m-field input,body.dark.suppliers-admin-page .m-field select,body.dark.suppliers-admin-page textarea,body.dark.suppliers-admin-page .po-row input,body.dark.suppliers-admin-page .po-row select{background:#0f171e;border-color:#34414b;color:#e7eef3;}
+    body.dark.suppliers-admin-page .m-field input,body.dark.suppliers-admin-page .m-field select,body.dark.suppliers-admin-page textarea,body.dark.suppliers-admin-page .po-row input{background:#0f171e;border-color:#34414b;color:#e7eef3;}
     body.dark #po-grid thead tr{background:#1b2730!important;color:#a8b5bd!important;}
     body.dark .purchase-total{background:#1c2128;}
     body.dark .purchase-total strong{color:#edf4f8;}
@@ -292,16 +290,6 @@
     PRODS.forEach(p => prodNameToId[norm(p.name)] = p.id);
     var prodById = {};
     PRODS.forEach(p => prodById[p.id] = p);
-    var PRODS_SORTED = PRODS.slice().sort(function (a, b) {
-      var na = norm(a.name), nb = norm(b.name);
-      return na < nb ? -1 : na > nb ? 1 : 0;
-    });
-    // <select> normal en vez del autocomplete: mismas opciones para cada
-    // fila (se construye una sola vez). "+ Producto nuevo" al final revela
-    // un campo de texto aparte para productos que aún no están en el catálogo.
-    var PO_NAME_OPTIONS_HTML = '<option value="">Selecciona un producto…</option>' +
-      PRODS_SORTED.map(function (p) { return '<option value="' + p.id + '">' + esc(p.name) + (p.sku ? ' (' + esc(p.sku) + ')' : '') + '</option>'; }).join('') +
-      '<option value="__new__">+ Producto nuevo (escribir)</option>';
 
     function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
     function fmtMoney(n){ return Number(n||0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
@@ -315,6 +303,11 @@
     }
     function poFocusCell(row, cell) {
       if (!cell) return;
+      // OJO: no forzar scrollIntoView aquí — en móvil compite con el propio
+      // scroll que hace el navegador para subir el input sobre el teclado
+      // (dos scrolls a la vez es justo lo que se veía "moverse feo"). Basta
+      // con enfocar; el reposicionamiento del autocomplete ya se encarga de
+      // seguirlo una vez que todo se asienta (ver acReposAll / focus de .po-name).
       cell.focus();
       if (cell.select) cell.select();
     }
@@ -338,44 +331,12 @@
       return poGoRow(rows[i], cellSel, dir);
     }
 
-    // Muestra/oculta el campo de texto para "producto nuevo" según lo que
-    // haya elegido el <select> — el campo ya trae su propio estilo punteado
-    // (ver poAddRow), así que aquí solo se decide si se ve o no.
     function poNameStyle(row) {
-      var sel = row.querySelector('.po-name');
-      var customInp = row.querySelector('.po-name-custom');
-      if (!sel || !customInp) return;
-      customInp.classList.toggle('hidden', !(!row.dataset.pid && sel.value === '__new__'));
-    }
-    function poGetProductName(row) {
-      if (row.dataset.pid) { var p = prodById[parseInt(row.dataset.pid)]; return p ? p.name : ''; }
-      var sel = row.querySelector('.po-name');
-      if (sel && sel.value === '__new__') {
-        var c = row.querySelector('.po-name-custom');
-        return c ? c.value.trim() : '';
-      }
-      return '';
-    }
-    // Vincula la fila a un producto existente, o la deja en modo "nuevo"
-    // (campo de texto libre) cuando no hay product_id — usado al elegir en
-    // el <select>, al pegar desde Excel y al precargar una fila.
-    function poSetProductName(row, o) {
-      var sel = row.querySelector('.po-name');
-      var customInp = row.querySelector('.po-name-custom');
-      if (o.product_id && prodById[o.product_id]) {
-        row.dataset.pid = String(o.product_id);
-        sel.value = String(o.product_id);
-        customInp.value = '';
-      } else if (o.name) {
-        row.dataset.pid = '';
-        sel.value = '__new__';
-        customInp.value = o.name;
-      } else {
-        row.dataset.pid = '';
-        sel.value = '';
-        customInp.value = '';
-      }
-      poNameStyle(row);
+      var inp = row.querySelector('.po-name');
+      var unlinked = !row.dataset.pid && inp.value.trim() && !inp.readOnly;
+      inp.classList.toggle('border-dashed', unlinked);
+      inp.classList.toggle('border-neutral-500', unlinked);
+      inp.classList.toggle('bg-neutral-100/50', unlinked);
     }
 
     // ===== Lista de variantes por fila: mismo truco que el autocomplete =====
@@ -415,27 +376,86 @@
       openVDet.open = false;
     });
 
-    // Se dispara al elegir algo en el <select> de producto de una fila.
-    function poHandleNameChange(row) {
-      var sel = row.querySelector('.po-name');
-      var customInp = row.querySelector('.po-name-custom');
-      var v = sel.value;
-      if (v === '__new__') {
-        row.dataset.pid = '';
-        poNameStyle(row);
-        refreshVariant(row);
-        poFocusCell(row, customInp);
-        poRecalc();
-        return;
-      }
-      if (!v) {
-        row.dataset.pid = '';
-        poNameStyle(row);
-        refreshVariant(row);
-        poRecalc();
-        return;
-      }
-      var id = parseInt(v);
+    // ===== Autocomplete de productos (estilo Excel) =====
+    // Un solo dropdown anclado al <body>: ningún transform/overflow del panel lo desplaza o recorta
+    var poAc = document.createElement('div');
+    poAc.className = 'po-ac hidden fixed z-[70] min-w-[280px] max-h-56 overflow-auto bg-white border border-slate-200 rounded-xl shadow-xl';
+    document.body.appendChild(poAc);
+
+    function acBox() { return poAc; }
+    function acHide() { poAc.classList.add('hidden'); poAc.innerHTML = ''; poAc._idx = -1; poAc._row = null; }
+    function acPlace(row) {
+      var inp = row.querySelector('.po-name');
+      var r = inp.getBoundingClientRect();
+      var vv = window.visualViewport;
+      // offsetLeft/offsetTop: en móvil (sobre todo iOS Safari), el teclado
+      // desplaza el visual viewport sin mover el layout viewport, así que
+      // getBoundingClientRect() y nuestro dropdown position:fixed quedan
+      // desalineados si no se compensa esa diferencia — era la causa de que
+      // el autocomplete "se moviera" de su input al abrirse el teclado.
+      var offX = (vv && vv.offsetLeft) || 0;
+      var offY = (vv && vv.offsetTop) || 0;
+      var vw = (vv && vv.width) || window.innerWidth;
+      var vh = (vv && vv.height) || window.innerHeight;
+      var w = Math.min(Math.max(r.width, 280), Math.max(240, vw - 16));
+      var left = Math.max(8, Math.min(r.left - offX, vw - w - 8));
+      var inpBottom = r.bottom - offY;
+      // Siempre debajo del input (nunca encima, aunque quede apretado) — se
+      // achica el alto de la lista al espacio real que quede abajo en vez de
+      // brincar arriba del campo, que es más confuso mientras se escribe.
+      // Con el teclado abierto vh se encoge mucho, así que ese espacio
+      // puede ser poco — se le pone un mínimo (60px) para que siga siendo
+      // usable en vez de quedar casi invisible.
+      var margin = 8, gap = 6;
+      var spaceBelow = vh - inpBottom - margin - gap;
+      var desiredH = 224;
+      var H = Math.max(60, Math.min(desiredH, spaceBelow));
+      var top = inpBottom + gap;
+      poAc.style.maxHeight = H + 'px';
+      poAc.style.left = left + 'px';
+      poAc.style.top = top + 'px';
+      poAc.style.width = w + 'px';
+    }
+    function acUpdate(row) {
+      var inp = row.querySelector('.po-name');
+      if (row.classList.contains('po-child') || inp.readOnly) { acHide(); return; }
+      var q = norm(inp.value);
+      // Sin texto: muestra todo el catálogo para elegir sin escribir (como el select de antes)
+      var list = q ? PRODS.filter(function(p){
+        return norm(p.name).indexOf(q) >= 0 || (p.sku ? norm(p.sku).indexOf(q) >= 0 : false);
+      }) : PRODS;
+      var matches = list.slice(0, q ? 8 : 50);
+      var html = matches.map(function(p, i){
+        return '<button type="button" data-pid="' + p.id + '" class="po-ac-it w-full text-left px-3 py-2 text-sm hover:bg-neutral-100 ' + (i === 0 ? 'bg-neutral-100/60' : '') + ' border-b border-slate-50">' +
+          '<b class="text-slate-800">' + esc(p.name) + '</b>' +
+          (p.sku ? ' <span class="text-slate-400 text-xs">(' + esc(p.sku) + ')</span>' : '') +
+          (p.variantOpts && p.variantOpts.length ? ' <span class="text-amber-700 text-xs">' + UI_ICONS.sliders + p.variantOpts.length + '</span>' : '') +
+          (p.price ? ' <span class="text-slate-400 text-xs">$' + fmtMoney(p.price) + '</span>' : '') +
+        '</button>';
+      }).join('');
+      if (q) html += '<button type="button" class="po-ac-new w-full text-left px-3 py-2 text-xs font-bold text-neutral-700 hover:bg-neutral-100">' + UI_ICONS.plus + 'Usar "' + esc(inp.value.trim()) + '" como producto nuevo</button>';
+      poAc.innerHTML = html;
+      poAc._row = row;
+      poAc.classList.remove('hidden');
+      acPlace(row);
+      poAc._idx = 0;
+      poAc.querySelectorAll('.po-ac-it').forEach(function(btn, i){
+        btn.addEventListener('mousedown', function(e){ e.preventDefault(); acPick(row, parseInt(btn.dataset.pid)); });
+      });
+      var nb = poAc.querySelector('.po-ac-new');
+      if (nb) nb.addEventListener('mousedown', function(e){
+        e.preventDefault(); acHide(); poFocusCell(row, row.querySelector('.po-qty'));
+      });
+    }
+    function acMove(row, dir) {
+      var items = poAc.querySelectorAll('.po-ac-it');
+      if (poAc.classList.contains('hidden') || !items.length) return false;
+      poAc._idx = (poAc._idx + dir + items.length) % items.length;
+      items.forEach(function(it, i){ it.classList.toggle('bg-neutral-100', i === poAc._idx); });
+      items[poAc._idx].scrollIntoView({ block: 'nearest' });
+      return true;
+    }
+    function acPick(row, id) {
       var p = prodById[id];
       if (!p) return;
       var hadChildren = (childOf.get(row) || []).length > 0;
@@ -445,9 +465,11 @@
         row.dataset.var = '';
       }
       row.dataset.pid = String(id);
+      row.querySelector('.po-name').value = p.name;
       // Preprecio: llena el precio de venta con el actual del producto si la celda está vacía
-      var price = row.querySelector('.po-price');
+      var cost = row.querySelector('.po-cost'), price = row.querySelector('.po-price');
       if (!price.value && p.price) price.value = Number(p.price).toFixed(2);
+      acHide();
       poNameStyle(row);
       refreshVariant(row);
       var vdet = row.querySelector('.po-vdet');
@@ -466,10 +488,7 @@
       row.dataset.var = opts.variant || '';
       row.innerHTML =
         '<td class="px-3 py-1.5 align-middle relative" data-label="Producto">' +
-          '<div class="po-name-wrap">' +
-            '<select class="po-name w-full min-w-[170px] border border-slate-200 rounded-lg px-2 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-neutral-400">' + PO_NAME_OPTIONS_HTML + '</select>' +
-            '<input type="text" class="po-name-custom hidden w-full min-w-[170px] border border-dashed border-neutral-400 bg-neutral-100/50 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-400" placeholder="Nombre del producto nuevo" autocomplete="off">' +
-          '</div>' +
+          '<input type="text" class="po-name w-full min-w-[170px] border border-slate-200 rounded-lg px-2 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-neutral-400" placeholder="Producto (escribe para buscar)" autocomplete="off">' +
         '</td>' +
         '<td class="px-2 py-1.5 align-middle" data-label="Variante">' +
           '<span class="po-vstatic hidden bg-amber-100 text-amber-800 rounded-lg px-2 py-1.5 text-xs font-bold whitespace-nowrap"></span>' +
@@ -485,8 +504,7 @@
         '<td class="px-2 py-1.5 align-middle text-right" data-label="Subtotal"><span class="po-sub text-xs font-black text-slate-700">$0.00</span></td>' +
         '<td class="px-2 py-1.5 align-middle text-center"><button type="button" aria-label="Eliminar línea" title="Eliminar línea" class="po-del w-7 h-7 rounded-lg bg-slate-100 text-red-600 hover:bg-red-50 hover:text-red-800 grid place-items-center">' + UI_ICONS.trash + '</button></td>';
 
-      var sel = row.querySelector('.po-name');
-      var customInp = row.querySelector('.po-name-custom');
+      var inp = row.querySelector('.po-name');
       var vname = row.querySelector('.po-vname');
       var qty = row.querySelector('.po-qty');
       var cost = row.querySelector('.po-cost');
@@ -522,27 +540,57 @@
         });
       });
 
-      // Producto: <select> normal (ordenado alfabéticamente) + campo de
-      // texto aparte para "producto nuevo" — sin dropdown propio que
-      // posicionar, así que nada que se desalinee en móvil.
-      sel.addEventListener('change', function(){ poHandleNameChange(row); });
-      customInp.addEventListener('input', poRecalc);
-      customInp.addEventListener('keydown', function(e){
-        if (e.key === 'Enter') { e.preventDefault(); poFocusCell(row, row.querySelector('.po-qty')); }
+      // Autocomplete + navegación en la celda de producto
+      inp.addEventListener('input', function(){ row.dataset.pid = ''; refreshVariant(row); poNameStyle(row); acUpdate(row); });
+      inp.addEventListener('focus', function(){
+        if (inp.readOnly) return;
+        // Si ya tiene un producto vinculado, selecciona el texto para reemplazarlo fácil
+        if (row.dataset.pid) requestAnimationFrame(function(){ inp.select(); });
+        acUpdate(row);
+        // En móvil, enfocar dispara el teclado y el navegador va ajustando el
+        // scroll mientras anima su apertura — eso sigue disparando 'resize'/
+        // 'scroll' del visualViewport varias veces. acReposAll (abajo) ya
+        // reacciona a esos eventos con debounce para no ir saltando de
+        // posición en cada paso de esa animación.
+      });
+      inp.addEventListener('blur', function(){
+        setTimeout(function(){
+          acHide(row);
+          // Si escribió el nombre exacto de un producto, lo vincula solo
+          if (!row.dataset.pid && !inp.readOnly) {
+            var id = prodNameToId[norm(inp.value)];
+            if (id) { row.dataset.pid = String(id); refreshVariant(row); }
+            poNameStyle(row);
+          }
+        }, 120);
+      });
+      inp.addEventListener('keydown', function(e){
+        if (e.key === 'ArrowDown') { e.preventDefault(); if (!acMove(row, 1)) acUpdate(row); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); acMove(row, -1); }
+        else if (e.key === 'Enter') {
+          e.preventDefault();
+          var b = acBox(row);
+          var items = b.querySelectorAll('.po-ac-it');
+          if (!b.classList.contains('hidden') && b._idx >= 0 && items[b._idx]) { acPick(row, parseInt(items[b._idx].dataset.pid)); return; }
+          acHide(row);
+          if (!poNextCell(row, inp)) poEnterNextRow(row);
+        }
+        else if (e.key === 'Escape') { acHide(row); }
       });
 
       vname.addEventListener('input', poRecalc);
       row.querySelector('.po-del').onclick = function(){ removeRow(row); };
 
-      poSetProductName(row, { product_id: opts.product_id, name: opts.name });
+      if (opts.product_id) { inp.value = prodById[opts.product_id] ? prodById[opts.product_id].name : ''; }
+      else if (opts.name) inp.value = opts.name;
       if (opts.qty) qty.value = opts.qty;
       if (opts.cost) cost.value = opts.cost;
       if (opts.price) price.value = opts.price;
 
       if (opts._childOf) {
         row.classList.add('po-child');
-        sel.disabled = true;
-        sel.classList.add('bg-slate-50', 'text-slate-500');
+        inp.readOnly = true;
+        inp.classList.add('bg-slate-50', 'text-slate-500');
       }
       refreshVariant(row);
       poNameStyle(row);
@@ -553,7 +601,7 @@
         childOf.set(opts._childOf, kids);
       }
       poRecalc();
-      if (opts.focus) poFocusCell(row, sel);
+      if (opts.focus) poFocusCell(row, inp);
       return row;
     }
 
@@ -612,6 +660,7 @@
       var pid = row.dataset.pid ? parseInt(row.dataset.pid) : null;
       var p = pid ? prodById[pid] : null;
       var hasVar = p && p.variantOpts && p.variantOpts.length;
+      var inp = row.querySelector('.po-name');
       var vname = row.querySelector('.po-vname');
       var vdet = row.querySelector('.po-vdet');
       var vstatic = row.querySelector('.po-vstatic');
@@ -681,7 +730,7 @@
     function poSerialize() {
       return poRows().map(function(r){
         var pid = r.dataset.pid ? parseInt(r.dataset.pid) : null;
-        var prodName = poGetProductName(r);
+        var prodName = pid ? prodById[pid].name : r.querySelector('.po-name').value.trim();
         var variant = r.dataset.var || r.querySelector('.po-vname').value.trim() || '';
         return { product_id: pid, name: prodName, variant: variant, qty: parseInt(r.querySelector('.po-qty').value) || 0, cost: parseFloat(r.querySelector('.po-cost').value) || 0, price: parseFloat(r.querySelector('.po-price').value) || 0 };
       }).filter(function(x){ return x.name && x.qty > 0; });
@@ -689,7 +738,9 @@
 
     // ===== Pegar desde Excel directamente en la tabla (Ctrl+V sobre la cuadrícula) =====
     function poFillRow(row, o) {
-      poSetProductName(row, { product_id: o.product_id, name: o.name });
+      var inp = row.querySelector('.po-name');
+      if (o.product_id) { row.dataset.pid = String(o.product_id); inp.value = prodById[o.product_id].name; }
+      else { row.dataset.pid = ''; inp.value = o.name || ''; }
       if (o.qty) row.querySelector('.po-qty').value = o.qty;
       if (o.cost) row.querySelector('.po-cost').value = o.cost;
       if (o.price) row.querySelector('.po-price').value = o.price;
@@ -733,6 +784,35 @@
       poPasteText(txt, row);
     });
 
+    // El autocomplete sigue anclado a su celda al hacer scroll (antes se cerraba y por eso "no salía").
+    // Es un solo dropdown compartido por todas las filas (poAc): reposicionarlo
+    // contra CADA fila (como antes) lo hacía terminar en la posición de la
+    // ÚLTIMA fila del pedido en vez de la fila que realmente se estaba
+    // editando — con varias líneas, cualquier scroll (o el teclado abriéndose
+    // en móvil) lo mandaba a taparse con una fila que no era, y encima con la
+    // lista escondida detrás del input en vez de debajo.
+    function acReposAll(){
+      if (poAc._row && !poAc.classList.contains('hidden')) acPlace(poAc._row);
+    }
+    window.addEventListener('scroll', acReposAll, { passive: true });
+    window.addEventListener('resize', acReposAll, { passive: true });
+    document.getElementById('po-grid').addEventListener('scroll', acReposAll, { passive: true });
+    // El teclado del celular no cambia el viewport de un salto: el visual
+    // viewport va disparando 'resize'/'scroll' en varios pasos mientras
+    // anima su apertura/cierre — reposicionar en CADA paso (sin esperar a
+    // que se asiente) es justo lo que se veía como el dropdown "brincando"
+    // de un lado a otro. Se espera un respiro breve sin más eventos antes
+    // de recalcular, así solo se mueve una vez, ya con el teclado asentado.
+    var acVvTimer = null;
+    function acReposVv(){
+      clearTimeout(acVvTimer);
+      acVvTimer = setTimeout(acReposAll, 80);
+    }
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', acReposVv);
+      window.visualViewport.addEventListener('scroll', acReposVv);
+    }
+
     function copiarPedido(msg) {
       var text = decodeURIComponent(msg);
       try { navigator.clipboard.writeText(text); mostrarToast('Texto copiado ✓', 'ok'); } catch(e) { mostrarToast('No se pudo copiar', 'error'); }
@@ -743,7 +823,7 @@
       var bad = null;
       poRows().forEach(function(r, i){
         if (bad) return;
-        var name = poGetProductName(r);
+        var name = (r.dataset.pid ? (prodById[r.dataset.pid] || {}).name : r.querySelector('.po-name').value.trim()) || '';
         var qty = parseInt(r.querySelector('.po-qty').value) || 0;
         var variant = r.dataset.var || r.querySelector('.po-vname').value.trim() || '';
         var cost = parseFloat(r.querySelector('.po-cost').value) || 0;
@@ -753,9 +833,7 @@
       });
       if (bad) {
         e.preventDefault();
-        var nameSel = bad.row.querySelector('.po-name');
-        var markName = (nameSel.value === '__new__') ? bad.row.querySelector('.po-name-custom') : nameSel;
-        var markQty = bad.row.querySelector('.po-qty');
+        var markName = bad.row.querySelector('.po-name'), markQty = bad.row.querySelector('.po-qty');
         if (bad.missingName) markName.classList.add('po-invalid');
         if (bad.missingQty) markQty.classList.add('po-invalid');
         setTimeout(function(){ markName.classList.remove('po-invalid'); markQty.classList.remove('po-invalid'); }, 2500);
