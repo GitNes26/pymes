@@ -24,6 +24,8 @@
 
 
   
+
+
   // Vibración corta (sensación nativa al agregar/confirmar)
   window.haptic = function (ms) {
     try { if (navigator.vibrate) navigator.vibrate(ms || 12); } catch (e) {}
