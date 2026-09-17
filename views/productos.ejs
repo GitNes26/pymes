@@ -1018,17 +1018,17 @@
           var f = inp.files && inp.files[0]; if (!f) return;
           pfUploadStart();
           comprimirImagen(f).then(function (finalFile) {
-            var fd = new FormData(); fd.append('foto', finalFile, finalFile.name || f.name || 'combo.jpg');
+            var fd = new FormData(); fd.append('foto', finalFile, nombreFotoSubida(finalFile, f));
             var tok = (window.__csrfValue && window.__csrfValue()) || '';
             if (tok) fd.append('_csrf', tok);
             return fetch('/<%= biz.slug %>/admin/upload', { method: 'POST', body: fd, headers: tok ? { 'x-csrf-token': tok } : {} });
           })
-            .then(function (r) { return r.json(); })
+            .then(leerRespuestaFoto)
             .then(function (d) {
               if (d.url) { model.images[key] = d.url; save(); renderCombos(); }
               else if (window.mostrarToast) mostrarToast('No se pudo subir la foto', 'error');
             })
-            .catch(function () { if (window.mostrarToast) mostrarToast('Error al subir la foto', 'error'); })
+            .catch(function (e) { if (window.mostrarToast) mostrarToast(e.message || 'Error al subir la foto', 'error'); })
             .finally(pfUploadEnd);
         };
         inp.click();
@@ -1312,6 +1312,22 @@
       });
     }
 
+    function nombreFotoSubida(finalFile, originalFile) {
+      // El canvas entrega JPEG aunque la cámara haya dado un nombre .heic/.png.
+      // Multer valida extensión y MIME; ambos deben describir el archivo enviado.
+      return finalFile.type === 'image/jpeg' ? 'foto.jpg' : (originalFile.name || 'foto.jpg');
+    }
+
+    function leerRespuestaFoto(response) {
+      return response.text().then(function (body) {
+        var data;
+        try { data = JSON.parse(body); } catch (e) { data = {}; }
+        if (response.redirected) throw new Error('Tu sesión expiró. Entra de nuevo y vuelve a subir la foto.');
+        if (!response.ok) throw new Error(data.error || (response.status === 403 ? 'Sesión vencida. Recarga la página e intenta de nuevo.' : 'No se pudo subir la foto.'));
+        return data;
+      });
+    }
+
     function subirVarias(pref, input) {
       if (!input || !input.files || !input.files.length) return;
       var files = Array.prototype.slice.call(input.files);
@@ -1322,11 +1338,11 @@
         pfUploadStart();
         comprimirImagen(file).then(function (finalFile) {
           var fd = new FormData();
-          fd.append('foto', finalFile, finalFile.name || file.name || 'foto.jpg');
+          fd.append('foto', finalFile, nombreFotoSubida(finalFile, file));
           if (tok) fd.append('_csrf', tok);
           return fetch('/<%= biz.slug %>/admin/upload', { method: 'POST', body: fd, headers: tok ? { 'x-csrf-token': tok } : {} });
         })
-          .then(function (r) { return r.json(); })
+          .then(leerRespuestaFoto)
           .then(function (d) {
             if (d.url) {
               var box = document.getElementById(pref + '-fotos');
@@ -1344,7 +1360,7 @@
               if (window.mostrarToast) mostrarToast('No se pudo subir una foto.', 'error');
             }
           })
-          .catch(function () { if (window.mostrarToast) mostrarToast('Error al subir una foto.', 'error'); })
+          .catch(function (e) { if (window.mostrarToast) mostrarToast(e.message || 'Error al subir una foto.', 'error'); })
           .finally(function () {
             pending--;
             pfUploadEnd();

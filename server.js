@@ -349,6 +349,14 @@ const upload = multer({
     cb(null, allowed.includes(ext) && okMime);
   }
 });
+function receiveImageUpload(req, res, next) {
+  upload.single('foto')(req, res, err => {
+    if (!err) return next();
+    if (err.code === 'LIMIT_FILE_SIZE') return res.status(413).json({ error: 'La imagen supera 5 MB. Elige una foto más pequeña.' });
+    console.error('[upload imagen]', err);
+    return res.status(500).json({ error: 'No se pudo guardar la imagen. Intenta de nuevo.' });
+  });
+}
 // Comprime cualquier foto que suban (producto, logo, banner, categoría…) para
 // que no pesen varios MB cada una — antes solo se comprimía del lado del
 // cliente en el formulario de productos; el resto de subidas (logo, banner,
@@ -582,8 +590,8 @@ function loginRateLimit(req, res, next) {
   next();
 }
 
-app.post('/:slug/admin/upload', requireAuth, upload.single('foto'), verifyBodyCsrf, async (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'Archivo no válido' });
+app.post('/:slug/admin/upload', requireAuth, receiveImageUpload, verifyBodyCsrf, async (req, res) => {
+  if (!req.file) return res.status(415).json({ error: 'Formato de imagen no compatible. Usa JPG, PNG, GIF o WebP.' });
   await compressUploadedImage(req.file.path);
   res.json({ url: '/uploads/' + req.file.filename });
 });
@@ -603,8 +611,8 @@ app.post('/maestro/:id/uploadvideo', maestroAuth, uploadVideo.single('video'), v
 });
 
 // Subida de logo/banner desde el editor de diseño del maestro
-app.post('/maestro/:id/upload', maestroAuth, upload.single('foto'), verifyBodyCsrf, async (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'Archivo no válido' });
+app.post('/maestro/:id/upload', maestroAuth, receiveImageUpload, verifyBodyCsrf, async (req, res) => {
+  if (!req.file) return res.status(415).json({ error: 'Formato de imagen no compatible. Usa JPG, PNG, GIF o WebP.' });
   await compressUploadedImage(req.file.path);
   res.json({ url: '/uploads/' + req.file.filename });
 });
