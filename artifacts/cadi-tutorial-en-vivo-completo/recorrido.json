@@ -1,0 +1,96 @@
+{
+  "slug": "ferreteria-del-toro-tutorial-completo-20260917",
+  "entorno": "http://localhost:3000",
+  "escenas": [
+    {
+      "escena": "Arranque",
+      "segundo": 0.0,
+      "url": "http://localhost:3000/registrar"
+    },
+    {
+      "escena": "Registro",
+      "segundo": 15.08,
+      "url": "http://localhost:3000/registrar"
+    },
+    {
+      "escena": "Enlace y contacto",
+      "segundo": 26.45,
+      "url": "http://localhost:3000/registrar"
+    },
+    {
+      "escena": "Crear tienda",
+      "segundo": 38.95,
+      "url": "http://localhost:3000/ferreteria-del-toro-tutorial-completo-20260917/admin/bienvenida"
+    },
+    {
+      "escena": "Elegir giro",
+      "segundo": 50.83,
+      "url": "http://localhost:3000/ferreteria-del-toro-tutorial-completo-20260917/admin/bienvenida"
+    },
+    {
+      "escena": "Elegir diseño",
+      "segundo": 61.34,
+      "url": "http://localhost:3000/ferreteria-del-toro-tutorial-completo-20260917/admin/bienvenida"
+    },
+    {
+      "escena": "Categorías",
+      "segundo": 71.44,
+      "url": "http://localhost:3000/ferreteria-del-toro-tutorial-completo-20260917/admin/panel?bienvenida=1"
+    },
+    {
+      "escena": "Panel",
+      "segundo": 81.8,
+      "url": "http://localhost:3000/ferreteria-del-toro-tutorial-completo-20260917/admin/productos"
+    },
+    {
+      "escena": "Producto",
+      "segundo": 94.61,
+      "url": "http://localhost:3000/ferreteria-del-toro-tutorial-completo-20260917/admin/productos"
+    },
+    {
+      "escena": "Detalles",
+      "segundo": 106.78,
+      "url": "http://localhost:3000/ferreteria-del-toro-tutorial-completo-20260917/admin/productos"
+    },
+    {
+      "escena": "Segundo producto",
+      "segundo": 119.45,
+      "url": "http://localhost:3000/ferreteria-del-toro-tutorial-completo-20260917/admin/productos"
+    },
+    {
+      "escena": "Catálogo público",
+      "segundo": 128.77,
+      "url": "http://localhost:3000/ferreteria-del-toro-tutorial-completo-20260917"
+    },
+    {
+      "escena": "Carrito",
+      "segundo": 140.62,
+      "url": "http://localhost:3000/ferreteria-del-toro-tutorial-completo-20260917"
+    },
+    {
+      "escena": "Pedido de prueba",
+      "segundo": 151.73,
+      "url": "http://localhost:3000/ferreteria-del-toro-tutorial-completo-20260917/admin/panel"
+    },
+    {
+      "escena": "Pedidos en el panel",
+      "segundo": 165.08,
+      "url": "http://localhost:3000/ferreteria-del-toro-tutorial-completo-20260917/admin/panel"
+    },
+    {
+      "escena": "Clientes y proveedores",
+      "segundo": 175.95,
+      "url": "http://localhost:3000/ferreteria-del-toro-tutorial-completo-20260917/admin/proveedores"
+    },
+    {
+      "escena": "Diseño y ajustes",
+      "segundo": 185.61,
+      "url": "http://localhost:3000/ferreteria-del-toro-tutorial-completo-20260917/admin/config"
+    },
+    {
+      "escena": "Cierre",
+      "segundo": 196.56,
+      "url": "http://localhost:3000/ferreteria-del-toro-tutorial-completo-20260917"
+    }
+  ]
+}
