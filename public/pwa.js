@@ -20,6 +20,9 @@
   }
 
 
+
+
+
   
   // Vibración corta (sensación nativa al agregar/confirmar)
   window.haptic = function (ms) {
