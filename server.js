@@ -14,6 +14,7 @@ try {
 } catch (e) {}
 
 const db = require('./db');
+const { reportPeriod, buildReport, csvCell } = require('./lib/reportes');
 const { MASCARA_SIZES, SHAPE_DEFS, getShapeClip, MASCARA_CSS, EDITOR_ONLY_CSS } = require('./lib/mascara');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
@@ -2885,6 +2886,30 @@ app.get('/:slug/admin/panel', requireAuth, can(['reportes', 'pedidos.gestionar']
   res.render('panel', { biz, ...data, error: null, bienvenida: req.query.bienvenida === '1' });
 }));
 
+function reportData(bizId, period) {
+  const orders = db.prepare('SELECT id, items, total, customer_name, status, paid, created_at, paid_at, is_installment, installment_paid FROM orders WHERE business_id = ? ORDER BY created_at DESC').all(bizId);
+  const payments = db.prepare('SELECT order_id, amount, created_at FROM abonos WHERE business_id = ?').all(bizId);
+  const tracking = db.prepare('SELECT type, created_at FROM tracking WHERE business_id = ? AND type IN (\'visit\', \'wa\') AND created_at >= ? AND created_at < ?').all(bizId, period.from, new Date(Date.parse(period.to + 'T00:00:00Z') + 86400000).toISOString().slice(0, 10));
+  return buildReport(period, orders, payments, tracking);
+}
+
+app.get('/:slug/admin/reportes', requireAuth, can('reportes'), (req, res) => {
+  const period = reportPeriod(req.query);
+  const report = period.error ? { orders: [], count: 0, sales: 0, revenue: 0, pending: 0, visits: 0, waClicks: 0, byDay: [] } : reportData(req.biz.id, period);
+  res.render('reportes', { biz: req.biz, period, report });
+});
+
+app.get('/:slug/admin/reportes.csv', requireAuth, can('reportes'), (req, res) => {
+  const period = reportPeriod(req.query);
+  if (period.error) return res.status(400).send(period.error);
+  const report = reportData(req.biz.id, period);
+  const rows = [['Fecha', 'Cliente', 'Productos', 'Total', 'Estado', 'Pagado', 'Abonos', 'Abonado']];
+  report.orders.forEach(o => rows.push([o.created_at, o.customer_name, o.items, o.total, o.status, o.paid ? 'SI' : 'NO', o.is_installment ? 'SI' : 'NO', o.installment_paid || 0]));
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="reporte-${req.biz.slug}-${period.from}-${period.to}.csv"`);
+  res.send('\uFEFF' + rows.map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n');
+});
+
 app.get('/:slug/admin/productos', requireAuth, can('productos.ver'), (req, res) => {
   const biz = req.biz;
   const data = panelData(biz);
@@ -3466,7 +3491,7 @@ app.post('/:slug/admin/order/:id/abono/:abonoId/eliminar', requireAuth, can('ped
   res.redirect('/' + req.params.slug + '/admin/panel');
 });
 
-app.get('/:slug/admin/reporte', requireAuth, (req, res) => {
+app.get('/:slug/admin/reporte', requireAuth, can('reportes'), (req, res) => {
   const orders = db.prepare(
     `SELECT * FROM orders WHERE business_id = ? ORDER BY created_at DESC`
   ).all(req.biz.id);

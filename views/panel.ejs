@@ -123,7 +123,7 @@
         <section class="m-card p-4 mb-3">
           <div class="flex items-center justify-between mb-2">
             <h2 class="font-bold text-sm" style="color:var(--ap-text)">Historial de precios y promos</h2>
-            <a href="/<%= biz.slug %>/admin/reporte" class="text-xs font-bold" style="color:var(--ap-accent-light)">Descargar CSV</a>
+            <% if (perms.includes('reportes')) { %><a href="/<%= biz.slug %>/admin/reportes" class="text-xs font-bold" style="color:var(--ap-accent-light)">Ver reportes</a><% } %>
           </div>
           <div class="space-y-1 max-h-64 overflow-y-auto m-scroll">
             <% priceHistory.forEach(h => { %>
@@ -303,10 +303,10 @@
               <span class="m-badge m-badge-warn"><%= pending %> por cobrar</span>
             <% } %>
           </div>
-          <a href="/<%= biz.slug %>/admin/reporte" class="m-btn m-btn-outlined m-btn-sm">
+          <% if (perms.includes('reportes')) { %><a href="/<%= biz.slug %>/admin/reportes" class="m-btn m-btn-outlined m-btn-sm">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 10v6m0 0l-3-3m3 3l3-3M4 18V6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2z"/></svg>
-            Reporte Excel
-          </a>
+            Ver reportes
+          </a><% } %>
         </div>
 
         <% const estados = [

@@ -4,6 +4,7 @@
   const hasModule = (m) => permsList.some(p => p === m || p.indexOf(m + '.') === 0);
   const items = [
     { id: 'panel', label: 'Panel', group: 'Principal', show: () => has('reportes') || has('pedidos.gestionar'), href: '/' + biz.slug + '/admin/panel', icon: 'M3 12h18M3 6h18M3 18h12M17 18h4' },
+    { id: 'reportes', label: 'Reportes', group: 'Principal', show: () => has('reportes'), href: '/' + biz.slug + '/admin/reportes', icon: 'M3 3v18h18M7 16l4-5 3 2 5-7' },
     { id: 'productos', label: 'Productos', group: 'Principal', show: () => hasModule('productos'), href: '/' + biz.slug + '/admin/productos', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
     { id: 'importar', label: 'Carga masiva', group: 'Principal', show: () => false, href: '/' + biz.slug + '/admin/importar', icon: 'M12 4v12m0 0l-4-4m4 4l4-4M4 20h16' },
     { id: 'empleados', label: 'Empleados', group: 'Negocio', show: () => has('empleados'), href: '/' + biz.slug + '/admin/empleados', icon: 'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zm14 10v-2a4 4 0 00-3-3.87M15 3.13a4 4 0 010 7.75' },
