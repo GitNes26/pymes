@@ -2510,6 +2510,11 @@
           </div>
         </div>
         <div class="p-5 space-y-5 border-l border-neutral-200">
+          <div id="tp-variant-wrap" class="hidden">
+            <p class="text-xs font-extrabold text-neutral-900 mb-1">Variante a mostrar</p>
+            <p class="text-[10px] text-neutral-500 mb-3">Cada una tiene su propia foto y precio — elige cuál va en la pieza.</p>
+            <div id="tp-variant-chips" class="flex flex-wrap gap-2" role="group" aria-label="Variante del producto"></div>
+          </div>
           <div>
             <p class="text-xs font-extrabold text-neutral-900 mb-1">Elige dónde publicar</p>
             <p class="text-[10px] text-neutral-500 mb-3">El diseño se recompone para cada proporción.</p>
@@ -2597,7 +2602,66 @@
       story:     { label: 'Historia 9:16',     note: '1080 × 1920 px · Historias y estados de WhatsApp',      w: 1080, h: 1920 },
       landscape: { label: 'Horizontal 1.91:1', note: '1200 × 628 px · Anuncios de enlace y banners',          w: 1200, h: 628 }
     };
-    var TPCARD = { row: null, url: '', photo: '', photoImg: null, qrImg: null, canvases: {}, format: 'square', style: 'diagonal', opener: null };
+    var TPCARD = { row: null, url: '', photo: '', photoImg: null, qrImg: null, canvases: {}, format: 'square', style: 'diagonal', opener: null, variantKey: null };
+
+    // El producto con variantes no tiene "una" foto/precio propios (viven por
+    // combinación) — antes la tarjeta siempre usaba el precio base y la
+    // primera foto que encontrara entre todas las variantes, sin dejar elegir
+    // cuál mostrar. Estos helpers resuelven precio/foto según la variante
+    // elegida en el selector (ver tpSeleccionarVariante), y cualquier builder
+    // de estilo que ya lea row.getAttribute('data-edit-price'/'data-edit-old')
+    // los usa sin tener que tocar cada uno.
+    function tpVariantModel(row) {
+      try {
+        var vraw = decodeURIComponent(row.getAttribute('data-edit-variants') || '');
+        var vm = JSON.parse(vraw);
+        return (vm && !Array.isArray(vm) && Array.isArray(vm.attrs) && vm.attrs.length) ? vm : null;
+      } catch (e) { return null; }
+    }
+    function tpCombos(vm) {
+      var lists = vm.attrs.map(function (a) { return (a.values && a.values.length) ? a.values : ['']; });
+      return lists.reduce(function (acc, arr) {
+        if (!acc.length) return arr.map(function (v) { return [v]; });
+        var out = [];
+        acc.forEach(function (prefix) { arr.forEach(function (v) { out.push(prefix.concat([v])); }); });
+        return out;
+      }, []);
+    }
+    function tpEffectivePrice(row) {
+      var vm = tpVariantModel(row);
+      if (vm && TPCARD.variantKey && vm.prices && vm.prices[TPCARD.variantKey] != null && vm.prices[TPCARD.variantKey] !== '') {
+        return vm.prices[TPCARD.variantKey];
+      }
+      return row.getAttribute('data-edit-price');
+    }
+    function tpEffectiveOld(row) {
+      // Las variantes no tienen "precio anterior" propio — al elegir una no
+      // se tacha nada para no mezclar el descuento del producto base con un
+      // precio que no es el suyo.
+      if (TPCARD.variantKey && tpVariantModel(row)) return '';
+      return row.getAttribute('data-edit-old');
+    }
+    function tpPoblarVariantes(row) {
+      var wrap = document.getElementById('tp-variant-wrap');
+      var chipsBox = document.getElementById('tp-variant-chips');
+      var vm = tpVariantModel(row);
+      if (!vm) { wrap.classList.add('hidden'); chipsBox.innerHTML = ''; TPCARD.variantKey = null; return; }
+      var combos = tpCombos(vm);
+      TPCARD.variantKey = combos.length ? combos[0].join('|') : null;
+      chipsBox.innerHTML = combos.map(function (vals, i) {
+        var key = vals.join('|');
+        var label = vals.filter(Boolean).join(' / ') || ('Variante ' + (i + 1));
+        return '<button type="button" class="tp-format-btn' + (i === 0 ? ' is-active' : '') + '" data-variant-key="' + key.replace(/"/g, '&quot;') + '" onclick="tpSeleccionarVariante(this)">' + label.replace(/</g, '&lt;') + '</button>';
+      }).join('');
+      wrap.classList.remove('hidden');
+    }
+    function tpSeleccionarVariante(btn) {
+      TPCARD.variantKey = btn.getAttribute('data-variant-key');
+      document.querySelectorAll('#tp-variant-chips .tp-format-btn').forEach(function (b) { b.classList.toggle('is-active', b === btn); });
+      TPCARD.photo = ''; TPCARD.photoImg = null;
+      tpDibujar(null);
+      tpCargarFoto(0);
+    }
 
     function tpSym(n) {
       var SYM = { MXN:'$', USD:'$', EUR:'€', COP:'$', ARS:'$', CLP:'$', PEN:'S/', GBP:'£', BRL:'R$' };
@@ -2649,6 +2713,7 @@
       TPCARD.style = 'diagonal';
       TPCARD_BIZ.accent = TPCARD_DEFAULT_COLORS.accent; TPCARD_BIZ.accent2 = TPCARD_DEFAULT_COLORS.accent2;
       tpSyncColorInputs();
+      tpPoblarVariantes(row);
       Object.keys(TP_STYLE_BUILDERS).forEach(function (key) {
         var b = document.getElementById('tp-style-' + key);
         if (b) b.classList.toggle('is-active', key === 'diagonal');
@@ -2706,8 +2771,14 @@
     // Si la imagen principal falla, prueba con las de la galería del producto.
     function tpFotosCandidatas() {
       var row = TPCARD.row, lista = [];
+      // La foto de la variante elegida va primero — si esa combinación tiene
+      // su propia foto, es la que se debe usar, no una cualquiera de las demás.
+      var vmSel = tpVariantModel(row);
+      if (vmSel && TPCARD.variantKey && vmSel.images && vmSel.images[TPCARD.variantKey]) {
+        lista.push(vmSel.images[TPCARD.variantKey]);
+      }
       var main = row.getAttribute('data-edit-image');
-      if (main) lista.push(main);
+      if (main && lista.indexOf(main) === -1) lista.push(main);
       try {
         var raw = decodeURIComponent(row.getAttribute('data-edit-galeria') || '');
         if (raw.indexOf('&quot;') !== -1) raw = raw.replace(/&quot;/g, '"').replace(/&amp;/g, '&');
@@ -2748,8 +2819,8 @@
       ctx.fillText('Agrega una foto para destacar tu producto', x + w/2, y + h*.69); ctx.textAlign = 'left';
     }
     function tpDrawPrice(ctx, row, x, y, size, color) {
-      var price = parseFloat(row.getAttribute('data-edit-price')) || 0;
-      var old = parseFloat(row.getAttribute('data-edit-old')) || 0;
+      var price = parseFloat(tpEffectivePrice(row)) || 0;
+      var old = parseFloat(tpEffectiveOld(row)) || 0;
       ctx.fillStyle = color || '#151816'; ctx.font = '900 ' + size + 'px Inter, "Segoe UI", Arial, sans-serif';
       var ptxt = tpSym(price); ctx.fillText(ptxt, x, y);
       if (old > price && old > 0) {
@@ -2761,8 +2832,8 @@
       }
     }
     function tpDrawOffer(ctx, row, x, y, size) {
-      var price = parseFloat(row.getAttribute('data-edit-price')) || 0;
-      var old = parseFloat(row.getAttribute('data-edit-old')) || 0;
+      var price = parseFloat(tpEffectivePrice(row)) || 0;
+      var old = parseFloat(tpEffectiveOld(row)) || 0;
       if (!(old > price && old > 0)) return;
       size = size || 28;
       var label = '−' + Math.round((1-price/old)*100) + '%  OFERTA';
@@ -2979,7 +3050,7 @@
 
       var priceY = nameY + nLines * Math.round((wide ? H : W) * .062) + (wide ? H * .08 : H * .05);
       ctx.fillStyle = TPCARD_BIZ.accent; ctx.font = '900 ' + Math.round((wide ? H : W) * .075) + 'px Inter, "Segoe UI", Arial, sans-serif';
-      ctx.fillText(tpSym(parseFloat(row.getAttribute('data-edit-price')) || 0), tx, priceY);
+      ctx.fillText(tpSym(parseFloat(tpEffectivePrice(row)) || 0), tx, priceY);
       ctx.textAlign = 'left';
       var qrSize = Math.round((wide ? H : Math.min(W, H)) * .12);
       tpDrawQR(ctx, wide ? W * .06 : W - qrSize - W * .06, wide ? H * .74 : H - qrSize - H * .05, qrSize, true);
@@ -3006,7 +3077,7 @@
       tpDrawImage(ctx, photo, bx, by, boxW, boxH, Math.round(W * .015));
       ctx.restore();
 
-      var price = parseFloat(row.getAttribute('data-edit-price')) || 0;
+      var price = parseFloat(tpEffectivePrice(row)) || 0;
       var stickerR = Math.round(Math.min(W, H) * .13);
       var sx = bx + boxW - stickerR * .35, sy = by + boxH - stickerR * .35;
       ctx.save(); ctx.translate(sx, sy); ctx.rotate(8 * Math.PI / 180);
@@ -3054,7 +3125,7 @@
         var lines = tpWrap(ctx, name, margin, H * .42, W * .42, Math.round(H * .1), 3);
         var priceY = H * .42 + lines * Math.round(H * .1) + H * .12;
         ctx.font = '400 ' + Math.round(H * .055) + 'px ' + serif; ctx.fillStyle = TPCARD_BIZ.accent;
-        ctx.fillText(tpSym(parseFloat(row.getAttribute('data-edit-price')) || 0), margin, priceY);
+        ctx.fillText(tpSym(parseFloat(tpEffectivePrice(row)) || 0), margin, priceY);
         tpDrawQR(ctx, margin, H * .78, Math.round(H * .13), false);
       } else {
         var pw2 = W * .6, ph2 = H * .4, px2 = W - margin - pw2, py2 = H * .1;
@@ -3070,7 +3141,7 @@
         var descY = py2 + ph2 + H * .11 + lines2 * Math.round(W * .066) + H * .025;
         if (desc) { ctx.globalAlpha = .62; ctx.font = '400 ' + Math.round(W * .026) + 'px ' + serif; tpWrap(ctx, desc, margin, descY, W * .86, Math.round(W * .038), 2); ctx.globalAlpha = 1; }
         ctx.font = '400 ' + Math.round(W * .07) + 'px ' + serif; ctx.fillStyle = TPCARD_BIZ.accent;
-        ctx.fillText(tpSym(parseFloat(row.getAttribute('data-edit-price')) || 0), margin, H * .93);
+        ctx.fillText(tpSym(parseFloat(tpEffectivePrice(row)) || 0), margin, H * .93);
         tpDrawQR(ctx, W - margin - Math.round(W * .12), H * .82, Math.round(W * .12), false);
       }
       return c;
@@ -3145,7 +3216,7 @@
       var lines = tpWrap(ctx, String(name || '').toUpperCase(), margin, nameY, W * .84, Math.round((wide ? H : W) * .062), 2);
       var priceY = nameY + lines * Math.round((wide ? H : W) * .062) + H * .06;
       ctx.font = '900 ' + Math.round((wide ? H : W) * .075) + 'px Inter, "Segoe UI", Arial, sans-serif';
-      ctx.fillText(tpSym(parseFloat(row.getAttribute('data-edit-price')) || 0), margin, priceY);
+      ctx.fillText(tpSym(parseFloat(tpEffectivePrice(row)) || 0), margin, priceY);
       var qrSize = Math.round((wide ? H : W) * .11);
       tpDrawQR(ctx, W - margin - qrSize, H - qrSize - H * .06, qrSize, true);
       return c;
@@ -3185,7 +3256,7 @@
       var priceY = nameY + lines * Math.round((wide ? H : W) * .052) + H * .06;
       ctx.save(); ctx.shadowColor = TPCARD_BIZ.accent2 || TPCARD_BIZ.accent; ctx.shadowBlur = box * .14;
       ctx.fillStyle = TPCARD_BIZ.accent2 || TPCARD_BIZ.accent; ctx.font = '900 ' + Math.round((wide ? H : W) * .065) + 'px Inter, "Segoe UI", Arial, sans-serif';
-      ctx.fillText(tpSym(parseFloat(row.getAttribute('data-edit-price')) || 0), tx, priceY);
+      ctx.fillText(tpSym(parseFloat(tpEffectivePrice(row)) || 0), tx, priceY);
       ctx.restore(); ctx.textAlign = 'left';
       var qrSize = Math.round((wide ? H : mn) * .1);
       tpDrawQR(ctx, wide ? W * .06 : W - qrSize - W * .06, wide ? H * .68 : H - qrSize - H * .05, qrSize, true);
@@ -3232,7 +3303,7 @@
 
       var priceY = nameY + lines * Math.round((wide ? H : W) * .056) + H * .055;
       ctx.fillStyle = TPCARD_BIZ.accent; ctx.font = '900 ' + Math.round((wide ? H : W) * .062) + 'px Inter, "Segoe UI", Arial, sans-serif';
-      ctx.fillText(tpSym(parseFloat(row.getAttribute('data-edit-price')) || 0), tx, priceY);
+      ctx.fillText(tpSym(parseFloat(tpEffectivePrice(row)) || 0), tx, priceY);
       ctx.textAlign = 'left';
       var qrSize = Math.round((wide ? H : mn) * .1);
       tpDrawQR(ctx, wide ? W * .06 : W - qrSize - W * .06, wide ? H * .72 : H - qrSize - H * .05, qrSize, false);
