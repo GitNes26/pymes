@@ -1,22 +1,22 @@
 # CataManager - Dockerfile multi-stage
+FROM node:22-bookworm-slim AS builder
 
-# ---- Etapa 1: dependencias (cache de npm ci) ----
-FROM node:22-bookworm-slim AS deps
 WORKDIR /app
-COPY package.json package-lock.json ./
+
+COPY package*.json ./
 RUN npm ci --only=production
 
+FROM node:22-bookworm-slim
 
-# ---- Etapa 2: build (genera Prisma + compila Next) ----
-FROM node:22-bookworm-slim AS build
 WORKDIR /app
 
-
-# ---- Etapa 3: runner ----
-FROM node:22-bookworm-slim AS runner
-WORKDIR /app
-
-RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001 && apk add --no-cache su-exec
+# gosu es el equivalente en Debian del su-exec de Alpine (arranca como root
+# para poder ajustar el dueño de los volúmenes montados, y luego baja
+# privilegios al usuario nodejs antes de ejecutar la app — ver docker-entrypoint.sh).
+RUN groupadd --system --gid 1001 nodejs \
+  && useradd --system --uid 1001 --gid 1001 --no-create-home nodejs \
+  && apt-get update -y && apt-get install -y --no-install-recommends gosu \
+  && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /app/node_modules ./node_modules
 COPY . .
@@ -27,8 +27,10 @@ EXPOSE 3000
 
 ENV NODE_ENV=production
 
+# bookworm-slim no trae wget/curl por defecto (a diferencia de Alpine);
+# se usa el fetch nativo de Node para no tener que instalar nada extra.
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget -qO- http://localhost:3000/health || exit 1
+  CMD node -e "fetch('http://localhost:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["node", "server.js"]

@@ -5,7 +5,7 @@ set -eu
 if [ "$(id -u)" -eq 0 ]; then
   mkdir -p /app/public/uploads /app/backups
   chown nodejs:nodejs /app/public/uploads /app/backups
-  exec su-exec nodejs "$@"
+  exec gosu nodejs "$@"
 fi
 
 exec "$@"
