@@ -800,6 +800,7 @@
       }
     }
   </style>
+  <link rel="stylesheet" href="/css/catalog-refine.css?v=20260917c">
   <script src="/js/img-retry.js"></script>
   <script src="/js/masks.js"></script>
 </head>
@@ -930,12 +931,12 @@
               <div style="margin-top:6px;padding:5px 8px;border-radius:7px;font-size:11px;font-weight:700;background:linear-gradient(135deg,rgba(239,68,68,.12),rgba(255,87,34,.14));color:#dc2626;border:1px dashed rgba(239,68,68,.35);line-height:1.3;"><i class="bi bi-tag-fill"></i> <%= p.promo_desc %></div>
             <% } %>
             <% if (p.allow_installments) { %>
-              <div style="margin-top:5px;"><span style="display:inline-block;font-size:10px;font-weight:800;color:#059669;background:rgba(16,185,129,.12);padding:2px 8px;border-radius:99px;">◐ <%= (p.installment_count || 6) %> abonos de <%= _rawMoney((p.price / (p.installment_count || 6)).toFixed(2)) %></span></div>
+              <div><span class="installment-note">◐ <%= (p.installment_count || 6) %> abonos de <%= _rawMoney((p.price / (p.installment_count || 6)).toFixed(2)) %></span></div>
             <% } %>
-            <div style="display:flex;gap:4px;margin-top:6px;">
-              <button class="prod-btn" style="flex:1;font-size:11px;padding:6px;" onclick="event.stopPropagation();if(!addToCart(<%= p.id %>,'<%= p.name.replace(/'/g,"\\'") %>',<%= parseFloat(p.price)||0 %>,'',{slug:'<%= biz.slug %>',name:'<%= biz.name.replace(/'/g,"\\'") %>',whatsapp:'<%= _whatsapp %>',logo:'<%= (biz.logo||'').replace(/'/g,"\\'") %>'},'<%= (p.image||'').replace(/'/g,"\\'") %>'))return;this.classList.add('added');this.innerHTML='<i class=\'bi bi-check-lg\'></i> Agregado';setTimeout(()=>{this.classList.remove('added');this.innerHTML='<i class=\'bi bi-bag-plus\'></i> Agregar';},1200);"><i class="bi bi-bag-plus"></i> Agregar</button>
-              <a class="prod-view-btn" href="/<%= biz.slug %>/p/<%= p.id %>" onclick="event.stopPropagation();" title="Ver producto" style="font-size:11px;padding:6px 8px;"><i class="bi bi-eye"></i> Ver</a>
-              <button class="prod-share-btn" style="padding:6px 8px;font-size:11px;" onclick="event.stopPropagation();shareProduct(<%= p.id %>,'<%= p.name.replace(/'/g,"\\'") %>',<%= parseFloat(p.price)||0 %>)" title="Compartir"><i class="bi bi-share"></i></button>
+            <div class="oferta-actions">
+              <button class="prod-btn" onclick="event.stopPropagation();if(!addToCart(<%= p.id %>,'<%= p.name.replace(/'/g,"\\'") %>',<%= parseFloat(p.price)||0 %>,'',{slug:'<%= biz.slug %>',name:'<%= biz.name.replace(/'/g,"\\'") %>',whatsapp:'<%= _whatsapp %>',logo:'<%= (biz.logo||'').replace(/'/g,"\\'") %>'},'<%= (p.image||'').replace(/'/g,"\\'") %>'))return;this.classList.add('added');this.innerHTML='<i class=\'bi bi-check-lg\'></i> Agregado';setTimeout(()=>{this.classList.remove('added');this.innerHTML='<i class=\'bi bi-bag-plus\'></i> Agregar';},1200);"><i class="bi bi-bag-plus"></i> Agregar</button>
+              <a class="prod-view-btn" href="/<%= biz.slug %>/p/<%= p.id %>" onclick="event.stopPropagation();" title="Ver producto"><i class="bi bi-eye"></i> Ver</a>
+              <button class="prod-share-btn" onclick="event.stopPropagation();shareProduct(<%= p.id %>,'<%= p.name.replace(/'/g,"\\'") %>',<%= parseFloat(p.price)||0 %>)" title="Compartir" aria-label="Compartir <%= p.name %>"><i class="bi bi-share"></i></button>
             </div>
           </div>
         </div>
@@ -1015,7 +1016,6 @@
                 <% if (p.old_price && p.old_price > p.price) { %><span class="prod-badge-offer">-<%= Math.round((1-p.price/p.old_price)*100) %>%</span><% } %>
                 <% if (p.promo_badge) { %><span class="prod-badge-promo"><%= p.promo_badge %></span><% } %>
               </div>
-              <button class="prod-share-btn" onclick="event.stopPropagation();shareProduct(<%= p.id %>,'<%= p.name.replace(/'/g,"\\'") %>',<%= parseFloat(p.price)||0 %>)" title="Compartir"><i class="bi bi-share"></i></button>
             </div>
             <div class="prod-body">
               <div class="prod-name"><%= p.name %></div>
@@ -1026,21 +1026,21 @@
               </div>
               <% if (p.promo_desc) { %><div class="prod-promo-strip"><i class="bi bi-tag-fill"></i> <%= p.promo_desc %></div><% } %>
               <% if (p.allow_installments) { var instPrice = (p.price / (p.installment_count || 6)).toFixed(2); %>
-                <span style="display:inline-block;font-size:11px;font-weight:700;color:#10b981;background:rgba(16,185,129,.1);padding:2px 8px;border-radius:6px;margin-top:4px;"><%= p.installment_count || 6 %> abonos de <%= _rawMoney(instPrice) %></span>
+                <span class="installment-note"><%= p.installment_count || 6 %> abonos de <%= _rawMoney(instPrice) %></span>
               <% } %>
               <% if (p.displayStock !== null && p.displayStock !== undefined) { %>
                 <% if (p.displayStock <= 0) { %>
-                  <div style="font-size:11px;font-weight:800;color:#ef4444;margin-top:4px;">Agotado</div>
+                  <div class="stock-status stock-status--out">Agotado</div>
                 <% } else if (p.displayStock <= 5) { %>
-                  <div style="font-size:11px;font-weight:800;color:#ea580c;margin-top:4px;">🔥 ¡Quedan <%= p.displayStock %>!</div>
+                  <div class="stock-status stock-status--low">🔥 ¡Quedan <%= p.displayStock %>!</div>
                 <% } else { %>
-                  <div style="font-size:11px;font-weight:600;color:var(--text-secondary);margin-top:4px;"><%= p.displayStock %> disponibles</div>
+                  <div class="stock-status stock-status--available"><%= p.displayStock %> disponibles</div>
                 <% } %>
               <% } %>
-              <div style="display:flex;gap:6px;margin-top:8px;">
-                <button class="prod-btn" style="flex:1;" onclick="event.stopPropagation();if(!addToCart(<%= p.id %>,'<%= p.name.replace(/'/g,"\\'") %>',<%= parseFloat(p.price)||0 %>,'',{slug:'<%= biz.slug %>',name:'<%= biz.name.replace(/'/g,"\\'") %>',whatsapp:'<%= _whatsapp %>',logo:'<%= (biz.logo||'').replace(/'/g,"\\'") %>'},'<%= (p.image||'').replace(/'/g,"\\'") %>'))return;this.classList.add('added');this.innerHTML='<i class=\'bi bi-check-lg\'></i> Agregado';setTimeout(()=>{this.classList.remove('added');this.innerHTML='<i class=\'bi bi-bag-plus\'></i> Agregar';},1200);"><i class="bi bi-bag-plus"></i> Agregar</button>
+              <div class="prod-actions">
+                <button class="prod-btn" onclick="event.stopPropagation();if(!addToCart(<%= p.id %>,'<%= p.name.replace(/'/g,"\\'") %>',<%= parseFloat(p.price)||0 %>,'',{slug:'<%= biz.slug %>',name:'<%= biz.name.replace(/'/g,"\\'") %>',whatsapp:'<%= _whatsapp %>',logo:'<%= (biz.logo||'').replace(/'/g,"\\'") %>'},'<%= (p.image||'').replace(/'/g,"\\'") %>'))return;this.classList.add('added');this.innerHTML='<i class=\'bi bi-check-lg\'></i> Agregado';setTimeout(()=>{this.classList.remove('added');this.innerHTML='<i class=\'bi bi-bag-plus\'></i> Agregar';},1200);"><i class="bi bi-bag-plus"></i> Agregar</button>
                 <a class="prod-view-btn" href="/<%= biz.slug %>/p/<%= p.id %>" onclick="event.stopPropagation();" title="Ver producto"><i class="bi bi-eye"></i> Ver</a>
-                <button class="prod-share-btn" onclick="event.stopPropagation();shareProduct(<%= p.id %>,'<%= p.name.replace(/'/g,"\\'") %>',<%= parseFloat(p.price)||0 %>)" title="Compartir"><i class="bi bi-share"></i></button>
+                <button class="prod-share-btn" onclick="event.stopPropagation();shareProduct(<%= p.id %>,'<%= p.name.replace(/'/g,"\\'") %>',<%= parseFloat(p.price)||0 %>)" title="Compartir" aria-label="Compartir <%= p.name %>"><i class="bi bi-share"></i></button>
               </div>
             </div>
           </div>

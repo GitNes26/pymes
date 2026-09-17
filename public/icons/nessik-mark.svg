@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">Nessik</title>
+  <desc id="desc">Monograma N inspirado en una tienda local y una conversación</desc>
+  <rect x="4" y="4" width="120" height="120" rx="28" fill="#0D3A31"/>
+  <path fill="#C89B3C" d="M27 96V33c0-7 5-12 12-12h9v75c0 6-5 11-11 11-5 0-10-5-10-11Z"/>
+  <path fill="#C89B3C" d="M80 32c0-6 5-11 11-11h10v75c0 7-5 12-12 12h-9V32Z"/>
+  <path fill="#FAF9F6" d="M42 22h13l46 56v18c0 5-3 9-8 11L42 46V22Z"/>
+  <path fill="#FAF9F6" d="M42 57h8v12c0 4-3 7-7 7s-7-3-7-7v-6l6-6Zm15 9h14v4c0 4-3 7-7 7s-7-3-7-7v-4Zm21 0h9l5 6c-1 3-4 5-7 5-4 0-7-3-7-7v-4Z"/>
+  <path fill="#0D3A31" d="m80 87 9 11 9-4-11-14-7 7Z"/>
+</svg>

@@ -1,0 +1,6 @@
+file 'C:/Users/CETIC-LuisGH2/Documents/Default Project/artifacts/cadi-status-promo/partes/parte-01.mp4'
+file 'C:/Users/CETIC-LuisGH2/Documents/Default Project/artifacts/cadi-status-promo/partes/parte-02.mp4'
+file 'C:/Users/CETIC-LuisGH2/Documents/Default Project/artifacts/cadi-status-promo/partes/parte-03.mp4'
+file 'C:/Users/CETIC-LuisGH2/Documents/Default Project/artifacts/cadi-status-promo/partes/parte-04.mp4'
+file 'C:/Users/CETIC-LuisGH2/Documents/Default Project/artifacts/cadi-status-promo/partes/parte-05.mp4'
+file 'C:/Users/CETIC-LuisGH2/Documents/Default Project/artifacts/cadi-status-promo/partes/parte-06.mp4'
