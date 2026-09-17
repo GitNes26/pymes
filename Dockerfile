@@ -1,13 +1,19 @@
 # CataManager - Dockerfile multi-stage
-FROM node:20-alpine AS builder
 
+# ---- Etapa 1: dependencias (cache de npm ci) ----
+FROM node:22-bookworm-slim AS deps
 WORKDIR /app
-
-COPY package*.json ./
+COPY package.json package-lock.json ./
 RUN npm ci --only=production
 
-FROM node:20-alpine
 
+# ---- Etapa 2: build (genera Prisma + compila Next) ----
+FROM node:22-bookworm-slim AS build
+WORKDIR /app
+
+
+# ---- Etapa 3: runner ----
+FROM node:22-bookworm-slim AS runner
 WORKDIR /app
 
 RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001 && apk add --no-cache su-exec
