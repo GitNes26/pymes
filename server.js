@@ -354,6 +354,9 @@ function receiveImageUpload(req, res, next) {
     if (!err) return next();
     if (err.code === 'LIMIT_FILE_SIZE') return res.status(413).json({ error: 'La imagen supera 5 MB. Elige una foto más pequeña.' });
     console.error('[upload imagen]', err);
+    if (err.code === 'EACCES' || err.code === 'EPERM') return res.status(500).json({ error: 'El almacenamiento de fotos no tiene permiso de escritura.' });
+    if (err.code === 'ENOSPC') return res.status(507).json({ error: 'El almacenamiento de fotos está lleno.' });
+    if (err.code === 'ENOENT') return res.status(500).json({ error: 'No existe el directorio donde se guardan las fotos.' });
     return res.status(500).json({ error: 'No se pudo guardar la imagen. Intenta de nuevo.' });
   });
 }
