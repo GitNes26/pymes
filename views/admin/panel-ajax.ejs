@@ -47,6 +47,8 @@
     }
 
     document.addEventListener('submit', function (e) {
+      // La validación del formulario puede cancelar el envío antes de llegar aquí.
+      if (e.defaultPrevented) return;
       var form = e.target;
       if (!form || form.tagName !== 'FORM') return;
       if (!form.closest('main') && !form.hasAttribute('data-ajax')) return;
@@ -74,6 +76,9 @@
       new FormData(form).forEach(function (v, k) { params.append(k, v); });
       fetch(form.action, { method: 'POST', body: params, redirect: 'follow', credentials: 'same-origin', headers: headers })
         .then(function (r) {
+          if (r.redirected && /\/admin\/?$/.test(new URL(r.url).pathname)) {
+            return Promise.reject({ msg: 'Tu sesión expiró. El formulario sigue abierto; entra de nuevo antes de intentar guardarlo.' });
+          }
           if (!r.ok) {
             return r.text().then(function (t) {
               // 403: puede ser token CSRF vencido O falta de permisos — no son lo mismo.
@@ -110,7 +115,7 @@
               mostrarToast('Listo ✓', 'ok');
             }
           } else {
-            location.reload();
+            mostrarToast('No se pudo actualizar la pantalla. Tus datos siguen en el formulario; revisa el listado antes de intentar guardar otra vez.', 'error');
           }
         })
         .catch(function (err) {

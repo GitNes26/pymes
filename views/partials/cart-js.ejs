@@ -50,7 +50,7 @@
   const NO_IMAGE = '/img/sin-imagen.svg';
   function money(n) { return CURRENCY_SYMBOL + (Number(n || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')); }
   const PROMAP = Object.fromEntries(
-    <%- safeJson((products || []).filter(p => !p.isAd).map(p => [String(p.id), { name: p.name, price: p.price, stock: p.stock === null || p.stock === undefined ? null : p.stock, image: p.image || '/img/sin-imagen.svg', imgs: (p.imgs && p.imgs.length ? p.imgs : [p.image || '/img/sin-imagen.svg']), variants: (typeof p.variants === 'string' ? p.variants : ''), promoType: p.promo_type || '', promoGift: p.promo_gift || '', promoDesc: p.promo_desc || '' }])) %>
+    <%- safeJson((products || []).filter(p => !p.isAd).map(p => [String(p.id), { name: p.name, price: p.price, stock: p.stock === null || p.stock === undefined ? null : p.stock, madeToOrder: !!p.made_to_order, image: p.image || '/img/sin-imagen.svg', imgs: (p.imgs && p.imgs.length ? p.imgs : [p.image || '/img/sin-imagen.svg']), variants: (typeof p.variants === 'string' ? p.variants : ''), promoType: p.promo_type || '', promoGift: p.promo_gift || '', promoDesc: p.promo_desc || '' }])) %>
   );
   const CURRENT_STORE = { slug: SLUG, name: STORE_NAME, whatsapp: STORE_WHATSAPP, logo: STORE_LOGO, wa_message: <%- safeJson(biz.wa_message || '') %> };
   // Pago en línea: solo aplica al carrito de ESTA tienda (no a productos de
@@ -207,10 +207,10 @@
       const comboPrice = (complete && vm.prices[key]) ? Number(vm.prices[key]) : p.price;
       priceEl.textContent = money(comboPrice);
       let hint = parts.join(' / ');
-      if (complete && st !== undefined) hint += (st <= 0 ? ' · Agotado' : ' · quedan ' + st);
+      if (complete) hint += p.madeToOrder ? ' · Por pedido' : (st !== undefined ? (st <= 0 ? ' · Agotado' : ' · quedan ' + st) : '');
       selEl.textContent = hint;
-      addBtn.disabled = !complete || (st !== undefined && st <= 0);
-      addBtn.textContent = (complete && st !== undefined && st <= 0) ? 'Agotado' : 'Agregar';
+      addBtn.disabled = !complete || (!p.madeToOrder && st !== undefined && st <= 0);
+      addBtn.textContent = (complete && !p.madeToOrder && st !== undefined && st <= 0) ? 'Agotado' : 'Agregar';
     }
 
     vm.attrs.forEach(attr => {
@@ -272,18 +272,18 @@
     if (!price || price <= 0) { toast('Precio invalido', false); return false; }
     if (!image) image = p.image;
     const pvm = normVariantModel(p.variants);
-    if (!pvm.attrs.length && (p.stock === null || p.stock === undefined || p.stock <= 0)) { toast('Producto agotado 😕', false); return false; }
+    if (!p.madeToOrder && !pvm.attrs.length && (p.stock === null || p.stock === undefined || p.stock <= 0)) { toast('Producto agotado 😕', false); return false; }
     if (pvm.attrs.length && !variant) { variantPicker(id); return false; }
     const key = itemKey(s.slug, id, variant);
     // stock por combinación
-    if (variant && pvm.stock) {
+    if (!p.madeToOrder && variant && pvm.stock) {
       const ck = variant.split(' / ').join('|');
       const st = pvm.stock[ck];
       if (st === undefined || st <= 0) { toast('Esa combinación está agotada 😕', false); return false; }
     }
     cart[key] = cart[key] || { store: s, id, name, price: Number(price), image: image || p.image, variant: variant || '', qty: 0 };
-    if (!pvm.attrs.length && p.stock !== null && cart[key].qty + 1 > p.stock) { toast('Stock máximo disponible', false); return false; }
-    if (variant && pvm.stock) {
+    if (!p.madeToOrder && !pvm.attrs.length && p.stock !== null && cart[key].qty + 1 > p.stock) { toast('Stock máximo disponible', false); return false; }
+    if (!p.madeToOrder && variant && pvm.stock) {
       const ck = variant.split(' / ').join('|');
       const st = pvm.stock[ck];
       if (st !== undefined && cart[key].qty + 1 > st) { toast('Solo quedan ' + st + ' de esa combinación', false); return false; }
@@ -367,7 +367,7 @@
       _removeCartRow(key, function () { delete cart[key]; saveCart(); renderCart(); });
       return;
     }
-    if (p) {
+    if (p && !p.madeToOrder) {
       const pvm = normVariantModel(p.variants);
       // Con variantes, p.stock siempre es null (vive por combinación) —
       // antes eso hacía que el tope de stock se saltara por completo al
@@ -1316,7 +1316,7 @@
       if (!p) return;
       card._pid = pid;
       const hasVars = normVariantModel(p.variants).attrs.length > 0;
-      const outOfStock = !hasVars && (p.stock === null || p.stock === undefined || p.stock <= 0);
+      const outOfStock = !p.madeToOrder && !hasVars && (p.stock === null || p.stock === undefined || p.stock <= 0);
       if (outOfStock && !card.querySelector('.abs-agotado')) {
         const badge = document.createElement('span');
         badge.className = 'abs-agotado absolute top-2 left-2 bg-red-500 text-white text-[10px] font-black px-2 py-1 rounded-full shadow';

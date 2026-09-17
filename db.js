@@ -176,6 +176,7 @@ CREATE TABLE IF NOT EXISTS price_history (
 addColumnIfMissing('products', 'old_price', 'REAL');
 addColumnIfMissing('products', 'featured', 'INTEGER DEFAULT 0');
 addColumnIfMissing('products', 'stock', 'INTEGER');  // NULL = sin control de stock
+addColumnIfMissing('products', 'made_to_order', 'INTEGER DEFAULT 0'); // se vende por pedido, sin límite de stock
 addColumnIfMissing('products', 'variants', "TEXT DEFAULT ''");  // JSON array, ej: ["Chica","Mediana","Grande"]
 addColumnIfMissing('products', 'promo_ends_at', "TEXT DEFAULT ''"); // vencimiento de la promoción (YYYY-MM-DD)
 addColumnIfMissing('products', 'galeria', "TEXT DEFAULT ''"); // fotos extra (JSON array de URLs)

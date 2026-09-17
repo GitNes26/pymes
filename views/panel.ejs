@@ -110,7 +110,7 @@
             <div class="flex-1 min-w-[200px]">
               <p class="text-sm font-extrabold" style="color:#a07d3c">Stock bajo en <%= lowStock.length %> producto(s)</p>
               <p class="text-xs mt-0.5 truncate" style="color:#b8892e">
-                <% lowStock.slice(0, 6).forEach((p, i) => { %><%= i > 0 ? ' · ' : '' %><b><%= p.name %></b> (<%= p.stock <= 0 ? 'agotado' : p.stock %><% }) %>
+                <% lowStock.slice(0, 6).forEach((p, i) => { %><%= i > 0 ? ' · ' : '' %><b><%= p.name %></b> (<%= p.displayStock <= 0 ? 'agotado' : p.displayStock %><% }) %>
                 <% if (lowStock.length > 6) { %> y <%= lowStock.length - 6 %> más<% } %>
               </p>
             </div>

@@ -331,7 +331,10 @@ setInterval(function() {
 
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, 'public', 'uploads')),
+  destination: (req, file, cb) => {
+    const dir = path.join(__dirname, 'public', 'uploads');
+    require('fs').mkdir(dir, { recursive: true }, err => cb(err, dir));
+  },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
     const allowed = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
@@ -356,8 +359,11 @@ function receiveImageUpload(req, res, next) {
     console.error('[upload imagen]', err);
     if (err.code === 'EACCES' || err.code === 'EPERM') return res.status(500).json({ error: 'El almacenamiento de fotos no tiene permiso de escritura.' });
     if (err.code === 'ENOSPC') return res.status(507).json({ error: 'El almacenamiento de fotos está lleno.' });
+    if (err.code === 'EDQUOT') return res.status(507).json({ error: 'Se agotó la cuota de almacenamiento de fotos.' });
+    if (err.code === 'EROFS') return res.status(500).json({ error: 'El almacenamiento de fotos está montado en modo de solo lectura.' });
     if (err.code === 'ENOENT') return res.status(500).json({ error: 'No existe el directorio donde se guardan las fotos.' });
-    return res.status(500).json({ error: 'No se pudo guardar la imagen. Intenta de nuevo.' });
+    const code = typeof err.code === 'string' && /^[A-Z0-9_]{2,40}$/.test(err.code) ? err.code : 'DESCONOCIDO';
+    return res.status(500).json({ error: 'No se pudo guardar la imagen (código ' + code + ').' });
   });
 }
 // Comprime cualquier foto que suban (producto, logo, banner, categoría…) para
@@ -1646,7 +1652,7 @@ function getCatalog(businessId) {
     // suma aquí para mostrar "quedan X" tanto en la tarjeta como en la
     // ficha del producto.
     const vm = parseVariantList(p.variants);
-    p.displayStock = (vm.attrs && vm.attrs.length)
+    p.displayStock = p.made_to_order ? null : (vm.attrs && vm.attrs.length)
       ? Object.values(vm.stock || {}).reduce((s, v) => s + (parseInt(v, 10) || 0), 0)
       : p.stock;
     return p;
@@ -2246,7 +2252,7 @@ app.get('/:slug/p/:id', (req, res, next) => {
   p.imgs = productImgs(p);
   withPromo(p);
   const pvm0 = parseVariantList(p.variants);
-  p.displayStock = (pvm0.attrs && pvm0.attrs.length)
+  p.displayStock = p.made_to_order ? null : (pvm0.attrs && pvm0.attrs.length)
     ? Object.values(pvm0.stock || {}).reduce((s, v) => s + (parseInt(v, 10) || 0), 0)
     : p.stock;
   track(biz.id, 'view', p.name);
@@ -2670,7 +2676,7 @@ function requireAuth(req, res, next) {
     res.locals.isEmployee = req.role === 'employee';
     res.locals.empName = req.emp ? req.emp.name : '';
     res.locals.perms = req.perms;
-    res.locals.lowStockCount = db.prepare("SELECT COUNT(*) AS c FROM products WHERE business_id = ? AND active = 1 AND (stock IS NULL OR stock <= 5)").get(biz.id).c;
+    res.locals.lowStockCount = db.prepare("SELECT COUNT(*) AS c FROM products WHERE business_id = ? AND active = 1 AND made_to_order = 0 AND (stock IS NULL OR stock <= 5)").get(biz.id).c;
     return next();
   }
   const next_ = encodeURIComponent(req.originalUrl || ('/' + req.params.slug + '/admin'));
@@ -2818,7 +2824,7 @@ function panelData(biz) {
     // Con variantes, el stock del producto (columna suelta) siempre queda en
     // null a propósito — vive repartido por combinación. Sin esto, cualquier
     // producto con variantes se mostraba "Agotado" aunque tuviera stock real.
-    p.displayStock = p.variantCount > 0
+    p.displayStock = p.made_to_order ? null : p.variantCount > 0
       ? Object.values(p.variants.stock || {}).reduce((s, v) => s + (parseInt(v, 10) || 0), 0)
       : p.stock;
     return withPromo(p);
@@ -2833,7 +2839,7 @@ function panelData(biz) {
   const planInfo = getPlan(biz);
   const storeUrl = BASE_URL ? BASE_URL + '/' + biz.slug : '/' + biz.slug;
   const shareUrl = BASE_URL ? BASE_URL + '/' + biz.slug : '';
-  const lowStock = allProducts.filter(p => p.stock === null || p.stock <= 5);
+  const lowStock = allProducts.filter(p => !p.made_to_order && (p.displayStock === null || p.displayStock <= 5));
   const priceHistory = db.prepare('SELECT * FROM price_history WHERE business_id = ? ORDER BY id DESC LIMIT 30').all(biz.id);
   return { categories, allProducts, orders, pending, stats, planMax, planInfo, storeUrl, shareUrl, attributeTemplates: getAttributeTemplates(biz.id), lowStock, priceHistory, canDesign: designAllowed(biz) };
 }
@@ -3160,6 +3166,7 @@ app.post('/:slug/admin/producto', requireAuth, can('productos.crear'), (req, res
     return res.status(400).render('productos', { biz, ...panelData(biz), error: check.message, planBlock: check.planBlock || null });
   }
   const { name, category_id, description, image, stock, variants } = req.body;
+  const madeToOrder = req.body.made_to_order ? 1 : 0;
   const { price: bodyPrice, old_price } = parsePrices(req.body);
   const promo = parsePromo(req.body);
   const inst = parseInstallment(req.body);
@@ -3170,8 +3177,9 @@ app.post('/:slug/admin/producto', requireAuth, can('productos.crear'), (req, res
   // Con variantes, el precio vive por cada combinación (paso 2), no arriba —
   // el precio "general" se calcula solo (el más bajo entre variantes) para
   // que el catálogo y los filtros de precio tengan algo con qué ordenar.
-  const variantsJson = parseVariants(variants);
+  let variantsJson = parseVariants(variants);
   const variantModel = variantsJson ? JSON.parse(variantsJson) : null;
+  if (madeToOrder && variantModel) { variantModel.stock = {}; variantsJson = JSON.stringify(variantModel); }
   let price = bodyPrice;
   if (variantModel) {
     const combosPrices = Object.values(variantModel.prices || {}).map(Number).filter(n => !isNaN(n) && n >= 0);
@@ -3185,8 +3193,8 @@ app.post('/:slug/admin/producto', requireAuth, can('productos.crear'), (req, res
     }
   }
   // Stock obligatorio en productos sin atributos (con variantes, el stock se define por cada combinación).
-  const stockNum = parseStock(stock);
-  if (!variantsJson) {
+  const stockNum = madeToOrder ? null : parseStock(stock);
+  if (!variantsJson && !madeToOrder) {
     if (stockNum === null) {
       return renderError('El stock es obligatorio: escribe cuántas piezas tienes (0 si el producto está agotado).');
     }
@@ -3196,9 +3204,9 @@ app.post('/:slug/admin/producto', requireAuth, can('productos.crear'), (req, res
   }
   try {
     db.prepare(
-      `INSERT INTO products (business_id, category_id, name, price, old_price, description, image, galeria, stock, variants, promo_ends_at, featured, promo_type, promo_value, promo_gift, sku, tags, video, specs, barcode, allow_installments, installment_count, installment_min_down, installment_frequency, cost)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    ).run(biz.id, category_id || null, String(name).trim(), price, old_price, description || '', image || '', parseGaleria(req.body.galeria), stockNum, variantsJson, parsePromoEnd(req.body.promo_ends_at), req.body.featured ? 1 : 0, promo.promo_type, promo.promo_value, promo.promo_gift, (req.body.sku || '').toString().trim().slice(0, 60), (req.body.tags || '').toString().trim().slice(0, 300), (req.body.video || '').toString().trim().slice(0, 300), (req.body.specs || '').toString().slice(0, 2000), (req.body.barcode || '').toString().trim().slice(0, 60), inst.allow_installments, inst.installment_count, inst.installment_min_down, inst.installment_frequency, parseCost(req.body.cost));
+      `INSERT INTO products (business_id, category_id, name, price, old_price, description, image, galeria, stock, made_to_order, variants, promo_ends_at, featured, promo_type, promo_value, promo_gift, sku, tags, video, specs, barcode, allow_installments, installment_count, installment_min_down, installment_frequency, cost)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).run(biz.id, category_id || null, String(name).trim(), price, old_price, description || '', image || '', parseGaleria(req.body.galeria), stockNum, madeToOrder, variantsJson, parsePromoEnd(req.body.promo_ends_at), req.body.featured ? 1 : 0, promo.promo_type, promo.promo_value, promo.promo_gift, (req.body.sku || '').toString().trim().slice(0, 60), (req.body.tags || '').toString().trim().slice(0, 300), (req.body.video || '').toString().trim().slice(0, 300), (req.body.specs || '').toString().slice(0, 2000), (req.body.barcode || '').toString().trim().slice(0, 60), inst.allow_installments, inst.installment_count, inst.installment_min_down, inst.installment_frequency, parseCost(req.body.cost));
     const created = db.prepare('SELECT * FROM products WHERE business_id = ? ORDER BY id DESC LIMIT 1').get(biz.id);
     if (created) logPriceHistory(biz.id, created);
   } catch (err) {
@@ -3249,6 +3257,7 @@ app.post('/:slug/admin/producto/:id/mover', requireAuth, can('productos.editar')
 
 app.post('/:slug/admin/producto/:id', requireAuth, can('productos.editar'), (req, res) => {
   const { name, category_id, description, image, stock, variants } = req.body;
+  const madeToOrder = req.body.made_to_order ? 1 : 0;
   const { price: bodyPrice, old_price } = parsePrices(req.body);
   const promo = parsePromo(req.body);
   const inst = parseInstallment(req.body);
@@ -3259,8 +3268,9 @@ app.post('/:slug/admin/producto/:id', requireAuth, can('productos.editar'), (req
   // Con variantes, el precio vive por cada combinación (paso 2), no arriba —
   // el precio "general" se calcula solo (el más bajo entre variantes) para
   // que el catálogo y los filtros de precio tengan algo con qué ordenar.
-  const variantsJson = parseVariants(variants);
+  let variantsJson = parseVariants(variants);
   const variantModel = variantsJson ? JSON.parse(variantsJson) : null;
+  if (madeToOrder && variantModel) { variantModel.stock = {}; variantsJson = JSON.stringify(variantModel); }
   let price = bodyPrice;
   if (variantModel) {
     const combosPrices = Object.values(variantModel.prices || {}).map(Number).filter(n => !isNaN(n) && n >= 0);
@@ -3274,8 +3284,8 @@ app.post('/:slug/admin/producto/:id', requireAuth, can('productos.editar'), (req
     }
   }
   // Stock obligatorio en productos sin atributos (con variantes, el stock se define por cada combinación).
-  const stockNum = parseStock(stock);
-  if (!variantsJson) {
+  const stockNum = madeToOrder ? null : parseStock(stock);
+  if (!variantsJson && !madeToOrder) {
     if (stockNum === null) {
       return renderError('El stock es obligatorio: escribe cuántas piezas tienes (0 si el producto está agotado).');
     }
@@ -3285,9 +3295,9 @@ app.post('/:slug/admin/producto/:id', requireAuth, can('productos.editar'), (req
   }
   try {
     db.prepare(
-      `UPDATE products SET name = ?, price = ?, old_price = ?, category_id = ?, description = ?, image = ?, galeria = ?, stock = ?, variants = ?, promo_ends_at = ?, featured = ?, promo_type = ?, promo_value = ?, promo_gift = ?, sku = ?, tags = ?, video = ?, specs = ?, barcode = ?, allow_installments = ?, installment_count = ?, installment_min_down = ?, installment_frequency = ?, cost = ?
+      `UPDATE products SET name = ?, price = ?, old_price = ?, category_id = ?, description = ?, image = ?, galeria = ?, stock = ?, made_to_order = ?, variants = ?, promo_ends_at = ?, featured = ?, promo_type = ?, promo_value = ?, promo_gift = ?, sku = ?, tags = ?, video = ?, specs = ?, barcode = ?, allow_installments = ?, installment_count = ?, installment_min_down = ?, installment_frequency = ?, cost = ?
        WHERE id = ? AND business_id = ?`
-    ).run(name.trim(), price, old_price, category_id || null, description || '', image || '', parseGaleria(req.body.galeria), stockNum, variantsJson, parsePromoEnd(req.body.promo_ends_at), req.body.featured ? 1 : 0, promo.promo_type, promo.promo_value, promo.promo_gift, (req.body.sku || '').toString().trim().slice(0, 60), (req.body.tags || '').toString().trim().slice(0, 300), (req.body.video || '').toString().trim().slice(0, 300), (req.body.specs || '').toString().slice(0, 2000), (req.body.barcode || '').toString().trim().slice(0, 60), inst.allow_installments, inst.installment_count, inst.installment_min_down, inst.installment_frequency, parseCost(req.body.cost), req.params.id, req.biz.id);
+    ).run(name.trim(), price, old_price, category_id || null, description || '', image || '', parseGaleria(req.body.galeria), stockNum, madeToOrder, variantsJson, parsePromoEnd(req.body.promo_ends_at), req.body.featured ? 1 : 0, promo.promo_type, promo.promo_value, promo.promo_gift, (req.body.sku || '').toString().trim().slice(0, 60), (req.body.tags || '').toString().trim().slice(0, 300), (req.body.video || '').toString().trim().slice(0, 300), (req.body.specs || '').toString().slice(0, 2000), (req.body.barcode || '').toString().trim().slice(0, 60), inst.allow_installments, inst.installment_count, inst.installment_min_down, inst.installment_frequency, parseCost(req.body.cost), req.params.id, req.biz.id);
     const updated = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
     if (updated) logPriceHistory(req.biz.id, updated);
   } catch (err) {
@@ -3300,11 +3310,11 @@ app.post('/:slug/admin/producto/:id/duplicar', requireAuth, can('productos.crear
   const p = db.prepare('SELECT * FROM products WHERE id = ? AND business_id = ?').get(req.params.id, req.biz.id);
   if (p) {
     db.prepare(
-      `INSERT INTO products (business_id, category_id, name, price, old_price, description, image, galeria, stock, variants, promo_ends_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO products (business_id, category_id, name, price, old_price, description, image, galeria, stock, made_to_order, variants, promo_ends_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).run(
       p.business_id, p.category_id, (p.name || '') + ' (copia)', p.price, p.old_price,
-      p.description || '', p.image || '', p.galeria || '', p.stock, p.variants || '', p.promo_ends_at || ''
+      p.description || '', p.image || '', p.galeria || '', p.stock, p.made_to_order ? 1 : 0, p.variants || '', p.promo_ends_at || ''
     );
   }
   res.redirect('/' + req.params.slug + '/admin/productos');
@@ -3536,6 +3546,7 @@ app.get('/:slug/admin/exportar.xlsx', requireAuth, (req, res) => {
     { header: 'Precio anterior', key: 'old_price', width: 14 },
     { header: 'Categoría', key: 'cat', width: 20 },
     { header: 'Stock', key: 'stock', width: 10 },
+    { header: 'Por pedido', key: 'made_to_order', width: 13 },
     { header: 'Atributos', key: 'variants', width: 30 },
     { header: 'Descripción', key: 'desc', width: 40 },
     { header: 'SKU', key: 'sku', width: 14 },
@@ -3552,6 +3563,7 @@ app.get('/:slug/admin/exportar.xlsx', requireAuth, (req, res) => {
       old_price: p.old_price || '',
       cat: catName[p.category_id] || '',
       stock: p.stock === null || p.stock === undefined ? '' : p.stock,
+      made_to_order: p.made_to_order ? 'Sí' : 'No',
       variants: variantsText(p.variants),
       desc: p.description || '',
       sku: p.sku || '',
@@ -3646,7 +3658,7 @@ app.get('/:slug/admin/api/new-orders', requireAuth, (req, res) => {
 
 // Conteo de productos con stock bajo/agotado (para el aviso del menú)
 app.get('/:slug/admin/api/low-stock', requireAuth, (req, res) => {
-  const c = db.prepare('SELECT COUNT(*) AS c FROM products WHERE business_id = ? AND active = 1 AND (stock IS NULL OR stock <= 5)').get(req.biz.id).c;
+  const c = db.prepare('SELECT COUNT(*) AS c FROM products WHERE business_id = ? AND active = 1 AND made_to_order = 0 AND (stock IS NULL OR stock <= 5)').get(req.biz.id).c;
   res.json({ count: c });
 });
 
@@ -4540,12 +4552,12 @@ app.post('/:slug/admin/compra/:id/recibido', requireAuth, can('config'), (req, r
     items.forEach(it => {
       if (it.product_id) {
         if (it.variant) {
-          const p = db.prepare('SELECT variants FROM products WHERE id = ? AND business_id = ?').get(it.product_id, req.biz.id);
+          const p = db.prepare('SELECT variants, made_to_order FROM products WHERE id = ? AND business_id = ?').get(it.product_id, req.biz.id);
           if (p) {
             const model = parseVariantList(p.variants);
             const key = it.variant.split(' / ').join('|');
             model.stock = model.stock || {};
-            model.stock[key] = (model.stock[key] || 0) + it.qty;
+            if (!p.made_to_order) model.stock[key] = (model.stock[key] || 0) + it.qty;
             // El costo capturado al hacer el pedido queda como el costo actual
             // de esa variante — así no hay que volver a escribirlo a mano en
             // Productos cada vez que se compra.
@@ -4555,9 +4567,9 @@ app.post('/:slug/admin/compra/:id/recibido', requireAuth, can('config'), (req, r
           }
         } else {
           if (it.cost > 0) {
-            db.prepare('UPDATE products SET stock = COALESCE(stock, 0) + ?, cost = ? WHERE id = ? AND business_id = ?').run(it.qty, it.cost, it.product_id, req.biz.id);
+            db.prepare('UPDATE products SET stock = CASE WHEN made_to_order = 1 THEN NULL ELSE COALESCE(stock, 0) + ? END, cost = ? WHERE id = ? AND business_id = ?').run(it.qty, it.cost, it.product_id, req.biz.id);
           } else {
-            db.prepare('UPDATE products SET stock = COALESCE(stock, 0) + ? WHERE id = ? AND business_id = ?').run(it.qty, it.product_id, req.biz.id);
+            db.prepare('UPDATE products SET stock = CASE WHEN made_to_order = 1 THEN NULL ELSE COALESCE(stock, 0) + ? END WHERE id = ? AND business_id = ?').run(it.qty, it.product_id, req.biz.id);
           }
           actualizados++;
         }

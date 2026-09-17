@@ -1028,7 +1028,9 @@
               <% if (p.allow_installments) { var instPrice = (p.price / (p.installment_count || 6)).toFixed(2); %>
                 <span class="installment-note"><%= p.installment_count || 6 %> abonos de <%= _rawMoney(instPrice) %></span>
               <% } %>
-              <% if (p.displayStock !== null && p.displayStock !== undefined) { %>
+              <% if (p.made_to_order) { %>
+                <div class="stock-status stock-status--available">Disponible por pedido</div>
+              <% } else if (p.displayStock !== null && p.displayStock !== undefined) { %>
                 <% if (p.displayStock <= 0) { %>
                   <div class="stock-status stock-status--out">Agotado</div>
                 <% } else if (p.displayStock <= 5) { %>

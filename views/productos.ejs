@@ -127,9 +127,9 @@
           <% const visibles = allProducts.filter(p => p.active).length; %>
           <button type="button" data-f="active" aria-pressed="false" class="m-chip !h-8">Visibles <span class="m-badge m-badge-success !h-5 !text-[10px]"><%= visibles %></span></button>
           <button type="button" data-f="hidden" aria-pressed="false" class="m-chip !h-8">Ocultos <span class="m-badge m-badge-neutral !h-5 !text-[10px]"><%= allProducts.length - visibles %></span></button>
-          <% const agotados = allProducts.filter(p => p.stock !== null && p.stock <= 0).length; %>
+          <% const agotados = allProducts.filter(p => !p.made_to_order && p.displayStock !== null && p.displayStock <= 0).length; %>
           <button type="button" data-f="out" aria-pressed="false" class="m-chip !h-8">Agotados <span class="m-badge m-badge-error !h-5 !text-[10px]"><%= agotados %></span></button>
-          <% const bajos = allProducts.filter(p => p.stock !== null && p.stock > 0 && p.stock <= 5).length; %>
+          <% const bajos = allProducts.filter(p => !p.made_to_order && p.displayStock !== null && p.displayStock > 0 && p.displayStock <= 5).length; %>
           <button type="button" data-f="low" aria-pressed="false" class="m-chip !h-8">Stock bajo <span class="m-badge m-badge-warn !h-5 !text-[10px]"><%= bajos %></span></button>
           <% const enPromo = allProducts.filter(p => p.old_price).length; %>
           <button type="button" data-f="promo" aria-pressed="false" class="m-chip !h-8"><i class="bi bi-tag" aria-hidden="true"></i> En promo <span class="m-badge m-badge-error !h-5 !text-[10px]"><%= enPromo %></span></button>
@@ -150,7 +150,7 @@
                    data-search="<%= [p.name, p.tags, p.description].filter(Boolean).join(' ').toLowerCase() %>" data-state="<%= p.active ? 'active' : 'hidden' %>" data-stock="<%= p.displayStock === null ? '' : (p.displayStock > 5 ? 'ok' : (p.displayStock > 0 ? 'low' : 'out')) %>" data-promo="<%= p.old_price ? 1 : 0 %>"
                    data-edit-id="<%= p.id %>" data-edit-name="<%= (p.name || '').replace(/"/g, '&quot;') %>" data-edit-price="<%= p.price %>" data-edit-old="<%= p.old_price || '' %>" data-edit-cost="<%= p.cost || '' %>"
                    data-edit-cat="<%= p.category_id || '' %>" data-edit-desc="<%= (p.description || '').replace(/"/g, '&quot;') %>" data-edit-image="<%= (p.image || '').replace(/"/g, '&quot;') %>" data-edit-galeria="<%= (p.galeria || '').replace(/"/g, '&quot;') %>"
-                   data-edit-stock="<%= p.stock === null ? '' : p.stock %>" data-edit-variants="<%= encodeURIComponent(JSON.stringify(p.variants || [])) %>" data-edit-featured="<%= p.featured ? 1 : 0 %>" data-edit-promo="<%= p.promo_ends_at || '' %>"
+                   data-edit-stock="<%= p.stock === null ? '' : p.stock %>" data-edit-made-to-order="<%= p.made_to_order ? 1 : 0 %>" data-edit-variants="<%= encodeURIComponent(JSON.stringify(p.variants || [])) %>" data-edit-featured="<%= p.featured ? 1 : 0 %>" data-edit-promo="<%= p.promo_ends_at || '' %>"
                    data-edit-promo-type="<%= p.promo_type || '' %>" data-edit-promo-value="<%= p.promo_value || '' %>" data-edit-promo-gift="<%= (p.promo_gift || '').replace(/"/g, '&quot;') %>"
                    data-edit-sku="<%= (p.sku || '').replace(/"/g, '&quot;') %>" data-edit-tags="<%= (p.tags || '').replace(/"/g, '&quot;') %>" data-edit-video="<%= (p.video || '').replace(/"/g, '&quot;') %>" data-edit-specs="<%= (p.specs || '').replace(/"/g, '&quot;') %>" data-edit-barcode="<%= (p.barcode || '').replace(/"/g, '&quot;') %>"
                    data-edit-installments="<%= p.allow_installments ? 1 : 0 %>" data-edit-inst-count="<%= p.installment_count || 6 %>" data-edit-inst-down="<%= p.installment_min_down || 0 %>" data-edit-inst-freq="<%= p.installment_frequency || 'semanal' %>">
@@ -173,7 +173,7 @@
                     <% } %>
                     <span class="w-0.5 h-0.5 rounded-full bg-slate-300"></span>
                     <span class="m-badge !h-5 !text-[10px] <%= p.active ? 'm-badge-success' : 'm-badge-neutral' %>"><%= p.active ? 'Visible' : 'Oculto' %></span>
-                    <span class="m-badge !h-5 !text-[10px] <%= (p.displayStock === null || p.displayStock <= 0) ? 'm-badge-error' : 'm-badge-primary' %>"><%= (p.displayStock === null || p.displayStock <= 0) ? 'Agotado' : p.displayStock + ' en stock' %></span>
+                    <% if (p.made_to_order) { %><span class="m-badge m-badge-primary !h-5 !text-[10px]">Por pedido</span><% } else { %><span class="m-badge !h-5 !text-[10px] <%= (p.displayStock === null || p.displayStock <= 0) ? 'm-badge-error' : 'm-badge-primary' %>"><%= (p.displayStock === null || p.displayStock <= 0) ? 'Agotado' : p.displayStock + ' en stock' %></span><% } %>
                     <% if (p.variantCount > 0) { %>
                       <span class="m-badge !h-5 !text-[10px] m-badge-warn"><%= p.variantCount %> <%= p.variantCount === 1 ? 'var.' : 'var.' %></span>
                     <% } %>
@@ -260,11 +260,11 @@
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2" id="f-tipo-cards">
                 <button type="button" data-tipo="unico" class="pf-tipo-card active" onclick="setTipo('unico')">
                   <span class="pf-tipo-ico"><i class="bi bi-box-seam" aria-hidden="true"></i></span>
-                  <span><span class="pf-tipo-tit">Producto único</span><span class="pf-tipo-sub">Se vende tal cual: 1 precio, 1 stock</span></span>
+                  <span><span class="pf-tipo-tit">Producto único</span><span class="pf-tipo-sub">Un precio; stock opcional si vendes por pedido</span></span>
                 </button>
                 <button type="button" data-tipo="variantes" class="pf-tipo-card" onclick="setTipo('variantes')">
                   <span class="pf-tipo-ico"><i class="bi bi-diagram-3" aria-hidden="true"></i></span>
-                  <span><span class="pf-tipo-tit">Con variantes</span><span class="pf-tipo-sub">1 producto con tallas/colores…: cada variante con su propio precio y stock</span></span>
+                  <span><span class="pf-tipo-tit">Con variantes</span><span class="pf-tipo-sub">Tallas o colores con precio propio; stock opcional por pedido</span></span>
                 </button>
               </div>
               <input type="hidden" name="tipo" id="f-tipo" value="unico">
@@ -293,6 +293,10 @@
               <input name="stock" id="f-stock" type="number" min="0" placeholder="Piezas disponibles">
               <p id="f-stock-note" class="hidden text-[11px] font-bold text-amber-600 mt-1">Con variantes, el stock se llena por cada variante en el paso 2 (Variantes) — 0 significa agotada.</p>
             </div>
+            <label class="md:col-span-2 flex items-start gap-2.5 rounded-xl border px-4 py-3 cursor-pointer" style="border-color:var(--ap-border);background:var(--ap-card)">
+              <input type="checkbox" name="made_to_order" id="f-made-to-order" value="1" class="mt-0.5 accent-neutral-800" onchange="syncStockField(); var ed=window.VAR_EDITORS && window.VAR_EDITORS.f; if(ed) ed.renderCombos(); if(pfStep===4) renderResumen()">
+              <span><strong class="block text-xs" style="color:var(--ap-text)">Sin stock · por pedido</strong><span class="block text-[11px] mt-0.5" style="color:var(--ap-text-sec)">Siempre visible y disponible para pedir. No se pide cantidad ni se limita la compra por existencias.</span></span>
+            </label>
             <div class="m-field md:col-span-2">
               <label for="f-cost">Costo del proveedor <span class="font-normal text-slate-400">(opcional — para tus reportes de ganancia)</span></label>
               <input name="cost" id="f-cost" type="text" inputmode="decimal" data-mask="money" placeholder="0.00">
@@ -417,7 +421,7 @@
             </div>
 
             <div>
-              <p class="font-bold text-xs text-slate-700 mb-2">3 · Variantes generadas <span class="font-normal text-slate-400">(precio y stock obligatorios en cada una; toca la foto para cambiarla si quieres)</span></p>
+              <p class="font-bold text-xs text-slate-700 mb-2">3 · Variantes generadas <span class="font-normal text-slate-400">(precio obligatorio; stock solo si administras existencias; toca la foto para cambiarla)</span></p>
               <div id="f-combo-box"></div>
             </div>
             <input type="hidden" name="variants" id="f-var-hidden">
@@ -425,6 +429,11 @@
 
           <div data-step-pane="4" class="md:col-span-2 hidden">
             <div id="pf-resumen" class="rounded-2xl bg-slate-50 border border-slate-100 p-4 text-sm"></div>
+          </div>
+
+          <div id="pf-upload-error" role="alert" class="md:col-span-2 hidden mt-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-900">
+            <p>Una foto no se pudo subir. Tus datos siguen aquí. Vuelve a seleccionar la foto o continúa sin las fotos fallidas.</p>
+            <button type="button" onclick="ignorarFotosFallidas()" class="mt-2 underline underline-offset-2 font-bold">Continuar sin esas fotos</button>
           </div>
 
           <div class="md:col-span-2 mt-4 flex items-center gap-2">
@@ -1016,6 +1025,7 @@
         inp.type = 'file'; inp.accept = 'image/*';
         inp.onchange = function () {
           var f = inp.files && inp.files[0]; if (!f) return;
+          var uploadKey = 'combo:' + key;
           pfUploadStart();
           comprimirImagen(f).then(function (finalFile) {
             var fd = new FormData(); fd.append('foto', finalFile, nombreFotoSubida(finalFile, f));
@@ -1025,10 +1035,10 @@
           })
             .then(leerRespuestaFoto)
             .then(function (d) {
-              if (d.url) { model.images[key] = d.url; save(); renderCombos(); }
-              else if (window.mostrarToast) mostrarToast('No se pudo subir la foto', 'error');
+              if (d.url) { setPhotoUploadFailed(uploadKey, false); model.images[key] = d.url; save(); renderCombos(); }
+              else { setPhotoUploadFailed(uploadKey, true); if (window.mostrarToast) mostrarToast('No se pudo subir la foto', 'error'); }
             })
-            .catch(function (e) { if (window.mostrarToast) mostrarToast(e.message || 'Error al subir la foto', 'error'); })
+            .catch(function (e) { setPhotoUploadFailed(uploadKey, true); if (window.mostrarToast) mostrarToast(e.message || 'Error al subir la foto', 'error'); })
             .finally(pfUploadEnd);
         };
         inp.click();
@@ -1095,7 +1105,8 @@
         if (!cs.length) return;
         var m = document.createElement('p');
         m.className = 'text-[11px] font-bold text-neutral-800 bg-neutral-100 border border-neutral-100 rounded-lg px-2.5 py-1.5 mb-3';
-        m.textContent = 'Sigue siendo 1 producto: una descripción para todos, y cada variante con su propia foto, precio y stock. Los atributos crean ' + cs.length + ' variante' + (cs.length === 1 ? '' : 's') + '.';
+        var madeToOrder = !!(document.getElementById('f-made-to-order') && document.getElementById('f-made-to-order').checked);
+        m.textContent = 'Sigue siendo 1 producto: una descripción para todos, y cada variante con su propia foto y precio' + (madeToOrder ? ', disponible por pedido' : ' y stock') + '. Los atributos crean ' + cs.length + ' variante' + (cs.length === 1 ? '' : 's') + '.';
         cbox.appendChild(m);
 
         // Precio general opcional: rellena todas las variantes de un jalón,
@@ -1122,7 +1133,7 @@
 
         var t = document.createElement('p');
         t.className = 'text-xs font-bold text-slate-600 mb-2';
-        t.textContent = 'Cada variante — precio y stock son suyos, no del producto (toca la foto para cambiarla)';
+        t.textContent = 'Cada variante — ' + (madeToOrder ? 'precio propio, sin control de stock' : 'precio y stock propios') + ' (toca la foto para cambiarla)';
         cbox.appendChild(t);
 
         var list = document.createElement('div');
@@ -1159,10 +1170,10 @@
                     '<label class="block text-[10px] font-bold text-slate-500 mb-0.5">Precio* de esta variante</label>' +
                     '<input type="number" min="0" step="0.01" placeholder="0.00" value="' + esc(pr) + '" class="combo-price ' + inputCls + '" style="color-scheme:light" title="Precio obligatorio de esta variante">' +
                   '</div>' +
-                  '<div>' +
+                  (madeToOrder ? '' : '<div>' +
                     '<label class="block text-[10px] font-bold text-slate-500 mb-0.5">Stock*</label>' +
                     '<input type="number" min="0" placeholder="0" value="' + esc(st) + '" class="combo-stock ' + inputCls + '" style="color-scheme:light" title="Stock obligatorio de esta variante (0 = agotada)">' +
-                  '</div>' +
+                  '</div>') +
                   '<div>' +
                     '<label class="block text-[10px] font-bold text-slate-500 mb-0.5">SKU <span class="font-normal text-slate-400">(opc.)</span></label>' +
                     '<input type="text" placeholder="—" value="' + esc(sk) + '" class="combo-sku ' + inputCls + '" style="color-scheme:light">' +
@@ -1176,7 +1187,7 @@
                     '<input type="number" min="0" step="0.01" placeholder="0.00" value="' + esc(co) + '" class="combo-cost ' + inputCls + '" style="color-scheme:light">' +
                   '</div>' +
                 '</div>' +
-                '<p class="combo-stock-warn hidden text-[10px] font-black text-red-500 mt-1">¡Falta stock!</p>' +
+                (madeToOrder ? '' : '<p class="combo-stock-warn hidden text-[10px] font-black text-red-500 mt-1">¡Falta stock!</p>') +
               '</div>' +
             '</div>';
           cell.querySelector('.combo-photo').onclick = function () { subirCombo(key); };
@@ -1194,7 +1205,7 @@
             delete model.images[key]; save(); renderCombos();
           };
           var stInp = cell.querySelector('.combo-stock');
-          (function (inp) {
+          if (stInp) (function (inp) {
             function syncSt() {
               var missing = inp.value.trim() === '';
               inp.style.borderColor = missing ? '#f87171' : '';
@@ -1335,6 +1346,7 @@
       var pending = files.length, done = 0;
       if (window.mostrarToast) mostrarToast('Subiendo ' + files.length + ' foto(s)…', 'info');
       files.forEach(function (file) {
+        var uploadKey = photoUploadKey(file);
         pfUploadStart();
         comprimirImagen(file).then(function (finalFile) {
           var fd = new FormData();
@@ -1345,6 +1357,7 @@
           .then(leerRespuestaFoto)
           .then(function (d) {
             if (d.url) {
+              setPhotoUploadFailed(uploadKey, false);
               var box = document.getElementById(pref + '-fotos');
               if (box) {
                 var w = document.createElement('div');
@@ -1357,10 +1370,11 @@
               }
               done++;
             } else {
+              setPhotoUploadFailed(uploadKey, true);
               if (window.mostrarToast) mostrarToast('No se pudo subir una foto.', 'error');
             }
           })
-          .catch(function (e) { if (window.mostrarToast) mostrarToast(e.message || 'Error al subir una foto.', 'error'); })
+          .catch(function (e) { setPhotoUploadFailed(uploadKey, true); if (window.mostrarToast) mostrarToast(e.message || 'Error al subir una foto.', 'error'); })
           .finally(function () {
             pending--;
             pfUploadEnd();
@@ -1484,6 +1498,19 @@
     // dejar avanzar/guardar a medias — si no, el resumen podía mostrarse sin
     // la foto porque la subida (fetch async) aún no había terminado.
     var pfUploadsPending = 0;
+    var pfFailedPhotoUploads = {};
+    function photoUploadKey(file) { return 'foto:' + file.name + ':' + file.size + ':' + file.lastModified; }
+    function setPhotoUploadFailed(key, failed) {
+      if (failed) pfFailedPhotoUploads[key] = true;
+      else delete pfFailedPhotoUploads[key];
+      var notice = document.getElementById('pf-upload-error');
+      if (notice) notice.classList.toggle('hidden', !Object.keys(pfFailedPhotoUploads).length);
+    }
+    function ignorarFotosFallidas() {
+      pfFailedPhotoUploads = {};
+      var notice = document.getElementById('pf-upload-error');
+      if (notice) notice.classList.add('hidden');
+    }
     function pfUploadStart() { pfUploadsPending++; }
     function pfUploadEnd() {
       pfUploadsPending = Math.max(0, pfUploadsPending - 1);
@@ -1661,7 +1688,8 @@
 
       var stockWrap = document.getElementById('f-stock-wrap');
       var hasVars = stockWrap && stockWrap.classList.contains('stock-hidden');
-      if (!hasVars) {
+      var madeToOrder = document.getElementById('f-made-to-order').checked;
+      if (!hasVars && !madeToOrder) {
         var sv = document.getElementById('f-stock').value;
         if (sv === '') { setError('f-stock', 'El stock es obligatorio: escribe cuántas piezas tienes (0 si está agotado)'); ok = false; }
         else if (isNaN(parseInt(sv)) || parseInt(sv) < 0) { setError('f-stock', 'Stock inválido (número entero ≥ 0)'); ok = false; }
@@ -1681,11 +1709,13 @@
       var input = document.getElementById('f-stock');
       var label = document.getElementById('f-stock-label');
       if (!wrap) return;
-      if (pfTipo === 'variantes') {
-        input.value = '';
+      var madeToOrder = document.getElementById('f-made-to-order').checked;
+      wrap.classList.toggle('hidden', madeToOrder);
+      if (pfTipo === 'variantes' || madeToOrder) {
+        if (pfTipo === 'variantes') input.value = '';
         input.classList.add('hidden');
         if (label) label.classList.add('hidden');
-        if (note) note.classList.remove('hidden');
+        if (note) note.classList.toggle('hidden', madeToOrder);
         wrap.classList.add('stock-hidden');
       } else {
         input.classList.remove('hidden');
@@ -1728,6 +1758,7 @@
       var catName = (catSel && catSel.options[catSel.selectedIndex]) ? catSel.options[catSel.selectedIndex].text : 'Sin categoría';
       var desc = document.getElementById('f-desc').value || '';
       var stock = document.getElementById('f-stock').value;
+      var madeToOrder = document.getElementById('f-made-to-order').checked;
       var promoEnds = document.getElementById('f-promo').value;
       var promoType = document.getElementById('f-promo-type').value;
       var featured = document.getElementById('f-featured').checked;
@@ -1772,7 +1803,7 @@
         if (old > price) h += '<span class="text-xs text-slate-400 line-through">' + money(old) + '</span>';
       }
       h += '</div>';
-      h += '<div class="text-xs text-slate-500 mt-0.5">' + escHTML(catName) + (!hasVariantes && stock !== '' ? ' · Stock: ' + stock : '') + (promoEnds ? ' · Promo vence ' + promoEnds : '') + '</div>';
+      h += '<div class="text-xs text-slate-500 mt-0.5">' + escHTML(catName) + (madeToOrder ? ' · Por pedido, sin límite de stock' : (!hasVariantes && stock !== '' ? ' · Stock: ' + stock : '')) + (promoEnds ? ' · Promo vence ' + promoEnds : '') + '</div>';
       if (featured) h += '<span class="inline-block mt-1 text-[11px] font-bold bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">⭐ Destacado</span>';
       h += '</div></div>';
 
@@ -1798,7 +1829,7 @@
         });
         var nCombos = 1;
         attrs.forEach(function (a) { nCombos *= (a.values && a.values.length) || 1; });
-        h += '<div class="mt-2 text-xs text-slate-500 font-bold">1 producto · ' + nCombos + ' variante' + (nCombos === 1 ? '' : 's') + ' (misma descripción; cada variante con su propia foto, precio y stock)</div>';
+        h += '<div class="mt-2 text-xs text-slate-500 font-bold">1 producto · ' + nCombos + ' variante' + (nCombos === 1 ? '' : 's') + ' (misma descripción; cada variante con su propia foto y precio' + (madeToOrder ? ', por pedido' : ' y stock') + ')</div>';
         var stok = (ed && ed.model && ed.model.stock) || {};
         var prcs = (ed && ed.model && ed.model.prices) || {};
         var stockVals = [];
@@ -1816,8 +1847,8 @@
           var vals = (attrs[i].values && attrs[i].values.length) ? attrs[i].values : [''];
           vals.forEach(function (v) { walk(i + 1, prefix.concat([v])); });
         })(0, []);
-        if (stockVals.length) h += '<div class="text-xs text-slate-500 mt-0.5">Stock por variante: <b class="text-slate-700">' + stockVals.join(', ') + '</b> · Total <b class="text-slate-700">' + totalStock + '</b></div>';
-        if (sinStock) h += '<div class="text-xs font-bold text-amber-600 mt-1">⚠ ' + sinStock + ' variante' + (sinStock === 1 ? '' : 's') + ' sin stock definido — revísalo en el paso 2 (Variantes)</div>';
+        if (!madeToOrder && stockVals.length) h += '<div class="text-xs text-slate-500 mt-0.5">Stock por variante: <b class="text-slate-700">' + stockVals.join(', ') + '</b> · Total <b class="text-slate-700">' + totalStock + '</b></div>';
+        if (!madeToOrder && sinStock) h += '<div class="text-xs font-bold text-amber-600 mt-1">⚠ ' + sinStock + ' variante' + (sinStock === 1 ? '' : 's') + ' sin stock definido — revísalo en el paso 2 (Variantes)</div>';
         if (sinPrecio) h += '<div class="text-xs font-bold text-amber-600 mt-1">⚠ ' + sinPrecio + ' variante' + (sinPrecio === 1 ? '' : 's') + ' sin precio definido — revísalo en el paso 2 (Variantes)</div>';
         var thumbs = [];
         Object.keys(ed.model.images || {}).forEach(function (k) { if (ed.model.images[k]) thumbs.push(ed.model.images[k]); });
@@ -1853,6 +1884,7 @@
       setVal('f-old', card.getAttribute('data-edit-old'));
       setVal('f-promo', card.getAttribute('data-edit-promo'));
       setVal('f-stock', card.getAttribute('data-edit-stock'));
+      document.getElementById('f-made-to-order').checked = card.getAttribute('data-edit-made-to-order') === '1';
       setVal('f-desc', card.getAttribute('data-edit-desc'));
       setVal('f-promo-type', card.getAttribute('data-edit-promo-type') || '');
       setVal('f-promo-value', card.getAttribute('data-edit-promo-value') || '');
@@ -1918,9 +1950,11 @@
     }
 
     function cancelarEdicion() {
+      ignorarFotosFallidas();
       pfMode = 'crear';
       var form = document.getElementById('pf-form');
       form.reset();
+      document.getElementById('f-made-to-order').checked = false;
       setVal('f-cat', '');
       form.action = '/<%= biz.slug %>/admin/producto';
       document.getElementById('pf-title').textContent = 'Agregar producto';
@@ -1997,6 +2031,14 @@
           if (window.mostrarToast) window.mostrarToast('⏳ Espera a que terminen de subirse las fotos', 'error');
           return;
         }
+        if (Object.keys(pfFailedPhotoUploads).length) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (window.mostrarToast) window.mostrarToast('Una foto no se subió. Reinténtala o continúa sin ella; tus datos siguen aquí.', 'error');
+          var notice = document.getElementById('pf-upload-error');
+          if (notice) notice.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          return;
+        }
         if (pfTipo !== 'variantes') return;
         var ed = window.VAR_EDITORS && window.VAR_EDITORS.f;
         // Sin al menos un atributo con valores, "Con variantes" no genera
@@ -2014,7 +2056,7 @@
             var k = prefix.join('|');
             var s = ed.model.stock && ed.model.stock[k];
             var pr = ed.model.prices && ed.model.prices[k];
-            if (s === undefined || s === '') faltanStock.push(prefix.join(' / ') || '(variante)');
+            if (!document.getElementById('f-made-to-order').checked && (s === undefined || s === '')) faltanStock.push(prefix.join(' / ') || '(variante)');
             if (pr === undefined || pr === '') faltanPrecio.push(prefix.join(' / ') || '(variante)');
             return;
           }
@@ -2062,6 +2104,7 @@
       pfStep = 1;
       pfMode = 'crear';
       pfTipo = 'unico';
+      ignorarFotosFallidas();
       initVariantes('f', '');
       initStepper();
       onPromoTypeChange();
@@ -2082,6 +2125,7 @@
         setVal('f-old', fd.old_price || '');
         setVal('f-desc', fd.description || '');
         setVal('f-stock', fd.stock || '');
+        document.getElementById('f-made-to-order').checked = fd.made_to_order === '1' || fd.made_to_order === 1;
         setVal('f-cost', fd.cost || '');
         setVal('f-sku', fd.sku || '');
         setVal('f-tags', fd.tags || '');

@@ -320,6 +320,7 @@
     (function () {
       var PROD_ID = <%- product.id %>;
       var PROD_STOCK = <%- (product.displayStock === null || product.displayStock === undefined) ? 'null' : product.displayStock %>;
+      var PROD_MADE_TO_ORDER = <%= product.made_to_order ? 'true' : 'false' %>;
       var vm = { attrs: [], images: {} };
       try { var d = JSON.parse(<%- JSON.stringify(product.variants || '') %>); if (d && d.attrs) vm = d; } catch (e) {}
       var sel = {};
@@ -368,6 +369,7 @@
       function updateStockNote() {
         var el = document.getElementById('prod-stock-note');
         if (!el) return;
+        if (PROD_MADE_TO_ORDER) { el.textContent = 'Disponible por pedido'; el.style.color = 'var(--text-sec)'; return; }
         var stock;
         if (vm.attrs.length) {
           var key = comboKey();
