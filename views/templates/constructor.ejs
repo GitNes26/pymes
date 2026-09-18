@@ -60,6 +60,7 @@
   var _tk = (typeof catDesignTokens !== 'undefined' && catDesignTokens) ? catDesignTokens : { accent: '#1a3c5e', accentGlow: '#c9a86c' };
   var _onAccent = _contrast(_tk.accent, '#ffffff') >= _contrast(_tk.accent, '#111111') ? '#ffffff' : '#111111';
   var _ftrOnDark = _onAccent === '#ffffff';
+  var _bgDark = _lum(_tk.bg || '#ffffff') < 0.35;
   var _ftrHead = _contrast(_tk.accent, _tk.accentGlow) >= 3 ? _tk.accentGlow : _onAccent;
   // Secciones extra que el dueño llena/enciende en Configuración (businesses.extras).
   // Las de texto salen solas cuando tienen contenido; las automáticas
@@ -856,6 +857,16 @@
     .contact-form .cf-input { margin:0 !important; width:100%; box-sizing:border-box; }
     .contact-form .cf-textarea, .contact-form .cf-submit { grid-column:1 / -1; }
     .contact-form .cf-textarea { min-height:96px; resize:vertical; }
+    /* Select nativo con el diseño de la apariencia: mismo fondo, borde, radio y fuente
+       que los demás campos, flecha del color del texto y lista con los colores del tema. */
+    .contact-form select.cf-input {
+      appearance:none; -webkit-appearance:none; cursor:pointer; padding-right:40px;
+      background-color:var(--bg);
+      background-image:linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+      background-position:calc(100% - 21px) 50%, calc(100% - 15px) 50%;
+      background-size:6px 6px, 6px 6px; background-repeat:no-repeat;
+    }
+    .contact-form select.cf-input option { background:var(--bg-card); color:var(--text); }
 
     /* Footer: iconos en columna fija para que el texto alinee, aunque salte de línea. */
     .ftr li { display:flex; gap:10px; align-items:flex-start; }
@@ -991,6 +1002,7 @@
     }
     <% } %>
     :root {
+      color-scheme: <%- _bgDark ? 'dark' : 'light' %>;
       --soc-on-accent: <%- _onAccent %>;
       --ftr-fg: <%- _onAccent %>;
       --ftr-head: <%- _ftrHead %>;
