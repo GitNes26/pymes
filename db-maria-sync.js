@@ -104,8 +104,10 @@ function ensureWorker() {
     transferList: [channel.port2],
   });
   worker.unref();
-  worker.on('error', (e) => { dead = true; lastError = (e && e.message) || 'worker error'; });
-  worker.on('exit', () => { dead = true; });
+  // Se deja rastro en los logs: antes un worker caído solo se veía como un 500
+  // genérico en todas las páginas sin decir por qué.
+  worker.on('error', (e) => { dead = true; lastError = (e && e.message) || 'worker error'; console.error('[db] error del worker de MySQL:', (e && e.stack) || e); });
+  worker.on('exit', (code) => { dead = true; console.error('[db] el worker de MySQL terminó (código ' + code + ')'); });
 
   // Espera el mensaje 'ready' del worker (conexión probada).
   const deadline = Date.now() + 15000;
@@ -121,7 +123,22 @@ function ensureWorker() {
   }
 }
 
+// Si el worker murió (conexión perdida, reinicio de MySQL, error no capturado…)
+// antes se quedaba muerto hasta reiniciar el contenedor y TODAS las páginas
+// daban 500. Ahora se vuelve a levantar, pero como reconectar bloquea el hilo
+// principal (Atomics.wait), se limita a un intento cada 20 s: con MySQL caído
+// el servidor sigue respondiendo rápido con error en vez de congelarse.
+let lastRespawn = 0;
+function respawnIfDead() {
+  if (!dead || Date.now() - lastRespawn < 20000) return;
+  lastRespawn = Date.now();
+  console.error('[db] reintentando conexión con MySQL…');
+  try { if (worker) worker.terminate(); } catch (e) {}
+  worker = null; port = null; ready = false; dead = false; lastError = '';
+}
+
 function call(op, payload) {
+  respawnIfDead();
   ensureWorker();
   const id = ++seq;
   const deadline = Date.now() + 30000;

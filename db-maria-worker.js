@@ -17,6 +17,11 @@ function reply(msg) {
   }
 }
 
+// Un error suelto (p. ej. una conexión inactiva que MySQL cerró) no debe matar
+// el hilo: si muere, el hilo principal se queda sin base de datos.
+process.on('uncaughtException', (e) => { console.error('[db-worker] uncaughtException:', (e && e.stack) || e); });
+process.on('unhandledRejection', (e) => { console.error('[db-worker] unhandledRejection:', (e && e.stack) || e); });
+
 const pool = mysql.createPool({
   host: workerData.cfg.host,
   port: workerData.cfg.port,
