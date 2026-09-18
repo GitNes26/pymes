@@ -222,7 +222,7 @@ Hooks opcionales de la página (definir antes de abrir):
     document.body.style.overflow = '';
     if (cancel) try { cancel(); } catch (e) {}
   }
-  function imgeOpen(src, onDone, onCancel, container) {
+  function imgeOpen(src, onDone, onCancel, container, aspect) {
     if (!src) return;
     S.cbDone = onDone || null;
     S.cbCancel = onCancel || null;
@@ -230,7 +230,7 @@ Hooks opcionales de la página (definir antes de abrir):
     var img = new Image();
     img.onload = function () {
       S.img = img;
-      S.aspect = '1:1'; S.rotQ = 0;
+      S.aspect = aspect || '1:1'; S.rotQ = 0;
       buildAspects();
       $('imge-ov').classList.add('open');
       document.body.style.overflow = 'hidden';
@@ -326,12 +326,12 @@ Hooks opcionales de la página (definir antes de abrir):
   }
 
   // API pública (compat con las páginas que ya llaman abrirEditorImagen)
-  window.abrirEditorImagen = function (a, b, c) {
+  window.abrirEditorImagen = function (a, b, c, d) {
     if (a && a.nodeType === 1) {
       var url = a.getAttribute('data-url');
       imgeOpen(url, null, null, a);
     } else {
-      imgeOpen(a, (typeof b === 'function') ? b : null, (typeof c === 'function') ? c : null);
+      imgeOpen(a, (typeof b === 'function') ? b : null, (typeof c === 'function') ? c : null, null, (typeof d === 'string') ? d : null);
     }
   };
   window.cerrarEditorImagen = imgeClose;

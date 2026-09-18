@@ -71,6 +71,14 @@
   var _PAGO_LBL = { efectivo:['bi-cash-coin','Efectivo'], transferencia:['bi-bank','Transferencia'], tarjeta:['bi-credit-card','Tarjeta'], contra_entrega:['bi-box-seam','Contra entrega'], abonos:['bi-calendar2-check','Pagos en abonos'], mercado_pago:['bi-shield-check','Mercado Pago'] };
   var _exPagos = (Array.isArray(_ex.pagos) ? _ex.pagos : []).filter(function(k){ return _PAGO_LBL[k]; });
   var _exShip = !!(_ex.envios || _exPagos.length || _ex.pagos_nota);
+  function _xe(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function _xsHead(eyebrow, title, sub, id) {
+    return '<div class="xs-head"><span class="xs-eyebrow">' + _xe(eyebrow) + '</span><h2 class="xs-title"' + (id ? ' id="' + id + '"' : '') + '>' + _xe(title) + '</h2>' + (sub ? '<p class="xs-sub">' + _xe(sub) + '</p>' : '') + '</div>';
+  }
+  // Alterna una banda tenue entre las secciones que SÍ se muestran (son opcionales,
+  // así que no se puede fijar por posición).
+  var _xsI = 0;
+  function _xsBand() { return (_xsI++ % 2) ? ' xs-band' : ''; }
   var _faq = [];
   try { var _fq = JSON.parse(biz.faq || '[]'); if (Array.isArray(_fq)) _faq = _fq.filter(function(x){ return x && (x.q || '').toString().trim() && (x.a || '').toString().trim(); }); } catch(e) {}
   var _address = biz.address || '';
@@ -633,49 +641,93 @@
     .ftr-redes a:focus-visible { outline:2px solid var(--ftr-fg, #fff); outline-offset:3px; }
     .ftr-redes a:active { transform:scale(0.95); }
 
-    /* ===== FRANJA "SÍGUENOS": visible en TODAS las apariencias =====
-       Todo sale de los tokens del diseño elegido (tarjeta, borde, sombra, radio,
-       texto, acento), así cada uno de los 26 estilos la ve a su manera. */
-    .socials-bar { display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap; padding:18px 24px 6px; }
-    .socials-bar-label { font-family:var(--font-heading); font-size:.85rem; font-weight:700; letter-spacing:.04em; color:var(--text-secondary); text-transform:uppercase; }
-    .socials-bar ul { display:flex; gap:10px; list-style:none; margin:0; padding:0; }
-    .socials-bar a {
-      display:flex; align-items:center; justify-content:center;
-      width:44px; height:44px;
-      border-radius:min(var(--radius), 16px);
-      background:var(--bg-card);
-      border:1px solid var(--border);
-      box-shadow:var(--shadow);
-      color:var(--text);
-      font-size:19px;
-      text-decoration:none;
-      transition:transform .2s cubic-bezier(.22,1,.36,1), background-color .2s cubic-bezier(.22,1,.36,1), color .2s cubic-bezier(.22,1,.36,1);
-    }
-    .socials-bar a:hover { background:var(--accent); color:var(--soc-on-accent, #fff); transform:translateY(-2px); }
-    .socials-bar a:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
-    .socials-bar a:active { transform:scale(.95); }
+    /* ===== SECCIONES DE CONTENIDO (Conócenos, Opiniones, Cómo pedir, Envíos y pago) =====
+       Ritmo: cada sección respira (padding fluido), se alterna una banda tenue
+       para separarlas sin cajas pesadas, y un mismo encabezado editorial las une.
+       Todo sale de los tokens de la apariencia elegida. */
+    .xs-sec { padding:clamp(44px,7vw,84px) 0; }
+    .xs-band { background:color-mix(in srgb, var(--accent) 6%, var(--bg)); border-block:1px solid var(--border); }
+    .xs-in { max-width:1080px; margin:0 auto; padding:0 24px; }
+    .xs-head { text-align:center; max-width:640px; margin:0 auto clamp(28px,4vw,44px); }
+    .xs-eyebrow { display:inline-flex; align-items:center; gap:12px; font-size:.72rem; font-weight:700; letter-spacing:.24em; text-transform:uppercase; color:var(--accent); }
+    .xs-eyebrow::before, .xs-eyebrow::after { content:""; width:28px; height:1px; background:currentColor; opacity:.55; }
+    .xs-title { margin:10px 0 0; font-family:var(--font-heading); font-size:clamp(1.65rem,3.2vw,2.35rem); font-weight:600; line-height:1.18; color:var(--text); }
+    .xs-sub { margin:12px auto 0; color:var(--text-secondary); font-size:.98rem; line-height:1.65; }
+    .xs-orn { display:flex; align-items:center; justify-content:center; gap:10px; margin:26px 0 0; color:var(--accent); opacity:.7; }
+    .xs-orn::before, .xs-orn::after { content:""; width:44px; height:1px; background:currentColor; opacity:.6; }
+    .xs-orn i { font-size:.6rem; }
 
-    /* ===== SECCIONES EXTRA (Conócenos, Envíos y pago, Testimonios, Cómo pedir) =====
-       Solo tokens del diseño elegido: se ven "de la casa" en cada apariencia. */
-    .xs-sec { padding:18px 0 8px; }
-    .xs-sec .sec-title { font-size:19px; }
-    .xs-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px; padding-bottom:10px; }
-    .xs-card { background:var(--bg-card); border:1px solid var(--border); border-radius:min(var(--radius),18px); box-shadow:var(--shadow); padding:20px 22px; color:var(--text); }
-    .xs-card h3 { font-family:var(--font-heading); font-size:1.05rem; margin:0 0 8px; display:flex; align-items:center; gap:8px; }
-    .xs-card h3 i { color:var(--accent); }
-    .xs-card p { margin:0; color:var(--text-secondary); font-size:.92rem; line-height:1.7; white-space:pre-line; }
-    .xs-about { max-width:820px; }
-    .xs-chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:2px; }
-    .xs-chip { display:inline-flex; align-items:center; gap:7px; padding:7px 13px; border-radius:999px; background:var(--bg); border:1px solid var(--border); color:var(--text); font-size:.85rem; font-weight:600; }
-    .xs-chip i { color:var(--accent); }
-    .xs-note { margin-top:10px !important; font-size:.82rem !important; }
-    .xs-stars { color:var(--accent-glow); font-size:.95rem; letter-spacing:2px; margin-bottom:8px; }
-    .xs-quote { font-style:italic; }
-    .xs-who { margin-top:12px; font-weight:700; font-size:.88rem; color:var(--text); }
-    .xs-step { display:flex; gap:14px; align-items:flex-start; }
-    .xs-step-n { flex:none; width:40px; height:40px; border-radius:min(var(--radius),14px); background:var(--accent); color:var(--soc-on-accent,#fff); display:flex; align-items:center; justify-content:center; font-size:19px; }
-    .xs-step h3 { margin-bottom:4px; }
-    .xs-step p { white-space:normal; }
+    /* Conócenos: foto + texto (sin foto, columna centrada) */
+    .xs-about { display:grid; grid-template-columns:5fr 6fr; gap:clamp(32px,6vw,72px); align-items:center; }
+    .xs-about.no-photo { grid-template-columns:1fr; max-width:720px; margin:0 auto; text-align:center; }
+    .xs-photo { position:relative; margin:0 14px 14px 0; }
+    .xs-photo::before { content:""; position:absolute; inset:14px -14px -14px 14px; border:1px solid var(--accent); border-radius:min(var(--radius),26px); opacity:.55; }
+    .xs-photo img { position:relative; display:block; width:100%; aspect-ratio:4/5; object-fit:cover; border-radius:min(var(--radius),26px); box-shadow:var(--shadow); background:var(--bg-card); }
+    .xs-about-text .xs-head { text-align:left; margin:0 0 22px; }
+    .xs-about-text .xs-eyebrow::before { display:none; }
+    .xs-about.no-photo .xs-about-text .xs-head { text-align:center; margin:0 auto 22px; }
+    .xs-about.no-photo .xs-about-text .xs-eyebrow::before { display:block; }
+    .xs-prose { margin:0; font-size:1.06rem; line-height:1.9; color:var(--text); opacity:.88; white-space:pre-line; }
+    .xs-about-text .xs-orn { justify-content:flex-start; }
+    .xs-about-text .xs-orn::before { display:none; }
+    .xs-about.no-photo .xs-orn { justify-content:center; }
+    .xs-about.no-photo .xs-orn::before { display:block; }
+
+    /* Opiniones */
+    .xs-quotes { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr)); gap:20px; }
+    .xs-quotes.n1 { grid-template-columns:minmax(0,640px); justify-content:center; }
+    .xs-quotes.n2 { grid-template-columns:repeat(2,minmax(0,1fr)); max-width:820px; margin:0 auto; }
+    .xs-quote { position:relative; display:flex; flex-direction:column; margin:0; padding:34px 28px 26px; background:var(--bg-card); border:1px solid var(--border); border-radius:min(var(--radius),20px); box-shadow:var(--shadow); }
+    .xs-quote::before { content:"\201C"; position:absolute; top:8px; left:22px; font-family:Georgia,"Times New Roman",serif; font-size:4.6rem; line-height:1; color:var(--accent); opacity:.4; }
+    .xs-stars { color:var(--accent); font-size:.9rem; letter-spacing:3px; margin:6px 0 14px; }
+    .xs-quote blockquote { margin:0 0 22px; flex:1; font-size:1rem; line-height:1.75; color:var(--text); opacity:.9; }
+    .xs-who { display:flex; align-items:center; gap:12px; padding-top:18px; border-top:1px solid var(--border); }
+    .xs-av { flex:none; width:38px; height:38px; border-radius:50%; background:var(--accent); color:var(--soc-on-accent,#fff); display:flex; align-items:center; justify-content:center; font-family:var(--font-heading); font-weight:700; font-size:1rem; }
+    .xs-who b { font-size:.92rem; color:var(--text); }
+
+    /* Cómo pedir */
+    .xs-steps { position:relative; display:grid; grid-template-columns:repeat(3,1fr); gap:28px; }
+    .xs-steps::before { content:""; position:absolute; top:33px; left:16.6%; right:16.6%; border-top:1px dashed color-mix(in srgb, var(--accent) 55%, transparent); }
+    .xs-step { position:relative; text-align:center; padding:0 6px; }
+    .xs-step-ic { position:relative; width:66px; height:66px; margin:0 auto 18px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.5rem; color:var(--accent); background:var(--bg); border:1px solid color-mix(in srgb, var(--accent) 55%, transparent); box-shadow:0 0 0 7px color-mix(in srgb, var(--accent) 8%, var(--bg)); }
+    .xs-band .xs-step-ic { background:color-mix(in srgb, var(--accent) 6%, var(--bg)); }
+    .xs-step-n { position:absolute; top:-4px; right:-6px; min-width:24px; height:24px; padding:0 6px; border-radius:99px; background:var(--accent); color:var(--soc-on-accent,#fff); font-family:var(--font-body); font-size:.72rem; font-weight:800; display:flex; align-items:center; justify-content:center; }
+    .xs-step h3 { margin:0 0 6px; font-family:var(--font-heading); font-size:1.12rem; font-weight:600; color:var(--text); }
+    .xs-step p { margin:0 auto; max-width:260px; font-size:.92rem; line-height:1.65; color:var(--text-secondary); }
+
+    /* Envíos y formas de pago */
+    .xs-ship { display:grid; grid-template-columns:1fr 1fr; background:var(--bg-card); border:1px solid var(--border); border-radius:min(var(--radius),22px); box-shadow:var(--shadow); overflow:hidden; }
+    .xs-ship.solo { grid-template-columns:minmax(0,1fr); max-width:640px; margin:0 auto; }
+    .xs-ship-col { padding:clamp(24px,4vw,40px); }
+    .xs-ship-col + .xs-ship-col { border-left:1px solid var(--border); }
+    .xs-ship-col h3 { display:flex; align-items:center; gap:12px; margin:0 0 20px; font-family:var(--font-heading); font-size:1.2rem; font-weight:600; color:var(--text); }
+    .xs-ship-col h3 i { display:flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:min(var(--radius),12px); background:color-mix(in srgb, var(--accent) 12%, transparent); color:var(--accent); font-size:1.1rem; }
+    .xs-list { list-style:none; margin:0; padding:0; display:grid; gap:14px; }
+    .xs-list li { display:flex; gap:12px; align-items:flex-start; font-size:.98rem; line-height:1.6; color:var(--text); opacity:.9; }
+    .xs-list li i { flex:none; margin-top:3px; color:var(--accent); }
+    .xs-chips { display:flex; flex-wrap:wrap; gap:10px; }
+    .xs-chip { display:inline-flex; align-items:center; gap:9px; padding:10px 16px; border-radius:999px; background:var(--bg); border:1px solid var(--border); color:var(--text); font-size:.9rem; font-weight:600; }
+    .xs-chip i { color:var(--accent); font-size:1rem; }
+    .xs-note { display:flex; gap:10px; margin:20px 0 0; padding:14px 16px; border-radius:min(var(--radius),14px); background:color-mix(in srgb, var(--accent) 8%, transparent); color:var(--text); font-size:.92rem; line-height:1.6; }
+    .xs-note i { flex:none; margin-top:2px; color:var(--accent); }
+    .xs-strip { margin:44px 0 6px; }
+
+    @media (min-width:601px) and (max-width:980px) { .xs-quotes.n3 .xs-quote:last-child:nth-child(odd) { grid-column:1 / -1; } }
+    @media (max-width:820px) {
+      .xs-about { grid-template-columns:1fr; gap:36px; }
+      .xs-photo { max-width:440px; margin-inline:auto 14px; }
+      .xs-photo img { aspect-ratio:5/4; }
+      .xs-quotes.n2 { grid-template-columns:1fr; }
+      .xs-steps { grid-template-columns:1fr; gap:26px; }
+      .xs-steps::before { display:none; }
+      .xs-step { display:grid; grid-template-columns:66px 1fr; gap:0 18px; text-align:left; align-items:center; padding:0; }
+      .xs-step-ic { margin:0; grid-row:1 / span 2; }
+      .xs-step p { margin:0; max-width:none; }
+      .xs-ship { grid-template-columns:1fr; }
+      .xs-ship-col + .xs-ship-col { border-left:0; border-top:1px solid var(--border); }
+    }
+
+
 
     /* ===== LIGHTBOX ===== */
     .lb { display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,.92); flex-direction:column; align-items:center; justify-content:center; }
@@ -1046,19 +1098,10 @@
   </div>
   <% } %>
 
-  <% if (_socials.length) { %>
-  <nav class="socials-bar" aria-label="Redes sociales de <%= biz.name %>">
-    <span class="socials-bar-label">Síguenos</span>
-    <ul>
-      <% _socials.forEach(function(s){ %><li><a href="<%= s.url %>" target="_blank" rel="noopener noreferrer" aria-label="<%= s.label %> de <%= biz.name %>" title="<%= s.label %>"><i class="bi <%= s.icon %>" aria-hidden="true"></i></a></li><% }) %>
-    </ul>
-  </nav>
-  <% } %>
-
   <!-- ===== RECIÉN LLEGADOS / MÁS VENDIDOS (los prende el dueño en Configuración) ===== -->
   <% [ { id:'nuevos-track', title:'Recién llegados', icon:'bi-stars', tag:'NUEVO', list:_newest },
        { id:'top-track', title:'Los más vendidos', icon:'bi-graph-up-arrow', tag:'TOP', list:_best } ].forEach(function(sec){ if (!sec.list.length) return; %>
-  <div class="ofertas-section">
+  <div class="ofertas-section xs-strip">
     <div class="wrap">
       <div class="ofertas-header">
         <div class="ofertas-title"><i class="bi <%= sec.icon %>"></i> <%= sec.title %></div>
@@ -1070,11 +1113,11 @@
     </div>
     <div class="ofertas-track-wrap">
       <div class="ofertas-track" id="<%= sec.id %>">
-        <% sec.list.forEach(function(p){ %>
+        <% sec.list.forEach(function(p, pi){ %>
         <a href="/<%= biz.slug %>/p/<%= p.id %>" class="oferta-card" style="text-decoration:none;color:inherit;">
           <div class="oferta-img-wrap">
             <img src="<%= p.image||'/img/sin-imagen.svg' %>" loading="lazy" alt="<%= p.name %>" onerror="this.onerror=null;this.src='/img/sin-imagen.svg'">
-            <span class="oferta-badge-tag"><%= sec.tag %></span>
+            <span class="oferta-badge-tag"><%= sec.tag === 'TOP' ? ('#' + (pi + 1)) : sec.tag %></span>
           </div>
           <div class="oferta-body">
             <div class="oferta-name"><%= p.name %></div>
@@ -1252,9 +1295,9 @@
 
   <!-- ===== GALERÍA ===== -->
   <% if (_gallery.length) { %>
-  <div class="gallery">
-    <div class="wrap">
-      <div class="sec-title"><i class="bi bi-images"></i> Galería</div>
+  <div class="gallery xs-sec<%- _xsBand() %>">
+    <div class="xs-in">
+      <%- _xsHead('Nuestro trabajo', 'Galería', '', 'xs-gal-t') %>
       <div class="gal-grid" id="galGrid">
         <% _gallery.forEach(function(url) { %>
         <img src="<%= url %>" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='/img/sin-imagen.svg'" onclick="openLB(this.src)">
@@ -1264,41 +1307,33 @@
   </div>
   <% } %>
 
-  <!-- ===== CÓMO PEDIR (interruptor en Configuración) ===== -->
-  <% if (_ex.showHow) { %>
-  <section class="xs-sec" aria-labelledby="xs-how-t">
-    <div class="wrap">
-      <div class="sec-title" id="xs-how-t"><i class="bi bi-list-check"></i> Cómo pedir</div>
-      <div class="xs-grid">
-        <div class="xs-card xs-step"><span class="xs-step-n" aria-hidden="true"><i class="bi bi-bag-plus"></i></span><div><h3>1 · Elige</h3><p>Explora el catálogo y toca “Agregar” en lo que te guste.</p></div></div>
-        <div class="xs-card xs-step"><span class="xs-step-n" aria-hidden="true"><i class="bi bi-card-checklist"></i></span><div><h3>2 · Revisa tu pedido</h3><p>Abre el carrito, ajusta cantidades y déjanos tu nombre y teléfono.</p></div></div>
-        <div class="xs-card xs-step"><span class="xs-step-n" aria-hidden="true"><i class="bi bi-chat-dots"></i></span><div><h3>3 · Lo cerramos por WhatsApp</h3><p>Te llega el pedido ya armado y ahí coordinamos pago y entrega.</p></div></div>
+  <!-- ===== CONÓCENOS (sale solo si el dueño escribió su texto; la foto es opcional) ===== -->
+  <% if (_exAbout) { var _hasPh = !!_exAbout.image; %>
+  <section class="xs-sec<%- _xsBand() %>" aria-labelledby="xs-about-t">
+    <div class="xs-in">
+      <div class="xs-about<%= _hasPh ? '' : ' no-photo' %>">
+        <% if (_hasPh) { %><figure class="xs-photo"><img src="<%= _exAbout.image %>" alt="" loading="lazy" onerror="var a=this.closest('.xs-about');a.classList.add('no-photo');this.closest('.xs-photo').remove();"></figure><% } %>
+        <div class="xs-about-text">
+          <%- _xsHead('Conócenos', _exAbout.title || 'Nuestra historia', '', 'xs-about-t') %>
+          <p class="xs-prose"><%= _exAbout.text %></p>
+          <div class="xs-orn" aria-hidden="true"><i class="bi bi-gem"></i></div>
+        </div>
       </div>
     </div>
   </section>
   <% } %>
 
-  <!-- ===== CONÓCENOS (sale solo si el dueño escribió su texto) ===== -->
-  <% if (_exAbout) { %>
-  <section class="xs-sec" aria-labelledby="xs-about-t">
-    <div class="wrap">
-      <div class="sec-title" id="xs-about-t"><i class="bi bi-people"></i> <%= _exAbout.title || 'Conócenos' %></div>
-      <div class="xs-card xs-about"><p><%= _exAbout.text %></p></div>
-    </div>
-  </section>
-  <% } %>
-
-  <!-- ===== TESTIMONIOS ===== -->
+  <!-- ===== OPINIONES ===== -->
   <% if (_exTesti.length) { %>
-  <section class="xs-sec" aria-labelledby="xs-testi-t">
-    <div class="wrap">
-      <div class="sec-title" id="xs-testi-t"><i class="bi bi-chat-heart"></i> Lo que dicen nuestros clientes</div>
-      <div class="xs-grid">
+  <section class="xs-sec<%- _xsBand() %>" aria-labelledby="xs-testi-t">
+    <div class="xs-in">
+      <%- _xsHead('Opiniones', 'Lo que dicen nuestros clientes', '', 'xs-testi-t') %>
+      <div class="xs-quotes n<%= Math.min(_exTesti.length, 3) %>">
         <% _exTesti.forEach(function(t){ var st = Math.min(5, Math.max(1, parseInt(t.stars, 10) || 5)); %>
-        <figure class="xs-card" style="margin:0;">
+        <figure class="xs-quote">
           <div class="xs-stars" role="img" aria-label="<%= st %> de 5 estrellas"><% for (var i = 0; i < 5; i++) { %><i class="bi <%= i < st ? 'bi-star-fill' : 'bi-star' %>" aria-hidden="true"></i><% } %></div>
-          <blockquote style="margin:0;"><p class="xs-quote">“<%= t.text %>”</p></blockquote>
-          <figcaption class="xs-who"><%= t.name %></figcaption>
+          <blockquote><%= t.text %></blockquote>
+          <figcaption class="xs-who"><span class="xs-av" aria-hidden="true"><%= String(t.name).trim().charAt(0).toUpperCase() %></span><b><%= t.name %></b></figcaption>
         </figure>
         <% }) %>
       </div>
@@ -1306,33 +1341,50 @@
   </section>
   <% } %>
 
+  <!-- ===== CÓMO PEDIR (interruptor en Configuración) ===== -->
+  <% if (_ex.showHow) { %>
+  <section class="xs-sec<%- _xsBand() %>" aria-labelledby="xs-how-t">
+    <div class="xs-in">
+      <%- _xsHead('Es muy fácil', 'Cómo pedir', 'Sin registros ni complicaciones: eliges, confirmas y lo cerramos por WhatsApp.', 'xs-how-t') %>
+      <div class="xs-steps">
+        <div class="xs-step"><span class="xs-step-ic" aria-hidden="true"><i class="bi bi-bag-plus"></i><span class="xs-step-n">1</span></span><h3>Elige lo que te guste</h3><p>Explora el catálogo y toca “Agregar” en tus favoritos.</p></div>
+        <div class="xs-step"><span class="xs-step-ic" aria-hidden="true"><i class="bi bi-card-checklist"></i><span class="xs-step-n">2</span></span><h3>Revisa tu pedido</h3><p>Abre el carrito, ajusta cantidades y déjanos tu nombre y teléfono.</p></div>
+        <div class="xs-step"><span class="xs-step-ic" aria-hidden="true"><i class="bi bi-chat-dots"></i><span class="xs-step-n">3</span></span><h3>Lo cerramos por WhatsApp</h3><p>Te llega el pedido armado y ahí coordinamos pago y entrega.</p></div>
+      </div>
+    </div>
+  </section>
+  <% } %>
+
   <!-- ===== ENVÍOS Y FORMAS DE PAGO ===== -->
-  <% if (_exShip) { %>
-  <section class="xs-sec" aria-labelledby="xs-ship-t">
-    <div class="wrap">
-      <div class="sec-title" id="xs-ship-t"><i class="bi bi-truck"></i> Envíos y formas de pago</div>
-      <div class="xs-grid">
-        <% if (_ex.envios) { %>
-        <div class="xs-card"><h3><i class="bi bi-truck" aria-hidden="true"></i> Envíos</h3><p><%= _ex.envios %></p></div>
+  <% if (_exShip) { var _envLines = String(_ex.envios || '').split(/\n+/).map(function(l){ return l.trim(); }).filter(Boolean); var _hasPay = !!(_exPagos.length || _ex.pagos_nota); %>
+  <section class="xs-sec<%- _xsBand() %>" aria-labelledby="xs-ship-t">
+    <div class="xs-in">
+      <%- _xsHead('Antes de comprar', 'Envíos y formas de pago', '', 'xs-ship-t') %>
+      <div class="xs-ship<%= (_envLines.length && _hasPay) ? '' : ' solo' %>">
+        <% if (_envLines.length) { %>
+        <div class="xs-ship-col">
+          <h3><i class="bi bi-truck" aria-hidden="true"></i> Envíos</h3>
+          <ul class="xs-list"><% _envLines.forEach(function(l){ %><li><i class="bi bi-check2-circle" aria-hidden="true"></i><span><%= l %></span></li><% }) %></ul>
+        </div>
         <% } %>
-        <% if (_exPagos.length || _ex.pagos_nota) { %>
-        <div class="xs-card"><h3><i class="bi bi-wallet2" aria-hidden="true"></i> Formas de pago</h3>
+        <% if (_hasPay) { %>
+        <div class="xs-ship-col">
+          <h3><i class="bi bi-wallet2" aria-hidden="true"></i> Formas de pago</h3>
           <% if (_exPagos.length) { %><div class="xs-chips"><% _exPagos.forEach(function(k){ %><span class="xs-chip"><i class="bi <%= _PAGO_LBL[k][0] %>" aria-hidden="true"></i><%= _PAGO_LBL[k][1] %></span><% }) %></div><% } %>
-          <% if (_ex.pagos_nota) { %><p class="xs-note"><%= _ex.pagos_nota %></p><% } %>
+          <% if (_ex.pagos_nota) { %><div class="xs-note"><i class="bi bi-info-circle" aria-hidden="true"></i><span><%= _ex.pagos_nota %></span></div><% } %>
         </div>
         <% } %>
       </div>
     </div>
   </section>
   <% } %>
-
   <!-- ===== PREGUNTAS FRECUENTES ===== -->
   <% if (_faq.length) { %>
   <style>#faqBlock details[open] .faq-x { transform:rotate(45deg); } .faq-x { transition:transform .2s; }</style>
-  <div style="padding:14px 0 8px;">
-    <div class="wrap">
-      <div class="sec-title" style="font-size:19px;"><i class="bi bi-question-circle"></i> Preguntas frecuentes</div>
-      <div id="faqBlock" style="display:flex;flex-direction:column;gap:10px;padding-bottom:10px;">
+  <section class="xs-sec<%- _xsBand() %>" aria-labelledby="xs-faq-t">
+    <div class="xs-in">
+      <%- _xsHead('Resolvemos tus dudas', 'Preguntas frecuentes', '', 'xs-faq-t') %>
+      <div id="faqBlock" style="display:flex;flex-direction:column;gap:12px;max-width:780px;margin:0 auto;">
         <% _faq.forEach(function(item){ %>
         <details style="background:var(--bg-card,#fff);border:1px solid var(--border,rgba(26,60,94,.08));border-radius:14px;overflow:hidden;box-shadow:var(--shadow,0 8px 32px rgba(0,0,0,.06));transition:box-shadow .2s;">
           <summary style="padding:15px 18px;font-weight:700;cursor:pointer;font-size:15px;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:10px;color:var(--text,#1e1b1a);"><span><%= item.q %></span><span class="faq-x" style="color:var(--text-secondary,#6b6562);font-size:20px;line-height:1;flex:none;">+</span></summary>
@@ -1341,15 +1393,15 @@
         <% }) %>
       </div>
     </div>
-  </div>
+  </section>
   <% } %>
 
   <!-- ===== UBICACIÓN / MAPA (solo si el negocio puso dirección) ===== -->
   <% if (_address) { %>
-  <div style="padding:14px 0 8px;">
-    <div class="wrap">
-      <div class="sec-title" style="font-size:19px;"><i class="bi bi-geo-alt"></i> ¿Dónde estamos?</div>
-      <div style="background:var(--bg-card,#fff);border:1px solid var(--border,rgba(26,60,94,.08));border-radius:16px;overflow:hidden;box-shadow:var(--shadow,0 8px 32px rgba(0,0,0,.06));margin-bottom:14px;">
+  <section class="xs-sec<%- _xsBand() %>" aria-labelledby="xs-map-t">
+    <div class="xs-in">
+      <%- _xsHead('Visítanos', '¿Dónde estamos?', '', 'xs-map-t') %>
+      <div style="background:var(--bg-card,#fff);border:1px solid var(--border,rgba(26,60,94,.08));border-radius:min(var(--radius),22px);overflow:hidden;box-shadow:var(--shadow,0 8px 32px rgba(0,0,0,.06));">
         <iframe title="Ubicación de <%= biz.name %>" src="https://maps.google.com/maps?q=<%= _addressEnc %>&z=16&output=embed" style="width:100%;height:360px;border:0;display:block;" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
         <div style="padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
           <span style="font-size:13px;color:var(--text,#1e1b1a);font-weight:600;"><i class="bi bi-pin-map" style="color:var(--accent,#1a3c5e);margin-right:6px;"></i><%= _address %></span>
@@ -1357,7 +1409,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </section>
   <% } %>
 
   <!-- ===== FORMULARIO DE CONTACTO ===== -->

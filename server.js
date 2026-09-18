@@ -254,13 +254,18 @@ const CAT_DESIGNS = [
 // lo que llega del formulario: largos acotados, solo métodos de pago conocidos
 // y estrellas 1–5. Devuelve '' si no quedó nada, para no guardar un "{}" vacío.
 const PAGOS_OK = ['efectivo', 'transferencia', 'tarjeta', 'contra_entrega', 'abonos', 'mercado_pago'];
+// Solo rutas de nuestras subidas o URLs http(s) sin caracteres que rompan el atributo.
+function safeImgUrl(v) {
+  const u = String(v == null ? '' : v).trim().slice(0, 500);
+  return /^(\/uploads\/[\w.\-]+|https?:\/\/[^\s"'<>]+)$/.test(u) ? u : '';
+}
 function sanitizeExtras(raw) {
   let x;
   try { x = typeof raw === 'string' ? JSON.parse(raw || '{}') : (raw || {}); } catch (e) { return ''; }
   if (!x || typeof x !== 'object') return '';
   const str = (v, n) => String(v == null ? '' : v).trim().slice(0, n);
   const out = {
-    about: { title: str(x.about && x.about.title, 80), text: str(x.about && x.about.text, 2000) },
+    about: { title: str(x.about && x.about.title, 80), text: str(x.about && x.about.text, 2000), image: safeImgUrl(x.about && x.about.image) },
     envios: str(x.envios, 1500),
     pagos: (Array.isArray(x.pagos) ? x.pagos : []).filter((p, i, a) => PAGOS_OK.includes(p) && a.indexOf(p) === i),
     pagos_nota: str(x.pagos_nota, 300),

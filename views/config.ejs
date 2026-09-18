@@ -732,6 +732,16 @@
                 <p class="text-xs font-black text-slate-500 dark:text-slate-400">Conócenos</p>
                 <input id="ex-about-title" class="config-input" maxlength="80" placeholder="Título (opcional, por defecto “Conócenos”)" value="<%= _exAbout.title || '' %>">
                 <textarea id="ex-about-text" rows="4" maxlength="2000" class="config-input" placeholder="Cuenta tu historia: desde cuándo existe el negocio, qué te distingue, quién te atiende…"><%= _exAbout.text || '' %></textarea>
+                <div class="config-upload-row flex items-center gap-3 pt-1">
+                  <label class="cursor-pointer bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-bold px-4 py-2.5 rounded-xl transition text-slate-700 dark:text-slate-300">
+                    <span class="inline-flex items-center gap-2"><svg class="config-ui-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M4 7h4l1.5-2h5L16 7h4v12H4z"/><circle cx="12" cy="13" r="3"/></svg>Subir foto</span>
+                    <input id="foto-about" type="file" accept="image/*" class="hidden" onchange="subirConEditor('foto-about', 'ex-about-image', 'prev-about', '4:5')">
+                  </label>
+                  <img id="prev-about" src="<%= _exAbout.image || '/img/sin-imagen.svg' %>" class="w-14 h-[70px] rounded-lg object-cover border border-slate-200 dark:border-[#30363d]" alt="">
+                  <button type="button" onclick="quitarFotoAbout()" class="text-xs font-bold text-red-600 hover:text-red-800">Quitar</button>
+                </div>
+                <p class="text-[11px] text-slate-400 dark:text-slate-500">Foto opcional (tú, tu equipo o tu local). Se recorta con el editor de imágenes.</p>
+                <input type="hidden" id="ex-about-image" value="<%= _exAbout.image || '' %>">
               </div>
 
               <div class="rounded-xl border border-slate-200 dark:border-[#30363d] p-3 space-y-2">
@@ -1358,6 +1368,11 @@
       wrap.appendChild(top); wrap.appendChild(ta);
       c.appendChild(wrap);
     }
+    function quitarFotoAbout() {
+      var i = document.getElementById('ex-about-image'), p = document.getElementById('prev-about');
+      if (i) i.value = '';
+      if (p) p.src = '/img/sin-imagen.svg';
+    }
     function extrasSerializar() {
       var v = function (id) { var e = document.getElementById(id); return e ? (e.value || '').trim() : ''; };
       var testimonios = [];
@@ -1370,7 +1385,7 @@
       document.querySelectorAll('#extras-block .ex-pago:checked').forEach(function (c) { pagos.push(c.value); });
       var h = document.getElementById('extras-json');
       if (h) h.value = JSON.stringify({
-        about: { title: v('ex-about-title'), text: v('ex-about-text') },
+        about: { title: v('ex-about-title'), text: v('ex-about-text'), image: v('ex-about-image') },
         envios: v('ex-envios'), pagos: pagos, pagos_nota: v('ex-pagos-nota'),
         testimonios: testimonios,
         showNew: !!(document.getElementById('ex-show-new') || {}).checked,
@@ -1403,7 +1418,7 @@
 
   <%- include('partials/img-editor', { upUrl: (esMaestro ? '/maestro/' + biz.id + '/upload' : '/' + biz.slug + '/admin/upload'), z: 9000 }) %>
 <script>
-    function subirConEditor(inputId, campoId, previewId) {
+    function subirConEditor(inputId, campoId, previewId, aspecto) {
       var input = document.getElementById(inputId);
       if (!input || !input.files || !input.files[0]) return;
       var f = input.files[0];
@@ -1415,7 +1430,7 @@
           var prev = document.getElementById(previewId);
           if (prev) prev.src = url;
           if (window.mostrarToast) mostrarToast('Imagen aplicada ✓', 'ok');
-        });
+        }, null, aspecto);
       };
       rd.readAsDataURL(f);
       input.value = '';
