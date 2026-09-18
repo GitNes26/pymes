@@ -2848,9 +2848,6 @@ app.get('/:slug/admin/salir', (req, res) => {
 function sendErrorPage(res, err) {
   console.error('[500]', err && (err.stack || err.message) || err);
   if (res.headersSent) return;
-  // TEMPORAL: con ?debug=<MASTER_KEY> muestra el error real (quitar tras diagnosticar)
-  const _q = res.req && res.req.query && res.req.query.debug;
-  const dbg = (_q && _q === MASTER_KEY) ? '<pre style="text-align:left;white-space:pre-wrap;word-break:break-all;margin-top:20px;padding:12px;background:#fff;border:1px solid #ddd;border-radius:8px;font-size:11px;color:#b00">' + String((err && (err.stack || err.message)) || err).replace(/&/g, '&amp;').replace(/</g, '&lt;').slice(0, 2000) + '</pre>' : '';
   res.status(500).type('html').send(`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Algo salió mal</title></head>
 <body style="margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#f4f2ee;font-family:system-ui,-apple-system,sans-serif">
 <div style="text-align:center;padding:24px;max-width:420px">
@@ -2858,7 +2855,6 @@ function sendErrorPage(res, err) {
 <h1 style="font-size:20px;color:#1a1b18;margin:0 0 8px">Algo salió mal</h1>
 <p style="font-size:14px;color:#7a7870;margin:0 0 20px">Hubo un error inesperado al cargar esta página. Intenta recargar; si sigue pasando, avísanos qué estabas haciendo.</p>
 <a href="javascript:history.back()" style="display:inline-block;padding:10px 22px;border-radius:10px;background:#1a3c5e;color:#fff;text-decoration:none;font-size:14px;font-weight:600">← Volver</a>
-${dbg}
 </div></body></html>`);
 }
 

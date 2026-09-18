@@ -77,3 +77,8 @@ desktop.ini
 # ================= Proyectos anidados que no son parte de la app =================
 noir-portfolio/
 *.zip
+
+# Material de video/tutoriales (no va al repo)
+.video-deps/
+artifacts/
+__pycache__/
