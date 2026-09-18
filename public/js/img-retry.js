@@ -1,33 +1,61 @@
 (function () {
   'use strict';
-  // En celular (redes más lentas/inestables) algunas imágenes fallan la
-  // primera vez que se piden. El evento "error" de <img> no burbujea, pero
-  // sí se puede escuchar en fase de captura sobre todo el documento — así
-  // se cubre cualquier imagen, presente o futura, sin tocar cada plantilla.
-  var MAX_RETRIES = 2;
-  var RETRY_DELAY_MS = 900;
+  // Las imágenes deben cargar siempre. Si una falla (red móvil inestable,
+  // servidor ocupado, imagen externa lenta) se reintenta varias veces con
+  // espera creciente y SOLO si todos los intentos fallan se muestra el
+  // marcador "sin imagen". Los <img> ya no llevan onerror en línea: ese
+  // onerror cambiaba el src al marcador en el primer fallo e impedía reintentar.
+  var MAX_RETRIES = 4;
+  var RETRY_DELAY_MS = 700;
+  var FALLBACK = '/img/sin-imagen.svg';
   var tries = new WeakMap();
 
-  function onImgError(e) {
-    var img = e.target;
+  function clean(src) { return String(src).replace(/([?&])__r=\d+&?/, '$1').replace(/[?&]$/, ''); }
+  function bust(src) { return clean(src) + (src.indexOf('?') > -1 ? '&' : '?') + '__r=' + Date.now(); }
+
+  function giveUp(img) {
+    var hide = img.getAttribute('data-hide-on-error') !== null;
+    if (hide) { img.style.display = 'none'; return; }
+    if (img.getAttribute('data-no-fallback') !== null) return;
+    if (img.getAttribute('src') === FALLBACK) return;
+    img.setAttribute('data-failed', '1');
+    img.removeAttribute('srcset');
+    img.src = FALLBACK;
+  }
+
+  function retry(img) {
     if (!img || img.tagName !== 'IMG') return;
-    if (img.getAttribute('data-no-retry') !== null) return;
-    var src = img.getAttribute('data-retry-src') || img.src;
-    if (!src) return;
+    if (img.getAttribute('data-failed') !== null) return;
+    if (img.getAttribute('src') === FALLBACK) return;
+    var base = img.getAttribute('data-retry-src') || img.getAttribute('src');
+    if (!base) return;
     var n = tries.get(img) || 0;
-    if (n >= MAX_RETRIES) return;
+    if (n >= MAX_RETRIES) { giveUp(img); return; }
     tries.set(img, n + 1);
-    var cleanSrc = src.split('?__r=')[0];
-    img.setAttribute('data-retry-src', cleanSrc);
-    // Si un onerror en la propia imagen ya la cambió a un placeholder
-    // mientras esperábamos, no lo pisemos con la URL rota de nuevo.
-    var srcAtSchedule = img.src;
+    img.setAttribute('data-retry-src', clean(base));
+    // Las imágenes lazy que fallaron deben pedirse ya, no esperar al scroll
+    if (img.loading === 'lazy') img.loading = 'eager';
     setTimeout(function () {
-      if (img.getAttribute('data-no-retry') !== null) return;
-      if (img.src !== srcAtSchedule) return;
-      img.src = cleanSrc + '?__r=' + Date.now();
+      // Si entre tanto cambió el src por otra causa (p. ej. variante), no lo pisamos
+      if (img.getAttribute('src') === FALLBACK) return;
+      img.src = bust(base);
     }, RETRY_DELAY_MS * (n + 1));
   }
 
-  document.addEventListener('error', onImgError, true);
+  // "error" no burbujea, pero sí se escucha en captura para cualquier imagen
+  document.addEventListener('error', function (e) { retry(e.target); }, true);
+
+  // Imágenes que ya fallaron antes de que este script estuviera escuchando,
+  // o que quedaron "completas" pero vacías: se reintentan al cargar la página
+  // y cuando el usuario vuelve a la pestaña (móvil con red intermitente).
+  function sweep() {
+    var imgs = document.images;
+    for (var i = 0; i < imgs.length; i++) {
+      var im = imgs[i];
+      if (im.complete && im.naturalWidth === 0 && im.getAttribute('src') && im.getAttribute('src') !== FALLBACK && im.getAttribute('data-failed') === null) retry(im);
+    }
+  }
+  window.addEventListener('load', function () { sweep(); setTimeout(sweep, 2500); });
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) sweep(); });
+  window.addEventListener('online', sweep);
 })();

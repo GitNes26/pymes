@@ -1030,9 +1030,9 @@
 
   <% if (biz.banner) { %>
   <div class="hero<%= biz.banner ? ' has-banner' : '' %>">
-    <img src="<%= biz.banner %>" class="bg" alt="banner" onerror="this.onerror=null;this.style.display='none'">
+    <img src="<%= biz.banner %>" class="bg" alt="banner" data-hide-on-error>
     <div class="hero-overlay">
-      <% if (biz.logo) { %><img src="<%= biz.logo %>" class="hero-logo" alt="logo" onerror="this.onerror=null;this.style.display='none'"><% } %>
+      <% if (biz.logo) { %><img src="<%= biz.logo %>" class="hero-logo" alt="logo" data-hide-on-error><% } %>
       <div class="hero-name"><%= biz.name %></div>
       <% if (biz.description) { %><div class="hero-desc"><%= biz.description %></div><% } %>
       <% if (_horarioHtml) { %>
@@ -1101,7 +1101,7 @@
   <header class="hdr">
     <div class="hdr-inner">
       <div class="hdr-left">
-        <% if (biz.logo) { %><img src="<%= biz.logo %>" class="hdr-logo" alt="logo" onerror="this.onerror=null;this.style.display='none'"><% } %>
+        <% if (biz.logo) { %><img src="<%= biz.logo %>" class="hdr-logo" alt="logo" data-hide-on-error><% } %>
         <span class="hdr-title"><%= biz.name %></span>
       </div>
       <div class="hdr-right">
@@ -1139,7 +1139,7 @@
         <% _ofertas.forEach(function(p){ var _pct=Math.round((1-p.price/p.old_price)*100); %>
         <div class="oferta-card" onclick="location.href='/<%= biz.slug %>/p/<%= p.id %>'" style="cursor:pointer;">
           <div class="oferta-img-wrap">
-            <img src="<%= p.image||'/img/sin-imagen.svg' %>" loading="lazy" alt="<%= p.name %>" onerror="this.onerror=null;this.src='/img/sin-imagen.svg'">
+            <img src="<%= p.image||'/img/sin-imagen.svg' %>" loading="lazy" alt="<%= p.name %>">
             <span class="oferta-badge-pct">-<%= _pct %>%</span>
             <span class="oferta-badge-tag">OFERTA</span>
           </div>
@@ -1186,7 +1186,7 @@
         <% sec.list.forEach(function(p, pi){ %>
         <a href="/<%= biz.slug %>/p/<%= p.id %>" class="oferta-card" style="text-decoration:none;color:inherit;">
           <div class="oferta-img-wrap">
-            <img src="<%= p.image||'/img/sin-imagen.svg' %>" loading="lazy" alt="<%= p.name %>" onerror="this.onerror=null;this.src='/img/sin-imagen.svg'">
+            <img src="<%= p.image||'/img/sin-imagen.svg' %>" loading="lazy" alt="<%= p.name %>">
             <span class="oferta-badge-tag"><%= sec.tag === 'TOP' ? ('#' + (pi + 1)) : sec.tag %></span>
           </div>
           <div class="oferta-body">
@@ -1265,7 +1265,7 @@
           <% _realProds.forEach(function(p) { %>
           <div class="prod-card" data-cat="<%= p.category_id || 0 %>" data-price="<%= p.price || 0 %>" data-name="<%= (p.name||'').toLowerCase() %>" onclick="location.href='/<%= biz.slug %>/p/<%= p.id %>'" style="cursor:pointer;">
             <div class="prod-img-wrap">
-              <img src="<%= p.image %>" alt="<%= p.name %>" loading="lazy" onerror="this.onerror=null;this.src='/img/sin-imagen.svg'">
+              <img src="<%= p.image %>" alt="<%= p.name %>" loading="lazy">
               <div class="prod-badge-wrap">
                 <% if (p.old_price && p.old_price > p.price) { %><span class="prod-badge-offer">-<%= Math.round((1-p.price/p.old_price)*100) %>%</span><% } %>
                 <% if (p.promo_badge) { %><span class="prod-badge-promo"><%= p.promo_badge %></span><% } %>
@@ -1370,7 +1370,7 @@
       <%- _xsHead('Nuestro trabajo', 'Galería', '', 'xs-gal-t') %>
       <div class="gal-grid" id="galGrid">
         <% _gallery.forEach(function(url) { %>
-        <img src="<%= url %>" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='/img/sin-imagen.svg'" onclick="openLB(this.src)">
+        <img src="<%= url %>" alt="" loading="lazy" referrerpolicy="no-referrer" onclick="openLB(this.src)">
         <% }) %>
       </div>
     </div>
@@ -1530,7 +1530,7 @@
         <% sponsoredAds.forEach(function(ad) { %>
         <a href="/<%= ad.store.slug %><%= ad.id ? '/p/' + ad.id : '' %>" class="oferta-card" style="text-decoration:none;color:inherit;">
           <div class="oferta-img-wrap">
-            <% if (ad.image) { %><img src="<%= ad.image %>" alt="<%= ad.name %>" loading="lazy" onerror="this.onerror=null;this.src='/img/sin-imagen.svg'"><% } %>
+            <% if (ad.image) { %><img src="<%= ad.image %>" alt="<%= ad.name %>" loading="lazy"><% } %>
             <span class="oferta-badge-tag"><%= ad.store.name %></span>
           </div>
           <div class="oferta-body">

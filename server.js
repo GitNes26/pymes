@@ -2312,9 +2312,10 @@ app.get('/:slug/p/:id', (req, res, next) => {
   const ogUrl = absoluteStoreUrl(req, biz) + '/p/' + p.id;
   const ogImage = absoluteImgUrl(req, p.imgs[0] || '');
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
-  app.render('producto', { biz, product: p, categories: [{ id: p.category_id || 0, name: p.category_name || 'General' }], related, ads, estilo, money: moneyFor(biz), currencySymbol: currencyInfo(biz.currency).symbol, currencyCode: biz.currency, ogUrl, ogImage }, (err, html) => {
+  app.render('producto', { biz, product: p, categories: [{ id: p.category_id || 0, name: p.category_name || 'General' }], related, ads, estilo, catDesign: catDesignOf(biz).id, catDesignTokens: catDesignOf(biz).tokens, money: moneyFor(biz), currencySymbol: currencyInfo(biz.currency).symbol, currencyCode: biz.currency, ogUrl, ogImage }, (err, html) => {
     if (err) return next(err);
-    res.send(paintCatalog(html, biz, pal, estilo));
+    // La ficha usa los mismos tokens de apariencia que el catálogo (sin repintado por estilo)
+    res.send(html);
   });
 });
 
