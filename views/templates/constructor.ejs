@@ -29,6 +29,38 @@
   try { _gallery = JSON.parse(biz.galeria || '[]'); } catch(e) {}
   var _redes = {};
   try { _redes = JSON.parse(biz.redes || '{}'); } catch(e) {}
+  // Redes sociales: el dueño puede capturar "@cuenta", "cuenta" o el enlace
+  // completo (el placeholder de Configuración pide un enlace en Facebook) — antes
+  // se pegaba siempre a "https://red.com/", así que un enlace completo salía
+  // duplicado ("facebook.com/https://facebook.com/...") y el ícono no llevaba a nada.
+  function _socialUrl(net, raw) {
+    var v = String(raw || '').trim();
+    if (!v) return '';
+    if (/^https?:\/\//i.test(v)) return v;
+    if (/^(www\.|m\.)?(instagram|facebook|tiktok|fb)\.[a-z.]+\//i.test(v)) return 'https://' + v;
+    var h = v.replace(/^@/, '').replace(/^\/+/, '');
+    if (net === 'tiktok') return 'https://www.tiktok.com/@' + encodeURIComponent(h);
+    if (net === 'instagram') return 'https://www.instagram.com/' + encodeURIComponent(h) + '/';
+    return 'https://www.facebook.com/' + encodeURI(h);
+  }
+  var _socials = [
+    { net: 'instagram', label: 'Instagram', icon: 'bi-instagram' },
+    { net: 'facebook', label: 'Facebook', icon: 'bi-facebook' },
+    { net: 'tiktok', label: 'TikTok', icon: 'bi-tiktok' }
+  ].map(function(s){ s.url = _socialUrl(s.net, _redes[s.net]); return s; }).filter(function(s){ return s.url; });
+  // Contraste real contra el acento de CADA apariencia: el footer usaba texto
+  // blanco fijo, invisible en los diseños de acento claro (dorado, cian, rosa…).
+  function _lum(hex) {
+    hex = String(hex || '').replace('#', '');
+    if (hex.length === 3) hex = hex.split('').map(function(c){ return c + c; }).join('');
+    var ch = [0, 2, 4].map(function(i){ var c = parseInt(hex.substr(i, 2), 16) / 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); });
+    return 0.2126 * ch[0] + 0.7152 * ch[1] + 0.0722 * ch[2];
+  }
+  function _contrast(a, b) { var x = _lum(a), y = _lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); }
+  var _tk = (typeof catDesignTokens !== 'undefined' && catDesignTokens) ? catDesignTokens : { accent: '#1a3c5e', accentGlow: '#c9a86c' };
+  var _onAccent = _contrast(_tk.accent, '#ffffff') >= _contrast(_tk.accent, '#111111') ? '#ffffff' : '#111111';
+  var _ftrOnDark = _onAccent === '#ffffff';
+  var _ftrHead = _contrast(_tk.accent, _tk.accentGlow) >= 3 ? _tk.accentGlow : _onAccent;
   var _faq = [];
   try { var _fq = JSON.parse(biz.faq || '[]'); if (Array.isArray(_fq)) _faq = _fq.filter(function(x){ return x && (x.q || '').toString().trim() && (x.a || '').toString().trim(); }); } catch(e) {}
   var _address = biz.address || '';
@@ -558,32 +590,54 @@
     .ofertas-track.sponsored-grid .oferta-card { flex:1 1 calc(25% - 14px); min-width:200px; max-width:100%; }
 
     /* ===== FOOTER ===== */
-    .ftr { background:var(--accent); color:#fff; padding:40px 24px 24px; }
+    .ftr { background:var(--accent); color:var(--ftr-fg, #fff); padding:40px 24px 24px; }
     .ftr-inner { margin:0 auto; }
     .ftr-top { display:grid; grid-template-columns:1.5fr 1fr 1fr; gap:28px; margin-bottom:28px; }
-    .ftr h3 { margin-bottom:10px; color:var(--accent-glow); font-size:16px; }
-    .ftr p,.ftr li { color:rgba(255,255,255,.7); font-size:.85rem; line-height:1.6; }
+    .ftr h3 { margin-bottom:10px; color:var(--ftr-head, var(--accent-glow)); font-size:16px; }
+    .ftr p,.ftr li { color:var(--ftr-soft, rgba(255,255,255,.7)); font-size:.85rem; line-height:1.6; }
     .ftr ul { list-style:none; }
     .ftr li { margin-bottom:4px; }
-    .ftr-copy { text-align:center; border-top:1px solid rgba(255,255,255,.15); padding-top:16px; font-size:.78rem; color:rgba(255,255,255,.4); }
-    .ftr-redes { display:flex; gap:8px; margin-top:10px; }
+    .ftr-copy { text-align:center; border-top:1px solid var(--ftr-chip-line, rgba(255,255,255,.15)); padding-top:16px; font-size:.78rem; color:var(--ftr-soft, rgba(255,255,255,.4)); }
+    .ftr-redes { display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
     .ftr-redes a {
       display:flex;
       align-items:center;
       justify-content:center;
-      width:34px;
-      height:34px;
-      border-radius:10px;
-      background:rgba(255,255,255,.1);
-      color:#fff;
-      font-size:16px;
-      transition:all .2s cubic-bezier(.22,1,.36,1);
+      width:44px;
+      height:44px;
+      border-radius:min(var(--radius), 14px);
+      background:var(--ftr-chip, rgba(255,255,255,.12));
+      border:1px solid var(--ftr-chip-line, rgba(255,255,255,.28));
+      color:var(--ftr-fg, #fff);
+      font-size:18px;
+      text-decoration:none;
+      transition:transform .2s cubic-bezier(.22,1,.36,1), background-color .2s cubic-bezier(.22,1,.36,1), color .2s cubic-bezier(.22,1,.36,1);
     }
-    .ftr-redes a:hover {
-      background:var(--accent-glow);
-      transform:translateY(-2px);
-    }
+    .ftr-redes a:hover { background:var(--ftr-fg, #fff); color:var(--accent); transform:translateY(-2px); }
+    .ftr-redes a:focus-visible { outline:2px solid var(--ftr-fg, #fff); outline-offset:3px; }
     .ftr-redes a:active { transform:scale(0.95); }
+
+    /* ===== FRANJA "SÍGUENOS": visible en TODAS las apariencias =====
+       Todo sale de los tokens del diseño elegido (tarjeta, borde, sombra, radio,
+       texto, acento), así cada uno de los 26 estilos la ve a su manera. */
+    .socials-bar { display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap; padding:18px 24px 6px; }
+    .socials-bar-label { font-family:var(--font-heading); font-size:.85rem; font-weight:700; letter-spacing:.04em; color:var(--text-secondary); text-transform:uppercase; }
+    .socials-bar ul { display:flex; gap:10px; list-style:none; margin:0; padding:0; }
+    .socials-bar a {
+      display:flex; align-items:center; justify-content:center;
+      width:44px; height:44px;
+      border-radius:min(var(--radius), 16px);
+      background:var(--bg-card);
+      border:1px solid var(--border);
+      box-shadow:var(--shadow);
+      color:var(--text);
+      font-size:19px;
+      text-decoration:none;
+      transition:transform .2s cubic-bezier(.22,1,.36,1), background-color .2s cubic-bezier(.22,1,.36,1), color .2s cubic-bezier(.22,1,.36,1);
+    }
+    .socials-bar a:hover { background:var(--accent); color:var(--soc-on-accent, #fff); transform:translateY(-2px); }
+    .socials-bar a:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+    .socials-bar a:active { transform:scale(.95); }
 
     /* ===== LIGHTBOX ===== */
     .lb { display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,.92); flex-direction:column; align-items:center; justify-content:center; }
@@ -788,6 +842,14 @@
       --font-body: <%- catDesignTokens.font.body %>;
     }
     <% } %>
+    :root {
+      --soc-on-accent: <%- _onAccent %>;
+      --ftr-fg: <%- _onAccent %>;
+      --ftr-head: <%- _ftrHead %>;
+      --ftr-soft: <%- _ftrOnDark ? 'rgba(255,255,255,.78)' : 'rgba(17,17,17,.78)' %>;
+      --ftr-chip: <%- _ftrOnDark ? 'rgba(255,255,255,.14)' : 'rgba(17,17,17,.10)' %>;
+      --ftr-chip-line: <%- _ftrOnDark ? 'rgba(255,255,255,.3)' : 'rgba(17,17,17,.28)' %>;
+    }
 
     /* ===== ACCESIBILIDAD: respetar "reducir movimiento" ===== */
     @media (prefers-reduced-motion: reduce) {
@@ -944,6 +1006,15 @@
       </div>
     </div>
   </div>
+  <% } %>
+
+  <% if (_socials.length) { %>
+  <nav class="socials-bar" aria-label="Redes sociales de <%= biz.name %>">
+    <span class="socials-bar-label">Síguenos</span>
+    <ul>
+      <% _socials.forEach(function(s){ %><li><a href="<%= s.url %>" target="_blank" rel="noopener noreferrer" aria-label="<%= s.label %> de <%= biz.name %>" title="<%= s.label %>"><i class="bi <%= s.icon %>" aria-hidden="true"></i></a></li><% }) %>
+    </ul>
+  </nav>
   <% } %>
 
   <!-- ===== CONTENIDO PRINCIPAL: sidebar + grid ===== -->
@@ -1229,11 +1300,9 @@
         <div>
           <h3><%= biz.name %></h3>
           <p><%= biz.description || 'Tu negocio en línea.' %></p>
-          <% if (_redes.instagram || _redes.facebook || _redes.tiktok) { %>
+          <% if (_socials.length) { %>
           <div class="ftr-redes">
-            <% if (_redes.instagram) { %><a href="https://instagram.com/<%= _redes.instagram.replace('@','') %>" target="_blank"><i class="bi bi-instagram"></i></a><% } %>
-            <% if (_redes.facebook) { %><a href="https://facebook.com/<%= _redes.facebook %>" target="_blank"><i class="bi bi-facebook"></i></a><% } %>
-            <% if (_redes.tiktok) { %><a href="https://tiktok.com/<%= _redes.tiktok.replace('@','') %>" target="_blank"><i class="bi bi-tiktok"></i></a><% } %>
+            <% _socials.forEach(function(s){ %><a href="<%= s.url %>" target="_blank" rel="noopener noreferrer" aria-label="<%= s.label %> de <%= biz.name %>" title="<%= s.label %>"><i class="bi <%= s.icon %>" aria-hidden="true"></i></a><% }) %>
           </div>
           <% } %>
         </div>
