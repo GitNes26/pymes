@@ -1,0 +1,100 @@
+/* Movimiento del catálogo y la ficha: entradas suaves, hover con cuerpo y respuesta al toque.
+   Todo se apaga con "reducir movimiento". Sin JS (html.js-motion) el contenido se ve normal. */
+:root {
+  --mo-ease: cubic-bezier(.22, 1, .36, 1);
+  --mo-spring: cubic-bezier(.34, 1.56, .64, 1);
+}
+
+/* ---------- Aparición al hacer scroll ---------- */
+html.js-motion .rv {
+  opacity: 0 !important;
+  transform: translateY(30px) scale(.982) !important;
+  transition: opacity .75s var(--mo-ease) var(--d, 0s), transform .9s var(--mo-ease) var(--d, 0s) !important;
+  will-change: opacity, transform;
+}
+html.js-motion .rv.rv-l { transform: translateX(-34px) !important; }
+html.js-motion .rv.rv-r { transform: translateX(34px) !important; }
+html.js-motion .rv.in { opacity: 1 !important; transform: none !important; }
+
+/* ---------- Entrada de la portada ---------- */
+@keyframes moUp { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
+@keyframes moPop { 0% { opacity: 0; transform: scale(.55) rotate(-6deg); } 60% { opacity: 1; transform: scale(1.08) rotate(1deg); } 100% { opacity: 1; transform: none; } }
+@keyframes moDrift { from { transform: scale(1.04) translate3d(0, 0, 0); } to { transform: scale(1.14) translate3d(-1.2%, -1%, 0); } }
+@keyframes moShine { 0% { background-position: -140% 0; } 60%, 100% { background-position: 240% 0; } }
+
+html.js-motion .hero .bg { animation: moDrift 22s ease-in-out infinite alternate; transform-origin: 50% 40%; }
+html.js-motion .hero-overlay > * { animation: moUp .9s var(--mo-ease) both; }
+html.js-motion .hero-overlay > .hero-logo { animation: moPop 1s var(--mo-spring) .05s both; }
+html.js-motion .hero-overlay > .hero-name { animation-delay: .18s; }
+html.js-motion .hero-overlay > .hero-desc { animation-delay: .32s; }
+html.js-motion .hero-overlay > .hero-status { animation-delay: .46s; }
+html.js-motion .hero-overlay > *:nth-child(n+5) { animation-delay: .58s; }
+html.js-motion .hdr { animation: moUp .7s var(--mo-ease) .1s both; }
+
+/* ---------- Tarjetas: elevan, la foto respira, el precio reacciona ---------- */
+body .prod-card, body .oferta-card, body .related-card {
+  transition: transform .45s var(--mo-ease), box-shadow .45s var(--mo-ease), border-color .3s;
+}
+body .prod-img-wrap img, body .oferta-img-wrap img, body .related-img {
+  transition: transform .9s var(--mo-ease), opacity .5s ease, filter .5s ease;
+}
+body .prod-price, body .related-price { transition: transform .4s var(--mo-ease); transform-origin: left center; }
+@media (hover: hover) {
+  body .prod-card:hover, body .oferta-card:hover, body .related-card:hover {
+    transform: translateY(-7px);
+    box-shadow: 0 22px 44px -18px color-mix(in srgb, var(--accent) 38%, transparent), 0 6px 14px -8px color-mix(in srgb, var(--text) 25%, transparent);
+    border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+  }
+  body .prod-card:hover .prod-img-wrap img, body .oferta-card:hover .oferta-img-wrap img, body .related-card:hover .related-img { transform: scale(1.08); }
+  body .prod-card:hover .prod-price, body .related-card:hover .related-price { transform: scale(1.06); }
+}
+body .prod-card button, body .oferta-card button, .btn-add, .btn-wa, .hdr-shop, .hdr-back, .filter-fab {
+  transition: transform .25s var(--mo-spring), background .25s, box-shadow .3s var(--mo-ease), border-color .25s, color .25s;
+}
+body .prod-card button:active, body .oferta-card button:active, .btn-add:active, .btn-wa:active, .filter-fab:active { transform: scale(.94); }
+@media (hover: hover) {
+  .btn-add:hover, .btn-wa:hover { transform: translateY(-2px); box-shadow: 0 12px 24px -10px color-mix(in srgb, var(--accent) 55%, transparent); }
+  body .prod-card button:hover, body .oferta-card button:hover { transform: translateY(-2px); }
+}
+
+/* Insignias de oferta: un brillo suave que cruza de vez en cuando */
+body .prod-badge-offer, body .prod-off, .prod-badge {
+  background-image: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, .38) 50%, transparent 65%);
+  background-size: 250% 100%; background-repeat: no-repeat; background-position: -140% 0;
+  animation: moShine 5.5s ease-in-out 1.2s infinite;
+}
+
+/* Fotos: entran con fundido en lugar de aparecer de golpe */
+html.js-motion img.mo-img { opacity: 0; transform: scale(1.03); }
+html.js-motion img.mo-img.ld { opacity: 1; transform: none; }
+
+/* ---------- Carrito y filtros ---------- */
+@keyframes moFabIn { 0% { opacity: 0; transform: translateY(26px) scale(.6); } 70% { opacity: 1; transform: translateY(-4px) scale(1.06); } 100% { opacity: 1; transform: none; } }
+@keyframes moPanelIn { from { opacity: 0; transform: translateY(18px) scale(.94); } to { opacity: 1; transform: none; } }
+@keyframes moBump { 0% { transform: scale(1); } 35% { transform: scale(1.5); } 70% { transform: scale(.92); } 100% { transform: scale(1); } }
+@keyframes moRing { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent); } 100% { box-shadow: 0 0 0 22px transparent; } }
+#chat-fab.mo-enter { animation: moFabIn .8s var(--mo-spring) .5s both; }
+.filter-fab.mo-enter { animation: moFabIn .8s var(--mo-spring) .8s both; }
+#chat-panel { animation: moPanelIn .35s var(--mo-ease) both; transform-origin: bottom right; }
+#chat-fab-badge.bump { animation: moBump .5s var(--mo-spring); }
+#chat-fab::after { content:""; position:absolute; inset:0; border-radius:50%; pointer-events:none; }
+#chat-fab.ping::after { animation: moRing .8s ease-out; }
+#chat-body > * { animation: moUp .4s var(--mo-ease) both; }
+
+/* Miniaturas y galería de la ficha */
+.prod-thumb { transition: transform .3s var(--mo-spring), opacity .25s, border-color .25s; }
+.prod-thumb:hover { transform: translateY(-3px); }
+.prod-main-img { transition: opacity .35s ease, transform .9s var(--mo-ease); }
+.prod-stage:hover .prod-main-img { transform: scale(1.04); }
+html.js-motion .prod-info > * { animation: moUp .8s var(--mo-ease) both; }
+html.js-motion .prod-info > *:nth-child(2) { animation-delay: .08s; }
+html.js-motion .prod-info > *:nth-child(3) { animation-delay: .16s; }
+html.js-motion .prod-info > *:nth-child(4) { animation-delay: .24s; }
+html.js-motion .prod-info > *:nth-child(n+5) { animation-delay: .32s; }
+html.js-motion .prod-stage { animation: moUp .9s var(--mo-ease) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  html.js-motion .rv, html.js-motion .rv.in { opacity: 1 !important; transform: none !important; transition: none !important; }
+  *, *::before, *::after { animation: none !important; transition-duration: .001ms !important; }
+  html.js-motion img.mo-img { opacity: 1; transform: none; }
+}
