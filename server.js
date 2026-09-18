@@ -250,6 +250,47 @@ const CAT_DESIGNS = [
   { id: 'acuarela', name: 'Acuarela', desc: 'Azul suave y lavanda, como pintado a mano', emoji: '🎨',
     tokens: { bg: '#f5f7fb', card: '#ffffff', text: '#2a3040', textSec: '#818ba0', accent: '#5b7fbd', accentLight: '#8aa6d4', accentGlow: '#c9a4d4', border: 'rgba(91,127,189,.12)', radius: 18, shadow: '0 10px 30px rgba(91,127,189,.10)', font: CAT_FONTS.contemporanea } }
 ];
+// Secciones extra del catálogo (columna businesses.extras, JSON). Se sanea todo
+// lo que llega del formulario: largos acotados, solo métodos de pago conocidos
+// y estrellas 1–5. Devuelve '' si no quedó nada, para no guardar un "{}" vacío.
+const PAGOS_OK = ['efectivo', 'transferencia', 'tarjeta', 'contra_entrega', 'abonos', 'mercado_pago'];
+function sanitizeExtras(raw) {
+  let x;
+  try { x = typeof raw === 'string' ? JSON.parse(raw || '{}') : (raw || {}); } catch (e) { return ''; }
+  if (!x || typeof x !== 'object') return '';
+  const str = (v, n) => String(v == null ? '' : v).trim().slice(0, n);
+  const out = {
+    about: { title: str(x.about && x.about.title, 80), text: str(x.about && x.about.text, 2000) },
+    envios: str(x.envios, 1500),
+    pagos: (Array.isArray(x.pagos) ? x.pagos : []).filter((p, i, a) => PAGOS_OK.includes(p) && a.indexOf(p) === i),
+    pagos_nota: str(x.pagos_nota, 300),
+    testimonios: (Array.isArray(x.testimonios) ? x.testimonios : []).slice(0, 8).map(t => ({
+      name: str(t && t.name, 60),
+      text: str(t && t.text, 400),
+      stars: Math.min(5, Math.max(1, parseInt(t && t.stars, 10) || 5))
+    })).filter(t => t.name && t.text),
+    showNew: !!x.showNew,
+    showTop: !!x.showTop,
+    showHow: !!x.showHow
+  };
+  const vacio = !out.about.text && !out.envios && !out.pagos.length && !out.pagos_nota && !out.testimonios.length && !out.showNew && !out.showTop && !out.showHow;
+  return vacio ? '' : JSON.stringify(out);
+}
+// Ids de los productos que más se han pedido (suma de unidades en pedidos no
+// cancelados; los pedidos guardan las líneas como texto "• 2 x Nombre (var) = $x").
+function bestSellerIds(bizId, products, limit) {
+  const counts = {};
+  db.prepare("SELECT items FROM orders WHERE business_id = ? AND status != 'cancelado'").all(bizId).forEach(o => {
+    String(o.items || '').split(/[\n|]/).forEach(line => {
+      const m = line.match(/(\d+)\s*x\s+(.+?)\s*=\s*[^]*?$/);
+      if (!m) return;
+      const nm = m[2].trim().replace(/\s*\([^)]*\)\s*$/, '').trim().toLowerCase();
+      counts[nm] = (counts[nm] || 0) + (parseInt(m[1], 10) || 1);
+    });
+  });
+  const key = p => String(p.name || '').trim().toLowerCase();
+  return products.filter(p => p && !p.isAd && counts[key(p)]).sort((a, b) => counts[key(b)] - counts[key(a)]).slice(0, limit).map(p => p.id);
+}
 function catDesignOf(biz) {
   return CAT_DESIGNS.find(d => d.id === (biz && biz.catalog_design)) || CAT_DESIGNS[0];
 }
@@ -2201,7 +2242,9 @@ app.get('/:slug', (req, res, next) => {
   const catDesignTokens = catDesignOf(biz).tokens;
   const ogUrl = absoluteStoreUrl(req, biz);
   const ogImage = absoluteImgUrl(req, biz.logo || biz.banner || '');
-  app.render('catalog', { biz, categories, products: productsFinal, estilo, catDesign, catDesignTokens, theme: getTemplateTheme(biz.template), components: getComponents(biz), pages, seoUrl: BASE_URL ? BASE_URL + '/' + biz.slug : '', money: moneyFor(biz), currencySymbol: currencyInfo(biz.currency).symbol, currencyCode: biz.currency, mascaraCss: MASCARA_CSS, mascaraConfig: { MASCARA_SIZES, SHAPE_DEFS, getShapeClip }, adsEnabled: adsOn(biz), sponsoredAds, adminLink, ogUrl, ogImage }, (err, html) => {
+  let bestIds = [];
+  try { if (JSON.parse(biz.extras || '{}').showTop) bestIds = bestSellerIds(biz.id, productsFinal, 8); } catch (e) {}
+  app.render('catalog', { biz, categories, products: productsFinal, bestIds, estilo, catDesign, catDesignTokens, theme: getTemplateTheme(biz.template), components: getComponents(biz), pages, seoUrl: BASE_URL ? BASE_URL + '/' + biz.slug : '', money: moneyFor(biz), currencySymbol: currencyInfo(biz.currency).symbol, currencyCode: biz.currency, mascaraCss: MASCARA_CSS, mascaraConfig: { MASCARA_SIZES, SHAPE_DEFS, getShapeClip }, adsEnabled: adsOn(biz), sponsoredAds, adminLink, ogUrl, ogImage }, (err, html) => {
     if (err) return next(err);
     res.send(finishCatalog(html, biz, pal, estilo));
   });
@@ -4258,6 +4301,9 @@ function applyConfig(biz, body) {
       return JSON.stringify(clean);
     } catch (e) { return '[]'; }
   })();
+  const extras = Object.prototype.hasOwnProperty.call(body, 'extras')
+    ? sanitizeExtras(body.extras)
+    : (biz.extras || '');
   const address = Object.prototype.hasOwnProperty.call(body, 'address')
     ? String(body.address || '').trim().slice(0, 300)
     : (biz.address || '');
@@ -4284,7 +4330,7 @@ function applyConfig(biz, body) {
   const transferHolder = transferFormPosted ? String(body.transfer_holder || '').trim().slice(0, 120) : biz.transfer_holder;
   const transferEnabled = transferFormPosted ? (body.transfer_enabled === '1' ? 1 : 0) : biz.transfer_enabled;
   db.prepare(
-    `UPDATE businesses SET name = ?, whatsapp = ?, description = ?, template = ?, color = ?, color_hex = ?, color_hex2 = ?, color_mode = ?, grid_cols = ?, logo = ?, banner = ?, giro = ?, giros = ?, estilo = ?, bg = ?, card = ?, text = ?, muted = ?, border = ?, radius = ?, font = ?, accent = ?, accent2 = ?, header = ?, header_text = ?, wa_message = ?, currency = ?, sections = ?, demo = ?, horario = ?, horario_msg = ?, blocks = ?, page_bg = ?, redes = ?, faq = ?, address = ?, catalog_design = ?, mp_access_token = ?, mp_enabled = ?, transfer_bank = ?, transfer_account = ?, transfer_holder = ?, transfer_enabled = ? WHERE id = ?`
+    `UPDATE businesses SET name = ?, whatsapp = ?, description = ?, template = ?, color = ?, color_hex = ?, color_hex2 = ?, color_mode = ?, grid_cols = ?, logo = ?, banner = ?, giro = ?, giros = ?, estilo = ?, bg = ?, card = ?, text = ?, muted = ?, border = ?, radius = ?, font = ?, accent = ?, accent2 = ?, header = ?, header_text = ?, wa_message = ?, currency = ?, sections = ?, demo = ?, horario = ?, horario_msg = ?, blocks = ?, page_bg = ?, redes = ?, faq = ?, extras = ?, address = ?, catalog_design = ?, mp_access_token = ?, mp_enabled = ?, transfer_bank = ?, transfer_account = ?, transfer_holder = ?, transfer_enabled = ? WHERE id = ?`
   ).run(
     name || biz.name,
     cleanWa || biz.whatsapp,
@@ -4321,6 +4367,7 @@ function applyConfig(biz, body) {
     sanitizePageBg(page_bg, Object.prototype.hasOwnProperty.call(body, 'page_bg'), biz.page_bg),
     redes,
     faq,
+    extras,
     address,
     catDesign,
     mpAccessToken,

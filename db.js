@@ -74,6 +74,10 @@ addColumnIfMissing('businesses', 'transfer_bank', "TEXT DEFAULT ''");
 addColumnIfMissing('businesses', 'transfer_account', "TEXT DEFAULT ''");
 addColumnIfMissing('businesses', 'transfer_holder', "TEXT DEFAULT ''");
 addColumnIfMissing('businesses', 'transfer_enabled', 'INTEGER DEFAULT 0');
+// Secciones extra del catálogo (JSON): about {title,text}, envios, pagos[], pagos_nota,
+// testimonios[{name,text,stars}] y los interruptores showNew / showTop / showHow.
+// Las de texto salen solas cuando el dueño las llena; las automáticas se prenden aquí.
+addColumnIfMissing('businesses', 'extras', "TEXT DEFAULT ''");
 
 // Sesiones con token aleatorio (el dueño y el maestro). Ya no se usa cookie estática.
 db.exec(`

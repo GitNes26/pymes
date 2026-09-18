@@ -61,6 +61,16 @@
   var _onAccent = _contrast(_tk.accent, '#ffffff') >= _contrast(_tk.accent, '#111111') ? '#ffffff' : '#111111';
   var _ftrOnDark = _onAccent === '#ffffff';
   var _ftrHead = _contrast(_tk.accent, _tk.accentGlow) >= 3 ? _tk.accentGlow : _onAccent;
+  // Secciones extra que el dueño llena/enciende en Configuración (businesses.extras).
+  // Las de texto salen solas cuando tienen contenido; las automáticas
+  // (nuevos, más vendidos, cómo pedir) solo si están prendidas.
+  var _ex = {};
+  try { _ex = JSON.parse(biz.extras || '{}') || {}; } catch(e) { _ex = {}; }
+  var _exAbout = (_ex.about && _ex.about.text) ? _ex.about : null;
+  var _exTesti = Array.isArray(_ex.testimonios) ? _ex.testimonios.filter(function(t){ return t && t.name && t.text; }) : [];
+  var _PAGO_LBL = { efectivo:['bi-cash-coin','Efectivo'], transferencia:['bi-bank','Transferencia'], tarjeta:['bi-credit-card','Tarjeta'], contra_entrega:['bi-box-seam','Contra entrega'], abonos:['bi-calendar2-check','Pagos en abonos'], mercado_pago:['bi-shield-check','Mercado Pago'] };
+  var _exPagos = (Array.isArray(_ex.pagos) ? _ex.pagos : []).filter(function(k){ return _PAGO_LBL[k]; });
+  var _exShip = !!(_ex.envios || _exPagos.length || _ex.pagos_nota);
   var _faq = [];
   try { var _fq = JSON.parse(biz.faq || '[]'); if (Array.isArray(_fq)) _faq = _fq.filter(function(x){ return x && (x.q || '').toString().trim() && (x.a || '').toString().trim(); }); } catch(e) {}
   var _address = biz.address || '';
@@ -93,6 +103,12 @@
   // Todos los productos activos (los sin foto usan el placeholder sin-imagen.svg en el <img>).
   // Se excluyen los slots de anuncios intercalados (isAd): se muestran en su propia sección "También te puede interesar".
   var _realProds = _prods.filter(function(p){ return p && !p.isAd; });
+  // "Recién llegados": los últimos productos (id más alto). Con pocos productos
+  // sería repetir todo el catálogo, así que solo aparece desde 4 en adelante.
+  var _newest = (_ex.showNew && _realProds.length >= 4)
+    ? _realProds.slice().sort(function(a, b){ return b.id - a.id; }).slice(0, 8) : [];
+  var _bestIds = (typeof bestIds !== 'undefined' && bestIds) ? bestIds : [];
+  var _best = _ex.showTop ? _bestIds.map(function(id){ return _realProds.filter(function(p){ return p.id === id; })[0]; }).filter(Boolean) : [];
 %><!DOCTYPE html>
 <html lang="es" data-style="<%= _design %>">
 <head>
@@ -639,6 +655,28 @@
     .socials-bar a:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
     .socials-bar a:active { transform:scale(.95); }
 
+    /* ===== SECCIONES EXTRA (Conócenos, Envíos y pago, Testimonios, Cómo pedir) =====
+       Solo tokens del diseño elegido: se ven "de la casa" en cada apariencia. */
+    .xs-sec { padding:18px 0 8px; }
+    .xs-sec .sec-title { font-size:19px; }
+    .xs-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px; padding-bottom:10px; }
+    .xs-card { background:var(--bg-card); border:1px solid var(--border); border-radius:min(var(--radius),18px); box-shadow:var(--shadow); padding:20px 22px; color:var(--text); }
+    .xs-card h3 { font-family:var(--font-heading); font-size:1.05rem; margin:0 0 8px; display:flex; align-items:center; gap:8px; }
+    .xs-card h3 i { color:var(--accent); }
+    .xs-card p { margin:0; color:var(--text-secondary); font-size:.92rem; line-height:1.7; white-space:pre-line; }
+    .xs-about { max-width:820px; }
+    .xs-chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:2px; }
+    .xs-chip { display:inline-flex; align-items:center; gap:7px; padding:7px 13px; border-radius:999px; background:var(--bg); border:1px solid var(--border); color:var(--text); font-size:.85rem; font-weight:600; }
+    .xs-chip i { color:var(--accent); }
+    .xs-note { margin-top:10px !important; font-size:.82rem !important; }
+    .xs-stars { color:var(--accent-glow); font-size:.95rem; letter-spacing:2px; margin-bottom:8px; }
+    .xs-quote { font-style:italic; }
+    .xs-who { margin-top:12px; font-weight:700; font-size:.88rem; color:var(--text); }
+    .xs-step { display:flex; gap:14px; align-items:flex-start; }
+    .xs-step-n { flex:none; width:40px; height:40px; border-radius:min(var(--radius),14px); background:var(--accent); color:var(--soc-on-accent,#fff); display:flex; align-items:center; justify-content:center; font-size:19px; }
+    .xs-step h3 { margin-bottom:4px; }
+    .xs-step p { white-space:normal; }
+
     /* ===== LIGHTBOX ===== */
     .lb { display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,.92); flex-direction:column; align-items:center; justify-content:center; }
     .lb img { max-width:92vw; max-height:80vh; object-fit:contain; border-radius:var(--radius); }
@@ -1017,6 +1055,38 @@
   </nav>
   <% } %>
 
+  <!-- ===== RECIÉN LLEGADOS / MÁS VENDIDOS (los prende el dueño en Configuración) ===== -->
+  <% [ { id:'nuevos-track', title:'Recién llegados', icon:'bi-stars', tag:'NUEVO', list:_newest },
+       { id:'top-track', title:'Los más vendidos', icon:'bi-graph-up-arrow', tag:'TOP', list:_best } ].forEach(function(sec){ if (!sec.list.length) return; %>
+  <div class="ofertas-section">
+    <div class="wrap">
+      <div class="ofertas-header">
+        <div class="ofertas-title"><i class="bi <%= sec.icon %>"></i> <%= sec.title %></div>
+        <div class="ofertas-arrows">
+          <button type="button" class="ofertas-arrow" aria-label="Anterior" onclick="document.getElementById('<%= sec.id %>').scrollBy({left:-220,behavior:'smooth'})"><i class="bi bi-chevron-left"></i></button>
+          <button type="button" class="ofertas-arrow" aria-label="Siguiente" onclick="document.getElementById('<%= sec.id %>').scrollBy({left:220,behavior:'smooth'})"><i class="bi bi-chevron-right"></i></button>
+        </div>
+      </div>
+    </div>
+    <div class="ofertas-track-wrap">
+      <div class="ofertas-track" id="<%= sec.id %>">
+        <% sec.list.forEach(function(p){ %>
+        <a href="/<%= biz.slug %>/p/<%= p.id %>" class="oferta-card" style="text-decoration:none;color:inherit;">
+          <div class="oferta-img-wrap">
+            <img src="<%= p.image||'/img/sin-imagen.svg' %>" loading="lazy" alt="<%= p.name %>" onerror="this.onerror=null;this.src='/img/sin-imagen.svg'">
+            <span class="oferta-badge-tag"><%= sec.tag %></span>
+          </div>
+          <div class="oferta-body">
+            <div class="oferta-name"><%= p.name %></div>
+            <div class="oferta-prices"><span class="oferta-new"><%= _money(p) %></span></div>
+          </div>
+        </a>
+        <% }) %>
+      </div>
+    </div>
+  </div>
+  <% }) %>
+
   <!-- ===== CONTENIDO PRINCIPAL: sidebar + grid ===== -->
   <div class="main-layout">
     <div class="wrap main-inner">
@@ -1192,6 +1262,68 @@
       </div>
     </div>
   </div>
+  <% } %>
+
+  <!-- ===== CÓMO PEDIR (interruptor en Configuración) ===== -->
+  <% if (_ex.showHow) { %>
+  <section class="xs-sec" aria-labelledby="xs-how-t">
+    <div class="wrap">
+      <div class="sec-title" id="xs-how-t"><i class="bi bi-list-check"></i> Cómo pedir</div>
+      <div class="xs-grid">
+        <div class="xs-card xs-step"><span class="xs-step-n" aria-hidden="true"><i class="bi bi-bag-plus"></i></span><div><h3>1 · Elige</h3><p>Explora el catálogo y toca “Agregar” en lo que te guste.</p></div></div>
+        <div class="xs-card xs-step"><span class="xs-step-n" aria-hidden="true"><i class="bi bi-card-checklist"></i></span><div><h3>2 · Revisa tu pedido</h3><p>Abre el carrito, ajusta cantidades y déjanos tu nombre y teléfono.</p></div></div>
+        <div class="xs-card xs-step"><span class="xs-step-n" aria-hidden="true"><i class="bi bi-chat-dots"></i></span><div><h3>3 · Lo cerramos por WhatsApp</h3><p>Te llega el pedido ya armado y ahí coordinamos pago y entrega.</p></div></div>
+      </div>
+    </div>
+  </section>
+  <% } %>
+
+  <!-- ===== CONÓCENOS (sale solo si el dueño escribió su texto) ===== -->
+  <% if (_exAbout) { %>
+  <section class="xs-sec" aria-labelledby="xs-about-t">
+    <div class="wrap">
+      <div class="sec-title" id="xs-about-t"><i class="bi bi-people"></i> <%= _exAbout.title || 'Conócenos' %></div>
+      <div class="xs-card xs-about"><p><%= _exAbout.text %></p></div>
+    </div>
+  </section>
+  <% } %>
+
+  <!-- ===== TESTIMONIOS ===== -->
+  <% if (_exTesti.length) { %>
+  <section class="xs-sec" aria-labelledby="xs-testi-t">
+    <div class="wrap">
+      <div class="sec-title" id="xs-testi-t"><i class="bi bi-chat-heart"></i> Lo que dicen nuestros clientes</div>
+      <div class="xs-grid">
+        <% _exTesti.forEach(function(t){ var st = Math.min(5, Math.max(1, parseInt(t.stars, 10) || 5)); %>
+        <figure class="xs-card" style="margin:0;">
+          <div class="xs-stars" role="img" aria-label="<%= st %> de 5 estrellas"><% for (var i = 0; i < 5; i++) { %><i class="bi <%= i < st ? 'bi-star-fill' : 'bi-star' %>" aria-hidden="true"></i><% } %></div>
+          <blockquote style="margin:0;"><p class="xs-quote">“<%= t.text %>”</p></blockquote>
+          <figcaption class="xs-who"><%= t.name %></figcaption>
+        </figure>
+        <% }) %>
+      </div>
+    </div>
+  </section>
+  <% } %>
+
+  <!-- ===== ENVÍOS Y FORMAS DE PAGO ===== -->
+  <% if (_exShip) { %>
+  <section class="xs-sec" aria-labelledby="xs-ship-t">
+    <div class="wrap">
+      <div class="sec-title" id="xs-ship-t"><i class="bi bi-truck"></i> Envíos y formas de pago</div>
+      <div class="xs-grid">
+        <% if (_ex.envios) { %>
+        <div class="xs-card"><h3><i class="bi bi-truck" aria-hidden="true"></i> Envíos</h3><p><%= _ex.envios %></p></div>
+        <% } %>
+        <% if (_exPagos.length || _ex.pagos_nota) { %>
+        <div class="xs-card"><h3><i class="bi bi-wallet2" aria-hidden="true"></i> Formas de pago</h3>
+          <% if (_exPagos.length) { %><div class="xs-chips"><% _exPagos.forEach(function(k){ %><span class="xs-chip"><i class="bi <%= _PAGO_LBL[k][0] %>" aria-hidden="true"></i><%= _PAGO_LBL[k][1] %></span><% }) %></div><% } %>
+          <% if (_ex.pagos_nota) { %><p class="xs-note"><%= _ex.pagos_nota %></p><% } %>
+        </div>
+        <% } %>
+      </div>
+    </div>
+  </section>
   <% } %>
 
   <!-- ===== PREGUNTAS FRECUENTES ===== -->
