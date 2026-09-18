@@ -98,3 +98,8 @@ html.js-motion .prod-stage { animation: moUp .9s var(--mo-ease) both; }
   *, *::before, *::after { animation: none !important; transition-duration: .001ms !important; }
   html.js-motion img.mo-img { opacity: 1; transform: none; }
 }
+
+/* ---------- Botones que se reducen al icono cuando el texto no cabe (js/btn-fit.js) ---------- */
+.fit-lbl { white-space: nowrap; }
+.icon-only .fit-lbl { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); }
+.icon-only { gap: 0 !important; }
