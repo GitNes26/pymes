@@ -835,6 +835,64 @@
       .filter-price-row { flex-direction:column; align-items:stretch; }
       .filter-dash { display:none; }
     }
+    /* ===== AJUSTES DE ALINEACIÓN (tiras, contacto, footer, logos, opiniones en móvil) =====
+       "body" delante para ganarle en especificidad a catalog-refine.css. */
+
+    /* Tiras horizontales (ofertas, recién llegados, más vendidos, "también te puede interesar"):
+       arrancan y terminan dentro del mismo ancho que el resto del contenido, no de borde a borde. */
+    body .ofertas-track-wrap { max-width:1480px; margin:0 auto; }
+    body .ofertas-track { padding-inline:24px; scroll-padding-inline:24px; }
+    body .sponsored-section .ofertas-header { margin-bottom:14px; }
+
+    /* Logos completos: antes se recortaban a un cuadrado (object-fit:cover). */
+    body .hdr-logo { width:auto; height:34px; max-width:104px; object-fit:contain; border-radius:8px; }
+    body .hero-logo, body .hero.has-banner .hero-logo { width:auto; max-width:min(220px,70vw); object-fit:contain; padding:5px; box-sizing:border-box; }
+    body .hero-logo { height:80px; }
+    body .hero.has-banner .hero-logo { height:64px; }
+
+    /* Contacto: tarjeta compacta y centrada, con el mismo encabezado que las demás secciones. */
+    body .contact-form-wrap { max-width:680px; padding:28px 30px; }
+    .contact-form { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .contact-form .cf-input { margin:0 !important; width:100%; box-sizing:border-box; }
+    .contact-form .cf-textarea, .contact-form .cf-submit { grid-column:1 / -1; }
+    .contact-form .cf-textarea { min-height:96px; resize:vertical; }
+
+    /* Footer: iconos en columna fija para que el texto alinee, aunque salte de línea. */
+    .ftr li { display:flex; gap:10px; align-items:flex-start; }
+    .ftr li i { flex:none; width:18px; margin:3px 0 0 !important; text-align:center; }
+
+    /* Carrusel de opiniones: solo en móvil */
+    .xs-dots { display:none; }
+
+    @media (max-width:700px) {
+      body .ofertas-track { padding-inline:18px; scroll-padding-inline:18px; gap:12px; }
+      /* mismo ancho que una columna de la cuadrícula de productos (2 por fila) */
+      body .oferta-card { flex:0 0 calc((100vw - 36px - 12px) / 2); }
+      body .hero-logo { height:60px; }
+      body .hero.has-banner .hero-logo { height:56px; }
+
+      /* Formas de pago alineadas en cuadrícula */
+      .xs-chips { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+      .xs-chip { justify-content:flex-start; border-radius:14px; padding:12px 14px; }
+
+      /* Opiniones: carrusel con scroll-snap */
+      .xs-quotes, .xs-quotes.n1, .xs-quotes.n2 { display:flex; grid-template-columns:none; max-width:none; margin:0 -24px; padding:4px 24px 10px; gap:14px; overflow-x:auto; scroll-snap-type:x mandatory; scroll-padding-inline:24px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+      .xs-quotes::-webkit-scrollbar { display:none; }
+      .xs-quotes .xs-quote { flex:0 0 84%; scroll-snap-align:start; }
+      .xs-quotes.n1 .xs-quote { flex-basis:100%; }
+      .xs-dots { display:flex; justify-content:center; gap:8px; margin-top:14px; }
+      .xs-dots button { width:8px; height:8px; padding:0; border:0; border-radius:99px; background:var(--accent); opacity:.28; cursor:pointer; transition:opacity .2s, width .2s; }
+      .xs-dots button.on { opacity:1; width:22px; }
+
+      /* Contacto en una columna */
+      .contact-form { grid-template-columns:1fr; }
+      body .contact-form-wrap { padding:22px 18px; }
+
+      /* Footer: bloques separados y espacio para que el carrito flotante no tape el copyright */
+      .ftr-top > div + div { border-top:1px solid var(--ftr-chip-line, rgba(255,255,255,.2)); padding-top:20px; }
+      .ftr { padding-bottom:88px; }
+    }
+
     /* ===== EXTRAS (sin duplicar lo que ya vive en premium-catalog.css) ===== */
 
     /* Scroll fade-in: solo para las secciones que lo usan explícitamente
@@ -1413,26 +1471,25 @@
   <% } %>
 
   <!-- ===== FORMULARIO DE CONTACTO ===== -->
-  <div class="contact-section">
-    <div class="wrap">
+  <section class="contact-section xs-sec<%- _xsBand() %>" aria-labelledby="xs-contact-t">
+    <div class="xs-in">
+      <%- _xsHead('Escríbenos', '¿Tienes alguna pregunta?', 'Te respondemos lo antes posible.', 'xs-contact-t') %>
       <div class="contact-form-wrap">
-        <h2><i class="bi bi-chat-dots" style="color:var(--accent);"></i> ¿Tienes alguna pregunta?</h2>
-        <p class="contact-sub">Escríbenos y te respondemos lo antes posible</p>
         <form class="contact-form" onsubmit="event.preventDefault();sendContactForm();">
-          <input type="text" id="cfName" placeholder="Tu nombre" required class="cf-input" style="margin-bottom:10px;">
-          <select id="cfTopic" class="cf-input" style="margin-bottom:10px;">
+          <input type="text" id="cfName" placeholder="Tu nombre" required class="cf-input">
+          <select id="cfTopic" class="cf-input no-search-select">
             <option value="">Asunto...</option>
             <option value="producto">Consulta de producto</option>
             <option value="envio">Envío y entrega</option>
             <option value="pedido">Estado de pedido</option>
             <option value="otro">Otro</option>
           </select>
-          <textarea id="cfMsg" placeholder="Escribe tu mensaje..." rows="4" required class="cf-input cf-textarea"></textarea>
+          <textarea id="cfMsg" placeholder="Escribe tu mensaje..." rows="3" required class="cf-input cf-textarea"></textarea>
           <button type="submit" class="cf-submit"><i class="bi bi-whatsapp"></i> Enviar por WhatsApp</button>
         </form>
       </div>
     </div>
-  </div>
+  </section>
 
   <!-- ===== TAMBIÉN TE PUEDE INTERESAR (slider) ===== -->
   <% if (typeof adsEnabled !== 'undefined' && adsEnabled && typeof sponsoredAds !== 'undefined' && sponsoredAds.length) { %>
@@ -1493,9 +1550,9 @@
         <div>
           <h3>Contacto</h3>
           <ul>
-            <% if (_whatsapp) { %><li><i class="bi bi-whatsapp" style="margin-right:6px;"></i><%= biz.whatsapp %></li><% } %>
-            <% if (biz.phone) { %><li><i class="bi bi-telephone" style="margin-right:6px;"></i><%= biz.phone %></li><% } %>
-            <% if (biz.address) { %><li><i class="bi bi-geo-alt" style="margin-right:6px;"></i><%= biz.address %></li><% } %>
+            <% if (_whatsapp) { %><li><i class="bi bi-whatsapp" aria-hidden="true"></i><%= biz.whatsapp %></li><% } %>
+            <% if (biz.phone) { %><li><i class="bi bi-telephone" aria-hidden="true"></i><%= biz.phone %></li><% } %>
+            <% if (biz.address) { %><li><i class="bi bi-geo-alt" aria-hidden="true"></i><%= biz.address %></li><% } %>
           </ul>
         </div>
         <div>
@@ -1818,6 +1875,33 @@
             card.click();
           }
         });
+      });
+    })();
+
+    /* Opiniones en móvil: carrusel con puntos indicadores (los puntos solo se ven ≤700px). */
+    (function () {
+      document.querySelectorAll('.xs-quotes').forEach(function (track) {
+        var cards = track.querySelectorAll('.xs-quote');
+        if (cards.length < 2) return;
+        var dots = document.createElement('div');
+        dots.className = 'xs-dots';
+        dots.setAttribute('role', 'tablist');
+        cards.forEach(function (c, i) {
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.setAttribute('aria-label', 'Opinión ' + (i + 1) + ' de ' + cards.length);
+          b.addEventListener('click', function () { track.scrollTo({ left: c.offsetLeft - track.offsetLeft - 24, behavior: 'smooth' }); });
+          dots.appendChild(b);
+        });
+        track.parentNode.insertBefore(dots, track.nextSibling);
+        var btns = dots.querySelectorAll('button');
+        function sync() {
+          var x = track.scrollLeft, best = 0, bd = 1e9;
+          cards.forEach(function (c, i) { var d = Math.abs((c.offsetLeft - track.offsetLeft - 24) - x); if (d < bd) { bd = d; best = i; } });
+          btns.forEach(function (b, i) { b.classList.toggle('on', i === best); });
+        }
+        track.addEventListener('scroll', function () { window.requestAnimationFrame(sync); }, { passive: true });
+        sync();
       });
     })();
 
