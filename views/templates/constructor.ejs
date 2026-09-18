@@ -796,8 +796,8 @@
     .filter-range.active { background:var(--accent); color:#fff; border-color:var(--accent); }
     .filter-clear { width:100%; padding:9px; border:1px solid var(--border); border-radius:var(--radius); font-size:12px; font-weight:600; cursor:pointer; background:none; color:var(--text-secondary); transition:all .2s; margin-top:10px; }
     .filter-clear:hover { border-color:#ef4444; color:#ef4444; }
-    .filter-fab { display:none; position:fixed; left:12px; bottom:80px; z-index:100; background:#111; color:#fff; border:none; border-radius:999px; padding:12px 20px; font-size:13px; font-weight:700; cursor:pointer; box-shadow:0 4px 16px rgba(0,0,0,.3); transition:transform .18s cubic-bezier(.22,1,.36,1), background .2s; }
-    .filter-fab:hover { background:#000; }
+    .filter-fab { display:none; position:fixed; left:12px; bottom:80px; z-index:100; background:var(--accent); color:var(--soc-on-accent,#fff); border:1px solid color-mix(in srgb, var(--accent) 70%, var(--text)); border-radius:min(999px, calc(var(--radius) * 2.4)); padding:12px 20px; font-size:13px; font-weight:700; cursor:pointer; box-shadow:0 6px 18px color-mix(in srgb, var(--accent) 32%, transparent); font-family:var(--font-body); transition:transform .18s cubic-bezier(.22,1,.36,1), background .2s; }
+    .filter-fab:hover { background:var(--accent-light); }
     .filter-fab:active { transform:scale(.94); }
     .main-content { flex:1; min-width:0; }
 
