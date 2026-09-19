@@ -43,7 +43,15 @@
   }
 
   // "error" no burbujea, pero sí se escucha en captura para cualquier imagen
-  document.addEventListener('error', function (e) { retry(e.target); }, true);
+  document.addEventListener('error', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && t.getAttribute('data-hide-on-error') !== null) t.style.visibility = 'hidden'; // sin icono roto mientras reintenta
+    retry(t);
+  }, true);
+  document.addEventListener('load', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && t.style.visibility === 'hidden') t.style.visibility = '';
+  }, true);
 
   // Imágenes que ya fallaron antes de que este script estuviera escuchando,
   // o que quedaron "completas" pero vacías: se reintentan al cargar la página
