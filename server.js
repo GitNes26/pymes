@@ -2493,6 +2493,8 @@ app.get('/:slug/pedir', (req, res) => {
   let message = buildOrderMessage(biz.name, lines, total, biz.wa_message, currencyInfo(biz.currency).symbol, instInfo);
   if (customerName) message += `\n\nMi nombre: ${customerName}`;
   if (customerPhone) message += `\nMi teléfono: ${customerPhone}`;
+  const okItems = items.filter(it => it && parseInt(it.id) > 0).slice(0, 12);
+  if (okItems.length) message += `\n\n📸 Fotos de mi pedido:\n${absoluteStoreUrl(req, biz)}/pedido?ids=${okItems.map(it => parseInt(it.id)).join(',')}&q=${okItems.map(it => Math.max(1, parseInt(it.qty) || 1)).join(',')}`;
 
   const customerData = customerName ? (customerName + (customerPhone ? ' (' + customerPhone + ')' : '')) : (customerPhone || '');
   db.prepare(
@@ -2504,6 +2506,93 @@ app.get('/:slug/pedir', (req, res) => {
   res.redirect(waLink(biz, message));
 });
 
+
+// ================= PEDIDO CON FOTOS =================
+// wa.me no permite adjuntar imágenes: lo que sí hace WhatsApp es mostrar una tarjeta con foto
+// (Open Graph) del primer enlace del mensaje. Cada pedido incluye un enlace a esta página, cuya
+// imagen de vista previa es un collage con los productos pedidos; quien recibe el mensaje ve las
+// fotos en el chat y, al abrir el enlace, el detalle con foto, cantidad y precio de cada producto.
+const _pedidoImgCache = new Map();
+function pedidoItems(biz, q) {
+  const ids = String(q.ids || '').split(',').map(x => parseInt(x, 10)).filter(x => x > 0).slice(0, 12);
+  const qtys = String(q.q || '').split(',').map(x => Math.max(1, Math.min(999, parseInt(x, 10) || 1)));
+  if (!ids.length) return [];
+  const rows = db.prepare('SELECT * FROM products WHERE business_id = ? AND active = 1 AND id IN (' + ids.map(() => '?').join(',') + ')').all(biz.id, ...ids);
+  return ids.map((id, i) => {
+    const p = rows.find(r => r.id === id);
+    if (!p) return null;
+    p.imgs = productImgs(p);
+    return { p, qty: qtys[i] || 1 };
+  }).filter(Boolean);
+}
+async function pedidoLoadImage(src) {
+  if (!src) return null;
+  try {
+    if (/^https?:\/\//i.test(src)) {
+      const ctl = new AbortController();
+      const t = setTimeout(() => ctl.abort(), 5000);
+      const r = await fetch(src, { signal: ctl.signal });
+      clearTimeout(t);
+      if (!r.ok) return null;
+      const ab = await r.arrayBuffer();
+      return ab.byteLength > 8e6 ? null : Buffer.from(ab);
+    }
+    const root = path.join(__dirname, 'public');
+    const abs = path.join(root, src.split('?')[0].replace(/^\/+/, ''));
+    if (!abs.startsWith(root)) return null;
+    return require('fs').readFileSync(abs);
+  } catch (e) { return null; }
+}
+async function pedidoCollage(items) {
+  const W = 1200, H = 630, gap = 24;
+  const bufs = (await Promise.all(items.slice(0, 4).map(it => pedidoLoadImage(it.imgSrc || it.p.imgs[0])))).filter(Boolean);
+  if (!bufs.length) return null;
+  const bg = await sharp(bufs[0], { density: 200 }).resize(W, H, { fit: 'cover' }).blur(30).modulate({ brightness: 0.55 }).png().toBuffer();
+  const n = bufs.length;
+  const size = Math.min(H - 60, Math.floor((W - gap * (n + 1)) / n));
+  const x0 = Math.round((W - (n * size + (n - 1) * gap)) / 2);
+  const y = Math.round((H - size) / 2);
+  const mask = Buffer.from('<svg width="' + size + '" height="' + size + '"><rect width="' + size + '" height="' + size + '" rx="26" ry="26"/></svg>');
+  const layers = [];
+  for (let i = 0; i < n; i++) {
+    try {
+      const tile = await sharp(bufs[i], { density: 200 }).resize(size, size, { fit: 'cover' }).composite([{ input: mask, blend: 'dest-in' }]).png().toBuffer();
+      layers.push({ input: tile, left: x0 + i * (size + gap), top: y });
+    } catch (e) { /* una foto ilegible no tumba el collage */ }
+  }
+  if (!layers.length) return null;
+  return sharp(bg).composite(layers).jpeg({ quality: 82 }).toBuffer();
+}
+app.get('/:slug/pedido-img', ah(async (req, res) => {
+  const biz = getBusiness(req.params.slug);
+  if (!biz || !biz.active) return res.status(404).end();
+  const items = pedidoItems(biz, req.query);
+  if (!items.length) return res.status(404).end();
+  const key = biz.slug + ':' + items.map(it => it.p.id + '-' + (it.p.image || '')).join(',');
+  let buf = _pedidoImgCache.get(key);
+  if (!buf) {
+    buf = await pedidoCollage(items);
+    if (!buf) return res.status(404).end();
+    if (_pedidoImgCache.size > 150) _pedidoImgCache.delete(_pedidoImgCache.keys().next().value);
+    _pedidoImgCache.set(key, buf);
+  }
+  res.set('Cache-Control', 'public, max-age=86400').type('jpeg').send(buf);
+}));
+app.get('/:slug/pedido', (req, res, next) => {
+  const biz = getBusiness(req.params.slug);
+  if (!biz || !biz.active) return res.status(404).render('404', { message: 'Tienda no encontrada o desactivada' });
+  const items = pedidoItems(biz, req.query);
+  if (!items.length) return res.redirect('/' + biz.slug);
+  const qs = 'ids=' + items.map(it => it.p.id).join(',') + '&q=' + items.map(it => it.qty).join(',');
+  const total = items.reduce((s, it) => s + it.p.price * it.qty, 0);
+  const base = absoluteStoreUrl(req, biz);
+  res.set('Cache-Control', 'no-store');
+  app.render('pedido-fotos', {
+    biz, items, total, ogUrl: base + '/pedido?' + qs, ogImage: base + '/pedido-img?' + qs,
+    catDesign: catDesignOf(biz).id, catDesignTokens: catDesignOf(biz).tokens,
+    money: moneyFor(biz)
+  }, (err, html) => { if (err) return next(err); res.send(html); });
+});
 // ================= PAGO EN LÍNEA (MERCADO PAGO — CHECKOUT PRO) =================
 // Cada tienda usa su propia cuenta/Access Token (guardado en businesses.mp_access_token,
 // ver Configuración → Pagos en línea) — nunca una cuenta central compartida.

@@ -1,0 +1,74 @@
+<%
+  var _T = catDesignTokens;
+  function _lum(hex) {
+    var h = String(hex || '').replace('#', '');
+    if (h.length === 3) h = h.split('').map(function (c) { return c + c; }).join('');
+    if (!/^[0-9a-f]{6}$/i.test(h)) return 0.2;
+    var c = [0, 2, 4].map(function (i) { var v = parseInt(h.substr(i, 2), 16) / 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  }
+  var _onAccent = _lum(_T.accent) > 0.42 ? '#161513' : '#ffffff';
+  var _n = items.reduce(function (s, it) { return s + it.qty; }, 0);
+%><!DOCTYPE html>
+<html lang="es" data-style="<%= catDesign %>">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex" />
+  <title>Pedido para <%= biz.name %></title>
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Pedido para <%= biz.name %> · <%= _n %> producto<%= _n === 1 ? '' : 's' %>" />
+  <meta property="og:description" content="<%= items.map(function (it) { return it.qty + ' x ' + it.p.name; }).join(' · ').slice(0, 180).replace(/"/g, '&quot;') %> — Total <%= money(total) %>" />
+  <meta property="og:image" content="<%= ogImage %>" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:url" content="<%= ogUrl %>" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="<%= ogImage %>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="<%= _T.font.href %>" rel="stylesheet" />
+  <link rel="stylesheet" href="/vendor/bootstrap-icons/bootstrap-icons.min.css">
+  <style>
+    :root { --bg: <%- _T.bg %>; --card: <%- _T.card %>; --text: <%- _T.text %>; --sec: <%- _T.textSec %>; --accent: <%- _T.accent %>; --border: <%- _T.border %>; --radius: <%- _T.radius %>px; --hf: <%- _T.font.heading %>; --bf: <%- _T.font.body %>; --on: <%- _onAccent %>; --line: color-mix(in srgb, var(--text) 14%, transparent); }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: var(--bf); background: var(--bg); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; line-height: 1.5; }
+    a { color: inherit; text-decoration: none; }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 22px 16px 60px; }
+    .head { display: flex; align-items: center; gap: 12px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+    .head img { width: 46px; height: 46px; border-radius: 50%; object-fit: contain; background: var(--card); border: 1px solid var(--border); }
+    .head p { font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--sec); font-weight: 700; }
+    .head h1 { font-family: var(--hf); font-size: 1.35rem; line-height: 1.15; }
+    .list { display: flex; flex-direction: column; gap: 12px; margin-top: 18px; }
+    .it { display: flex; gap: 14px; align-items: center; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); transition: transform .25s cubic-bezier(.22,1,.36,1), border-color .2s; }
+    .it:hover { transform: translateY(-2px); border-color: var(--line); }
+    .it img { width: 92px; height: 92px; flex: none; object-fit: cover; border-radius: calc(var(--radius) * .6); background: color-mix(in srgb, var(--text) 6%, var(--card)); }
+    .it b { display: block; font-size: 15px; line-height: 1.3; }
+    .it small { display: block; color: var(--sec); font-size: 12.5px; margin-top: 3px; }
+    .it .pr { margin-left: auto; text-align: right; font-family: var(--hf); font-weight: 700; color: var(--accent); white-space: nowrap; }
+    .tot { display: flex; justify-content: space-between; align-items: baseline; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 15px; }
+    .tot b { font-family: var(--hf); font-size: 1.5rem; color: var(--accent); }
+    .cta { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; margin-top: 22px; border-radius: calc(var(--radius) * .6); background: var(--accent); color: var(--on); font-weight: 700; font-size: 14.5px; }
+    @media (max-width: 480px) { .it img { width: 72px; height: 72px; } .it { align-items: flex-start; } .it .pr { align-self: center; } }
+  </style>
+  <script src="/js/img-retry.js"></script>
+</head>
+<body>
+  <main class="wrap">
+    <header class="head">
+      <% if (biz.logo) { %><img src="<%= biz.logo %>" alt="" data-hide-on-error><% } %>
+      <div><p>Pedido recibido</p><h1><%= biz.name %></h1></div>
+    </header>
+    <div class="list">
+      <% items.forEach(function (it) { %>
+        <a class="it" href="/<%= biz.slug %>/p/<%= it.p.id %>">
+          <img src="<%= it.p.imgs[0] || '/img/sin-imagen.svg' %>" alt="<%= it.p.name %>" loading="lazy">
+          <div><b><%= it.p.name %></b><small><%= it.qty %> pieza<%= it.qty === 1 ? '' : 's' %> · <%= money(it.p.price) %> c/u</small></div>
+          <span class="pr"><%= money(it.p.price * it.qty) %></span>
+        </a>
+      <% }) %>
+    </div>
+    <div class="tot"><span>Total</span><b><%= money(total) %></b></div>
+    <a class="cta" href="/<%= biz.slug %>"><i class="bi bi-grid-3x3-gap"></i> Ver catálogo completo</a>
+  </main>
+</body>
+</html>
