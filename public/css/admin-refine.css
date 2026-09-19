@@ -93,3 +93,50 @@ main .m-card, .pn-kpi, .pn-share, .pn-plan { animation: pnUp .5s var(--pn-ease) 
 
 #sec-funnel > section:first-child > div:first-child { flex-wrap: wrap; gap: 8px; }
 .warning-card { border-radius: 14px; }
+
+/* ---------- Clientes ---------- */
+.cl-layout { display: grid; gap: 16px; align-items: start; }
+@media (min-width: 1024px) { .cl-layout { grid-template-columns: minmax(0, 1fr) 340px; } .cl-side { position: sticky; top: 16px; } }
+.cl-side > .m-card { margin-bottom: 14px; }
+.cl-list { padding: 0; overflow: hidden; }
+.cl-top { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; padding: 16px 16px 14px; border-bottom: 1px solid var(--pn-line); }
+.cl-h { font-size: 16px; font-weight: 800; letter-spacing: -.01em; }
+.cl-meta { font-size: 12.5px; color: var(--ap-text-sec); margin-top: 2px; }
+.cl-meta b { color: var(--ap-text); font-weight: 700; }
+.cl-search { position: relative; display: block; flex: 1 1 220px; max-width: 320px; }
+.cl-search i { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--ap-text-sec); font-size: 14px; pointer-events: none; }
+.cl-search input { width: 100%; min-height: 44px; padding: 0 14px 0 38px; border: 1px solid var(--pn-line); border-radius: 12px; background: var(--pn-soft); font-size: 14px; color: var(--ap-text); }
+.cl-rows { display: flex; flex-direction: column; }
+.cl-row { display: flex; align-items: center; gap: 12px; padding: 13px 16px; border-bottom: 1px solid var(--pn-line); transition: background .2s; }
+.cl-row.hidden { display: none; }
+.cl-row:last-child { border-bottom: 0; }
+.cl-row:hover { background: var(--pn-soft); }
+.cl-av { width: 42px; height: 42px; flex: none; display: grid; place-items: center; border-radius: 50%; background: color-mix(in srgb, var(--ap-accent-gold) 18%, var(--ap-card)); color: var(--ap-accent-text); font-weight: 800; font-size: 15px; }
+.cl-info { flex: 1; min-width: 0; }
+.cl-name { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-weight: 700; font-size: 14.5px; }
+.cl-name span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.cl-star { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 999px; font-style: normal; font-size: 10.5px; font-weight: 700; background: color-mix(in srgb, var(--ap-accent-gold) 16%, transparent); color: #8a6a34; }
+.cl-sub { display: flex; flex-wrap: wrap; gap: 2px 12px; margin-top: 3px; font-size: 12px; color: var(--ap-text-sec); }
+.cl-sub b { color: var(--ap-text); font-weight: 700; }
+.cl-note { margin-top: 4px; font-size: 12px; color: #9a6a1c; }
+.cl-actions { display: flex; align-items: center; gap: 6px; flex: none; }
+.cl-wa { display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 14px; border-radius: 12px; background: color-mix(in srgb, #1faa54 12%, var(--ap-card)); color: #167a3d; font-size: 13px; font-weight: 700; text-decoration: none; border: 1px solid color-mix(in srgb, #1faa54 28%, transparent); transition: background .2s, transform .2s; }
+.cl-wa:hover { background: color-mix(in srgb, #1faa54 20%, var(--ap-card)); transform: translateY(-1px); }
+.cl-del { width: 40px; height: 40px; display: grid; place-items: center; border: 0; border-radius: 12px; background: transparent; color: var(--ap-text-sec); cursor: pointer; transition: background .2s, color .2s; }
+.cl-del:hover { background: color-mix(in srgb, #b43232 10%, transparent); color: #b43232; }
+.cl-empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; padding: 44px 20px; color: var(--ap-text-sec); font-size: 13px; }
+.cl-empty span { width: 54px; height: 54px; display: grid; place-items: center; border-radius: 50%; background: var(--pn-soft); font-size: 24px; margin-bottom: 8px; }
+.cl-empty b { color: var(--ap-text); font-size: 15px; }
+.cl-empty p { max-width: 40ch; }
+@media (max-width: 640px) {
+  .cl-row { flex-wrap: wrap; }
+  .cl-actions { width: 100%; padding-left: 54px; }
+  .cl-wa { flex: 1; justify-content: center; }
+  .cl-search { max-width: none; flex-basis: 100%; }
+}
+.cl-side .m-field { margin: 0; }
+.cl-side form.grid { gap: 10px; }
+.cl-side h2 { font-size: 15px; }
+
+/* Campos dentro de rejillas: el hueco lo pone la rejilla, no el margen del campo */
+main .grid > .m-field, main form.grid .m-field { margin-bottom: 0; }

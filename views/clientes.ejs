@@ -19,86 +19,86 @@
         <div class="mb-3 bg-emerald-50 text-emerald-700 text-sm font-bold px-4 py-3 rounded-xl m-pop">Cliente guardado ✓</div>
       <% } %>
 
+      <div class="cl-layout">
+        <div class="cl-main">
+        <!-- Lista -->
+        <section class="m-card cl-list">
+          <% var _frec = customers.filter(function (c) { return c.orderCount >= 2; }).length; var _tot = customers.reduce(function (s, c) { return s + (c.totalSpent || 0); }, 0); %>
+          <div class="cl-top">
+            <div>
+              <h2 class="cl-h">Tus clientes</h2>
+              <p class="cl-meta"><b><%= customers.length %></b> en total · <b><%= _frec %></b> frecuente<%= _frec === 1 ? '' : 's' %><% if (_tot > 0) { %> · <b><%= money(_tot) %></b> comprado<% } %></p>
+            </div>
+            <label class="cl-search">
+              <i class="bi bi-search"></i>
+              <input id="cliente-search" type="text" placeholder="Buscar por nombre o teléfono" autocomplete="off">
+            </label>
+          </div>
+
+          <% if (customers.length === 0) { %>
+            <div class="cl-empty">
+              <span><i class="bi bi-people"></i></span>
+              <p><b>Aún no tienes clientes</b></p>
+              <p>Se guardan solos cuando alguien pide por WhatsApp con su nombre o teléfono. También puedes agregarlos a mano.</p>
+            </div>
+          <% } else { %>
+            <div id="cliente-list" class="cl-rows">
+              <% customers.forEach(c => { %>
+                <div class="cl-row" data-search="<%= (c.name + ' ' + c.phone).toLowerCase() %>" data-cliente-id="<%= c.id %>" data-cliente-name="<%= (c.name || '').replace(/"/g, '&quot;') %>" data-cliente-phone="<%= c.phone || '' %>" data-cliente-ordercount="<%= c.orderCount %>">
+                  <span class="cl-av"><%= (c.name || '?').trim().charAt(0).toUpperCase() %></span>
+                  <div class="cl-info">
+                    <p class="cl-name"><span><%= c.name %></span><% if (c.orderCount >= 2) { %><em class="cl-star"><i class="bi bi-star-fill"></i> Frecuente</em><% } %></p>
+                    <p class="cl-sub">
+                      <% if (c.phone) { %><span><i class="bi bi-telephone"></i> <%= c.phone %></span><% } %>
+                      <span><%= c.orderCount %> pedido<%= c.orderCount === 1 ? '' : 's' %></span>
+                      <span><% if (c.totalSpent > 0) { %><b><%= money(c.totalSpent) %></b><% } else { %>sin compras<% } %></span>
+                      <% if (c.orders.length) { %><span>último: <%= fmtFecha(c.orders[0].created_at, 'fecha') %></span><% } %>
+                    </p>
+                    <% if (c.notes) { %><p class="cl-note"><i class="bi bi-sticky"></i> <%= c.notes %></p><% } %>
+                  </div>
+                  <div class="cl-actions">
+                    <% if (c.phone) { %><a href="https://wa.me/<%= c.phone.startsWith('52') ? c.phone : '52' + c.phone %>" target="_blank" class="cl-wa" title="Enviar WhatsApp"><i class="bi bi-whatsapp"></i><span>WhatsApp</span></a><% } %>
+                    <form method="POST" action="/<%= biz.slug %>/admin/cliente/<%= c.id %>/eliminar" data-confirm="¿Eliminar a <%= c.name %>?">
+                      <button class="cl-del" title="Eliminar" aria-label="Eliminar a <%= c.name %>"><i class="bi bi-trash3"></i></button>
+                    </form>
+                  </div>
+                </div>
+              <% }) %>
+            </div>
+            <div id="cliente-pager"></div>
+          <% } %>
+        </section>
+        </div>
+        <aside class="cl-side">
       <!-- Nuevo cliente -->
       <section class="m-card p-4 mb-3">
         <h2 class="font-extrabold text-sm mb-3" style="color:var(--ap-text)">Nuevo cliente</h2>
-        <form method="POST" action="/<%= biz.slug %>/admin/cliente" class="grid sm:grid-cols-3 gap-3">
+        <form method="POST" action="/<%= biz.slug %>/admin/cliente" class="grid gap-3">
           <div class="m-field"><label>Nombre *</label><input name="name" required placeholder="Ej: María González"></div>
           <div class="m-field"><label>Teléfono</label><input name="phone" type="tel" inputmode="numeric" maxlength="12" pattern="[0-9]{3} [0-9]{3} [0-9]{4}" data-mask="phone" title="10 dígitos" placeholder="Ej: 871 234 5678"></div>
           <div class="m-field"><label>Notas</label><input name="notes" placeholder="Ej: prefiere WhatsApp"></div>
-          <div class="sm:col-span-3"><button class="m-btn m-btn-filled w-full !min-h-11">Guardar cliente</button></div>
+          <div><button class="pn-btn pn-btn-solid w-full">Guardar cliente</button></div>
         </form>
       </section>
 
       <!-- Enviar promo -->
       <section class="m-card p-4 mb-3">
         <h2 class="font-extrabold text-sm mb-1 flex items-center gap-1.5" style="color:var(--ap-text)">
-          <svg class="w-4 h-4" style="color:var(--ap-accent-text)" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 106 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+          <i class="bi bi-megaphone" style="color:var(--ap-accent-text)"></i>
           Enviar promo
         </h2>
         <p class="text-xs mb-3" style="color:var(--ap-text-sec)">Escribe un mensaje y envíalo por WhatsApp a tus clientes. Usa <b>{nombre}</b> para personalizarlo con el nombre de cada quien.</p>
         <textarea id="promo-msg" rows="3" class="w-full border rounded-xl px-3 py-2 text-sm focus:outline-none" style="border-color:var(--ap-border);background:var(--ap-bg);color:var(--ap-text)">¡Hola {nombre}! Te aviso que tenemos promociones nuevas esta semana. ¿Te interesa? 😊</textarea>
         <div class="flex flex-wrap gap-2 mt-3">
-          <button type="button" onclick="prepararPromo('todos')" class="m-btn m-btn-filled m-btn-sm">Enviar a todos</button>
-          <button type="button" onclick="prepararPromo('frecuentes')" class="m-btn m-btn-tonal m-btn-sm">Solo frecuentes (2+ pedidos)</button>
-          <button type="button" onclick="copiarPromo()" class="m-btn m-btn-outlined m-btn-sm">Copiar mensaje</button>
+          <button type="button" onclick="prepararPromo('todos')" class="pn-btn pn-btn-solid pn-btn-sm">Enviar a todos</button>
+          <button type="button" onclick="prepararPromo('frecuentes')" class="pn-btn pn-btn-sm">Solo frecuentes (2+ pedidos)</button>
+          <button type="button" onclick="copiarPromo()" class="pn-btn pn-btn-sm">Copiar mensaje</button>
         </div>
         <div id="promo-result" class="mt-3"></div>
       </section>
+        </aside>
+      </div>
 
-      <!-- Lista -->
-      <section class="m-card p-4">
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="font-extrabold text-sm" style="color:var(--ap-text)">Clientes <span class="m-badge m-badge-neutral !ml-1"><%= customers.length %></span></h2>
-          <div class="relative">
-            <input id="cliente-search" type="text" placeholder="Buscar cliente…" class="border rounded-full pl-9 pr-3 py-1.5 text-xs focus:outline-none" style="border-color:var(--ap-border);background:var(--ap-card);color:var(--ap-text)">
-            <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style="color:var(--ap-text-sec)" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
-          </div>
-        </div>
-
-        <% if (customers.length === 0) { %>
-          <div class="text-center py-8 rounded-xl" style="border:2px dashed var(--ap-border)">
-            <svg class="w-8 h-8 mx-auto mb-2" style="color:var(--ap-text-sec)" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            <p class="text-xs font-semibold" style="color:var(--ap-text-sec)">Aún no tienes clientes. Se guardan solos cuando alguien pide por WhatsApp con su nombre o teléfono.</p>
-          </div>
-        <% } else { %>
-          <div id="cliente-list" class="divide-y" style="border-color:var(--ap-border)">
-            <% customers.forEach(c => { %>
-              <div class="m-list-item m-ripple px-2 py-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3" data-search="<%= (c.name + ' ' + c.phone).toLowerCase() %>" data-cliente-id="<%= c.id %>" data-cliente-name="<%= (c.name || '').replace(/"/g, '&quot;') %>" data-cliente-phone="<%= c.phone || '' %>" data-cliente-ordercount="<%= c.orderCount %>">
-                <div class="flex items-center gap-3 min-w-0">
-                <div class="w-10 h-10 rounded-full font-black flex items-center justify-center shrink-0 text-sm" style="background:rgba(44,44,46,.1);color:var(--ap-accent-text)">
-                  <%= (c.name || '?').trim().charAt(0).toUpperCase() %>
-                </div>
-                <div class="min-w-0 flex-1">
-                  <div class="flex items-center gap-2 flex-wrap">
-                    <p class="font-bold text-sm truncate" style="color:var(--ap-text)"><%= c.name %></p>
-                    <% if (c.phone) { %><span class="text-[11px] font-semibold" style="color:var(--ap-text-sec)"><%= c.phone %></span><% } %>
-                    <% if (c.orderCount >= 2) { %><span class="m-badge m-badge-warn !h-5 !text-[10px]">⭐ Frecuente</span><% } %>
-                  </div>
-                  <p class="text-[11px] mt-0.5" style="color:var(--ap-text-sec)">
-                    <%= c.orderCount %> pedido<%= c.orderCount === 1 ? '' : 's' %> ·
-                    <% if (c.totalSpent > 0) { %><b style="color:var(--ap-text)"><%= money(c.totalSpent) %></b> comprado<% } else { %>sin compras aún<% } %>
-                    <% if (c.orders.length) { %> · último: <%= fmtFecha(c.orders[0].created_at, 'fecha') %><% } %>
-                    <% if (c.notes) { %> · <span class="text-amber-600"><%= c.notes %></span><% } %>
-                  </p>
-                </div>
-                </div>
-                <div class="flex items-center gap-1 flex-wrap justify-start sm:justify-end sm:shrink-0">
-                  <% if (c.phone) { %>
-                    <a href="https://wa.me/<%= c.phone.startsWith('52') ? c.phone : '52' + c.phone %>" target="_blank" class="m-btn m-btn-sm !min-h-0 !py-1.5 !bg-emerald-500 !text-white" title="Enviar WhatsApp">
-                      💬 WhatsApp
-                    </a>
-                  <% } %>
-                  <form method="POST" action="/<%= biz.slug %>/admin/cliente/<%= c.id %>/eliminar" data-confirm="¿Eliminar a <%= c.name %>?" class="inline">
-                    <button class="m-btn-icon !w-8 !h-8 hover:!bg-red-50 hover:!text-red-500" title="Eliminar">✕</button>
-                  </form>
-                </div>
-              </div>
-            <% }) %>
-          </div>
-          <div id="cliente-pager"></div>
-        <% } %>
-      </section>
 
     </div>
   </main>
