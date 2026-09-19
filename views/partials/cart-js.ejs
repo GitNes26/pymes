@@ -526,6 +526,7 @@
     const body = document.getElementById('chat-body');
     if (!body) return;
     const groups = storeGroups();
+    groups.forEach(prefetchOrderPhoto);
     const sub = document.getElementById('chat-sub');
     if (sub) {
       const n = cartItems().reduce((s, i) => s + i.qty, 0);
@@ -587,6 +588,7 @@
           <div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;">
             ${(MP_ENABLED && g.store.slug === SLUG) ? `<button type="button" onclick="payWithMercadoPago(${jattr(g.store.slug)})" style="width:100%;background:#009ee3;color:#fff;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:14px;cursor:pointer;">💳 Pagar con Mercado Pago</button>` : ''}
             <button type="button" onclick="sendStoreOrder(${jattr(g.store.slug)})" style="width:100%;background:#1e293b;color:#fff;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:14px;cursor:pointer;">Pedir por WhatsApp</button>
+            ${canSharePhotos() ? `<button type="button" onclick="sendStoreOrder(${jattr(g.store.slug)}, true)" style="width:100%;margin-top:8px;background:none;border:1px solid #cbd5e1;color:#1e293b;border-radius:12px;padding:10px;font-weight:700;font-size:13px;cursor:pointer;">📷 Enviar con foto de los productos</button><p style="font-size:10.5px;color:#94a3b8;margin:5px 2px 0;text-align:center;">Elige el chat de ${esc(g.store.name)} en el menu que se abre.</p>` : ''}
           </div>
         </div>`;
     }).join('');
@@ -630,8 +632,25 @@
     return true;
   }
   let _sendingOrder = false;
-  function sendStoreOrder(slug) {
-    if (_sendingOrder) return; // evita doble clic / doble envío
+  // Foto real del pedido: wa.me no puede adjuntar imagenes, pero el menu "Compartir" del celular si
+  // (Web Share con archivos). Se precarga el collage para que el clic conserve el gesto del usuario.
+  const _orderPhotos = {};
+  function orderPhotoKey(g) { return g.store.slug + ':' + g.items.map(it => it.id + 'x' + it.qty).join(','); }
+  function canSharePhotos() {
+    try { return !!(navigator.canShare && navigator.canShare({ files: [new File(['x'], 'a.jpg', { type: 'image/jpeg' })] })); } catch (e) { return false; }
+  }
+  function prefetchOrderPhoto(g) {
+    if (!canSharePhotos()) return;
+    const key = orderPhotoKey(g);
+    if (_orderPhotos[key]) return;
+    _orderPhotos[key] = 'loading';
+    fetch('/' + g.store.slug + '/pedido-img?ids=' + g.items.map(it => it.id).join(',') + '&q=' + g.items.map(it => it.qty).join(','))
+      .then(r => r.ok ? r.blob() : Promise.reject())
+      .then(b => { _orderPhotos[key] = new File([b], 'pedido-' + g.store.slug + '.jpg', { type: 'image/jpeg' }); })
+      .catch(() => { delete _orderPhotos[key]; });
+  }
+  function sendStoreOrder(slug, withPhoto) {
+    if (_sendingOrder) return; // evita doble clic / doble envio
     if (!validarDatosCliente()) return;
     const g = storeGroups().find(x => x.store.slug === slug);
     if (!g) return;
@@ -656,12 +675,26 @@
       msg += '\n\n' + datos.join('\n');
     }
     // wa.me no adjunta imágenes; WhatsApp sí muestra una tarjeta con foto del enlace: apunta a la página del pedido con collage
-    msg += '\n\n📸 Fotos de mi pedido:\n' + location.origin + '/' + g.store.slug + '/pedido?ids=' + g.items.map(it => it.id).join(',') + '&q=' + g.items.map(it => it.qty).join(',');
+    const photoFile = withPhoto ? _orderPhotos[orderPhotoKey(g)] : null;
+    const sharePhoto = photoFile && photoFile !== 'loading' && canSharePhotos();
+    if (!sharePhoto) msg += '\n\n📸 Fotos de mi pedido:\n' + location.origin + '/' + g.store.slug + '/pedido?ids=' + g.items.map(it => it.id).join(',') + '&q=' + g.items.map(it => it.qty).join(',');
     const url = 'https://wa.me/' + waNumber(g.store.whatsapp) + '?text=' + encodeURIComponent(msg);
     try {
       fetch('/api/pedir', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: g.items.map(it => ({ store: it.store.slug, id: it.id, qty: it.qty, variant: it.variant })), nombre: nombre, telefono: telefono }) }).catch(() => {});
     } catch (e) {}
+    if (sharePhoto) {
+      // Sale la foto adjunta: el cliente elige el chat de la tienda en el menu de compartir
+      navigator.share({ files: [photoFile], text: msg }).then(() => finishOrder(g)).catch(() => {
+        // cancelo el menu: no se vacia el carrito ni se pierde el pedido
+        _sendingOrder = false;
+        renderCart();
+      });
+      return;
+    }
     window.open(url, '_blank');
+    finishOrder(g);
+  }
+  function finishOrder(g) {
     // El pedido ya se registró arriba (fetch a /api/pedir): una vez que se
     // abrió WhatsApp con el mensaje listo, ya no tiene caso dejar esos
     // productos en el carrito — si se quedaban, el cliente terminaba
