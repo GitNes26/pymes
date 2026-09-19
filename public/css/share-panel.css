@@ -1,0 +1,36 @@
+/* Panel de compartir de la "Publicidad del producto" */
+.tps { display: flex; flex-direction: column; gap: 14px; }
+.tps-bar { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) 46px; gap: 8px; position: sticky; top: -1px; z-index: 3; background: #fff; padding: 2px 0 10px; }
+.tps-btn { min-width: 0; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; padding: 0 16px; border: 1px solid #E5E1D6; border-radius: 12px; background: #fff; color: #15181d; font: 700 13px Inter, system-ui, sans-serif; cursor: pointer; transition: transform .2s cubic-bezier(.22, 1, .36, 1), border-color .2s, background .2s; }
+.tps-btn:hover { border-color: #b9b4a4; transform: translateY(-1px); }
+.tps-btn:active { transform: scale(.97); }
+.tps-btn i { font-size: 16px; }
+.tps-solid { background: #2c2c2e; border-color: #2c2c2e; color: #fff; }
+.tps-solid:hover { background: #454548; border-color: #454548; }
+.tps-ico { padding: 0; }
+.tps-sec { padding-top: 14px; border-top: 1px solid #ECE9E0; }
+.tps-title { font-size: 13px; font-weight: 800; color: #15181d; letter-spacing: -.005em; }
+.tps-sub { font-size: 11.5px; color: #7a7f87; margin-top: 2px; line-height: 1.45; }
+.tps-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.tps-tones { display: inline-flex; padding: 3px; border-radius: 999px; background: #F1EFE8; gap: 2px; }
+.tps-tones button { min-height: 30px; padding: 0 12px; border: 0; border-radius: 999px; background: transparent; font: 700 11.5px Inter, system-ui, sans-serif; color: #61666e; cursor: pointer; transition: background .2s, color .2s; }
+.tps-tones button.is-on { background: #2c2c2e; color: #fff; }
+#tp-caption { width: 100%; border: 1px solid #E5E1D6; border-radius: 12px; padding: 12px 13px; font: 500 13px/1.55 Inter, system-ui, sans-serif; color: #15181d; background: #FAF9F5; resize: vertical; min-height: 130px; outline: none; }
+#tp-caption:focus { border-color: #2c2c2e; box-shadow: 0 0 0 3px rgba(44, 44, 46, .12); background: #fff; }
+.tps-cap-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 7px; font-size: 11px; color: #7a7f87; flex-wrap: wrap; }
+.tps-cap-actions { display: inline-flex; gap: 6px; }
+.tps-cap-actions button { display: inline-flex; align-items: center; gap: 5px; min-height: 34px; padding: 0 11px; border: 1px solid #E5E1D6; border-radius: 9px; background: #fff; font: 700 11.5px Inter, system-ui, sans-serif; color: #2c2c2e; cursor: pointer; }
+.tps-cap-actions button:hover { border-color: #b9b4a4; }
+.tps-channels { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+.tps-channels button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-height: 64px; padding: 8px 4px; border: 1px solid #E5E1D6; border-radius: 14px; background: #fff; font: 700 11.5px Inter, system-ui, sans-serif; color: #3a3f47; cursor: pointer; transition: transform .25s cubic-bezier(.34, 1.56, .64, 1), border-color .2s, background .2s; }
+.tps-channels button i { font-size: 21px; color: var(--c); transition: transform .25s cubic-bezier(.34, 1.56, .64, 1); }
+.tps-channels button:hover { border-color: var(--c); background: color-mix(in srgb, var(--c) 7%, #fff); transform: translateY(-2px); }
+.tps-channels button:hover i { transform: scale(1.15); }
+.tps-channels button:active { transform: scale(.95); }
+.tps-link { display: flex; gap: 8px; margin-top: 10px; }
+.tps-link input { flex: 1; min-width: 0; min-height: 44px; padding: 0 12px; border: 1px solid #E5E1D6; border-radius: 12px; background: #FAF9F5; font: 600 12px ui-monospace, SFMono-Regular, Menlo, monospace; color: #3a3f47; outline: none; }
+.tps-link button { width: 46px; border: 1px solid #E5E1D6; border-radius: 12px; background: #fff; color: #2c2c2e; cursor: pointer; font-size: 16px; }
+.tps-link button:hover { border-color: #b9b4a4; }
+.tps-all { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 42px; margin-top: 10px; border: 1px dashed #cfcab9; border-radius: 12px; background: transparent; font: 700 12.5px Inter, system-ui, sans-serif; color: #3a3f47; cursor: pointer; }
+.tps-all:hover { background: #FAF9F5; border-color: #2c2c2e; }
+@media (max-width: 520px) { .tps-bar { grid-template-columns: 1fr 1fr 46px; } }

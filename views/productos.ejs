@@ -2503,6 +2503,7 @@
     })();
   </script>
 
+  <link rel="stylesheet" href="/css/share-panel.css?v=20260918b">
   <!-- Modal: tarjeta de producto para redes sociales -->
   <style>
     #tp-modal { display:none; }
@@ -2600,25 +2601,58 @@
               </label>
             </div>
           </div>
-          <div>
-            <button id="tp-download" type="button" onclick="descargarFormatoTarjeta()" class="m-btn m-btn-filled w-full !text-xs !h-11">
-              <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14"/></svg>
-              Descargar cuadrada 1:1
-            </button>
-            <button type="button" onclick="compartirTarjetaProducto()" class="m-btn m-btn-outlined w-full mt-2 !text-xs !h-11">
-              <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 10.7 6.8-4.4m-6.8 7 6.8 4.4"/></svg>
-              Compartir imagen
-            </button>
-          </div>
-          <div class="pt-4 border-t border-neutral-200">
-            <p class="text-xs font-bold text-neutral-800 mb-1">Enlace directo incluido</p>
-            <p class="text-[10px] text-neutral-500 mb-2">La pieza lleva un QR que abre este producto.</p>
-            <div class="flex gap-2">
-              <input id="tp-link" aria-label="Enlace del producto" readonly onclick="this.select()" class="flex-1 min-w-0 text-xs text-neutral-700 bg-neutral-50 border border-neutral-300 rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-neutral-700/20" value="">
-              <button type="button" onclick="copiarEnlaceProducto()" aria-label="Copiar enlace" class="m-btn m-btn-outlined !px-3">
-                <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-              </button>
+          <!-- ===== COMPARTIR ===== -->
+          <div class="tps">
+            <div class="tps-bar">
+              <button type="button" id="tp-share-main" onclick="compartirTarjetaProducto()" class="tps-btn tps-solid"><i class="bi bi-send"></i><span>Compartir</span></button>
+              <button id="tp-download" type="button" onclick="descargarFormatoTarjeta()" class="tps-btn" title="Descargar la imagen"><i class="bi bi-download"></i> Descargar</button>
+              <button type="button" onclick="copiarImagenTarjeta()" class="tps-btn tps-ico" title="Copiar imagen para pegarla en WhatsApp Web, Facebook…" aria-label="Copiar imagen"><i class="bi bi-images"></i></button>
             </div>
+
+            <section class="tps-sec">
+              <div class="tps-head">
+                <div><p class="tps-title">Texto para publicar</p><p class="tps-sub">Listo para pegar, con precio, promo y enlace.</p></div>
+                <div class="tps-tones" role="group" aria-label="Tono del texto">
+                  <button type="button" class="is-on" data-tone="venta" onclick="tpTono('venta')">Ventas</button>
+                  <button type="button" data-tone="elegante" onclick="tpTono('elegante')">Elegante</button>
+                  <button type="button" data-tone="corto" onclick="tpTono('corto')">Corto</button>
+                </div>
+              </div>
+              <textarea id="tp-caption" rows="7" aria-label="Texto de la publicación" oninput="TPCARD.dirty=true;tpContarCaption()"></textarea>
+              <div class="tps-cap-foot">
+                <span id="tp-cap-count">0 caracteres</span>
+                <span class="tps-cap-actions">
+                  <button type="button" onclick="tpTono(TPCARD.tone||'venta')" title="Volver a generar el texto"><i class="bi bi-arrow-counterclockwise"></i> Regenerar</button>
+                  <button type="button" onclick="copiarTextoTarjeta()"><i class="bi bi-clipboard"></i> Copiar texto</button>
+                </span>
+              </div>
+            </section>
+
+            <section class="tps-sec">
+              <p class="tps-title">Publicar en</p>
+              <p class="tps-sub">Abre la red con el texto y el enlace ya puestos. En las que no aceptan imagen desde un enlace, descargamos la pieza y copiamos el texto por ti.</p>
+              <div class="tps-channels">
+                <button type="button" onclick="tpCanal('whatsapp')" style="--c:#1faa54"><i class="bi bi-whatsapp"></i><span>WhatsApp</span></button>
+                <button type="button" onclick="tpCanal('estado')" style="--c:#1faa54"><i class="bi bi-circle-square"></i><span>Estado</span></button>
+                <button type="button" onclick="tpCanal('facebook')" style="--c:#1877f2"><i class="bi bi-facebook"></i><span>Facebook</span></button>
+                <button type="button" onclick="tpCanal('instagram')" style="--c:#d6249f"><i class="bi bi-instagram"></i><span>Instagram</span></button>
+                <button type="button" onclick="tpCanal('tiktok')" style="--c:#111"><i class="bi bi-tiktok"></i><span>TikTok</span></button>
+                <button type="button" onclick="tpCanal('telegram')" style="--c:#229ed9"><i class="bi bi-telegram"></i><span>Telegram</span></button>
+                <button type="button" onclick="tpCanal('x')" style="--c:#111"><i class="bi bi-twitter-x"></i><span>X</span></button>
+                <button type="button" onclick="tpCanal('pinterest')" style="--c:#e60023"><i class="bi bi-pinterest"></i><span>Pinterest</span></button>
+                <button type="button" onclick="tpCanal('email')" style="--c:#5b6472"><i class="bi bi-envelope"></i><span>Correo</span></button>
+              </div>
+            </section>
+
+            <section class="tps-sec">
+              <p class="tps-title">Enlace directo</p>
+              <p class="tps-sub">La pieza lleva un QR que abre este producto.</p>
+              <div class="tps-link">
+                <input id="tp-link" aria-label="Enlace del producto" readonly onclick="this.select()" value="">
+                <button type="button" onclick="copiarEnlaceProducto()" aria-label="Copiar enlace"><i class="bi bi-clipboard"></i></button>
+              </div>
+              <button type="button" class="tps-all" onclick="descargarTodasTarjeta()"><i class="bi bi-file-earmark-zip"></i> Descargar las 4 proporciones</button>
+            </section>
           </div>
         </div>
       </div>
@@ -2702,6 +2736,7 @@
       TPCARD.photo = ''; TPCARD.photoImg = null;
       tpDibujar(null);
       tpCargarFoto(0);
+      if (!TPCARD.dirty) tpTono(TPCARD.tone || 'venta');
     }
 
     function tpSym(n) {
@@ -2751,7 +2786,7 @@
     function abrirTarjetaProducto(row) {
       if (!row) return;
       TPCARD.row = row; TPCARD.url = ''; TPCARD.photo = ''; TPCARD.photoImg = null; TPCARD.qrImg = null; TPCARD.canvases = {}; TPCARD.opener = document.activeElement;
-      TPCARD.style = 'diagonal';
+      TPCARD.style = 'diagonal'; TPCARD.tone = 'venta'; TPCARD.dirty = false;
       TPCARD_BIZ.accent = TPCARD_DEFAULT_COLORS.accent; TPCARD_BIZ.accent2 = TPCARD_DEFAULT_COLORS.accent2;
       tpSyncColorInputs();
       tpPoblarVariantes(row);
@@ -2776,6 +2811,7 @@
           if (!d.ok) throw new Error(d.error || 'No se pudo preparar la tarjeta');
           TPCARD.url = d.url;
           var li = document.getElementById('tp-link'); if (li) li.value = d.url;
+          TPCARD.dirty = false; tpTono(TPCARD.tone || 'venta');
           tpPintar();
           if (d.qr) {
             var qr = new Image();
@@ -3466,7 +3502,7 @@
       });
       var info = TP_FORMATS[TPCARD.format];
       var btn=document.getElementById('tp-download'),note=document.getElementById('tp-size-note');
-      if(btn)btn.lastChild.textContent=' Descargar ' + info.label.toLowerCase();
+      if(btn)btn.lastChild.textContent=' Descargar';
       if(note)note.textContent=info.note;
       tpRenderPreview();
     }
@@ -3508,6 +3544,137 @@
       };
       if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(TPCARD.url).then(done, fallback);
       else fallback();
+    }
+
+    // ===== Compartir la publicidad: texto listo, canales y copiado de imagen =====
+    function tpPromoTexto(row) {
+      var t = row.getAttribute('data-edit-promo-type') || '';
+      var v = row.getAttribute('data-edit-promo-value') || '';
+      var g = row.getAttribute('data-edit-promo-gift') || '';
+      if (t === 'regalo' && g) return 'Llévate de regalo: ' + g;
+      if (t && v) return t.charAt(0).toUpperCase() + t.slice(1) + ' ' + v;
+      return '';
+    }
+    function tpHashtags(row) {
+      var tags = (row.getAttribute('data-edit-tags') || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean).slice(0, 4);
+      tags.push(TPCARD_BIZ.name);
+      var seen = {};
+      return tags.map(function (s) {
+        return '#' + s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '');
+      }).filter(function (h) { if (h.length < 3 || seen[h.toLowerCase()]) return false; seen[h.toLowerCase()] = 1; return true; }).join(' ');
+    }
+    function tpGenerarCaption(tone) {
+      var row = TPCARD.row; if (!row) return '';
+      var name = row.getAttribute('data-edit-name') || 'Producto';
+      var desc = (row.getAttribute('data-edit-desc') || '').trim();
+      if (desc.length > 140) desc = desc.slice(0, 137).replace(/\s+\S*$/, '') + '…';
+      var price = tpSym(tpEffectivePrice(row));
+      var oldRaw = tpEffectiveOld(row);
+      var old = oldRaw && Number(oldRaw) > Number(tpEffectivePrice(row)) ? tpSym(oldRaw) : '';
+      var promo = tpPromoTexto(row);
+      var inst = row.getAttribute('data-edit-installments') === '1'
+        ? 'A solo ' + (row.getAttribute('data-edit-inst-count') || 6) + ' abonos de ' + tpSym(Math.ceil(Number(tpEffectivePrice(row)) / (Number(row.getAttribute('data-edit-inst-count')) || 6))) : '';
+      var url = TPCARD.url || '';
+      var biz = TPCARD_BIZ.name;
+      var L = [];
+      if (tone === 'corto') {
+        L.push(name + ' · ' + price + (old ? ' (antes ' + old + ')' : ''));
+        if (url) L.push(url);
+        return L.join('\n');
+      }
+      if (tone === 'elegante') {
+        L.push(name);
+        if (desc) L.push('', desc);
+        L.push('', price + (old ? '  ·  antes ' + old : ''));
+        if (promo) L.push(promo);
+        if (inst) L.push(inst);
+        L.push('', 'Descúbrelo en ' + biz + (url ? ':' : '.'));
+        if (url) L.push(url);
+        var ht = tpHashtags(row); if (ht) L.push('', ht);
+        return L.join('\n');
+      }
+      L.push('🔥 ' + name.toUpperCase());
+      if (desc) L.push(desc);
+      L.push('');
+      L.push('💰 ' + (old ? 'Antes ' + old + ' → ' : '') + 'Hoy ' + price);
+      if (promo) L.push('🎁 ' + promo);
+      if (inst) L.push('💳 ' + inst);
+      L.push('');
+      L.push('📲 Pídelo aquí' + (url ? ':' : '.'));
+      if (url) L.push(url);
+      L.push('✨ ' + biz);
+      var ht2 = tpHashtags(row); if (ht2) L.push('', ht2);
+      return L.join('\n');
+    }
+    function tpTono(tone) {
+      TPCARD.tone = tone; TPCARD.dirty = false;
+      document.querySelectorAll('.tps-tones button').forEach(function (b) { b.classList.toggle('is-on', b.getAttribute('data-tone') === tone); });
+      var ta = document.getElementById('tp-caption');
+      if (ta) { ta.value = tpGenerarCaption(tone); tpContarCaption(); }
+    }
+    function tpContarCaption() {
+      var ta = document.getElementById('tp-caption'), c = document.getElementById('tp-cap-count');
+      if (ta && c) c.textContent = ta.value.length + ' caracteres';
+    }
+    function tpTexto() { var ta = document.getElementById('tp-caption'); return (ta && ta.value.trim()) || tpGenerarCaption('venta'); }
+    function tpCopiar(text, okMsg) {
+      var fallback = function () {
+        var ta = document.createElement('textarea'); ta.value = text; ta.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); mostrarToast(okMsg, 'ok'); } catch (e) { mostrarToast('No se pudo copiar', 'error'); }
+        ta.remove();
+      };
+      if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(function () { mostrarToast(okMsg, 'ok'); }, fallback); else fallback();
+    }
+    function copiarTextoTarjeta() { tpCopiar(tpTexto(), 'Texto copiado ✓'); }
+    function copiarImagenTarjeta() {
+      var canvas = TPCARD.canvases[TPCARD.format];
+      if (!canvas) { mostrarToast('Aún se está generando la tarjeta', 'error'); return; }
+      if (!(window.ClipboardItem && navigator.clipboard && navigator.clipboard.write && window.isSecureContext)) {
+        tpDescargarCanvas(canvas, TPCARD.format, 'Tu navegador no copia imágenes; la descargamos');
+        return;
+      }
+      canvas.toBlob(function (blob) {
+        if (!blob) { mostrarToast('No se pudo preparar la imagen', 'error'); return; }
+        navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]).then(
+          function () { mostrarToast('Imagen copiada — pégala en tu publicación ✓', 'ok'); },
+          function () { tpDescargarCanvas(canvas, TPCARD.format, 'No se pudo copiar; la descargamos'); }
+        );
+      }, 'image/png');
+    }
+    function tpAbsImg() {
+      var s = TPCARD.row ? (TPCARD.row.getAttribute('data-edit-image') || '') : '';
+      if (!s) return '';
+      return /^https?:/i.test(s) ? s : location.origin + (s.charAt(0) === '/' ? s : '/' + s);
+    }
+    // Canales: los que aceptan enlace+texto lo abren ya llenos; los que no (Instagram, TikTok, Estados)
+    // reciben la pieza descargada y el texto copiado, con la indicación de qué hacer.
+    function tpCanal(canal) {
+      var text = tpTexto(), url = TPCARD.url || '', enc = encodeURIComponent;
+      var nombre = TPCARD.row ? TPCARD.row.getAttribute('data-edit-name') : 'Producto';
+      var abrir = function (u) { window.open(u, '_blank', 'noopener'); };
+      var preparar = function (formato, msg) {
+        var canvas = TPCARD.canvases[formato];
+        tpCopiar(text, 'Texto copiado ✓');
+        if (canvas) setTimeout(function () { tpDescargarCanvas(canvas, formato, msg); }, 350);
+      };
+      if (canal === 'whatsapp') return abrir('https://wa.me/?text=' + enc(text));
+      if (canal === 'facebook') return abrir('https://www.facebook.com/sharer/sharer.php?u=' + enc(url) + '&quote=' + enc(text));
+      if (canal === 'telegram') return abrir('https://t.me/share/url?url=' + enc(url) + '&text=' + enc(text.replace(url, '').trim()));
+      if (canal === 'x') return abrir('https://twitter.com/intent/tweet?text=' + enc(text.replace(url, '').trim().slice(0, 240)) + '&url=' + enc(url));
+      if (canal === 'pinterest') return abrir('https://www.pinterest.com/pin/create/button/?url=' + enc(url) + '&media=' + enc(tpAbsImg()) + '&description=' + enc(text.replace(url, '').trim().slice(0, 480)));
+      if (canal === 'email') { location.href = 'mailto:?subject=' + enc(nombre + ' · ' + TPCARD_BIZ.name) + '&body=' + enc(text); return; }
+      if (canal === 'instagram') return preparar('feed', 'Pieza 4:5 descargada — súbela en Instagram y pega el texto');
+      if (canal === 'tiktok') return preparar('story', 'Pieza 9:16 descargada — súbela en TikTok y pega el texto');
+      if (canal === 'estado') return preparar('story', 'Pieza 9:16 descargada — publícala como Estado de WhatsApp');
+    }
+    function descargarTodasTarjeta() {
+      var keys = Object.keys(TP_FORMATS), i = 0;
+      (function next() {
+        if (i >= keys.length) return;
+        var k = keys[i++];
+        tpDescargarCanvas(TPCARD.canvases[k], k, TP_FORMATS[k].label + ' descargada ✓');
+        setTimeout(next, 500);
+      })();
     }
   </script>
 </body>
