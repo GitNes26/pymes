@@ -140,3 +140,20 @@ main .m-card, .pn-kpi, .pn-share, .pn-plan { animation: pnUp .5s var(--pn-ease) 
 
 /* Campos dentro de rejillas: el hueco lo pone la rejilla, no el margen del campo */
 main .grid > .m-field, main form.grid .m-field { margin-bottom: 0; }
+
+/* ---------- Campos con etiqueta flotante: alto táctil, borde suave, sin huecos raros ---------- */
+main .m-field input, main .m-field textarea, main .m-field select { min-height: 46px; border: 1px solid var(--pn-line); border-radius: 12px; background: var(--ap-card); }
+main .m-field textarea { min-height: 84px; }
+main .m-field input:hover, main .m-field textarea:hover, main .m-field select:hover { border-color: color-mix(in srgb, var(--ap-text) 26%, transparent); }
+main .gap-2 > .m-field, main .gap-3 > .m-field, main .gap-4 > .m-field, main .gap-5 > .m-field, main .gap-6 > .m-field { margin-top: 0; }
+
+/* ---------- Encabezados de página unificados (Configuración y páginas con page-header) ---------- */
+main .config-shell .config-hero { padding: 2px 0 0; border: 0; border-radius: 0; background: transparent; margin-bottom: 16px; align-items: flex-end; }
+main .config-shell .config-title { margin-top: 0; font-size: clamp(1.5rem, 3.4vw, 2rem); font-weight: 800; letter-spacing: -.02em; line-height: 1.15; }
+main .config-shell .config-lede { margin-top: 3px; font-size: 13.5px; }
+main .config-shell .config-catalog-link { min-height: 44px; padding: 0 16px; border-radius: 12px; border: 1px solid var(--pn-line) !important; background: var(--ap-card) !important; color: var(--ap-text) !important; font-weight: 600; font-size: 13.5px; }
+main .config-shell .config-catalog-link:hover { border-color: color-mix(in srgb, var(--ap-text) 30%, transparent) !important; background: var(--ap-card) !important; }
+.admin-page-header h1 { font-size: clamp(1.4rem, 3.2vw, 1.85rem) !important; letter-spacing: -.02em !important; line-height: 1.15; }
+.admin-page-header p { font-size: 13.5px !important; }
+.admin-page-header { margin-bottom: 18px !important; }
+.admin-page-header__icon { width: 44px !important; height: 44px !important; border: 1px solid var(--pn-line); background: var(--ap-card) !important; }
