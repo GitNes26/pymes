@@ -9,20 +9,18 @@
   <main class="transition-all duration-300">
     <div class="px-4 md:px-8 py-4 md:py-6 pb-24 md:pb-6">
 
-      <!-- Encabezado compacto -->
-      <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
-        <div>
-          <h1 class="text-lg md:text-xl font-extrabold tracking-tight" style="color:var(--ap-text);letter-spacing:-0.015em">Hola, <%= biz.name.split(' ')[0] %> 👋</h1>
-          <p class="text-xs mt-0.5" style="color:var(--ap-text-sec)">Resumen de tu catálogo hoy.</p>
+      <!-- Encabezado -->
+      <header class="pn-head">
+        <div class="pn-head-txt">
+          <p class="pn-date"><%= new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' }) %></p>
+          <h1 class="pn-title">Hola, <%= biz.name.split(' ')[0] %> 👋</h1>
+          <p class="pn-sub">Así va tu catálogo hoy.</p>
         </div>
-        <div class="flex items-center gap-2">
-          <a href="/<%= biz.slug %>" target="_blank" class="m-btn m-btn-tonal m-btn-sm">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/></svg>
-            Ver catálogo
-          </a>
-
+        <div class="pn-head-actions">
+          <a href="/<%= biz.slug %>/admin/productos" class="pn-btn pn-btn-solid"><i class="bi bi-plus-lg"></i><span>Producto</span></a>
+          <a href="/<%= biz.slug %>" target="_blank" class="pn-btn"><i class="bi bi-box-arrow-up-right"></i><span>Ver catálogo</span></a>
         </div>
-      </div>
+      </header>
 
       <% if (error) { %>
         <div id="panel-error" class="mb-3 bg-[var(--md-error-container)] text-[#8c1d18] text-sm font-bold px-4 py-3 rounded-xl m-pop flex items-center gap-2">
@@ -40,40 +38,18 @@
         </div>
       <% } %>
 
+
       <% if (biz.plan === 'free') { %>
-        <div class="mb-3 text-white rounded-2xl shadow-[var(--md-elevation-1)] px-4 py-3 flex items-center justify-between flex-wrap gap-2 m-ripple" style="background:#2c2c2e">
-          <div class="flex items-center gap-3">
-            <span class="text-xl">🚀</span>
-            <div>
-              <p class="font-extrabold text-sm">Plan Gratuito · <%= allProducts.length %>/<%= planMax %> productos</p>
-              <p class="text-[11px] mt-0.5" style="color:rgba(255,255,255,.7)">Productos ilimitados y atributos con el plan Pro.</p>
-            </div>
+        <div class="pn-plan">
+          <span class="pn-plan-ic"><i class="bi bi-rocket-takeoff"></i></span>
+          <div class="pn-plan-txt">
+            <b>Plan Gratuito</b>
+            <span><%= allProducts.length %><%= (planMax && planMax !== Infinity) ? ' de ' + planMax : '' %> productos<%= (planMax && planMax !== Infinity) ? '' : ' · sin límite' %></span>
           </div>
-          <a href="/<%= biz.slug %>/admin/config" class="m-btn m-btn-filled m-btn-sm !bg-white" style="color:#2c2c2e">Mejorar plan</a>
+          <% if (planMax && planMax !== Infinity) { %><div class="pn-plan-bar"><i style="width:<%= Math.min(100, Math.round(allProducts.length / planMax * 100)) %>%"></i></div><% } %>
+          <a href="/<%= biz.slug %>/admin/config" class="pn-btn pn-btn-sm">Mejorar plan</a>
         </div>
       <% } %>
-
-      <!-- Comparte tu catálogo (compacto) -->
-      <section class="share-card mb-3 p-4 !text-white" style="border-radius:var(--ap-radius)">
-        <div class="flex items-center justify-between flex-wrap gap-3" style="position:relative;z-index:1">
-          <div class="flex-1 min-w-52">
-            <p class="font-extrabold text-sm">Comparte tu catálogo 🚀</p>
-            <div class="flex items-center gap-1.5 bg-white/15 rounded-full pl-3 pr-1.5 py-1 mt-2">
-              <code class="flex-1 truncate text-[11px] font-bold"><%= storeUrl %></code>
-              <button onclick="navigator.clipboard.writeText('<%= storeUrl %>').then(()=>{this.textContent='¡Copiado!';setTimeout(()=>this.textContent='Copiar',1500)})" class="m-btn m-btn-filled m-btn-sm !bg-white !text-emerald-700 shrink-0 !min-h-0 !py-1">Copiar</button>
-            </div>
-            <div class="flex flex-wrap gap-1.5 mt-2">
-              <a href="https://wa.me/?text=<%= encodeURIComponent('Mira mi catálogo: ' + storeUrl) %>" target="_blank" class="m-btn m-btn-sm !bg-white/15 !text-white hover:!bg-white/25">💬 WhatsApp</a>
-              <a href="https://www.facebook.com/sharer/sharer.php?u=<%= encodeURIComponent(storeUrl) %>" target="_blank" class="m-btn m-btn-sm !bg-white/15 !text-white hover:!bg-white/25">📘 Facebook</a>
-            </div>
-          </div>
-          <% if (typeof qrUrl !== 'undefined' && qrUrl) { %>
-            <div class="rounded-2xl p-2 shrink-0 mx-auto md:mx-0" style="background:var(--ap-card)">
-              <img src="<%= qrUrl %>" alt="Código QR del catálogo" class="w-24 h-24">
-            </div>
-          <% } %>
-        </div>
-      </section>
 
       <!-- Métricas clave -->
       <% const cards = [
@@ -83,20 +59,19 @@
         { label: 'Conversión', value: stats.conv, isPct: true, target: '#sec-funnel' }
       ]; %>
       <% if (stats.hasCostData || stats.supplierSpend > 0) { cards.push({ label: 'Ganancia estimada', value: stats.profit, isMoney: true, title: 'Ingresos cobrados menos el costo de los productos vendidos que ya tienen costo capturado y menos lo pagado a proveedores — si un producto no tiene costo, no se descuenta (es una estimación, no exacta).', target: '#sec-pedidos' }); } %>
-      <section class="grid grid-cols-2 <%= cards.length > 4 ? 'lg:grid-cols-5' : 'lg:grid-cols-4' %> gap-4 md:gap-6 mb-8 md:mb-10">
-        <% cards.forEach((c) => { %>
-          <div class="rounded-2xl p-5 md:p-7 cursor-pointer transition-colors" style="background:var(--ap-card);border:1px solid var(--ap-border);box-shadow:var(--ap-shadow)" title="<%= c.title || '' %>" data-scroll-target="<%= c.target %>">
-            <p class="text-[10.5px] font-semibold uppercase tracking-[0.12em]" style="color:var(--ap-text-sec)"><%= c.label %></p>
-            <% if (c.isMoney) { %><p class="text-2xl md:text-3xl font-bold tracking-tight mt-3" style="color:var(--ap-text)" data-count="<%= c.value %>" data-prefix="$" data-decimals="2">$0.00</p><% } else if (c.isPct) { %><p class="text-2xl md:text-3xl font-bold tracking-tight mt-3" style="color:var(--ap-text)" data-count="<%= c.value %>" data-decimals="1">0.0%</p><% } else { %><p class="text-2xl md:text-3xl font-bold tracking-tight mt-3" style="color:var(--ap-text)" data-count="<%= c.value %>">0</p><% } %>
+      <% const _ico = { 'Visitas hoy': 'bi-eye', 'Ingresos cobrados': 'bi-cash-coin', 'Pedidos WhatsApp': 'bi-whatsapp', 'Conversión': 'bi-bullseye', 'Ganancia estimada': 'bi-graph-up-arrow' }; %>
+      <section class="pn-kpis <%= cards.length > 4 ? 'is-5' : '' %>">
+        <% cards.forEach((c, ci) => { %>
+          <div class="pn-kpi metric-card" style="--i:<%= ci %>" title="<%= c.title || '' %>" data-scroll-target="<%= c.target %>">
+            <div class="pn-kpi-top">
+              <p class="pn-kpi-label"><%= c.label %></p>
+              <span class="pn-kpi-ic"><i class="bi <%= _ico[c.label] || 'bi-bar-chart' %>"></i></span>
+            </div>
+            <% if (c.isMoney) { %><p class="pn-kpi-val" data-count="<%= c.value %>" data-prefix="$" data-decimals="2">$0.00</p><% } else if (c.isPct) { %><p class="pn-kpi-val" data-count="<%= c.value %>" data-decimals="1" data-suffix="%">0.0%</p><% } else { %><p class="pn-kpi-val" data-count="<%= c.value %>">0</p><% } %>
             <% if (typeof c.delta !== 'undefined') { %>
-              <div class="mt-3 flex items-center gap-1.5">
-                <span class="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[11px] font-semibold"
-                  style="<%= c.delta > 0 ? 'background:rgba(44,44,46,.08);color:var(--ap-accent-text)' : c.delta < 0 ? 'background:rgba(180,50,50,.08);color:#b43232' : 'background:var(--ap-bg);color:var(--ap-text-sec)' %>">
-                  <% if (c.delta > 0) { %><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
-                  <% } else if (c.delta < 0) { %><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
-                  <% } %><%= Math.abs(c.delta) %>%
-                </span>
-                <span class="text-[11px]" style="color:var(--ap-text-sec)"><%= c.deltaLabel %></span>
+              <div class="pn-kpi-foot">
+                <span class="pn-delta <%= c.delta > 0 ? 'up' : c.delta < 0 ? 'down' : '' %>"><i class="bi <%= c.delta > 0 ? 'bi-arrow-up-right' : c.delta < 0 ? 'bi-arrow-down-right' : 'bi-dash' %>"></i><%= Math.abs(c.delta) %>%</span>
+                <span><%= c.deltaLabel %></span>
               </div>
             <% } %>
           </div>
@@ -139,6 +114,27 @@
         </section>
       <% } %>
 
+      <!-- Comparte tu catálogo -->
+      <section class="pn-share">
+        <div class="pn-share-main">
+          <p class="pn-share-title">Comparte tu catálogo</p>
+          <p class="pn-share-sub">Cada enlace compartido es una visita más. Mándalo por WhatsApp o pégalo en tus redes.</p>
+          <div class="pn-url">
+            <i class="bi bi-link-45deg"></i>
+            <code><%= storeUrl %></code>
+            <button type="button" class="pn-copy" onclick="navigator.clipboard.writeText('<%= storeUrl %>').then(()=>{this.textContent='¡Copiado!';setTimeout(()=>this.textContent='Copiar',1500)})">Copiar</button>
+          </div>
+          <div class="pn-chips">
+            <a href="https://wa.me/?text=<%= encodeURIComponent('Mira mi catálogo: ' + storeUrl) %>" target="_blank" class="pn-chip"><i class="bi bi-whatsapp" style="color:#1faa54"></i> WhatsApp</a>
+            <a href="https://www.facebook.com/sharer/sharer.php?u=<%= encodeURIComponent(storeUrl) %>" target="_blank" class="pn-chip"><i class="bi bi-facebook" style="color:#1877f2"></i> Facebook</a>
+          </div>
+        </div>
+        <% if (typeof qrUrl !== 'undefined' && qrUrl) { %>
+          <div class="pn-qr"><img src="<%= qrUrl %>" alt="Código QR del catálogo"><span>Escanéalo</span></div>
+        <% } %>
+      </section>
+
+
       <!-- Funnel + pedidos semana en una fila -->
       <div class="grid lg:grid-cols-3 gap-2.5 mb-3" id="sec-funnel">
         <section class="lg:col-span-2 m-card p-5">
@@ -155,15 +151,11 @@
             { label: 'Abrieron WhatsApp', value: stats.waClicks, pct: stats.total > 0 ? Math.round((stats.waClicks / stats.total) * 100) : 0, color: 'from-neutral-600 to-neutral-400' },
             { label: 'Pedidos', value: stats.orders, pct: stats.total > 0 ? Math.round((stats.orders / stats.total) * 100) : 0, color: 'from-emerald-500 to-teal-400' }
           ]; %>
-          <div class="flex items-end justify-center gap-3">
+          <div class="pn-funnel">
             <% steps.forEach((s, si) => { %>
-              <div class="flex-1 flex flex-col items-center gap-1.5">
-                <div class="w-full rounded-lg bg-gradient-to-r <%= s.color %> transition-all duration-700" data-bar-v="<%= (s.pct / 100) * 64 %>" style="height: 0px"></div>
-                <div class="text-center">
-                  <p class="font-bold text-sm" style="color:var(--ap-text)"><%= s.value %></p>
-                  <p class="text-[10px] font-semibold" style="color:var(--ap-text-sec)"><%= s.label %></p>
-                  <p class="text-[10px] font-bold" style="color:<%= s.pct === 100 ? 'var(--ap-accent)' : 'var(--ap-text-sec)' %>"><%= s.pct %>%</p>
-                </div>
+              <div class="pn-fstep">
+                <div class="pn-fhead"><span><%= s.label %></span><b><%= s.value %> <em><%= s.pct %>%</em></b></div>
+                <div class="progress-bar"><div class="progress-bar-fill <%= si === 2 ? 'green' : 'blue' %>" style="width:0%" data-bar="<%= Math.max(s.pct, s.value > 0 ? 3 : 0) %>"></div></div>
               </div>
             <% }) %>
           </div>

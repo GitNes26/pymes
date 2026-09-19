@@ -32,6 +32,7 @@
       var target = parseFloat(el.getAttribute('data-count'));
       var decimals = parseInt(el.getAttribute('data-decimals') || '0', 10);
       var prefix = el.getAttribute('data-prefix') || '';
+      var suffix = el.getAttribute('data-suffix') || '';
       var dur = el.getAttribute('data-dur') ? parseInt(el.getAttribute('data-dur'), 10) : 900;
       var start = null;
       function frame(ts) {
@@ -39,9 +40,9 @@
         var p = Math.min((ts - start) / dur, 1);
         var ease = 1 - Math.pow(1 - p, 3);
         var val = target * ease;
-        el.textContent = prefix + fmtThousands(val, decimals);
+        el.textContent = prefix + fmtThousands(val, decimals) + suffix;
         if (p < 1) requestAnimationFrame(frame);
-        else el.textContent = prefix + fmtThousands(target, decimals);
+        else el.textContent = prefix + fmtThousands(target, decimals) + suffix;
       }
       requestAnimationFrame(frame);
     });

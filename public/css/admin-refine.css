@@ -1,0 +1,95 @@
+/* Acabado del panel de administración — mismas reglas del sistema: plano, bordes antes que sombras,
+   un solo acento (petróleo), objetivos táctiles de 44px. Se carga después de head.ejs y material.css. */
+:root {
+  --pn-line: color-mix(in srgb, var(--ap-text) 10%, transparent);
+  --pn-soft: color-mix(in srgb, var(--ap-text) 4%, var(--ap-card));
+  --pn-ease: cubic-bezier(.22, 1, .36, 1);
+}
+
+/* ---------- Base compartida ---------- */
+.m-card { border: 1px solid var(--pn-line); border-radius: 14px; box-shadow: none; background: var(--ap-card); }
+.m-card h2 { letter-spacing: -.005em; }
+.m-badge { border-radius: 999px; font-weight: 700; }
+main input:focus, main select:focus, main textarea:focus { outline: none; border-color: var(--ap-accent) !important; box-shadow: 0 0 0 3px color-mix(in srgb, var(--ap-accent) 14%, transparent) !important; }
+@keyframes pnUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+main .m-card, .pn-kpi, .pn-share, .pn-plan { animation: pnUp .5s var(--pn-ease) both; }
+
+/* ---------- Botones del panel ---------- */
+.pn-btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; padding: 0 16px; border: 1px solid var(--pn-line); border-radius: 12px; background: var(--ap-card); color: var(--ap-text); font: 600 13.5px Inter, system-ui, sans-serif; cursor: pointer; text-decoration: none; transition: border-color .2s var(--pn-ease), background .2s, transform .2s var(--pn-ease); white-space: nowrap; }
+.pn-btn:hover { border-color: color-mix(in srgb, var(--ap-text) 30%, transparent); transform: translateY(-1px); }
+.pn-btn:active { transform: scale(.97); }
+.pn-btn-solid { background: var(--ap-accent); border-color: var(--ap-accent); color: #fff; }
+.pn-btn-solid:hover { background: var(--ap-accent-light); border-color: var(--ap-accent-light); }
+.pn-btn-sm { min-height: 36px; padding: 0 14px; font-size: 12.5px; }
+
+/* ---------- Encabezado ---------- */
+.pn-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
+.pn-date { font-size: 11.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ap-text-sec); }
+.pn-title { font-size: clamp(1.5rem, 3.4vw, 2rem); font-weight: 800; letter-spacing: -.02em; line-height: 1.15; margin-top: 3px; color: var(--ap-text); }
+.pn-sub { font-size: 13.5px; color: var(--ap-text-sec); margin-top: 2px; }
+.pn-head-actions { display: flex; gap: 8px; }
+
+/* ---------- Plan ---------- */
+.pn-plan { display: flex; align-items: center; gap: 12px; padding: 10px 12px 10px 10px; margin-bottom: 14px; border: 1px solid var(--pn-line); border-radius: 14px; background: var(--ap-card); }
+.pn-plan-ic { width: 36px; height: 36px; flex: none; display: grid; place-items: center; border-radius: 10px; background: color-mix(in srgb, var(--ap-accent-gold) 16%, transparent); color: var(--ap-accent-gold); font-size: 17px; }
+.pn-plan-txt { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+.pn-plan-txt b { font-size: 13.5px; }
+.pn-plan-txt span { font-size: 12px; color: var(--ap-text-sec); }
+.pn-plan-bar { flex: 1; height: 6px; border-radius: 9px; background: var(--pn-soft); overflow: hidden; min-width: 60px; }
+.pn-plan-bar i { display: block; height: 100%; border-radius: 9px; background: var(--ap-accent-gold); }
+.pn-plan .pn-btn { margin-left: auto; }
+
+/* ---------- Indicadores ---------- */
+.pn-kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
+@media (min-width: 900px) { .pn-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; } .pn-kpis.is-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+.pn-kpi { padding: 16px 16px 14px; border: 1px solid var(--pn-line); border-radius: 14px; background: var(--ap-card); cursor: pointer; animation-delay: calc(var(--i, 0) * 60ms); transition: border-color .25s var(--pn-ease), transform .25s var(--pn-ease); }
+.pn-kpi:hover { border-color: color-mix(in srgb, var(--ap-text) 28%, transparent); transform: translateY(-2px); }
+.pn-kpi-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.pn-kpi-label { font-size: 11.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ap-text-sec); }
+.pn-kpi-ic { width: 30px; height: 30px; flex: none; display: grid; place-items: center; border-radius: 9px; background: var(--pn-soft); color: var(--ap-text-sec); font-size: 15px; }
+.pn-kpi-val { font-size: clamp(1.5rem, 2.6vw, 2rem); font-weight: 800; letter-spacing: -.02em; line-height: 1.1; margin-top: 12px; font-variant-numeric: tabular-nums; }
+.pn-kpi-foot { display: flex; align-items: center; gap: 7px; margin-top: 10px; font-size: 11.5px; color: var(--ap-text-sec); flex-wrap: wrap; }
+.pn-delta { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 999px; font-weight: 700; background: var(--pn-soft); color: var(--ap-text-sec); }
+.pn-delta.up { background: color-mix(in srgb, #2d6a4f 13%, transparent); color: #24593f; }
+.pn-delta.down { background: color-mix(in srgb, #b43232 12%, transparent); color: #a02c2c; }
+
+/* ---------- Compartir ---------- */
+.pn-share { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 18px; margin-bottom: 18px; border: 1px solid var(--pn-line); border-radius: 14px; background: var(--ap-card); }
+.pn-share-main { flex: 1; min-width: 0; }
+.pn-share-title { font-size: 15px; font-weight: 800; letter-spacing: -.01em; }
+.pn-share-sub { font-size: 12.5px; color: var(--ap-text-sec); margin-top: 3px; max-width: 46ch; }
+.pn-url { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 5px 5px 5px 12px; border: 1px solid var(--pn-line); border-radius: 12px; background: var(--pn-soft); max-width: 460px; }
+.pn-url > i { color: var(--ap-text-sec); font-size: 17px; }
+.pn-url code { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 12.5px ui-monospace, SFMono-Regular, Menlo, monospace; }
+.pn-copy { min-height: 36px; padding: 0 14px; border: 0; border-radius: 9px; background: var(--ap-accent); color: #fff; font: 700 12.5px Inter, system-ui, sans-serif; cursor: pointer; transition: background .2s, transform .15s; }
+.pn-copy:hover { background: var(--ap-accent-light); }
+.pn-copy:active { transform: scale(.95); }
+.pn-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.pn-chip { display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 14px; border: 1px solid var(--pn-line); border-radius: 999px; background: var(--ap-card); font-size: 13px; font-weight: 600; text-decoration: none; color: var(--ap-text); transition: border-color .2s, transform .2s var(--pn-ease); }
+.pn-chip:hover { border-color: color-mix(in srgb, var(--ap-text) 30%, transparent); transform: translateY(-1px); }
+.pn-qr { flex: none; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.pn-qr img { width: 104px; height: 104px; padding: 7px; border: 1px solid var(--pn-line); border-radius: 14px; background: #fff; }
+.pn-qr span { font-size: 11px; font-weight: 600; color: var(--ap-text-sec); letter-spacing: .04em; }
+@media (max-width: 640px) {
+  .pn-head-actions { width: 100%; }
+  .pn-head-actions .pn-btn { flex: 1; }
+  .pn-plan { flex-wrap: wrap; }
+  .pn-plan-bar { order: 5; flex-basis: 100%; }
+  .pn-share { flex-direction: column-reverse; align-items: stretch; text-align: left; }
+  .pn-qr { flex-direction: row; justify-content: flex-start; gap: 12px; }
+  .pn-qr img { width: 88px; height: 88px; }
+}
+
+/* ---------- Embudo ---------- */
+.pn-funnel { display: flex; flex-direction: column; gap: 14px; margin-top: 4px; }
+.pn-fhead { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 6px; font-size: 12.5px; }
+.pn-fhead span { color: var(--ap-text-sec); font-weight: 600; }
+.pn-fhead b { font-weight: 800; font-size: 14px; font-variant-numeric: tabular-nums; }
+.pn-fhead em { font-style: normal; font-size: 11.5px; font-weight: 700; color: var(--ap-text-sec); margin-left: 4px; }
+.pn-funnel .progress-bar { height: 10px; border-radius: 999px; }
+.pn-funnel .progress-bar-fill { border-radius: 999px; }
+
+@media (prefers-reduced-motion: reduce) { main .m-card, .pn-kpi, .pn-share, .pn-plan { animation: none; } }
+
+#sec-funnel > section:first-child > div:first-child { flex-wrap: wrap; gap: 8px; }
+.warning-card { border-radius: 14px; }
