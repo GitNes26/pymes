@@ -5,7 +5,7 @@
     Swal.fire({
       toast: true,
       position: 'bottom',
-      timer: 2600,
+      timer: 3600,
       timerProgressBar: true,
       showConfirmButton: false,
       icon: t === 'error' ? 'error' : (t === 'info' ? 'info' : 'success'),
@@ -25,4 +25,28 @@
       cancelButtonColor: '#64748b'
     }).then(function (r) { return !!r.isConfirmed; });
   }
+</script>
+<script>
+  // Aviso automático tras guardar: las páginas que se recargan completas dejan el mensaje en #panel-msg
+  // (o en ?ok= / ?error= al redirigir). Antes el aviso de Configuración nunca salía porque comprobaba
+  // Swal.isLoaded, que ya no existe en SweetAlert2 11.
+  (function () {
+    function avisar() {
+      if (typeof mostrarToast !== 'function' || !window.Swal) return;
+      var m = document.getElementById('panel-msg');
+      if (m && m.textContent.trim()) {
+        mostrarToast(m.textContent.trim(), m.getAttribute('data-tipo') === 'error' ? 'error' : 'ok');
+        m.remove();
+        return;
+      }
+      var q = new URLSearchParams(location.search), ok = q.get('ok'), er = q.get('error');
+      if (ok || er) {
+        mostrarToast(er ? er : (ok === '1' || ok === 'true' ? 'Guardado ✓' : ok), er ? 'error' : 'ok');
+        q.delete('ok'); q.delete('error');
+        var qs = q.toString();
+        try { history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash); } catch (e) {}
+      }
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', avisar); else avisar();
+  })();
 </script>

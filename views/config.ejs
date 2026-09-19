@@ -1244,14 +1244,6 @@
     })();
     <% } %>
 
-    // Muestra los mensajes de guardado como toast de SweetAlert2
-    (function () {
-      var t = document.getElementById('panel-msg');
-      if (t && t.textContent.trim() && window.Swal && Swal.isLoaded) {
-        var ok = t.getAttribute('data-tipo') === 'ok';
-        Swal.fire({ toast: true, position: 'bottom', timer: 4500, timerProgressBar: true, showConfirmButton: false, icon: ok ? 'success' : 'error', title: t.textContent.trim() });
-      }
-    })();
   </script>
 
   <script>
