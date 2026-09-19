@@ -13,6 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800;14..32,900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/css/material.css" />
+  <link rel="stylesheet" href="/vendor/bootstrap-icons/bootstrap-icons.min.css" />
   <script src="/js/material.js"></script>
   <script src="/js/searchable-select.js"></script>
   <script src="/vendor/sweetalert2.all.min.js"></script>
@@ -407,6 +408,8 @@
     body.dark .mt-tab-count { background: rgba(255,255,255,.06); color: #8b949e; }
     body.dark .mt-tab.active .mt-tab-count { background: rgba(138,180,248,.15); color: #93c5fd; }
   </style>
+  <link rel="stylesheet" href="/css/maestro-refine.css?v=20260918a" />
+  <script src="/js/img-retry.js"></script>
 </head>
 <body class="m-material min-h-screen bg-slate-100 dark:bg-[#0d1117]">
 
@@ -456,7 +459,7 @@
     <header class="panel-header sticky top-0 z-10">
       <div class="max-w-6xl mx-auto px-4 md:px-6 py-4 flex items-center justify-between gap-3">
         <div class="flex items-center gap-3">
-          <span class="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-800 to-neutral-700 text-white flex items-center justify-center text-lg shadow-sm">🔐</span>
+          <span class="w-10 h-10 rounded-xl text-white flex items-center justify-center text-lg" style="background:#2c2c2e"><i class="bi bi-shield-lock"></i></span>
           <div>
             <h1 class="font-extrabold text-slate-900 dark:text-white leading-tight text-lg">Panel maestro</h1>
             <p class="text-xs text-slate-400 dark:text-slate-500"><%= list.length %> tiendas registradas</p>
@@ -485,32 +488,32 @@
       %>
       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 mb-3">
         <div class="mp-stat-card stagger-item" data-stat-filter="all" style="animation-delay:.0s" title="Ver todas las tiendas">
-          <div class="mp-stat-icon blue">🏪</div>
+          <div class="mp-stat-icon blue"><i class="bi bi-shop"></i></div>
           <p class="mp-stat-val"><%= list.length %></p>
           <p class="mp-stat-lbl">Tiendas</p>
         </div>
         <div class="mp-stat-card stagger-item" data-stat-filter="active" style="animation-delay:.03s" title="Filtrar: solo activas">
-          <div class="mp-stat-icon green">●</div>
+          <div class="mp-stat-icon green"><i class="bi bi-check-circle"></i></div>
           <p class="mp-stat-val"><%= mpActivas %></p>
           <p class="mp-stat-lbl">Activas</p>
         </div>
         <div class="mp-stat-card stagger-item" data-stat-filter="pro" style="animation-delay:.06s" title="Filtrar: solo plan Pro">
-          <div class="mp-stat-icon purple">💎</div>
+          <div class="mp-stat-icon purple"><i class="bi bi-gem"></i></div>
           <p class="mp-stat-val"><%= mpProCount %></p>
           <p class="mp-stat-lbl">Plan Pro</p>
         </div>
         <div class="mp-stat-card stagger-item" data-stat-filter="ads" style="animation-delay:.09s" title="Filtrar: publicitadas">
-          <div class="mp-stat-icon amber">📣</div>
+          <div class="mp-stat-icon amber"><i class="bi bi-megaphone"></i></div>
           <p class="mp-stat-val"><%= mpAds %></p>
           <p class="mp-stat-lbl">Publicitadas</p>
         </div>
         <div class="mp-stat-card stagger-item" style="animation-delay:.12s" title="Productos registrados en toda la plataforma">
-          <div class="mp-stat-icon pink">📦</div>
+          <div class="mp-stat-icon pink"><i class="bi bi-box-seam"></i></div>
           <p class="mp-stat-val"><%= mpProductos %></p>
           <p class="mp-stat-lbl">Productos</p>
         </div>
         <div class="mp-stat-card stagger-item" style="animation-delay:.15s" title="Suma de precios de plan de tiendas activas">
-          <div class="mp-stat-icon slate">💰</div>
+          <div class="mp-stat-icon slate"><i class="bi bi-cash-stack"></i></div>
           <p class="mp-stat-val">$<%= mpMrr.toFixed(0) %></p>
           <p class="mp-stat-lbl">Ingreso/mes</p>
         </div>
@@ -523,8 +526,8 @@
 
       <!-- TAB NAV -->
       <nav class="flex gap-1 bg-slate-100 dark:bg-[#161b22] rounded-2xl p-1 mb-5 border border-slate-200 dark:border-[#21262d]">
-        <button onclick="switchTab('tiendas')" id="tab-btn-tiendas" class="mt-tab active">🏪 Tiendas <span class="mt-tab-count"><%= list.length %></span></button>
-        <button onclick="switchTab('planes')" id="tab-btn-planes" class="mt-tab">🎛 Planes <span class="mt-tab-count"><%= plans.length %></span></button>
+        <button onclick="switchTab('tiendas')" id="tab-btn-tiendas" class="mt-tab active"><i class="bi bi-shop"></i> Tiendas <span class="mt-tab-count"><%= list.length %></span></button>
+        <button onclick="switchTab('planes')" id="tab-btn-planes" class="mt-tab"><i class="bi bi-sliders"></i> Planes <span class="mt-tab-count"><%= plans.length %></span></button>
       </nav>
 
       <!-- TAB: TIENDAS -->
@@ -559,85 +562,71 @@
                data-visitas="<%= b.visits_count || 0 %>" data-productos="<%= b.products_count || 0 %>" data-pedidos="<%= b.orders_count || 0 %>"
                data-creado="<%= b.created_at %>" data-nombre="<%= (b.name || '').toLowerCase() %>"
                style="animation-delay: <%= (i * 0.03) %>s">
-            <div class="flex flex-col md:flex-row md:items-center gap-3">
-
-              <!-- Info tienda -->
-              <div class="flex items-center gap-3 min-w-0 flex-1">
-                <img src="<%= b.logo || '/img/sin-imagen.svg' %>" class="w-10 h-10 rounded-xl object-cover border border-slate-200 dark:border-[#30363d] shrink-0" />
-                <div class="min-w-0">
-                  <p class="font-bold text-slate-900 dark:text-white truncate">
-                    <%= b.name %>
-                    <a href="/<%= b.slug %>" target="_blank" class="text-neutral-600 dark:text-[#d4d4d4] text-xs font-bold hover:underline">/<%= b.slug %></a>
+            <div class="mc">
+              <div class="mc-head">
+                <img src="<%= b.logo || '/img/sin-imagen.svg' %>" class="mc-logo" alt="" data-hide-on-error />
+                <div class="mc-id">
+                  <p class="mc-name"><span><%= b.name %></span><a href="/<%= b.slug %>" target="_blank">/<%= b.slug %> <i class="bi bi-box-arrow-up-right"></i></a></p>
+                  <p class="mc-stats">
+                    <span><i class="bi bi-box-seam"></i> <%= b.products_count || 0 %> producto<%= (b.products_count || 0) === 1 ? '' : 's' %></span>
+                    <span><i class="bi bi-receipt"></i> <%= b.orders_count || 0 %> pedido<%= (b.orders_count || 0) === 1 ? '' : 's' %></span>
+                    <span><i class="bi bi-eye"></i> <%= b.visits_count || 0 %> visita<%= (b.visits_count || 0) === 1 ? '' : 's' %></span>
+                    <span><i class="bi bi-calendar3"></i> <%= fmtFecha(b.created_at) %></span>
                   </p>
-                  <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
-                    <span>📦 <%= b.products_count || 0 %> productos</span>
-                    <span>🧾 <%= b.orders_count || 0 %> pedidos</span>
-                    <span>👁 <%= b.visits_count || 0 %> visitas</span>
-                    <span>📅 <%= fmtFecha(b.created_at) %></span>
-                  </p>
-                  <div class="flex items-center gap-1.5 mt-1 flex-wrap">
-                    <% if (b.giro) { %><span class="badge-status giro clickable" onclick="filtrarPorGiro('<%= b.giro %>')" title="Filtrar por este giro">🏪 <%= b.giro %></span><% } %>
-                    <span class="badge-status <%= b.plan === 'pro' ? 'pro' : 'free' %>"><%= b.plan_name.toUpperCase() %></span>
-                    <span class="badge-status neutral">$<%= Number(b.plan_price || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') %></span>
-                    <% if (b.plan_ends_at) { %>
-                      <span class="badge-status <%= b.expired ? 'expired' : 'warning' %>">
-                        Vence <%= fmtFecha(b.plan_ends_at, 'fecha') %> <%= b.expired ? '· VENCIDO' : '' %>
-                      </span>
-                    <% } %>
-                    <% if (b.suspended) { %><span class="badge-status suspended">⏸ Suspendida</span><% } %>
-                    <span class="badge-status <%= b.ads_enabled ? 'ads' : 'no-ads' %>">📣 <%= b.ads_enabled ? 'anuncio' : 'sin anuncio' %></span>
-                    <span class="badge-status <%= b.active ? 'active' : 'inactive' %>"><%= b.active ? '● Activa' : '○ Inactiva' %></span>
-                  </div>
                 </div>
+                <span class="badge-status <%= b.active ? 'active' : 'inactive' %>"><%= b.active ? 'Activa' : 'Inactiva' %></span>
               </div>
 
-              <!-- Acciones -->
-              <div class="flex items-center gap-1.5 flex-wrap shrink-0 justify-end md:justify-start">
-                <!-- Cambiar plan -->
-                <form method="POST" action="/maestro/<%= b.id %>/plan" class="inline">
-                  <select name="plan" onchange="this.form.submit()" class="plan-select">
-                    <% plans.forEach(p => { %>
-                      <option value="<%= p.key %>" <%= b.plan === p.key ? 'selected' : '' %> <%= p.active ? '' : 'disabled' %>><%= p.name %></option>
-                    <% }) %>
-                  </select>
-                </form>
-
-                <!-- Vencimiento y precio -->
-                <form method="POST" action="/maestro/<%= b.id %>/vencimiento" class="flex items-center gap-1">
-                  <input name="plan_price" type="number" step="0.01" min="0" value="<%= b.plan_price || 0 %>" title="Precio ($)" class="input-compact w-14" />
-                  <input name="plan_ends_at" type="date" value="<%= b.plan_ends_at || '' %>" title="Vence el" class="input-compact w-28" />
-                  <button class="action-btn primary small">OK</button>
-                </form>
-
-                <!-- Alternar anuncio -->
-                <form method="POST" action="/maestro/<%= b.id %>/ads" class="inline">
-                  <button class="action-btn <%= b.ads_enabled ? 'warning' : '' %> small" title="Mostrar como anuncio en otros catálogos">
-                    📣
-                  </button>
-                </form>
-
-                <!-- Suspender / Reactivar -->
-                <% if (b.suspended) { %>
-                  <form method="POST" action="/maestro/<%= b.id %>/reactivar" class="inline">
-                    <button class="action-btn success small">▶ Reactivar</button>
-                  </form>
-                <% } else { %>
-                  <form method="POST" action="/maestro/<%= b.id %>/suspender" class="inline">
-                    <button class="action-btn danger small" title="Pausar catálogo y panel">⏸</button>
-                  </form>
+              <div class="mc-badges">
+                <% if (b.giro) { %><span class="badge-status giro clickable" onclick="filtrarPorGiro('<%= b.giro %>')" title="Filtrar por este giro"><%= b.giro %></span><% } %>
+                <span class="badge-status <%= b.plan === 'pro' ? 'pro' : 'free' %>"><%= b.plan_name.toUpperCase() %></span>
+                <span class="badge-status neutral">$<%= Number(b.plan_price || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') %></span>
+                <% if (b.plan_ends_at) { %>
+                  <span class="badge-status <%= b.expired ? 'expired' : 'warning' %>">Vence <%= fmtFecha(b.plan_ends_at, 'fecha') %><%= b.expired ? ' · VENCIDO' : '' %></span>
                 <% } %>
+                <% if (b.suspended) { %><span class="badge-status suspended">Suspendida</span><% } %>
+                <span class="badge-status <%= b.ads_enabled ? 'ads' : 'no-ads' %>"><%= b.ads_enabled ? 'Con anuncio' : 'Sin anuncio' %></span>
+              </div>
 
-                <!-- Activar / Desactivar -->
-                <form method="POST" action="/maestro/<%= b.id %>/toggle" class="inline">
-                  <button class="action-btn <%= b.active ? 'primary' : 'danger' %> small">
-                    <%= b.active ? '● Activa' : '○ Inactiva' %>
-                  </button>
-                </form>
+              <div class="mc-controls">
+                <div class="mc-billing">
+                  <span class="mc-lbl">Plan y cobro</span>
+                  <div class="mc-billing-row">
+                    <form method="POST" action="/maestro/<%= b.id %>/plan">
+                      <select name="plan" onchange="this.form.submit()" class="plan-select" aria-label="Plan">
+                        <% plans.forEach(p => { %>
+                          <option value="<%= p.key %>" <%= b.plan === p.key ? 'selected' : '' %> <%= p.active ? '' : 'disabled' %>><%= p.name %></option>
+                        <% }) %>
+                      </select>
+                    </form>
+                    <form method="POST" action="/maestro/<%= b.id %>/vencimiento" class="mc-pay">
+                      <label class="mc-mini"><span>$</span><input name="plan_price" type="number" step="0.01" min="0" value="<%= b.plan_price || 0 %>" title="Precio ($)" aria-label="Precio" /></label>
+                      <input name="plan_ends_at" type="date" value="<%= b.plan_ends_at || '' %>" title="Vence el" aria-label="Vence el" class="mc-date" />
+                      <button class="mc-save" title="Guardar precio y vencimiento">Guardar</button>
+                    </form>
+                  </div>
+                </div>
 
-                <!-- Resetear PIN -->
-                <form method="POST" action="/maestro/<%= b.id %>/reset-pin" class="inline" onsubmit="var p=prompt('Nuevo PIN para <%= b.slug %> (min 6 digitos):','123456'); if(!p){event.preventDefault();return;} this.insertAdjacentHTML('beforeend','<input type=hidden name=new_pin value=\'' + p + '\'>');">
-                  <button class="action-btn warning small" title="Resetear PIN de acceso">🔑</button>
-                </form>
+                <div class="mc-actions">
+                  <form method="POST" action="/maestro/<%= b.id %>/ads">
+                    <button class="mc-act <%= b.ads_enabled ? 'is-on' : '' %>" title="Mostrar como anuncio en otros catálogos"><i class="bi bi-megaphone"></i><span><%= b.ads_enabled ? 'Quitar anuncio' : 'Anunciar' %></span></button>
+                  </form>
+                  <% if (b.suspended) { %>
+                    <form method="POST" action="/maestro/<%= b.id %>/reactivar">
+                      <button class="mc-act ok"><i class="bi bi-play-circle"></i><span>Reactivar</span></button>
+                    </form>
+                  <% } else { %>
+                    <form method="POST" action="/maestro/<%= b.id %>/suspender">
+                      <button class="mc-act warn" title="Pausar catálogo y panel"><i class="bi bi-pause-circle"></i><span>Suspender</span></button>
+                    </form>
+                  <% } %>
+                  <form method="POST" action="/maestro/<%= b.id %>/toggle">
+                    <button class="mc-act <%= b.active ? '' : 'ok' %>"><i class="bi <%= b.active ? 'bi-toggle-on' : 'bi-toggle-off' %>"></i><span><%= b.active ? 'Desactivar' : 'Activar' %></span></button>
+                  </form>
+                  <form method="POST" action="/maestro/<%= b.id %>/reset-pin" onsubmit="var p=prompt('Nuevo PIN para <%= b.slug %> (min 6 digitos):','123456'); if(!p){event.preventDefault();return;} this.insertAdjacentHTML('beforeend','<input type=hidden name=new_pin value=\'' + p + '\'>');">
+                    <button class="mc-act" title="Resetear PIN de acceso"><i class="bi bi-key"></i><span>PIN</span></button>
+                  </form>
+                </div>
               </div>
             </div>
           </div>
