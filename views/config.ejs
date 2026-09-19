@@ -575,7 +575,7 @@
             </div>
             <div>
               <label class="config-label">WhatsApp (10 dígitos) *</label>
-              <input id="config-whatsapp" name="whatsapp" value="<%= biz.whatsapp %>" type="tel" inputmode="numeric" maxlength="12" pattern="[0-9]{3} [0-9]{3} [0-9]{4}" data-mask="phone" title="10 dígitos" class="config-input" placeholder="871 234 5678" required>
+              <input id="config-whatsapp" name="whatsapp" value="<%= (function (w) { var d = String(w || '').replace(/\D/g, ''); if (d.length > 10 && d.indexOf('52') === 0) d = d.slice(-10); return d.length === 10 ? d.slice(0, 3) + ' ' + d.slice(3, 6) + ' ' + d.slice(6) : String(w || ''); })(biz.whatsapp) %>" type="tel" inputmode="numeric" maxlength="12" pattern="[0-9]{3} ?[0-9]{3} ?[0-9]{4}" data-mask="phone" title="10 dígitos" class="config-input" placeholder="871 234 5678" required>
               <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Los pedidos llegarán a este número.</p>
             </div>
           </div>
@@ -1067,6 +1067,7 @@
 
   <%- include('admin/panel-ajax') %>
   <%- include('admin/toast') %>
+  <%- include('admin/invalid-toast') %>
   <%- include('partials/upload-js', { biz, esMaestro }) %>
 
   <script>

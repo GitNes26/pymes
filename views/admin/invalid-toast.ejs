@@ -1,0 +1,19 @@
+<script>
+  // Si el navegador bloquea el envío por un campo inválido (formato, obligatorio), lo dice con un aviso
+  // visible: la burbuja nativa a veces no se ve y parecía que "Guardar" no hacía nada.
+  (function () {
+    var shown = false;
+    document.addEventListener('invalid', function (e) {
+      var el = e.target;
+      if (shown || !el || typeof mostrarToast !== 'function') return;
+      shown = true;
+      setTimeout(function () { shown = false; }, 1500);
+      var lbl = '';
+      var box = el.closest('.m-field, label, div');
+      var l = (el.id && document.querySelector('label[for="' + el.id + '"]')) || (box && box.querySelector('label'));
+      if (l) lbl = (l.textContent || '').replace(/\*/g, '').trim().replace(/\s+/g, ' ');
+      var msg = el.validity && el.validity.patternMismatch ? ('formato no válido' + (el.getAttribute('title') ? ' — ' + el.getAttribute('title') : '')) : (el.validationMessage || 'Revisa este campo');
+      mostrarToast((lbl ? lbl + ': ' : '') + msg, 'error');
+    }, true);
+  })();
+</script>
