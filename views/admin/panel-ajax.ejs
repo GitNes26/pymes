@@ -52,6 +52,9 @@
       var form = e.target;
       if (!form || form.tagName !== 'FORM') return;
       if (!form.closest('main') && !form.hasAttribute('data-ajax')) return;
+      // Configuración depende de scripts que arman filas y serializan campos ocultos al cargar la página:
+      // reemplazar solo el main los dejaba sin ejecutar y el siguiente guardado mandaba campos vacíos.
+      if (form.hasAttribute('data-noajax')) return;
       var confirmMsg = form.getAttribute('data-confirm');
       e.preventDefault();
       if (confirmMsg) {

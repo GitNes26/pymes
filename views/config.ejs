@@ -565,7 +565,7 @@
           </div>
         </div>
 
-        <form method="POST" action="<%= cfgAction %>" class="space-y-4" id="form-datos">
+        <form data-noajax method="POST" action="<%= cfgAction %>" class="space-y-4" id="form-datos">
           <input type="hidden" name="sections-current" value="<%= biz.sections || '{}' %>">
           <input type="hidden" name="sections" id="sections-json" value="">
           <div class="grid md:grid-cols-2 gap-4">
@@ -803,7 +803,7 @@
           </div>
         </div>
 
-        <form method="POST" action="<%= cfgAction %>" class="space-y-4" id="form-pagos">
+        <form data-noajax method="POST" action="<%= cfgAction %>" class="space-y-4" id="form-pagos">
           <input type="hidden" name="mp_form" value="1">
           <label class="flex items-center gap-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl px-4 py-3 cursor-pointer">
             <input type="checkbox" name="mp_enabled" value="1" <%= biz.mp_enabled ? 'checked' : '' %> class="w-4.5 h-4.5 accent-sky-500">
@@ -846,7 +846,7 @@
           </div>
         </div>
 
-        <form method="POST" action="<%= cfgAction %>" class="space-y-4" id="form-transferencia">
+        <form data-noajax method="POST" action="<%= cfgAction %>" class="space-y-4" id="form-transferencia">
           <input type="hidden" name="transfer_form" value="1">
           <label class="flex items-center gap-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl px-4 py-3 cursor-pointer">
             <input type="checkbox" name="transfer_enabled" value="1" <%= biz.transfer_enabled ? 'checked' : '' %> class="w-4.5 h-4.5 accent-emerald-500">
@@ -904,7 +904,7 @@
           <% var _fontHrefs = Array.from(new Set(CAT_DESIGNS.map(function(d){ return d.tokens.font.href; }))); %>
           <% _fontHrefs.forEach(function(h) { %><link rel="stylesheet" href="<%= h %>"><% }) %>
 
-          <form method="POST" action="<%= cfgAction %>" id="cat-design-form">
+          <form data-noajax method="POST" action="<%= cfgAction %>" id="cat-design-form">
             <div class="catalog-design-toolbar">
               <p class="catalog-design-count"><strong><%= CAT_DESIGNS.length %></strong> diseños disponibles</p>
               <p class="text-xs text-slate-400 dark:text-slate-500">Selecciona uno y guarda el cambio</p>
@@ -987,7 +987,7 @@
           </div>
         </div>
 
-        <form method="POST" action="<%= cfgAction %>" class="space-y-4">
+        <form data-noajax method="POST" action="<%= cfgAction %>" class="space-y-4">
           <div>
             <label class="config-label">Logo</label>
             <div class="config-upload-row flex items-center gap-3">
@@ -1036,7 +1036,7 @@
           </div>
         </div>
 
-        <form method="POST" action="/<%= biz.slug %>/admin/cambiar-pin" class="space-y-3 mb-6">
+        <form data-noajax method="POST" action="/<%= biz.slug %>/admin/cambiar-pin" class="space-y-3 mb-6">
           <div class="grid md:grid-cols-3 gap-3">
             <label><span class="config-label">PIN actual</span><input name="pin_actual" type="password" inputmode="numeric" autocomplete="current-password" placeholder="Ingresa tu PIN" class="config-input" required></label>
             <label><span class="config-label">PIN nuevo</span><input name="pin_nuevo" type="password" inputmode="numeric" autocomplete="new-password" placeholder="6 a 12 dígitos" class="config-input" required></label>
@@ -1049,7 +1049,7 @@
 
         <div class="security-reset border-t border-slate-200 dark:border-[#30363d] pt-4">
           <p class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">¿El dueño olvidó su PIN?</p>
-          <form method="POST" action="/<%= biz.slug %>/admin/resetear-pin" class="flex flex-wrap gap-2">
+          <form data-noajax method="POST" action="/<%= biz.slug %>/admin/resetear-pin" class="flex flex-wrap gap-2">
             <label class="flex-1 max-w-xs"><span class="config-label">Código maestro</span><input name="master" type="password" autocomplete="current-password" placeholder="Código maestro" class="config-input" required></label>
             <button class="m-btn m-btn-danger m-btn-sm dark:bg-[#8b2d32] dark:text-white dark:hover:bg-[#a03a3f]">
               Resetear a 1234
