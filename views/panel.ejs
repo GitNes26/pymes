@@ -122,7 +122,7 @@
           <div class="pn-url">
             <i class="bi bi-link-45deg"></i>
             <code><%= storeUrl %></code>
-            <button type="button" class="pn-copy" onclick="navigator.clipboard.writeText('<%= storeUrl %>').then(()=>{this.textContent='¡Copiado!';setTimeout(()=>this.textContent='Copiar',1500)})">Copiar</button>
+            <button type="button" class="pn-copy" onclick="pnCopy(this,'<%= storeUrl %>')">Copiar</button>
           </div>
           <div class="pn-chips">
             <a href="https://wa.me/?text=<%= encodeURIComponent('Mira mi catálogo: ' + storeUrl) %>" target="_blank" class="pn-chip"><i class="bi bi-whatsapp" style="color:#1faa54"></i> WhatsApp</a>
@@ -473,6 +473,12 @@
     var BIZ_SLUG = <%- safeJson(biz.slug) %>;
     var CURRENCY_SYMBOL = <%- safeJson(typeof currencySymbol !== 'undefined' && currencySymbol ? currencySymbol : '$') %>;
     function moneyFmt(n) { return CURRENCY_SYMBOL + (Number(n || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')); }
+    // Copiar con respaldo: el portapapeles moderno falla sin foco o sin HTTPS
+    function pnCopy(btn, text) {
+      function ok() { btn.textContent = '¡Copiado!'; setTimeout(function () { btn.textContent = 'Copiar'; }, 1500); }
+      function old() { var t = document.createElement('textarea'); t.value = text; t.style.position = 'fixed'; t.style.opacity = '0'; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); ok(); } catch (e) { window.prompt('Copia el enlace:', text); } document.body.removeChild(t); }
+      if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(ok, old); else old();
+    }
 
     // ===== Tarjetas de métricas: clic para saltar a la sección relacionada =====
     (function () {

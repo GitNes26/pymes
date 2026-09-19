@@ -126,7 +126,7 @@
       });
     }
     rebuildClientes();
-    window.onPanelSwap = rebuildClientes;
+    window.onPanelSwap = function () { rebuildClientes(); cliPage = 1; if (typeof cliShow === 'function') cliShow(); };
     function escHtml(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
     var promoState = { filtro: 'todos', page: 1, list: [] };
     var PROMO_PAGE_SIZE = 8;
@@ -197,7 +197,6 @@
       if (navigator.clipboard) { navigator.clipboard.writeText(msg).then(function () { mostrarToast('Mensaje copiado ✓', 'ok'); }); }
       else mostrarToast('Copia el texto manualmente', 'info');
     }
-    var s = document.getElementById('cliente-search');
     // ====== Filtro en vivo + paginación de clientes (mismo patrón que productos) ======
     var CLI_PAGE_SIZE = 20;
     var cliPage = 1;
@@ -205,6 +204,7 @@
       return Array.prototype.slice.call(document.querySelectorAll('#cliente-list [data-search]'));
     }
     function cliShow() {
+      var s = document.getElementById('cliente-search');
       var q = (s && s.value || '').toLowerCase().trim();
       var current = cliAll().filter(function (row) {
         return !q || (row.getAttribute('data-search') || '').indexOf(q) !== -1;
@@ -229,9 +229,8 @@
       box.querySelector('[data-pg="prev"]').onclick = function () { if (cliPage > 1) { cliPage--; cliShow(); } };
       box.querySelector('[data-pg="next"]').onclick = function () { if (cliPage < pages) { cliPage++; cliShow(); } };
     }
-    if (s) {
-      s.oninput = function () { cliPage = 1; cliShow(); };
-    }
+    // Delegado: el buscador se reemplaza en cada swap del panel, así que un oninput directo se perdía
+    document.addEventListener('input', function (e) { if (e.target && e.target.id === 'cliente-search') { cliPage = 1; cliShow(); } });
     cliShow();
   </script>
 </body>
