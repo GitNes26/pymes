@@ -157,3 +157,6 @@ main .config-shell .config-catalog-link:hover { border-color: color-mix(in srgb,
 .admin-page-header p { font-size: 13.5px !important; }
 .admin-page-header { margin-bottom: 18px !important; }
 .admin-page-header__icon { width: 44px !important; height: 44px !important; border: 1px solid var(--pn-line); background: var(--ap-card) !important; }
+
+/* Configuración: el botón Guardar del final de cada sección no debe quedar tapado por la barra inferior del celular */
+@media (max-width: 1023px) { main .config-shell { padding-bottom: calc(110px + env(safe-area-inset-bottom)); } }
