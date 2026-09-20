@@ -41,3 +41,11 @@
     return (alt1 && card.matches(':hover') && parseFloat(getComputedStyle(alt1).opacity) > 0.5) ? alt1 : null;
   };
 })();
+
+// Toda imagen decorativa sin alt queda marcada como tal para los lectores de pantalla
+(function () {
+  function fix() { document.querySelectorAll('img:not([alt])').forEach(function (i) { i.setAttribute('alt', ''); }); }
+  fix();
+  document.addEventListener('DOMContentLoaded', fix);
+  window.addEventListener('load', fix);
+})();

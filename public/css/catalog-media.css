@@ -216,3 +216,33 @@ body .prod-badge-wrap { align-items: flex-start; }
 body .prod-badge-wrap { max-width: 78%; }
 /* Con el panel de filtros abierto, los botones flotantes no tapan el botón "Buscar" */
 body:has(.filter-sidebar.sidebar-open) #chat-fab, body:has(.filter-sidebar.sidebar-open) .filter-fab { opacity: 0; pointer-events: none; }
+
+/* ---------- Accesibilidad y ritmo ---------- */
+.skip-link { position: fixed; left: 12px; top: -60px; z-index: 100000; padding: 12px 18px; border-radius: 12px; background: var(--accent); color: var(--soc-on-accent, #fff); font-weight: 700; text-decoration: none; transition: top .2s; }
+.skip-link:focus { top: 12px; }
+:where(a, button, input, select, textarea, [tabindex]):focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+#contenido:focus { outline: none; }
+h1.hero-name, h1.hdr-title { margin: 0; }
+.prod-name a { color: inherit; text-decoration: none; display: block; }
+.prod-name a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* Objetivos táctiles de 44 px */
+html body .hdr .wa-pill, html body .hdr .admin-pill, html body .install-pill { min-height: 44px; display: inline-flex; align-items: center; }
+html body .prod-actions .prod-btn, html body .prod-actions .prod-view-btn, html body .oferta-actions .prod-btn, html body .oferta-actions .prod-view-btn { min-height: 44px; }
+html body .prod-actions .prod-share-btn, html body .oferta-actions .prod-share-btn { min-width: 44px; height: 44px; }
+html body .filter-cat, html body .filter-clear { min-height: 44px; }
+html body .filter-range, html body .filter-attr { min-height: 44px; }
+html body .ofertas-arrow { min-width: 44px; min-height: 44px; }
+
+/* Cabecera fija: mientras se ve la portada no repite logo y nombre (solo acciones); aparecen al bajar */
+body:has(.hero, .brand-hero) .hdr:not(.hdr-compact) .hdr-left { opacity: 0; pointer-events: none; }
+.hdr .hdr-left { transition: opacity .3s ease; }
+
+/* Rendimiento y ritmo: lo que queda fuera de pantalla se pinta al acercarse */
+.xs-sec, .xs-mod, .ftr, .xs-strip { content-visibility: auto; contain-intrinsic-size: auto 560px; }
+/* Franjas seguidas (Ofertas, Recién llegados, Más vendidos): la alternancia de fondo las separa y da ritmo */
+.ofertas-section + .ofertas-section { background: color-mix(in srgb, var(--accent) 5%, var(--bg)); padding-block: clamp(14px, 3vw, 28px); margin-top: clamp(10px, 2vw, 20px); }
+.ofertas-section + .ofertas-section + .ofertas-section { background: transparent; }
+html body .hdr-left { min-width: 0; flex: 1 1 auto; }
+html body .hdr-logo { flex: none; }
+html body .hdr-right { flex: none; }

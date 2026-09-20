@@ -2,7 +2,7 @@
   'use strict';
   // Si el texto de un botón no cabe junto a su icono, se muestra solo el icono
   // (el texto sigue en el DOM para lectores de pantalla y como title).
-  var SEL = '.prod-btn, .prod-view-btn, .btn-add, .btn-wa, .admin-pill, .filter-fab, [data-fit]';
+  var SEL = '.prod-btn, .prod-view-btn, .btn-add, .btn-wa, .admin-pill, .wa-pill, .install-pill, .filter-fab, [data-fit]';
   var seen = new WeakSet();
   var pending = false;
 

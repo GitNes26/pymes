@@ -4,15 +4,15 @@
               <img src="<%= p.image %>"<%- _imgAttrs(p.image, '(max-width:640px) 50vw, (max-width:1100px) 33vw, 340px') %> alt="<%= p.name %>" loading="lazy" decoding="async">
               <% var _more = (p.imgs || []).filter(function (u) { return u && u !== p.image; }).slice(0, 3); if (_more.length) { %><% _more.forEach(function (u, k) { %><img class="prod-img-alt" data-i="<%= k + 1 %>" src="<%= u %>"<%- _imgAttrs(u, '(max-width:640px) 50vw, 340px') %> alt="" aria-hidden="true" loading="lazy" decoding="async" data-no-fallback><% }) %><span class="prod-dots" aria-hidden="true"><i class="on"></i><% _more.forEach(function () { %><i></i><% }) %></span><% } %>
               <div class="prod-badge-wrap">
-                <% if (locals.badge) { %><span class="<%= locals.badgeCls || 'prod-badge-promo' %>"><%= badge %></span><% } %>
-                <% if (p.old_price && p.old_price > p.price) { %><span class="prod-badge-offer">-<%= Math.round((1-p.price/p.old_price)*100) %>%</span><% } %>
-                <% if (p.promo_badge) { %><span class="prod-badge-promo"><%= p.promo_badge %></span><% } %>
-
+                <% var _nb = 0; %>
+                <% if (locals.badge) { _nb++; %><span class="<%= locals.badgeCls || 'prod-badge-promo' %>"><%= badge %></span><% } %>
+                <% if (p.old_price && p.old_price > p.price) { _nb++; %><span class="prod-badge-offer">-<%= Math.round((1-p.price/p.old_price)*100) %>%</span><% } %>
+                <% if (p.promo_badge && _nb < 2) { %><span class="prod-badge-promo"><%= p.promo_badge %></span><% } %>
               </div>
             </div>
             <div class="prod-body">
               <% if (p.customTags && p.customTags.length) { %><div class="prod-tags-row"><% p.customTags.forEach(function (t) { var _h = String(t.c || '#2c2c2e').replace('#', ''); var _lum = (parseInt(_h.substr(0, 2), 16) * 0.299 + parseInt(_h.substr(2, 2), 16) * 0.587 + parseInt(_h.substr(4, 2), 16) * 0.114); %><span class="prod-tag-custom" style="background:<%= t.c %>;color:<%= _lum > 160 ? '#161513' : '#fff' %>"><%= t.t %></span><% }) %></div><% } %>
-              <div class="prod-name"><%= p.name %></div>
+              <div class="prod-name"><a href="/<%= biz.slug %>/p/<%= p.id %>" onclick="event.stopPropagation();"><%= p.name %></a></div>
               <% if (p.description) { %><div class="prod-desc"><%= p.description %></div><% } %>
               <div class="prod-prices">
                 <span class="prod-price"><%= _money(p) %></span>

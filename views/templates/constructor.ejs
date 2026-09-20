@@ -74,6 +74,20 @@
   var _ftrOnDark = _onAccent === '#ffffff';
   var _bgDark = _lum(_tk.bg || '#ffffff') < 0.35;
   var _ftrHead = _contrast(_tk.accent, _tk.accentGlow) >= 3 ? _tk.accentGlow : _onAccent;
+  // Texto secundario: se acerca al color de texto hasta cumplir 4.6:1 (WCAG AA) contra el fondo y contra las tarjetas
+  function _mixHex(a, b, t) {
+    function rgb(h) { h = String(h || '#000000').replace('#', ''); if (h.length === 3) h = h.split('').map(function (c) { return c + c; }).join(''); return [0, 2, 4].map(function (i) { return parseInt(h.substr(i, 2), 16) || 0; }); }
+    var x = rgb(a), y = rgb(b);
+    return '#' + [0, 1, 2].map(function (i) { var v = Math.round(x[i] + (y[i] - x[i]) * t); return (v < 16 ? '0' : '') + v.toString(16); }).join('');
+  }
+  var _secSafe = (function () {
+    var c = _tk.textSec || '#6b6562', bg = _tk.bg || '#ffffff', card = _tk.card || '#ffffff', tx = _tk.text || '#111111';
+    for (var t = 0; t <= 1.001; t += 0.05) {
+      var m = _mixHex(c, tx, t);
+      if (_contrast(m, bg) >= 4.6 && _contrast(m, card) >= 4.6) return m;
+    }
+    return tx;
+  })();
   // Secciones extra que el dueño llena/enciende en Configuración (businesses.extras).
   // Las de texto salen solas cuando tienen contenido; las automáticas
   // (nuevos, más vendidos, cómo pedir) solo si están prendidas.
@@ -1065,6 +1079,8 @@
     <% } %>
     :root {
       color-scheme: <%- _bgDark ? 'dark' : 'light' %>;
+      --text-secondary: <%- _secSafe %>;
+      --muted: <%- _secSafe %>;
       --soc-on-accent: <%- _onAccent %>;
       --ftr-fg: <%- _onAccent %>;
       --ftr-head: <%- _ftrHead %>;
@@ -1086,22 +1102,23 @@
   </style>
   <link rel="stylesheet" href="/css/catalog-refine.css?v=20260917c">
   <link rel="stylesheet" href="/css/catalog-motion.css?v=20260919a">
-  <link rel="stylesheet" href="/css/catalog-media.css?v=20260920h">
+  <link rel="stylesheet" href="/css/catalog-media.css?v=20260920k">
   <link rel="stylesheet" href="/css/catalog-hero.css?v=20260919c">
   <script src="/js/catalog-motion.js?v=20260920a" defer></script>
-  <script src="/js/catalog-gallery.js?v=20260919a" defer></script>
-  <script src="/js/btn-fit.js?v=20260918a" defer></script>
+  <script src="/js/catalog-gallery.js?v=20260920a" defer></script>
+  <script src="/js/btn-fit.js?v=20260920a" defer></script>
   <script src="/js/img-retry.js?v=20260919b"></script>
   <script src="/js/masks.js"></script>
 </head>
 <body>
+  <a class="skip-link" href="#contenido">Saltar al contenido</a>
 
   <% if (biz.banner) { %>
   <div class="hero<%= biz.banner ? ' has-banner' : '' %>">
     <img src="<%= biz.banner %>" class="bg" alt="banner" data-hide-on-error>
     <div class="hero-overlay">
-      <% if (biz.logo) { %><img src="<%= biz.logo %>" class="hero-logo" alt="logo" data-hide-on-error><% } %>
-      <div class="hero-name"><%= biz.name %></div>
+      <% if (biz.logo && biz.logo !== biz.banner) { %><img src="<%= biz.logo %>" class="hero-logo" alt="Logo de <%= biz.name %>" data-hide-on-error><% } %>
+      <h1 class="hero-name"><%= biz.name %></h1>
       <% if (biz.description) { %><div class="hero-desc"><%= biz.description %></div><% } %>
       <% if (_horarioHtml) { %>
       <div class="hero-status <%= (function(){
@@ -1142,7 +1159,7 @@
   <!-- Sin banner: el logo se presenta grande en una portada sencilla -->
   <div class="brand-hero">
     <img src="<%= biz.logo %>" class="brand-hero-logo" alt="<%= biz.name %>" data-hide-on-error>
-    <div class="hero-name"><%= biz.name %></div>
+    <h1 class="hero-name"><%= biz.name %></h1>
     <% if (biz.description) { %><div class="hero-desc"><%= biz.description %></div><% } %>
   </div>
   <% } %>
@@ -1177,7 +1194,7 @@
     <div class="hdr-inner">
       <div class="hdr-left">
         <% if (biz.logo) { %><img src="<%= biz.logo %>" class="hdr-logo" alt="logo" data-hide-on-error><% } %>
-        <span class="hdr-title"><%= biz.name %></span>
+        <% if (biz.banner || biz.logo) { %><span class="hdr-title"><%= biz.name %></span><% } else { %><h1 class="hdr-title"><%= biz.name %></h1><% } %>
       </div>
       <div class="hdr-right">
         <button type="button" id="pwa-install-btn-public" class="install-pill" onclick="window.installPWA && window.installPWA()"><i class="bi bi-download"></i> Instalar app</button>
@@ -1266,7 +1283,7 @@
   <% }) %>
 
   <!-- ===== CONTENIDO PRINCIPAL: sidebar + grid ===== -->
-  <div class="main-layout">
+  <main class="main-layout" id="contenido" tabindex="-1">
     <div class="wrap main-inner">
 
       <!-- SIDEBAR DE FILTROS -->
@@ -1299,12 +1316,12 @@
         <% if (_catsShown.length > 1) { %>
         <div class="filter-group">
           <label class="filter-label">Categoría</label>
-          <div class="filter-cats">
+          <nav class="filter-cats" aria-label="Categorías">
             <button class="filter-cat on" data-cat="all" onclick="catalogFilterCat('all',this)">Todos <span><%= _realProds.length %></span></button>
             <% _catsShown.forEach(function(cat) { %>
             <button class="filter-cat" data-cat="<%= cat.id %>" onclick="catalogFilterCat('<%= cat.id %>',this)"><%= cat.name %> <span><%= _catCount[String(cat.id)] || 0 %></span></button>
             <% }) %>
-          </div>
+          </nav>
         </div>
         <% } %>
 
@@ -1371,7 +1388,7 @@
         <div id="prodGridEnd" style="height:1px;"></div>
       </div>
     </div>
-  </div>
+  </main>
 
   <!-- Botón filtros móvil: solo tiene sentido mientras se ven los productos, así
        que se oculta en cuanto el usuario baja hacia otras secciones (preguntas,
@@ -1958,7 +1975,7 @@
 
       // Header sticky: continuidad entre el logo grande del hero y el logo
       // compacto del header — se activa apenas el hero sale de vista.
-      var hero = document.querySelector('.hero');
+      var hero = document.querySelector('.hero') || document.querySelector('.brand-hero');
       var hdr = document.querySelector('.hdr');
       if (hero && hdr) {
         var hdrObs = new IntersectionObserver(function(entries) {
