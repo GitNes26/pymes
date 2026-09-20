@@ -464,7 +464,7 @@ async function trimBlankBands(inBuf) {
     if (k < Math.max(2, Math.round(n * 0.015))) return 0;
     const b = st.slice(0, Math.min(k, 4)).reduce((a, x) => a + x.m, 0) / Math.min(k, 4);
     const c = st.slice(k, k + 4).reduce((a, x) => a + x.m, 0) / Math.min(4, n - k);
-    if (Math.abs(b - c) < 14 || (b < 232 && b > 22)) return 0; // solo franjas casi blancas o casi negras
+    if (Math.abs(b - c) < 14 || (b < 205 && b > 45)) return 0; // solo franjas claras (blanco, gris muy claro) u oscuras (negro)
     let j = 0;
     while (j < k && Math.abs(st[j].m - b) < 8) j++;
     return j;
