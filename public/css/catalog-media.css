@@ -209,3 +209,10 @@ body .prod-badge-wrap { align-items: flex-start; }
 }
 .prod-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .prod-tags .prod-tag-custom { font-size: 11px; padding: 5px 12px; border-radius: 999px; }
+
+/* Etiquetas personalizadas: debajo de la foto, para que nunca la tapen */
+.prod-tags-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+.prod-tags-row .prod-tag-custom { box-shadow: none; font-size: 10px; padding: 3px 9px; }
+body .prod-badge-wrap { max-width: 78%; }
+/* Con el panel de filtros abierto, los botones flotantes no tapan el botón "Buscar" */
+body:has(.filter-sidebar.sidebar-open) #chat-fab, body:has(.filter-sidebar.sidebar-open) .filter-fab { opacity: 0; pointer-events: none; }

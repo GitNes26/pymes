@@ -7,10 +7,11 @@
                 <% if (locals.badge) { %><span class="<%= locals.badgeCls || 'prod-badge-promo' %>"><%= badge %></span><% } %>
                 <% if (p.old_price && p.old_price > p.price) { %><span class="prod-badge-offer">-<%= Math.round((1-p.price/p.old_price)*100) %>%</span><% } %>
                 <% if (p.promo_badge) { %><span class="prod-badge-promo"><%= p.promo_badge %></span><% } %>
-                <% (p.customTags || []).forEach(function (t) { var _h = String(t.c || '#2c2c2e').replace('#', ''); var _lum = (parseInt(_h.substr(0, 2), 16) * 0.299 + parseInt(_h.substr(2, 2), 16) * 0.587 + parseInt(_h.substr(4, 2), 16) * 0.114); %><span class="prod-tag-custom" style="background:<%= t.c %>;color:<%= _lum > 160 ? '#161513' : '#fff' %>"><%= t.t %></span><% }) %>
+
               </div>
             </div>
             <div class="prod-body">
+              <% if (p.customTags && p.customTags.length) { %><div class="prod-tags-row"><% p.customTags.forEach(function (t) { var _h = String(t.c || '#2c2c2e').replace('#', ''); var _lum = (parseInt(_h.substr(0, 2), 16) * 0.299 + parseInt(_h.substr(2, 2), 16) * 0.587 + parseInt(_h.substr(4, 2), 16) * 0.114); %><span class="prod-tag-custom" style="background:<%= t.c %>;color:<%= _lum > 160 ? '#161513' : '#fff' %>"><%= t.t %></span><% }) %></div><% } %>
               <div class="prod-name"><%= p.name %></div>
               <% if (p.description) { %><div class="prod-desc"><%= p.description %></div><% } %>
               <div class="prod-prices">

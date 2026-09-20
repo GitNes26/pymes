@@ -815,6 +815,7 @@
     .filter-sidebar { flex:0 0 260px; position:sticky; top:64px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:20px; box-shadow:var(--shadow); }
     .filter-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
     .filter-header h3 { font-size:16px; font-weight:700; display:flex; align-items:center; gap:6px; }
+    .filter-apply-bar { display:none; }
     .filter-close-movil { display:none; background:none; border:none; font-size:18px; cursor:pointer; color:var(--text-secondary); }
     .filter-group { margin-bottom:16px; }
     .filter-label { display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--text-secondary); margin-bottom:6px; }
@@ -856,6 +857,10 @@
     @media(max-width:900px) {
       .filter-sidebar { position:fixed; left:0; top:0; bottom:0; z-index:200; border-radius:0; width:300px; transform:translateX(-100%); transition:transform .3s cubic-bezier(.22,1,.36,1); overflow-y:auto; }
       .filter-sidebar.sidebar-open { transform:translateX(0); box-shadow:4px 0 32px rgba(0,0,0,.15); }
+      .filter-sidebar { overflow-y:auto; overscroll-behavior:contain; padding-bottom:0; }
+      .filter-apply-bar { display:block; position:sticky; bottom:0; z-index:3; margin:14px -20px 0; padding:12px 20px calc(12px + env(safe-area-inset-bottom)); background:var(--bg-card); border-top:1px solid var(--border); }
+      .filter-apply { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; min-height:50px; border:0; border-radius:min(var(--radius), 14px); background:var(--accent); color:var(--soc-on-accent,#fff); font-size:15px; font-weight:700; cursor:pointer; transition:transform .2s cubic-bezier(.34,1.56,.64,1); }
+      .filter-apply:active { transform:scale(.97); }
       .filter-close-movil { display:block; }
       .filter-fab { display:flex; align-items:center; gap:6px; }
       .main-inner { flex-direction:column; gap:0; padding-top:16px; }
@@ -1074,7 +1079,7 @@
   </style>
   <link rel="stylesheet" href="/css/catalog-refine.css?v=20260917c">
   <link rel="stylesheet" href="/css/catalog-motion.css?v=20260919a">
-  <link rel="stylesheet" href="/css/catalog-media.css?v=20260920f">
+  <link rel="stylesheet" href="/css/catalog-media.css?v=20260920h">
   <link rel="stylesheet" href="/css/catalog-hero.css?v=20260919c">
   <script src="/js/catalog-motion.js?v=20260920a" defer></script>
   <script src="/js/catalog-gallery.js?v=20260919a" defer></script>
@@ -1320,6 +1325,9 @@
         </div>
 
         <button class="filter-clear" onclick="clearFilters()"><i class="bi bi-x-lg"></i> Limpiar filtros</button>
+        <div class="filter-apply-bar">
+          <button type="button" class="filter-apply" onclick="commitFilters()"><i class="bi bi-search"></i> Buscar · <b id="filterPending"><%= _realProds.length %></b> <span id="filterPendingLbl">resultados</span></button>
+        </div>
       </aside>
 
       <!-- GRID DE PRODUCTOS -->
@@ -1817,10 +1825,30 @@
       var sb = document.getElementById('filterSidebar');
       if (sb) sb.classList.remove('sidebar-open');
     }
+    // En el celular (panel lateral) los filtros NO se aplican al tocarlos: se combinan y se aplican con el botón "Buscar".
+    // En escritorio (barra siempre visible) siguen filtrando al momento.
+    var _drawerMQ = window.matchMedia('(max-width:900px)');
+    function _isDrawer() { return _drawerMQ.matches; }
+    function _pendingCount() {
+      var n = 0;
+      document.querySelectorAll('#prodGrid .prod-card').forEach(function (c) { if (_matchesFilters(c)) n++; });
+      var el = document.getElementById('filterPending');
+      if (el) el.textContent = n;
+      var lbl = document.getElementById('filterPendingLbl');
+      if (lbl) lbl.textContent = n === 1 ? 'resultado' : 'resultados';
+    }
     function applyFilters() {
+      if (_isDrawer()) { _pendingCount(); return; }
       _shownCount = PAGE_SIZE; // cada cambio de filtro reinicia la paginación
       _renderProducts();
       goProducts();
+    }
+    // Botón "Buscar" (celular) y Enter: aplica todos los filtros marcados, cierra el panel y va a Productos
+    function commitFilters() {
+      _shownCount = PAGE_SIZE;
+      _renderProducts();
+      closeFilters();
+      goProducts(true);
     }
     // Enter (o "Buscar" del teclado del celular): cierra los filtros y muestra los resultados
     ['filterSearch', 'filterPriceMin', 'filterPriceMax'].forEach(function (id) {
@@ -1830,8 +1858,7 @@
         if (e.key !== 'Enter') return;
         e.preventDefault();
         el.blur();
-        closeFilters();
-        goProducts(true);
+        commitFilters();
       });
     });
     function setPriceRange(min, max) {
@@ -1842,8 +1869,7 @@
       document.querySelectorAll('.filter-range').forEach(function(b){b.classList.remove('active');});
       if (window.event && window.event.target) window.event.target.classList.add('active');
       applyFilters();
-      closeFilters();
-      goProducts(true);
+      if (!_isDrawer()) { closeFilters(); goProducts(true); }
     }
     function clearFilters() {
       var s = document.getElementById('filterSearch');
@@ -1859,8 +1885,8 @@
       if (allBtn) allBtn.classList.add('on');
       _shownCount = PAGE_SIZE;
       _renderProducts();
-      closeFilters();
-      goProducts(true);
+      _pendingCount();
+      if (!_isDrawer()) { closeFilters(); goProducts(true); }
     }
     function catalogFilterAttr(btn) {
       btn.classList.toggle('on');
@@ -1871,8 +1897,7 @@
       if (!el) { var btn = document.querySelector('.filter-cat[data-cat="'+cat+'"]'); if (btn) btn.classList.add('on'); }
       else { el.classList.add('on'); }
       applyFilters();
-      closeFilters();
-      goProducts(true);
+      if (!_isDrawer()) { closeFilters(); goProducts(true); }
     }
 
     // Estado inicial: solo la primera página visible
