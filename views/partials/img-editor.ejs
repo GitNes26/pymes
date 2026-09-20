@@ -253,7 +253,7 @@ Hooks opcionales de la página (definir antes de abrir):
       fd.append('foto', blob, 'editada.png');
       var tok = csrf();
       if (tok) fd.append('_csrf', tok);
-      fetch(UP_URL, { method: 'POST', body: fd, headers: tok ? { 'x-csrf-token': tok } : {}, credentials: 'same-origin' })
+      fetch(UP_URL + (window.__imgeTrim ? (UP_URL.indexOf('?') > -1 ? '&' : '?') + 'trim=1' : ''), { method: 'POST', body: fd, headers: tok ? { 'x-csrf-token': tok } : {}, credentials: 'same-origin' })
         .then(function (r) { return r.json(); })
         .then(function (d) {
           imgeClose();

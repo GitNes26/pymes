@@ -445,7 +445,40 @@ function receiveImageUpload(req, res, next) {
 // Se reescribe el mismo archivo ya guardado por multer con un tamaño y
 // calidad razonables; si algo falla (archivo raro, sharp no lo puede leer)
 // se deja el original tal cual en vez de tronar la subida.
-async function compressUploadedImage(filePath) {
+// Recorta franjas vacías pegadas a un borde (p. ej. la banqueta blanca debajo de la foto de una lona): una franja
+// uniforme cuyo tono contrasta de golpe con el contenido de al lado. No toca fotos con cielo, degradados ni márgenes
+// blancos parejos (ahí no hay salto brusco), ni recorta más del 45% por lado.
+async function trimBlankBands(inBuf) {
+  const W = 200;
+  const { data, info } = await sharp(inBuf, { failOn: 'none' }).rotate().resize({ width: W, withoutEnlargement: true }).flatten({ background: '#ffffff' }).greyscale().raw().toBuffer({ resolveWithObject: true });
+  const w = info.width, h = info.height;
+  if (w < 20 || h < 20) return inBuf;
+  const lineStats = (n, len, get) => { const out = []; for (let i = 0; i < n; i++) { let sum = 0, sq = 0; for (let j = 0; j < len; j++) { const v = get(i, j); sum += v; sq += v * v; } const m = sum / len; out.push({ m, sd: Math.sqrt(Math.max(0, sq / len - m * m)) }); } return out; };
+  const rows = lineStats(h, w, (y, x) => data[y * w + x]);
+  const cols = lineStats(w, h, (x, y) => data[y * w + x]);
+  // stats ordenadas del borde hacia adentro → cuántas líneas cortar
+  const cut = (st) => {
+    const n = st.length, max = Math.floor(n * 0.45);
+    let k = 0;
+    while (k < max && st[k].sd < 3) k++;
+    if (k < Math.max(2, Math.round(n * 0.015))) return 0;
+    const b = st.slice(0, Math.min(k, 4)).reduce((a, x) => a + x.m, 0) / Math.min(k, 4);
+    const c = st.slice(k, k + 4).reduce((a, x) => a + x.m, 0) / Math.min(4, n - k);
+    if (Math.abs(b - c) < 14 || (b < 232 && b > 22)) return 0; // solo franjas casi blancas o casi negras
+    let j = 0;
+    while (j < k && Math.abs(st[j].m - b) < 8) j++;
+    return j;
+  };
+  const bottom = cut(rows.slice().reverse()), top = cut(rows), right = cut(cols.slice().reverse()), left = cut(cols);
+  if (!bottom && !top && !right && !left) return inBuf;
+  const meta = await sharp(inBuf, { failOn: 'none' }).rotate().toBuffer({ resolveWithObject: true });
+  const sx = meta.info.width / w, sy = meta.info.height / h;
+  const L = Math.round(left * sx), T = Math.round(top * sy);
+  const CW = meta.info.width - L - Math.round(right * sx), CH = meta.info.height - T - Math.round(bottom * sy);
+  if (CW < 40 || CH < 40) return inBuf;
+  return sharp(meta.data).extract({ left: L, top: T, width: CW, height: CH }).toBuffer();
+}
+async function compressUploadedImage(filePath, opts) {
   const ext = path.extname(filePath).toLowerCase();
   if (ext === '.gif') return; // se respeta tal cual para no perder la animación
   try {
@@ -454,13 +487,14 @@ async function compressUploadedImage(filePath) {
     // para lectura falla (EBUSY/UNKNOWN) — con el buffer no queda ningún
     // handle sobre filePath mientras se procesa.
     const before = fs.statSync(filePath).size;
-    const inBuf = fs.readFileSync(filePath);
+    let inBuf = fs.readFileSync(filePath);
+    if (opts && opts.trim && ext !== '.svg') { try { inBuf = await trimBlankBands(inBuf); } catch (e) { console.error('trimBlankBands:', e.message); } }
     const img = sharp(inBuf, { failOn: 'none' }).rotate().resize({ width: 1600, height: 1600, fit: 'inside', withoutEnlargement: true });
     let buf;
     if (ext === '.png') buf = await img.png({ compressionLevel: 9, palette: true }).toBuffer();
     else if (ext === '.webp') buf = await img.webp({ quality: 80 }).toBuffer();
     else buf = await img.jpeg({ quality: 78, mozjpeg: true }).toBuffer();
-    if (buf.length < before) fs.writeFileSync(filePath, buf);
+    if (buf.length < before || (opts && opts.trim)) fs.writeFileSync(filePath, buf);
   } catch (e) {
     console.error('compressUploadedImage:', e.message);
   }
@@ -673,7 +707,7 @@ function loginRateLimit(req, res, next) {
 
 app.post('/:slug/admin/upload', requireAuth, receiveImageUpload, verifyBodyCsrf, async (req, res) => {
   if (!req.file) return res.status(415).json({ error: 'Formato de imagen no compatible. Usa JPG, PNG, GIF o WebP.' });
-  await compressUploadedImage(req.file.path);
+  await compressUploadedImage(req.file.path, { trim: req.query.trim === '1' });
   res.json({ url: '/uploads/' + req.file.filename });
 });
 
@@ -694,7 +728,7 @@ app.post('/maestro/:id/uploadvideo', maestroAuth, uploadVideo.single('video'), v
 // Subida de logo/banner desde el editor de diseño del maestro
 app.post('/maestro/:id/upload', maestroAuth, receiveImageUpload, verifyBodyCsrf, async (req, res) => {
   if (!req.file) return res.status(415).json({ error: 'Formato de imagen no compatible. Usa JPG, PNG, GIF o WebP.' });
-  await compressUploadedImage(req.file.path);
+  await compressUploadedImage(req.file.path, { trim: req.query.trim === '1' });
   res.json({ url: '/uploads/' + req.file.filename });
 });
 

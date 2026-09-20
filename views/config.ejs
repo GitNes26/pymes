@@ -1456,6 +1456,8 @@
   <%- include('partials/img-editor', { upUrl: (esMaestro ? '/maestro/' + biz.id + '/upload' : '/' + biz.slug + '/admin/upload'), z: 9000 }) %>
 <script>
     function subirConEditor(inputId, campoId, previewId, aspecto) {
+      // Logo y banner: el servidor recorta franjas vacías pegadas a un borde de la foto
+      window.__imgeTrim = (campoId === 'logo-url' || campoId === 'banner-url');
       var input = document.getElementById(inputId);
       if (!input || !input.files || !input.files[0]) return;
       var f = input.files[0];
