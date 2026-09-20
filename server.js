@@ -991,7 +991,7 @@ const TPL_ACCENTS = {
 
 // Íconos de pestaña y de pantalla de inicio: el logo de la tienda (si lo tiene) en vez del de la plataforma
 function brandIconLinks(biz) {
-  if (biz && (biz.logo || biz.banner)) {
+  if (biz) {
     const v = brandVersion(biz);
     return '<link rel="icon" type="image/png" href="/' + biz.slug + '/icon/192.png?v=' + v + '">' +
       '<link rel="apple-touch-icon" href="/' + biz.slug + '/icon/180.png?v=' + v + '">';
@@ -2467,15 +2467,22 @@ app.get('/:slug/icon/:size.png', ah(async (req, res) => {
   const size = [180, 192, 512].includes(parseInt(req.params.size, 10)) ? parseInt(req.params.size, 10) : 192;
   const biz = getBusiness(req.params.slug);
   const fallback = size === 180 ? '/icons/apple-touch-icon.png' : '/icons/icon-' + size + '.png';
-  if (!biz || !biz.active || !(biz.logo || biz.banner)) return res.redirect(fallback);
+  if (!biz || !biz.active) return res.redirect(fallback);
   const key = 'icon:' + size + ':' + biz.slug + ':' + brandVersion(biz);
   let buf = _brandCache.get(key);
+  let real = true;
   if (!buf) {
-    try { buf = await brandIcon(biz, size); } catch (e) { buf = null; }
-    if (!buf) return res.redirect(fallback);
-    brandCacheSet(key, buf);
+    try { buf = (biz.logo || biz.banner) ? await brandIcon(biz, size) : null; } catch (e) { buf = null; }
+    if (!buf) {
+      // Sin imagen (o no se pudo leer): inicial del negocio con su color, nunca el ícono de la plataforma
+      real = false;
+      const ini = (String(biz.name || 'C').trim().charAt(0) || 'C').toUpperCase().replace(/[<>&"]/g, '');
+      const ac = (catDesignOf(biz).tokens || {}).accent || '#17232d';
+      const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + size + '" height="' + size + '"><rect width="100%" height="100%" fill="' + ac + '"/><text x="50%" y="50%" dy=".35em" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="' + Math.round(size * 0.55) + '" fill="#ffffff">' + ini + '</text></svg>';
+      try { buf = await sharp(Buffer.from(svg)).png().toBuffer(); } catch (e) { return res.redirect(fallback); }
+    } else brandCacheSet(key, buf);
   }
-  res.set('Cache-Control', 'public, max-age=86400').type('png').send(buf);
+  res.set('Cache-Control', real ? 'public, max-age=86400' : 'no-cache').type('png').send(buf);
 }));
 
 // Manifest PWA por tienda (permite instalar el catálogo como app nativa)
@@ -2499,7 +2506,7 @@ app.get('/:slug/manifest.webmanifest', (req, res) => {
     background_color: designTokens.bg || '#ffffff',
     theme_color: designTokens.accent || '#17232d',
     lang: 'es',
-    icons: (biz.logo || biz.banner) ? [
+    icons: true ? [
       { src: '/' + biz.slug + '/icon/192.png?v=' + brandVersion(biz), sizes: '192x192', type: 'image/png', purpose: 'any' },
       { src: '/' + biz.slug + '/icon/512.png?v=' + brandVersion(biz), sizes: '512x512', type: 'image/png', purpose: 'any' },
       { src: '/' + biz.slug + '/icon/512.png?v=' + brandVersion(biz), sizes: '512x512', type: 'image/png', purpose: 'maskable' }
