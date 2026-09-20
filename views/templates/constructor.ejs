@@ -1770,18 +1770,52 @@
         if (info) info.textContent = 'Mostrando ' + Math.min(total, _shownCount) + ' de ' + total + ' productos';
       }
     }
+    // Al filtrar/buscar siempre se regresa al inicio de "Productos": al bajar la cantidad de tarjetas la página se acorta
+    // y el navegador dejaba al visitante en otra sección (contacto, pie de página…).
+    var _goT = null;
+    function goProducts(now) {
+      clearTimeout(_goT);
+      var run = function () {
+        var t = document.querySelector('.main-content .sec-title') || document.getElementById('prodGrid');
+        if (!t) return;
+        var hdr = document.querySelector('.hdr');
+        var y = t.getBoundingClientRect().top + window.pageYOffset - ((hdr ? hdr.offsetHeight : 0) + 14);
+        var rm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        window.scrollTo({ top: Math.max(0, y), behavior: rm ? 'auto' : 'smooth' });
+      };
+      if (now) run(); else _goT = setTimeout(run, 380);
+    }
+    function closeFilters() {
+      var sb = document.getElementById('filterSidebar');
+      if (sb) sb.classList.remove('sidebar-open');
+    }
     function applyFilters() {
       _shownCount = PAGE_SIZE; // cada cambio de filtro reinicia la paginación
       _renderProducts();
+      goProducts();
     }
+    // Enter (o "Buscar" del teclado del celular): cierra los filtros y muestra los resultados
+    ['filterSearch', 'filterPriceMin', 'filterPriceMax'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        el.blur();
+        closeFilters();
+        goProducts(true);
+      });
+    });
     function setPriceRange(min, max) {
       var minEl = document.getElementById('filterPriceMin');
       var maxEl = document.getElementById('filterPriceMax');
       if (minEl) minEl.value = min||'';
       if (maxEl) maxEl.value = max===99999 ? '' : max;
       document.querySelectorAll('.filter-range').forEach(function(b){b.classList.remove('active');});
-      event.target.classList.add('active');
+      if (window.event && window.event.target) window.event.target.classList.add('active');
       applyFilters();
+      closeFilters();
+      goProducts(true);
     }
     function clearFilters() {
       var s = document.getElementById('filterSearch');
@@ -1796,12 +1830,16 @@
       if (allBtn) allBtn.classList.add('on');
       _shownCount = PAGE_SIZE;
       _renderProducts();
+      closeFilters();
+      goProducts(true);
     }
     function catalogFilterCat(cat, el) {
       document.querySelectorAll('.filter-cat').forEach(function(b){b.classList.remove('on');});
       if (!el) { var btn = document.querySelector('.filter-cat[data-cat="'+cat+'"]'); if (btn) btn.classList.add('on'); }
       else { el.classList.add('on'); }
       applyFilters();
+      closeFilters();
+      goProducts(true);
     }
 
     // Estado inicial: solo la primera página visible
