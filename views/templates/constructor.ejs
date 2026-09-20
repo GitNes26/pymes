@@ -1304,6 +1304,7 @@
               <% } else if (p.displayStock !== null && p.displayStock !== undefined) { %>
                 <% if (p.displayStock <= 0) { %>
                   <div class="stock-status stock-status--out">Agotado</div>
+                <% } else if (p.hideStock) { %>
                 <% } else if (p.displayStock <= 5) { %>
                   <div class="stock-status stock-status--low">🔥 ¡Quedan <%= p.displayStock %>!</div>
                 <% } else { %>
@@ -1873,13 +1874,16 @@
     /* Hacer clickeables las imágenes de producto y galería */
     document.addEventListener('DOMContentLoaded', function() {
       /* Imágenes de productos */
-      document.querySelectorAll('.prod-img-wrap img').forEach(function(img) {
+      document.querySelectorAll('.prod-img-wrap img:not(.prod-img-alt)').forEach(function(img) {
         img.style.cursor = 'zoom-in';
         img.addEventListener('click', function(e) {
           e.stopPropagation();
           var card = img.closest('.prod-card');
           var name = card ? (card.querySelector('.prod-name') || {}).textContent : '';
-          expandImage(img.src, name || '');
+          // El zoom abre la foto que se ve en ese momento: con el mouse encima la tarjeta muestra la 2.ª foto
+          var alt = card && card.querySelector('.prod-img-alt');
+          var shown = (alt && card.matches(':hover') && parseFloat(getComputedStyle(alt).opacity) > 0.5) ? alt : img;
+          expandImage(shown.getAttribute('src'), name || '');
         });
       });
       /* Imágenes de galería */

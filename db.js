@@ -78,6 +78,7 @@ addColumnIfMissing('businesses', 'transfer_enabled', 'INTEGER DEFAULT 0');
 // testimonios[{name,text,stars}] y los interruptores showNew / showTop / showHow.
 // Las de texto salen solas cuando el dueño las llena; las automáticas se prenden aquí.
 addColumnIfMissing('businesses', 'extras', "TEXT DEFAULT ''");
+addColumnIfMissing('products', 'show_stock', 'INTEGER DEFAULT 1'); // 1 = el catálogo muestra el stock (Quedan X / N disponibles); 0 = lo oculta
 
 // Sesiones con token aleatorio (el dueño y el maestro). Ya no se usa cookie estática.
 db.exec(`

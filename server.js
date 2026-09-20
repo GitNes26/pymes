@@ -1713,6 +1713,7 @@ function getCatalog(businessId) {
   ).all(businessId).map(withPromo).map(p => {
     p.imgs = productImgs(p);
     if (variantCoverImage(p)) p.image = p.imgs[0]; // la tarjeta muestra la foto de la primera variante
+    p.hideStock = p.show_stock === 0 || p.show_stock === '0';
     p.shortDesc = (p.description || '').replace(/\s+/g, ' ').trim().slice(0, 110);
     // Para que el cliente sepa si se va a acabar: con variantes el stock
     // vive por combinación (p.stock siempre null a propósito), así que se
@@ -2321,6 +2322,7 @@ app.get('/:slug/p/:id', (req, res, next) => {
   p.imgs = productImgs(p);
   withPromo(p);
   const pvm0 = parseVariantList(p.variants);
+  p.hideStock = p.show_stock === 0 || p.show_stock === '0';
   p.displayStock = p.made_to_order ? null : (pvm0.attrs && pvm0.attrs.length)
     ? Object.values(pvm0.stock || {}).reduce((s, v) => s + (parseInt(v, 10) || 0), 0)
     : p.stock;
@@ -3388,6 +3390,7 @@ app.post('/:slug/admin/producto', requireAuth, can('productos.crear'), (req, res
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).run(biz.id, category_id || null, String(name).trim(), price, old_price, description || '', image || '', parseGaleria(req.body.galeria), stockNum, madeToOrder, variantsJson, parsePromoEnd(req.body.promo_ends_at), req.body.featured ? 1 : 0, promo.promo_type, promo.promo_value, promo.promo_gift, (req.body.sku || '').toString().trim().slice(0, 60), (req.body.tags || '').toString().trim().slice(0, 300), (req.body.video || '').toString().trim().slice(0, 300), (req.body.specs || '').toString().slice(0, 2000), (req.body.barcode || '').toString().trim().slice(0, 60), inst.allow_installments, inst.installment_count, inst.installment_min_down, inst.installment_frequency, parseCost(req.body.cost));
     const created = db.prepare('SELECT * FROM products WHERE business_id = ? ORDER BY id DESC LIMIT 1').get(biz.id);
+    if (created && req.body.show_stock_set) db.prepare('UPDATE products SET show_stock = ? WHERE id = ? AND business_id = ?').run(req.body.show_stock ? 1 : 0, created.id, biz.id);
     if (created) logPriceHistory(biz.id, created);
   } catch (err) {
     return renderError('No se pudo guardar el producto: ' + (err.message || 'error desconocido'));
@@ -3478,6 +3481,7 @@ app.post('/:slug/admin/producto/:id', requireAuth, can('productos.editar'), (req
       `UPDATE products SET name = ?, price = ?, old_price = ?, category_id = ?, description = ?, image = ?, galeria = ?, stock = ?, made_to_order = ?, variants = ?, promo_ends_at = ?, featured = ?, promo_type = ?, promo_value = ?, promo_gift = ?, sku = ?, tags = ?, video = ?, specs = ?, barcode = ?, allow_installments = ?, installment_count = ?, installment_min_down = ?, installment_frequency = ?, cost = ?
        WHERE id = ? AND business_id = ?`
     ).run(name.trim(), price, old_price, category_id || null, description || '', image || '', parseGaleria(req.body.galeria), stockNum, madeToOrder, variantsJson, parsePromoEnd(req.body.promo_ends_at), req.body.featured ? 1 : 0, promo.promo_type, promo.promo_value, promo.promo_gift, (req.body.sku || '').toString().trim().slice(0, 60), (req.body.tags || '').toString().trim().slice(0, 300), (req.body.video || '').toString().trim().slice(0, 300), (req.body.specs || '').toString().slice(0, 2000), (req.body.barcode || '').toString().trim().slice(0, 60), inst.allow_installments, inst.installment_count, inst.installment_min_down, inst.installment_frequency, parseCost(req.body.cost), req.params.id, req.biz.id);
+    if (req.body.show_stock_set) db.prepare('UPDATE products SET show_stock = ? WHERE id = ? AND business_id = ?').run(req.body.show_stock ? 1 : 0, req.params.id, req.biz.id);
     const updated = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
     if (updated) logPriceHistory(req.biz.id, updated);
   } catch (err) {

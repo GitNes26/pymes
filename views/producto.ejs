@@ -372,6 +372,7 @@
   <script>
     (function () {
       var PROD_ID = <%- product.id %>;
+      var PROD_HIDE_STOCK = <%= product.hideStock ? 'true' : 'false' %>;
       var PROD_STOCK = <%- (product.displayStock === null || product.displayStock === undefined) ? 'null' : product.displayStock %>;
       var PROD_MADE_TO_ORDER = <%= product.made_to_order ? 'true' : 'false' %>;
       var CUR = <%- JSON.stringify(typeof currencySymbol !== 'undefined' ? currencySymbol : '$') %>;
@@ -436,6 +437,7 @@
         }
         if (stock === null || stock === undefined) { el.textContent = ''; return; }
         if (stock <= 0) { el.textContent = 'Agotado'; el.style.color = '#ef4444'; }
+        else if (PROD_HIDE_STOCK) { el.textContent = ''; }
         else if (stock <= 5) { el.textContent = '🔥 ¡Quedan ' + stock + '!'; el.style.color = '#ea580c'; }
         else { el.textContent = stock + ' disponibles'; el.style.color = 'var(--text-sec)'; }
       }

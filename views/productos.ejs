@@ -148,7 +148,7 @@
                    data-search="<%= [p.name, p.tags, p.description].filter(Boolean).join(' ').toLowerCase() %>" data-state="<%= p.active ? 'active' : 'hidden' %>" data-stock="<%= p.displayStock === null ? '' : (p.displayStock > 5 ? 'ok' : (p.displayStock > 0 ? 'low' : 'out')) %>" data-promo="<%= p.old_price ? 1 : 0 %>"
                    data-edit-id="<%= p.id %>" data-edit-name="<%= (p.name || '').replace(/"/g, '&quot;') %>" data-edit-price="<%= p.price %>" data-edit-old="<%= p.old_price || '' %>" data-edit-cost="<%= p.cost || '' %>"
                    data-edit-cat="<%= p.category_id || '' %>" data-edit-desc="<%= (p.description || '').replace(/"/g, '&quot;') %>" data-edit-image="<%= (p.image || '').replace(/"/g, '&quot;') %>" data-edit-galeria="<%= (p.galeria || '').replace(/"/g, '&quot;') %>"
-                   data-edit-stock="<%= p.stock === null ? '' : p.stock %>" data-edit-made-to-order="<%= p.made_to_order ? 1 : 0 %>" data-edit-variants="<%= encodeURIComponent(JSON.stringify(p.variants || [])) %>" data-edit-featured="<%= p.featured ? 1 : 0 %>" data-edit-promo="<%= p.promo_ends_at || '' %>"
+                   data-edit-stock="<%= p.stock === null ? '' : p.stock %>" data-edit-made-to-order="<%= p.made_to_order ? 1 : 0 %>" data-edit-show-stock="<%= (p.show_stock === 0 || p.show_stock === '0') ? 0 : 1 %>" data-edit-variants="<%= encodeURIComponent(JSON.stringify(p.variants || [])) %>" data-edit-featured="<%= p.featured ? 1 : 0 %>" data-edit-promo="<%= p.promo_ends_at || '' %>"
                    data-edit-promo-type="<%= p.promo_type || '' %>" data-edit-promo-value="<%= p.promo_value || '' %>" data-edit-promo-gift="<%= (p.promo_gift || '').replace(/"/g, '&quot;') %>"
                    data-edit-sku="<%= (p.sku || '').replace(/"/g, '&quot;') %>" data-edit-tags="<%= (p.tags || '').replace(/"/g, '&quot;') %>" data-edit-video="<%= (p.video || '').replace(/"/g, '&quot;') %>" data-edit-specs="<%= (p.specs || '').replace(/"/g, '&quot;') %>" data-edit-barcode="<%= (p.barcode || '').replace(/"/g, '&quot;') %>"
                    data-edit-installments="<%= p.allow_installments ? 1 : 0 %>" data-edit-inst-count="<%= p.installment_count || 6 %>" data-edit-inst-down="<%= p.installment_min_down || 0 %>" data-edit-inst-freq="<%= p.installment_frequency || 'semanal' %>">
@@ -295,6 +295,11 @@
             <label class="md:col-span-2 flex items-start gap-2.5 rounded-xl border px-4 py-3 cursor-pointer" style="border-color:var(--ap-border);background:var(--ap-card)">
               <input type="checkbox" name="made_to_order" id="f-made-to-order" value="1" class="mt-0.5 accent-neutral-800" onchange="syncStockField(); var ed=window.VAR_EDITORS && window.VAR_EDITORS.f; if(ed) ed.renderCombos(); if(pfStep===4) renderResumen()">
               <span><strong class="block text-xs" style="color:var(--ap-text)">Sin stock · por pedido</strong><span class="block text-[11px] mt-0.5" style="color:var(--ap-text-sec)">Siempre visible y disponible para pedir. No se pide cantidad ni se limita la compra por existencias.</span></span>
+            </label>
+            <label class="md:col-span-2 flex items-start gap-2.5 rounded-xl border px-4 py-3 cursor-pointer" style="border-color:var(--ap-border);background:var(--ap-card)">
+              <input type="hidden" name="show_stock_set" value="1">
+              <input type="checkbox" name="show_stock" id="f-show-stock" value="1" checked class="mt-0.5 accent-neutral-800">
+              <span><strong class="block text-xs" style="color:var(--ap-text)">Mostrar el stock en el catálogo</strong><span class="block text-[11px] mt-0.5" style="color:var(--ap-text-sec)">El cliente verá "Quedan 3" o "12 disponibles". Si lo desmarcas no se muestra la cantidad; "Agotado" siempre se avisa.</span></span>
             </label>
             <div class="m-field md:col-span-2">
               <label for="f-cost">Costo del proveedor <span class="font-normal text-slate-400">(opcional — para tus reportes de ganancia)</span></label>
@@ -1926,6 +1931,7 @@
       setVal('f-promo', card.getAttribute('data-edit-promo'));
       setVal('f-stock', card.getAttribute('data-edit-stock'));
       document.getElementById('f-made-to-order').checked = card.getAttribute('data-edit-made-to-order') === '1';
+      document.getElementById('f-show-stock').checked = card.getAttribute('data-edit-show-stock') !== '0';
       setVal('f-desc', card.getAttribute('data-edit-desc'));
       setVal('f-promo-type', card.getAttribute('data-edit-promo-type') || '');
       setVal('f-promo-value', card.getAttribute('data-edit-promo-value') || '');
@@ -1996,6 +2002,7 @@
       var form = document.getElementById('pf-form');
       form.reset();
       document.getElementById('f-made-to-order').checked = false;
+      document.getElementById('f-show-stock').checked = true;
       setVal('f-cat', '');
       form.action = '/<%= biz.slug %>/admin/producto';
       document.getElementById('pf-title').textContent = 'Agregar producto';
@@ -2167,6 +2174,7 @@
         setVal('f-desc', fd.description || '');
         setVal('f-stock', fd.stock || '');
         document.getElementById('f-made-to-order').checked = fd.made_to_order === '1' || fd.made_to_order === 1;
+        document.getElementById('f-show-stock').checked = fd.show_stock_set ? !!fd.show_stock : true;
         setVal('f-cost', fd.cost || '');
         setVal('f-sku', fd.sku || '');
         setVal('f-tags', fd.tags || '');
