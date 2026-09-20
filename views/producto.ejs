@@ -195,7 +195,7 @@
     }
   </style>
   <link rel="stylesheet" href="/css/catalog-motion.css?v=20260918a">
-  <link rel="stylesheet" href="/css/catalog-media.css?v=20260919a">
+  <link rel="stylesheet" href="/css/catalog-media.css?v=20260919d">
   <script src="/js/img-retry.js"></script>
   <script src="/js/catalog-motion.js?v=20260918a" defer></script>
   <script src="/js/btn-fit.js?v=20260918a" defer></script>
@@ -224,7 +224,7 @@
     <div class="prod-layout">
       <!-- Galería -->
       <div class="prod-gallery">
-        <div class="prod-stage">
+        <div class="prod-stage" id="prod-stage" style="--ph:url(<%- encodeURI(product.imgs[0] || '').replace(/[()']/g, function (c) { return '%' + c.charCodeAt(0).toString(16); }) %>)">
           <% if (_hasOld) { %><span class="prod-badge">-<%= Math.round((1-product.price/product.old_price)*100) %>%</span><% } %>
           <img src="<%= product.imgs[0] || '/img/sin-imagen.svg' %>" id="prod-main-img" class="prod-main-img" alt="<%= product.name %>" fetchpriority="high" onclick="openGalImg(this.src)" />
           <button type="button" class="prod-zoom" aria-label="Ampliar imagen" onclick="openGalImg(document.getElementById('prod-main-img').src)"><i class="bi bi-arrows-fullscreen"></i></button>
@@ -345,7 +345,12 @@
   </div>
 
   <script>
+    function setStageBg(src) {
+      var st = document.getElementById('prod-stage');
+      if (st && src) st.style.setProperty('--ph', 'url(' + encodeURI(src).replace(/[()']/g, function (c) { return '%' + c.charCodeAt(0).toString(16); }) + ')');
+    }
     function switchImg(thumb, src) {
+      setStageBg(src);
       document.getElementById('prod-main-img').src = src;
       document.querySelectorAll('.prod-thumb').forEach(function(t){ t.classList.remove('active'); });
       thumb.classList.add('active');
@@ -452,6 +457,7 @@
         if (!img) return;
         var main = document.getElementById('prod-main-img');
         if (main) main.src = img;
+        if (typeof setStageBg === 'function') setStageBg(img);
         document.querySelectorAll('.prod-thumb').forEach(function (t) {
           t.classList.toggle('active', t.getAttribute('src') === img);
         });

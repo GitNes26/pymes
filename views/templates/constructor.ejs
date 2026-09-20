@@ -15,6 +15,12 @@
     if (!/^\/uploads\/[^\/?]+\.(jpe?g|png|webp)$/i.test(src || '')) return '';
     return src + '?w=480 480w, ' + src + '?w=800 800w, ' + src + '?w=1200 1200w';
   };
+  // Fondo desenfocado de la propia foto (la foto se muestra completa, sin recortar; lo que sobra se rellena con su tono)
+  var _ph = function (src) {
+    if (!src || /sin-imagen/.test(src)) return '';
+    var u = /^\/uploads\/[^\/?]+\.(jpe?g|png|webp)$/i.test(src) ? src + '?w=240' : src;
+    return ' style="--ph:url(' + encodeURI(u).replace(/[()']/g, function (c) { return '%' + c.charCodeAt(0).toString(16); }) + ')"';
+  };
   var _imgAttrs = function (src, sizes) { var ss = _srcset(src); return ss ? ' srcset="' + ss + '" sizes="' + sizes + '"' : ''; };
   var _rawMoney = (typeof money === "function") ? money : function(n){ return "$" + Number(n||0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); };
   var _money = function(p){ return _rawMoney(typeof p === "object" ? (p.price||0) : p); };
@@ -1030,7 +1036,7 @@
   </style>
   <link rel="stylesheet" href="/css/catalog-refine.css?v=20260917c">
   <link rel="stylesheet" href="/css/catalog-motion.css?v=20260918a">
-  <link rel="stylesheet" href="/css/catalog-media.css?v=20260919a">
+  <link rel="stylesheet" href="/css/catalog-media.css?v=20260919d">
   <script src="/js/catalog-motion.js?v=20260918a" defer></script>
   <script src="/js/btn-fit.js?v=20260918a" defer></script>
   <script src="/js/img-retry.js"></script>
@@ -1148,7 +1154,7 @@
       <div class="ofertas-track" id="ofertas-track">
         <% _ofertas.forEach(function(p){ var _pct=Math.round((1-p.price/p.old_price)*100); %>
         <div class="oferta-card" onclick="location.href='/<%= biz.slug %>/p/<%= p.id %>'" style="cursor:pointer;">
-          <div class="oferta-img-wrap">
+          <div class="oferta-img-wrap"<%- _ph(p.image) %>>
             <img src="<%= p.image||'/img/sin-imagen.svg' %>"<%- _imgAttrs(p.image, '(max-width:640px) 62vw, 280px') %> loading="lazy" decoding="async" alt="<%= p.name %>">
             <span class="oferta-badge-pct">-<%= _pct %>%</span>
             <span class="oferta-badge-tag">OFERTA</span>
@@ -1195,7 +1201,7 @@
       <div class="ofertas-track" id="<%= sec.id %>">
         <% sec.list.forEach(function(p, pi){ %>
         <a href="/<%= biz.slug %>/p/<%= p.id %>" class="oferta-card" style="text-decoration:none;color:inherit;">
-          <div class="oferta-img-wrap">
+          <div class="oferta-img-wrap"<%- _ph(p.image) %>>
             <img src="<%= p.image||'/img/sin-imagen.svg' %>"<%- _imgAttrs(p.image, '(max-width:640px) 62vw, 280px') %> loading="lazy" decoding="async" alt="<%= p.name %>">
             <span class="oferta-badge-tag"><%= sec.tag === 'TOP' ? ('#' + (pi + 1)) : sec.tag %></span>
           </div>
@@ -1274,7 +1280,7 @@
         <div class="prod-grid" id="prodGrid">
           <% _realProds.forEach(function(p) { %>
           <div class="prod-card" data-cat="<%= p.category_id || 0 %>" data-price="<%= p.price || 0 %>" data-name="<%= (p.name||'').toLowerCase() %>" onclick="location.href='/<%= biz.slug %>/p/<%= p.id %>'" style="cursor:pointer;">
-            <div class="prod-img-wrap">
+            <div class="prod-img-wrap"<%- _ph(p.image) %>>
               <img src="<%= p.image %>"<%- _imgAttrs(p.image, '(max-width:640px) 50vw, (max-width:1100px) 33vw, 340px') %> alt="<%= p.name %>" loading="lazy" decoding="async">
               <% if (p.imgs && p.imgs[1] && p.imgs[1] !== p.image) { %><img class="prod-img-alt" src="<%= p.imgs[1] %>"<%- _imgAttrs(p.imgs[1], '(max-width:640px) 50vw, 340px') %> alt="" aria-hidden="true" loading="lazy" decoding="async" data-no-fallback><span class="prod-photos" title="<%= p.imgs.length %> fotos"><i class="bi bi-images"></i> <%= p.imgs.length %></span><% } %>
               <div class="prod-badge-wrap">
@@ -1540,7 +1546,7 @@
         </script>
         <% sponsoredAds.forEach(function(ad) { %>
         <a href="/<%= ad.store.slug %><%= ad.id ? '/p/' + ad.id : '' %>" class="oferta-card" style="text-decoration:none;color:inherit;">
-          <div class="oferta-img-wrap">
+          <div class="oferta-img-wrap"<%- _ph(ad.image) %>>
             <% if (ad.image) { %><img src="<%= ad.image %>" alt="<%= ad.name %>" loading="lazy"><% } %>
             <span class="oferta-badge-tag"><%= ad.store.name %></span>
           </div>
