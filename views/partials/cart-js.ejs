@@ -53,6 +53,42 @@
   #chat-panel svg[stroke="#94a3b8"] { stroke: var(--text-secondary, #94a3b8); }
   .vp-val-on, .var-filter-active { background: var(--accent, #2563eb) !important; color: var(--on-accent, var(--soc-on-accent, #fff)) !important; border-color: var(--accent, #2563eb) !important; }
   .vfilter-check { accent-color: var(--accent, #2563eb); }
+
+  /* ===== "Elige las opciones" (selector de variantes) con la apariencia de la tienda ===== */
+  .vp-panel {
+    --cx-on: var(--on-accent, var(--soc-on-accent, #fff));
+    --cx-line: color-mix(in srgb, var(--text, #0f172a) 14%, transparent);
+    --cx-soft: color-mix(in srgb, var(--text, #0f172a) 5%, var(--bg-card, #fff));
+    background: var(--bg-card, #fff) !important; color: var(--text, #0f172a);
+    border: 1px solid var(--cx-line); font-family: var(--font-body, inherit);
+    border-radius: min(var(--radius, 16px), 24px) min(var(--radius, 16px), 24px) 0 0;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  }
+  @media (min-width: 640px) { .vp-panel { border-radius: min(var(--radius, 16px), 24px); } }
+  .vp-panel h3 { font-family: var(--font-heading, inherit); color: var(--text, #0f172a) !important; font-size: 1.1rem; }
+  .vp-panel .text-slate-900, .vp-panel .text-slate-800 { color: var(--text, #0f172a) !important; }
+  .vp-panel .text-slate-700, .vp-panel .text-slate-600, .vp-panel .text-slate-500, .vp-panel .text-slate-400 { color: var(--text-secondary, #64748b) !important; }
+  .vp-panel .text-slate-400.hover\:text-slate-600, .vp-panel > div:first-child > button { min-width: 44px; min-height: 44px; border-radius: 12px; color: var(--text-secondary, #64748b) !important; }
+  .vp-panel > div:first-child > button:hover { background: var(--cx-soft); color: var(--text, #0f172a) !important; }
+  .vp-panel #vp-img { width: 72px; height: 72px; object-fit: contain; background: var(--cx-soft); border: 1px solid var(--cx-line) !important; border-radius: min(var(--radius, 16px), 16px) !important; box-shadow: none !important; }
+  .vp-panel #vp-price { color: var(--accent, #1e293b) !important; font-family: var(--font-heading, inherit); font-size: 1.05rem; font-weight: 700; }
+  .vp-panel .vp-val {
+    min-height: 44px; padding: 0 18px !important; font-size: 14px !important;
+    background: var(--bg-card, #fff) !important; color: var(--text, #0f172a) !important; border: 1px solid var(--cx-line) !important;
+    border-radius: min(999px, calc(var(--radius, 16px) * 2.4)) !important;
+    transition: border-color .2s, background .2s, transform .2s cubic-bezier(.34, 1.56, .64, 1);
+  }
+  .vp-panel .vp-val:hover { border-color: var(--accent, #1e293b) !important; }
+  .vp-panel .vp-val:active { transform: scale(.95); }
+  .vp-panel .vp-val.vp-val-on { background: var(--accent, #1e293b) !important; color: var(--cx-on) !important; border-color: var(--accent, #1e293b) !important; }
+  .vp-panel #vp-add {
+    min-height: 50px; background: var(--accent, #1e293b) !important; color: var(--cx-on) !important;
+    border-radius: min(var(--radius, 16px), 14px) !important; font-size: 15px !important;
+    transition: transform .2s cubic-bezier(.34, 1.56, .64, 1), background .2s;
+  }
+  .vp-panel #vp-add:hover:not(:disabled) { background: var(--accent-light, var(--accent, #1e293b)) !important; }
+  .vp-panel #vp-add:active:not(:disabled) { transform: scale(.97); }
+  .vp-panel #vp-add:disabled { background: var(--cx-soft) !important; color: var(--text-secondary, #94a3b8) !important; border: 1px solid var(--cx-line); }
   /* Drawer de filtros en móvil */
   @media (max-width: 1023px) {
     .catalog-sidebar {
