@@ -383,7 +383,11 @@ app.get('/uploads/:file', (req, res, next) => {
     sharp(src).rotate().resize({ width, withoutEnlargement: true }).webp({ quality: 80 }).toFile(out).then(send).catch(() => next());
   } catch (e) { next(); }
 });
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(require('compression')());
+app.use(express.static(path.join(__dirname, 'public'), {
+  maxAge: '7d',
+  setHeaders: function (res, fp) { if (/\.(html|webmanifest)$/.test(fp) || /[\/]sw\.js$/.test(fp)) res.setHeader('Cache-Control', 'no-cache'); }
+}));
 // === RATE LIMITER ===
 var _rateLimit = {};
 function rateLimit(maxPerMin) {
@@ -1052,7 +1056,7 @@ function paintCatalog(html, biz, pal, estilo) {
     MASCARA_CSS.replace(/\n\s*/g,'').replace(/<\/?style>/g,'') +
     '</style>';
   // Metadatos PWA + viewport nativo (instalable como app)
-  html = html.replace(/<meta name="viewport"[^>]*>/, '<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />');
+  html = html.replace(/<meta name="viewport"[^>]*>/, '<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5.0" />');
   const bizName = String(biz.name || 'Catálogo').replace(/"/g, '&quot;');
   const pwaHead =
     '<meta name="theme-color" content="' + pal.accent + '">' +
@@ -1134,7 +1138,7 @@ function paintCatalog(html, biz, pal, estilo) {
 // Acabado ligero para las plantillas del constructor: no re-pinta componentes (la plantilla
 // ya trae su CSS). Solo añade viewport nativo, PWA y asegura la fuente del tema.
 function paintTheme(html, biz, pal, theme) {
-  html = html.replace(/<meta name="viewport"[^>]*>/, '<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />');
+  html = html.replace(/<meta name="viewport"[^>]*>/, '<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5.0" />');
   const bizName = String(biz.name || 'Catálogo').replace(/"/g, '&quot;');
   const pwaHead =
     '<meta name="theme-color" content="' + (theme.accent || pal.accent) + '">' +
