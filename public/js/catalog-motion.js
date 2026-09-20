@@ -9,7 +9,7 @@
   var SEL = [
     '.prod-card', '.oferta-card', '.related-card',
     '.ofertas-header', '.sec-head', '.xs-sec', '.contact-section', '.specs-wrap',
-    '.ftr-inner > *'
+    '.ftr-inner > *', '.mod-head', '.xs-model'
   ].join(',');
 
   var io = new IntersectionObserver(function (entries) {

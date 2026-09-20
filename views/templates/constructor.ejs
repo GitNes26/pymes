@@ -1068,9 +1068,9 @@
   </style>
   <link rel="stylesheet" href="/css/catalog-refine.css?v=20260917c">
   <link rel="stylesheet" href="/css/catalog-motion.css?v=20260919a">
-  <link rel="stylesheet" href="/css/catalog-media.css?v=20260920a">
+  <link rel="stylesheet" href="/css/catalog-media.css?v=20260920c">
   <link rel="stylesheet" href="/css/catalog-hero.css?v=20260919c">
-  <script src="/js/catalog-motion.js?v=20260918a" defer></script>
+  <script src="/js/catalog-motion.js?v=20260920a" defer></script>
   <script src="/js/catalog-gallery.js?v=20260919a" defer></script>
   <script src="/js/btn-fit.js?v=20260918a" defer></script>
   <script src="/js/img-retry.js?v=20260919b"></script>
@@ -1447,19 +1447,26 @@
   </div>
   <% } %>
 
-  <!-- ===== MODELOS (fotos de personas usando los productos; sale solo si hay fotos) ===== -->
+  <!-- ===== MODELOS / LOOKBOOK (fotos de personas usando los productos; sale solo si hay fotos) ===== -->
   <% if (_exMod) { var _mi = _exMod.images.slice(0, 6); %>
-  <section class="xs-sec<%- _xsBand() %>" aria-labelledby="xs-mod-t">
-    <div class="xs-in">
-      <%- _xsHead('Lookbook', _exMod.title || 'Nuestros modelos', _exMod.text || '', 'xs-mod-t') %>
-      <div class="xs-models mod-n<%= _mi.length %>">
-        <% _mi.forEach(function (m) { %>
+  <section class="xs-mod" aria-labelledby="xs-mod-t">
+    <div class="mod-in">
+      <header class="mod-head">
+        <span class="mod-eyebrow">Lookbook</span>
+        <h2 class="mod-title" id="xs-mod-t"><%= _exMod.title || 'Nuestros modelos' %></h2>
+        <% if (_exMod.text) { %><p class="mod-sub"><%= _exMod.text %></p><% } %>
+        <span class="mod-line" aria-hidden="true"></span>
+      </header>
+      <div class="xs-models mod-n<%= _mi.length %>" id="modScroller">
+        <% _mi.forEach(function (m, i) { %>
         <figure class="xs-model"<%- _ph(m.src) %> data-src="<%= m.src %>" data-cap="<%= m.cap || '' %>">
-          <img src="<%= m.src %>"<%- _imgAttrs(m.src, '(max-width:640px) 50vw, 360px') %> alt="<%= m.cap || 'Modelo' %>" loading="lazy" decoding="async">
-          <% if (m.cap) { %><figcaption><%= m.cap %></figcaption><% } %>
+          <img src="<%= m.src %>"<%- _imgAttrs(m.src, '(max-width:720px) 76vw, 420px') %> alt="<%= m.cap || 'Modelo' %>" loading="lazy" decoding="async">
+          <span class="mod-idx"><%= (i + 1 < 10 ? '0' : '') + (i + 1) %></span>
+          <% if (m.cap) { %><figcaption><span><%= m.cap %></span></figcaption><% } %>
         </figure>
         <% }) %>
       </div>
+      <% if (_mi.length > 1) { %><div class="mod-dots" id="modDots" aria-hidden="true"><% _mi.forEach(function (m, i) { %><i<%= i === 0 ? ' class="on"' : '' %>></i><% }) %></div><% } %>
     </div>
   </section>
   <script>
@@ -1467,6 +1474,19 @@
       var f = e.target.closest && e.target.closest('.xs-model');
       if (f && typeof expandImage === 'function') expandImage(f.getAttribute('data-src'), f.getAttribute('data-cap') || '');
     });
+    (function () {
+      var sc = document.getElementById('modScroller'), dots = document.querySelectorAll('#modDots i');
+      if (!sc || !dots.length) return;
+      var t = null;
+      sc.addEventListener('scroll', function () {
+        clearTimeout(t);
+        t = setTimeout(function () {
+          var first = sc.children[0], step = first ? first.getBoundingClientRect().width + 12 : 1;
+          var i = Math.max(0, Math.min(dots.length - 1, Math.round(sc.scrollLeft / step)));
+          for (var d = 0; d < dots.length; d++) dots[d].classList.toggle('on', d === i);
+        }, 40);
+      }, { passive: true });
+    })();
   </script>
   <% } %>
 
