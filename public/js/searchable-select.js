@@ -12,6 +12,9 @@
    ============================================================ */
 (function () {
   'use strict';
+  // DESACTIVADO: los <select> se usan normales (nativos), sin buscador ni lista flotante.
+  // Para volver a activar el combo con buscador, borra este return.
+  return;
   if (window.__searchableSelectLoaded) return;
   window.__searchableSelectLoaded = true;
 

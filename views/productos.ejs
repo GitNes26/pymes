@@ -153,7 +153,7 @@
                    data-edit-sku="<%= (p.sku || '').replace(/"/g, '&quot;') %>" data-edit-tags="<%= (p.tags || '').replace(/"/g, '&quot;') %>" data-edit-video="<%= (p.video || '').replace(/"/g, '&quot;') %>" data-edit-specs="<%= (p.specs || '').replace(/"/g, '&quot;') %>" data-edit-barcode="<%= (p.barcode || '').replace(/"/g, '&quot;') %>"
                    data-edit-installments="<%= p.allow_installments ? 1 : 0 %>" data-edit-inst-count="<%= p.installment_count || 6 %>" data-edit-inst-down="<%= p.installment_min_down || 0 %>" data-edit-inst-freq="<%= p.installment_frequency || 'semanal' %>">
                 <div class="product-card__main">
-                <button type="button" class="product-card__image-button" data-product-name="<%= p.name %>" onclick="abrirImagenProducto(this.querySelector('img'), this.dataset.productName)" aria-label="Ampliar imagen de <%= p.name %>">
+                <button type="button" class="product-card__image-button"<%- (p.cover || p.image) ? " style=\"--ph:url(" + encodeURI(p.cover || p.image).replace(/[()']/g, function (c) { return '%' + c.charCodeAt(0).toString(16); }) + ")\"" : "" %> data-product-name="<%= p.name %>" onclick="abrirImagenProducto(this.querySelector('img'), this.dataset.productName)" aria-label="Ampliar imagen de <%= p.name %>">
                   <img src="<%= p.cover || p.image || "/img/sin-imagen.svg" %>" alt="Foto de <%= p.name %>" loading="lazy" class="product-card__image" onerror="this.onerror=null;this.src='/img/sin-imagen.svg'">
                   <span class="product-card__zoom" aria-hidden="true"><i class="bi bi-arrows-fullscreen"></i></span>
                 </button>
@@ -728,6 +728,11 @@
       transition:transform .4s cubic-bezier(.22,1,.36,1), filter .3s ease;
     }
     .product-card:hover .product-card__image { transform:scale(1.025); filter:saturate(1.04); }
+    /* Foto completa (sin recortar) sobre un fondo desenfocado de la propia foto: igual que en el catálogo */
+    .product-card__image-button { isolation:isolate; }
+    .product-card__image-button::before { content:""; position:absolute; inset:-14%; z-index:0; pointer-events:none; background:var(--ph, none) center / cover no-repeat; filter:blur(20px) saturate(1.15); opacity:.85; }
+    .product-card__image { position:relative; z-index:1; object-fit:contain !important; background:transparent !important; }
+    .product-card__zoom { z-index:2; }
     .product-card__zoom {
       position:absolute;
       right:9px;
