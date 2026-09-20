@@ -2920,6 +2920,7 @@ app.post('/:slug/pagar-tarjeta', rateLimit(12), async (req, res) => {
   track(biz.id, 'mp', 'pedido');
   if (pay.status === 'approved') {
     db.prepare("UPDATE orders SET paid = 1, paid_at = datetime('now'), status = 'pagado' WHERE id = ?").run(orderId);
+    notifyOwnerPaid(biz, orderId);
     return res.json({ ok: true, status: 'approved', orderId, total });
   }
   if (pay.status === 'in_process' || pay.status === 'pending') {
@@ -2928,6 +2929,29 @@ app.post('/:slug/pagar-tarjeta', rateLimit(12), async (req, res) => {
   db.prepare('DELETE FROM orders WHERE id = ?').run(orderId);
   return res.status(402).json({ ok: false, status: pay.status, error: MP_DETAIL_ES[pay.status_detail] || 'La tarjeta fue rechazada. Prueba con otra tarjeta.' });
 });
+
+// Aviso al dueño por WhatsApp cuando un pedido se paga en línea (WhatsApp Business Cloud API de Meta).
+// Requiere WA_TOKEN y WA_PHONE_ID en el entorno; opcional WA_TEMPLATE (+ WA_TEMPLATE_LANG) para avisar
+// fuera de la ventana de 24 h (plantilla con 4 variables: pedido, cliente, total, productos).
+async function notifyOwnerPaid(biz, orderId) {
+  try {
+    const token = process.env.WA_TOKEN, phoneId = process.env.WA_PHONE_ID;
+    const raw = String(biz.whatsapp || '').replace(/[^0-9]/g, '');
+    if (!token || !phoneId || !raw) { console.log('[pago] pedido #' + orderId + ' pagado; aviso de WhatsApp no configurado'); return; }
+    const to = raw.length === 10 ? '52' + raw : raw;
+    const o = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId);
+    if (!o) return;
+    const money = currencyInfo(biz.currency).symbol + Number(o.total || 0).toFixed(2);
+    const items = String(o.items || '').replace(/\s*\|\s*/g, '\n');
+    const cust = o.customer_name || 'Cliente';
+    const tpl = process.env.WA_TEMPLATE;
+    const body = tpl
+      ? { messaging_product: 'whatsapp', to, type: 'template', template: { name: tpl, language: { code: process.env.WA_TEMPLATE_LANG || 'es_MX' }, components: [{ type: 'body', parameters: [String(orderId), cust, money, items.replace(/\n/g, ', ')].map(t => ({ type: 'text', text: String(t).slice(0, 900) })) }] } }
+      : { messaging_product: 'whatsapp', to, type: 'text', text: { body: '✅ Pago recibido — Pedido #' + orderId + '\nCliente: ' + cust + '\nTotal: ' + money + '\n\n' + items } };
+    const r = await fetch('https://graph.facebook.com/v20.0/' + phoneId + '/messages', { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (!r.ok) console.error('WhatsApp aviso falló:', r.status, (await r.text()).slice(0, 300));
+  } catch (e) { console.error('Error avisando por WhatsApp:', e.message); }
+}
 
 // Notificación de pago de Mercado Pago — confirma vía su API (nunca se confía
 // en el body del webhook a secas: cualquiera podría mandar un POST falso).
@@ -2946,6 +2970,7 @@ app.post('/webhooks/mercadopago', async (req, res) => {
     db.prepare('UPDATE orders SET mp_payment_id = ?, mp_status = ? WHERE id = ?').run(String(paymentId), payment.status || '', order.id);
     if (payment.status === 'approved' && !order.paid) {
       db.prepare("UPDATE orders SET paid = 1, paid_at = datetime('now'), status = 'pagado' WHERE id = ?").run(order.id);
+      notifyOwnerPaid(biz, order.id);
     }
   } catch (e) {
     console.error('Error procesando webhook de Mercado Pago:', e);
