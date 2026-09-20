@@ -1116,9 +1116,9 @@
 
   <% if (biz.banner) { %>
   <div class="hero<%= biz.banner ? ' has-banner' : '' %>">
-    <img src="<%= biz.banner %>" class="bg" alt="banner" data-hide-on-error>
+    <img src="<%= biz.banner %>"<%- _imgAttrs(biz.banner, '100vw') %> class="bg" alt="" fetchpriority="high" decoding="async" data-hide-on-error>
     <div class="hero-overlay">
-      <% if (biz.logo && biz.logo !== biz.banner) { %><img src="<%= biz.logo %>" class="hero-logo" alt="Logo de <%= biz.name %>" data-hide-on-error><% } %>
+      <% if (biz.logo && biz.logo !== biz.banner) { %><img src="<%= biz.logo %>" class="hero-logo" alt="Logo de <%= biz.name %>" fetchpriority="high" decoding="async" data-hide-on-error><% } %>
       <h1 class="hero-name"><%= biz.name %></h1>
       <% if (biz.description) { %><div class="hero-desc"><%= biz.description %></div><% } %>
       <% if (_horarioHtml) { %>
@@ -1159,7 +1159,7 @@
   <% } else if (biz.logo) { %>
   <!-- Sin banner: el logo se presenta grande en una portada sencilla -->
   <div class="brand-hero">
-    <img src="<%= biz.logo %>" class="brand-hero-logo" alt="<%= biz.name %>" data-hide-on-error>
+    <img src="<%= biz.logo %>" class="brand-hero-logo" alt="<%= biz.name %>" fetchpriority="high" decoding="async" data-hide-on-error>
     <h1 class="hero-name"><%= biz.name %></h1>
     <% if (biz.description) { %><div class="hero-desc"><%= biz.description %></div><% } %>
   </div>
