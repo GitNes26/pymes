@@ -148,7 +148,7 @@
                    data-search="<%= [p.name, p.tags, p.description].filter(Boolean).join(' ').toLowerCase() %>" data-state="<%= p.active ? 'active' : 'hidden' %>" data-stock="<%= p.displayStock === null ? '' : (p.displayStock > 5 ? 'ok' : (p.displayStock > 0 ? 'low' : 'out')) %>" data-promo="<%= p.old_price ? 1 : 0 %>"
                    data-edit-id="<%= p.id %>" data-edit-name="<%= (p.name || '').replace(/"/g, '&quot;') %>" data-edit-price="<%= p.price %>" data-edit-old="<%= p.old_price || '' %>" data-edit-cost="<%= p.cost || '' %>"
                    data-edit-cat="<%= p.category_id || '' %>" data-edit-desc="<%= (p.description || '').replace(/"/g, '&quot;') %>" data-edit-image="<%= (p.image || '').replace(/"/g, '&quot;') %>" data-edit-galeria="<%= (p.galeria || '').replace(/"/g, '&quot;') %>"
-                   data-edit-stock="<%= p.stock === null ? '' : p.stock %>" data-edit-made-to-order="<%= p.made_to_order ? 1 : 0 %>" data-edit-show-stock="<%= (p.show_stock === 0 || p.show_stock === '0') ? 0 : 1 %>" data-edit-variants="<%= encodeURIComponent(JSON.stringify(p.variants || [])) %>" data-edit-featured="<%= p.featured ? 1 : 0 %>" data-edit-promo="<%= p.promo_ends_at || '' %>"
+                   data-edit-stock="<%= p.stock === null ? '' : p.stock %>" data-edit-made-to-order="<%= p.made_to_order ? 1 : 0 %>" data-edit-show-stock="<%= (p.show_stock === 0 || p.show_stock === '0') ? 0 : 1 %>" data-edit-custom-tags="<%= p.custom_tags || '' %>" data-edit-variants="<%= encodeURIComponent(JSON.stringify(p.variants || [])) %>" data-edit-featured="<%= p.featured ? 1 : 0 %>" data-edit-promo="<%= p.promo_ends_at || '' %>"
                    data-edit-promo-type="<%= p.promo_type || '' %>" data-edit-promo-value="<%= p.promo_value || '' %>" data-edit-promo-gift="<%= (p.promo_gift || '').replace(/"/g, '&quot;') %>"
                    data-edit-sku="<%= (p.sku || '').replace(/"/g, '&quot;') %>" data-edit-tags="<%= (p.tags || '').replace(/"/g, '&quot;') %>" data-edit-video="<%= (p.video || '').replace(/"/g, '&quot;') %>" data-edit-specs="<%= (p.specs || '').replace(/"/g, '&quot;') %>" data-edit-barcode="<%= (p.barcode || '').replace(/"/g, '&quot;') %>"
                    data-edit-installments="<%= p.allow_installments ? 1 : 0 %>" data-edit-inst-count="<%= p.installment_count || 6 %>" data-edit-inst-down="<%= p.installment_min_down || 0 %>" data-edit-inst-freq="<%= p.installment_frequency || 'semanal' %>">
@@ -301,6 +301,25 @@
               <input type="checkbox" name="show_stock" id="f-show-stock" value="1" checked class="mt-0.5 accent-neutral-800">
               <span><strong class="block text-xs" style="color:var(--ap-text)">Mostrar el stock en el catálogo</strong><span class="block text-[11px] mt-0.5" style="color:var(--ap-text-sec)">El cliente verá "Quedan 3" o "12 disponibles". Si lo desmarcas no se muestra la cantidad; "Agotado" siempre se avisa.</span></span>
             </label>
+            <div class="md:col-span-2 rounded-xl border px-4 py-3" style="border-color:var(--ap-border);background:var(--ap-card)" id="ct-box">
+              <div class="flex items-center justify-between gap-2 flex-wrap">
+                <div>
+                  <strong class="block text-xs" style="color:var(--ap-text)">Etiquetas personalizadas</strong>
+                  <span class="block text-[11px] mt-0.5" style="color:var(--ap-text-sec)">Hasta 3. Salen sobre la foto y en la ficha del producto. Ej: “Mayoreo desde 10 pzas”, “Envío gratis”.</span>
+                </div>
+                <button type="button" id="ct-add" onclick="ctAdd()" class="pn-btn pn-btn-sm">+ Agregar etiqueta</button>
+              </div>
+              <input type="hidden" name="custom_tags" id="f-custom-tags" value="">
+              <div id="ct-rows" class="mt-3 space-y-2"></div>
+              <div class="mt-3 flex flex-wrap gap-1.5" id="ct-suggest">
+                <span class="text-[11px] font-semibold" style="color:var(--ap-text-sec)">Sugeridas:</span>
+                <button type="button" class="ct-sug" onclick="ctAdd('Mayoreo','#7c3aed')">Mayoreo</button>
+                <button type="button" class="ct-sug" onclick="ctAdd('Envío gratis','#0f766e')">Envío gratis</button>
+                <button type="button" class="ct-sug" onclick="ctAdd('Últimas piezas','#b45309')">Últimas piezas</button>
+                <button type="button" class="ct-sug" onclick="ctAdd('Nuevo','#1d4ed8')">Nuevo</button>
+                <button type="button" class="ct-sug" onclick="ctAdd('Edición limitada','#be123c')">Edición limitada</button>
+              </div>
+            </div>
             <div class="m-field md:col-span-2">
               <label for="f-cost">Costo del proveedor <span class="font-normal text-slate-400">(opcional — para tus reportes de ganancia)</span></label>
               <input name="cost" id="f-cost" type="text" inputmode="decimal" data-mask="money" placeholder="0.00">
@@ -1932,6 +1951,7 @@
       setVal('f-stock', card.getAttribute('data-edit-stock'));
       document.getElementById('f-made-to-order').checked = card.getAttribute('data-edit-made-to-order') === '1';
       document.getElementById('f-show-stock').checked = card.getAttribute('data-edit-show-stock') !== '0';
+      ctLoad(card.getAttribute('data-edit-custom-tags') || '');
       setVal('f-desc', card.getAttribute('data-edit-desc'));
       setVal('f-promo-type', card.getAttribute('data-edit-promo-type') || '');
       setVal('f-promo-value', card.getAttribute('data-edit-promo-value') || '');
@@ -2003,6 +2023,7 @@
       form.reset();
       document.getElementById('f-made-to-order').checked = false;
       document.getElementById('f-show-stock').checked = true;
+      ctLoad('');
       setVal('f-cat', '');
       form.action = '/<%= biz.slug %>/admin/producto';
       document.getElementById('pf-title').textContent = 'Agregar producto';
@@ -2175,6 +2196,7 @@
         setVal('f-stock', fd.stock || '');
         document.getElementById('f-made-to-order').checked = fd.made_to_order === '1' || fd.made_to_order === 1;
         document.getElementById('f-show-stock').checked = fd.show_stock_set ? !!fd.show_stock : true;
+        ctLoad(fd.custom_tags || '');
         setVal('f-cost', fd.cost || '');
         setVal('f-sku', fd.sku || '');
         setVal('f-tags', fd.tags || '');
@@ -2512,6 +2534,19 @@
   </script>
 
   <link rel="stylesheet" href="/css/share-panel.css?v=20260918b">
+  <style>
+    .ct-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:8px; border:1px solid var(--ap-border); border-radius:12px; background:var(--ap-bg); }
+    .ct-text { flex:1 1 170px; min-width:0; min-height:40px; padding:0 12px; border:1px solid var(--ap-border); border-radius:10px; background:var(--ap-card); font-size:13px; }
+    .ct-colors { display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
+    .ct-dot { width:22px; height:22px; border-radius:50%; border:2px solid transparent; cursor:pointer; box-shadow:0 0 0 1px rgba(0,0,0,.12); }
+    .ct-dot.on { border-color:#fff; box-shadow:0 0 0 2px var(--ap-text); }
+    .ct-color { width:28px; height:28px; padding:0; border:0; background:none; cursor:pointer; }
+    .ct-prev { display:inline-block; padding:3px 10px; border-radius:6px; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .ct-del { width:32px; height:32px; border-radius:8px; color:#dc2626; background:none; border:0; cursor:pointer; }
+    .ct-del:hover { background:rgba(220,38,38,.08); }
+    .ct-sug { min-height:30px; padding:0 11px; border:1px solid var(--ap-border); border-radius:999px; background:var(--ap-card); font-size:11.5px; font-weight:700; cursor:pointer; }
+    .ct-sug:hover { border-color:var(--ap-text); }
+  </style>
   <!-- Modal: tarjeta de producto para redes sociales -->
   <style>
     #tp-modal { display:none; }
@@ -3540,6 +3575,59 @@
           tpDescargarCanvas(canvas,TPCARD.format,'Imagen descargada para compartir');
         }
       },'image/png');
+    }
+
+    // ===== Etiquetas personalizadas del producto (texto + color) =====
+    var CT_COLORS = ['#2c2c2e', '#7c3aed', '#1d4ed8', '#0f766e', '#15803d', '#b45309', '#be123c', '#c2410c'];
+    function ctSync() {
+      var out = [];
+      document.querySelectorAll('#ct-rows .ct-row').forEach(function (r) {
+        var t = (r.querySelector('.ct-text').value || '').trim();
+        if (t) out.push({ t: t.slice(0, 24), c: r.querySelector('.ct-color').value || '#2c2c2e' });
+      });
+      var h = document.getElementById('f-custom-tags');
+      if (h) h.value = out.length ? JSON.stringify(out) : '';
+      var add = document.getElementById('ct-add');
+      if (add) add.disabled = document.querySelectorAll('#ct-rows .ct-row').length >= 3;
+    }
+    function ctTextOn(hex) {
+      var m = /^#?([0-9a-f]{6})$/i.exec(hex || '');
+      if (!m) return '#fff';
+      var r = parseInt(m[1].slice(0, 2), 16), g = parseInt(m[1].slice(2, 4), 16), b = parseInt(m[1].slice(4, 6), 16);
+      return (r * 0.299 + g * 0.587 + b * 0.114) > 160 ? '#161513' : '#fff';
+    }
+    function ctAdd(text, color) {
+      var box = document.getElementById('ct-rows');
+      if (!box) return;
+      if (box.querySelectorAll('.ct-row').length >= 3) { if (window.mostrarToast) mostrarToast('Máximo 3 etiquetas por producto', 'error'); return; }
+      var row = document.createElement('div');
+      row.className = 'ct-row';
+      var dots = CT_COLORS.map(function (c) { return '<button type="button" class="ct-dot" data-c="' + c + '" style="background:' + c + '" aria-label="Color ' + c + '"></button>'; }).join('');
+      row.innerHTML =
+        '<input type="text" class="ct-text" maxlength="24" placeholder="Texto de la etiqueta">' +
+        '<div class="ct-colors">' + dots + '<input type="color" class="ct-color" aria-label="Otro color"></div>' +
+        '<span class="ct-prev"></span>' +
+        '<button type="button" class="ct-del" aria-label="Quitar etiqueta">✕</button>';
+      box.appendChild(row);
+      var tx = row.querySelector('.ct-text'), cl = row.querySelector('.ct-color'), pv = row.querySelector('.ct-prev');
+      function paint() { pv.textContent = tx.value.trim() || 'Vista previa'; pv.style.background = cl.value; pv.style.color = ctTextOn(cl.value); row.querySelectorAll('.ct-dot').forEach(function (d) { d.classList.toggle('on', d.getAttribute('data-c').toLowerCase() === cl.value.toLowerCase()); }); ctSync(); }
+      tx.value = text || '';
+      cl.value = color || CT_COLORS[1];
+      tx.addEventListener('input', paint);
+      cl.addEventListener('input', paint);
+      row.querySelectorAll('.ct-dot').forEach(function (d) { d.addEventListener('click', function () { cl.value = d.getAttribute('data-c'); paint(); }); });
+      row.querySelector('.ct-del').addEventListener('click', function () { row.remove(); ctSync(); });
+      paint();
+      if (!text) tx.focus();
+    }
+    function ctLoad(raw) {
+      var box = document.getElementById('ct-rows');
+      if (!box) return;
+      box.innerHTML = '';
+      var arr = [];
+      try { arr = JSON.parse(raw || '[]'); } catch (e) { arr = []; }
+      if (Array.isArray(arr)) arr.slice(0, 3).forEach(function (x) { if (x && x.t) ctAdd(x.t, x.c); });
+      ctSync();
     }
     function copiarEnlaceProducto() {
       if (!TPCARD.url) return;

@@ -200,3 +200,12 @@ body .prod-img-wrap > img[src$="sin-imagen.svg"], body .oferta-img-wrap > img[sr
 .prod-badge-rank { background: var(--accent-glow, #c9a86c); color: #16130f; }
 body .prod-badge-wrap { align-items: flex-start; }
 .prod-badge-rank { background: linear-gradient(135deg, #f6d36b, #e0a92e); color: #1a1200; box-shadow: 0 2px 10px rgba(224, 169, 46, .35); }
+
+/* ---------- Etiquetas personalizadas del producto (texto + color propios) ---------- */
+.prod-tag-custom {
+  display: inline-block; max-width: 100%; font-size: 10px; font-weight: 800; line-height: 1.4; padding: 3px 10px; border-radius: 6px;
+  text-transform: uppercase; letter-spacing: .05em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .18);
+}
+.prod-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.prod-tags .prod-tag-custom { font-size: 11px; padding: 5px 12px; border-radius: 999px; }

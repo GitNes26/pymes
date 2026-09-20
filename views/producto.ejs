@@ -195,7 +195,7 @@
     }
   </style>
   <link rel="stylesheet" href="/css/catalog-motion.css?v=20260919a">
-  <link rel="stylesheet" href="/css/catalog-media.css?v=20260920e">
+  <link rel="stylesheet" href="/css/catalog-media.css?v=20260920f">
   <script src="/js/img-retry.js"></script>
   <script src="/js/catalog-motion.js?v=20260920a" defer></script>
   <script src="/js/btn-fit.js?v=20260918a" defer></script>
@@ -241,6 +241,7 @@
       <!-- Información -->
       <div class="prod-info">
         <span class="prod-cat"><%= product.category_name || 'General' %></span>
+        <% if (product.customTags && product.customTags.length) { %><div class="prod-tags"><% product.customTags.forEach(function (t) { var _h = String(t.c || '#2c2c2e').replace('#', ''); var _lum = (parseInt(_h.substr(0, 2), 16) * 0.299 + parseInt(_h.substr(2, 2), 16) * 0.587 + parseInt(_h.substr(4, 2), 16) * 0.114); %><span class="prod-tag-custom" style="background:<%= t.c %>;color:<%= _lum > 160 ? '#161513' : '#fff' %>"><%= t.t %></span><% }) %></div><% } %>
         <h1 class="prod-title"><%= product.name %></h1>
 
         <div class="prod-prices">
