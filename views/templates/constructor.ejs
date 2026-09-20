@@ -1068,7 +1068,7 @@
   </style>
   <link rel="stylesheet" href="/css/catalog-refine.css?v=20260917c">
   <link rel="stylesheet" href="/css/catalog-motion.css?v=20260919a">
-  <link rel="stylesheet" href="/css/catalog-media.css?v=20260920c">
+  <link rel="stylesheet" href="/css/catalog-media.css?v=20260920e">
   <link rel="stylesheet" href="/css/catalog-hero.css?v=20260919c">
   <script src="/js/catalog-motion.js?v=20260920a" defer></script>
   <script src="/js/catalog-gallery.js?v=20260919a" defer></script>
@@ -1240,16 +1240,7 @@
     <div class="ofertas-track-wrap">
       <div class="ofertas-track" id="<%= sec.id %>">
         <% sec.list.forEach(function(p, pi){ %>
-        <a href="/<%= biz.slug %>/p/<%= p.id %>" class="oferta-card" style="text-decoration:none;color:inherit;">
-          <div class="oferta-img-wrap"<%- _ph(p.image) %>>
-            <img src="<%= p.image||'/img/sin-imagen.svg' %>"<%- _imgAttrs(p.image, '(max-width:640px) 62vw, 280px') %> loading="lazy" decoding="async" alt="<%= p.name %>">
-            <span class="oferta-badge-tag"><%= sec.tag === 'TOP' ? ('#' + (pi + 1)) : sec.tag %></span>
-          </div>
-          <div class="oferta-body">
-            <div class="oferta-name"><%= p.name %></div>
-            <div class="oferta-prices"><span class="oferta-new"><%= _money(p) %></span></div>
-          </div>
-        </a>
+        <%- include("../partials/prod-card", { p: p, biz: biz, _money: _money, _rawMoney: _rawMoney, _whatsapp: _whatsapp, _imgAttrs: _imgAttrs, _ph: _ph, plain: true, badge: (sec.tag === 'TOP' ? ('Top ' + (pi + 1)) : 'Nuevo'), badgeCls: (sec.tag === 'TOP' ? 'prod-badge-rank' : 'prod-badge-new') }) %>
         <% }) %>
       </div>
     </div>
@@ -1331,45 +1322,7 @@
         <% if (_realProds.length) { %>
         <div class="prod-grid" id="prodGrid">
           <% _realProds.forEach(function(p) { %>
-          <div class="prod-card" data-attrs="|<%= (p._attrs || []).join('|') %>|" data-cat="<%= p.category_id || 0 %>" data-price="<%= p.price || 0 %>" data-name="<%= (p.name||'').toLowerCase() %>" onclick="location.href='/<%= biz.slug %>/p/<%= p.id %>'" style="cursor:pointer;">
-            <div class="prod-img-wrap"<%- _ph(p.image) %>>
-              <img src="<%= p.image %>"<%- _imgAttrs(p.image, '(max-width:640px) 50vw, (max-width:1100px) 33vw, 340px') %> alt="<%= p.name %>" loading="lazy" decoding="async">
-              <% var _more = (p.imgs || []).filter(function (u) { return u && u !== p.image; }).slice(0, 3); if (_more.length) { %><% _more.forEach(function (u, k) { %><img class="prod-img-alt" data-i="<%= k + 1 %>" src="<%= u %>"<%- _imgAttrs(u, '(max-width:640px) 50vw, 340px') %> alt="" aria-hidden="true" loading="lazy" decoding="async" data-no-fallback><% }) %><span class="prod-dots" aria-hidden="true"><i class="on"></i><% _more.forEach(function () { %><i></i><% }) %></span><% } %>
-              <div class="prod-badge-wrap">
-                <% if (p.old_price && p.old_price > p.price) { %><span class="prod-badge-offer">-<%= Math.round((1-p.price/p.old_price)*100) %>%</span><% } %>
-                <% if (p.promo_badge) { %><span class="prod-badge-promo"><%= p.promo_badge %></span><% } %>
-              </div>
-            </div>
-            <div class="prod-body">
-              <div class="prod-name"><%= p.name %></div>
-              <% if (p.description) { %><div class="prod-desc"><%= p.description %></div><% } %>
-              <div class="prod-prices">
-                <span class="prod-price"><%= _money(p) %></span>
-                <% if (p.old_price && p.old_price > p.price) { %><span class="prod-old"><%= _money(p.old_price) %></span><% } %>
-              </div>
-              <% if (p.promo_desc) { %><div class="prod-promo-strip"><i class="bi bi-tag-fill"></i> <%= p.promo_desc %></div><% } %>
-              <% if (p.allow_installments) { var instPrice = (p.price / (p.installment_count || 6)).toFixed(2); %>
-                <span class="installment-note"><%= p.installment_count || 6 %> abonos de <%= _rawMoney(instPrice) %></span>
-              <% } %>
-              <% if (p.made_to_order) { %>
-                <div class="stock-status stock-status--available">Disponible por pedido</div>
-              <% } else if (p.displayStock !== null && p.displayStock !== undefined) { %>
-                <% if (p.displayStock <= 0) { %>
-                  <div class="stock-status stock-status--out">Agotado</div>
-                <% } else if (p.hideStock) { %>
-                <% } else if (p.displayStock <= 5) { %>
-                  <div class="stock-status stock-status--low">🔥 ¡Quedan <%= p.displayStock %>!</div>
-                <% } else { %>
-                  <div class="stock-status stock-status--available"><%= p.displayStock %> disponibles</div>
-                <% } %>
-              <% } %>
-              <div class="prod-actions">
-                <button class="prod-btn" onclick="event.stopPropagation();if(!addToCart(<%= p.id %>,'<%= p.name.replace(/'/g,"\\'") %>',<%= parseFloat(p.price)||0 %>,'',{slug:'<%= biz.slug %>',name:'<%= biz.name.replace(/'/g,"\\'") %>',whatsapp:'<%= _whatsapp %>',logo:'<%= (biz.logo||'').replace(/'/g,"\\'") %>'},'<%= (p.image||'').replace(/'/g,"\\'") %>'))return;this.classList.add('added');this.innerHTML='<i class=\'bi bi-check-lg\'></i> Agregado';setTimeout(()=>{this.classList.remove('added');this.innerHTML='<i class=\'bi bi-bag-plus\'></i> Agregar';},1200);"><i class="bi bi-bag-plus"></i> Agregar</button>
-                <a class="prod-view-btn" href="/<%= biz.slug %>/p/<%= p.id %>" onclick="event.stopPropagation();" title="Ver producto"><i class="bi bi-eye"></i> Ver</a>
-                <button class="prod-share-btn" onclick="event.stopPropagation();shareProduct(<%= p.id %>,'<%= p.name.replace(/'/g,"\\'") %>',<%= parseFloat(p.price)||0 %>)" title="Compartir" aria-label="Compartir <%= p.name %>"><i class="bi bi-share"></i></button>
-              </div>
-            </div>
-          </div>
+          <%- include("../partials/prod-card", { p: p, biz: biz, _money: _money, _rawMoney: _rawMoney, _whatsapp: _whatsapp, _imgAttrs: _imgAttrs, _ph: _ph }) %>
           <% }) %>
         </div>
         <div id="loadMoreWrap" style="display:none;text-align:center;padding:4px 0 48px;">

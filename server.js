@@ -287,11 +287,12 @@ function sanitizeExtras(raw) {
   const vacio = !out.about.text && !out.envios && !out.pagos.length && !out.pagos_nota && !out.testimonios.length && !out.modelos.images.length && !out.showNew && !out.showTop && !out.showHow;
   return vacio ? '' : JSON.stringify(out);
 }
-// Ids de los productos que más se han pedido (suma de unidades en pedidos no
+// Ids de los productos que más se han vendido (suma de unidades en pedidos cobrados y no
 // cancelados; los pedidos guardan las líneas como texto "• 2 x Nombre (var) = $x").
 function bestSellerIds(bizId, products, limit) {
   const counts = {};
-  db.prepare("SELECT items FROM orders WHERE business_id = ? AND status != 'cancelado'").all(bizId).forEach(o => {
+  // Solo cuentan los pedidos ya COBRADOS: un pedido por WhatsApp no garantiza que se haya vendido
+  db.prepare("SELECT items FROM orders WHERE business_id = ? AND status != 'cancelado' AND paid = 1").all(bizId).forEach(o => {
     String(o.items || '').split(/[\n|]/).forEach(line => {
       const m = line.match(/(\d+)\s*x\s+(.+?)\s*=\s*[^]*?$/);
       if (!m) return;

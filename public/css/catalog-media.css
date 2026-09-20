@@ -189,3 +189,14 @@ body .prod-img-wrap > img[src$="sin-imagen.svg"], body .oferta-img-wrap > img[sr
 .mod-dots i.on { width: 26px; background: var(--accent-glow, var(--accent)); }
 
 @media (prefers-reduced-motion: reduce) { .xs-model, .xs-model > img, .xs-model figcaption span { transition: none; } }
+
+/* ---------- Recién llegados / Más vendidos: usan la misma tarjeta que los productos ---------- */
+.xs-strip .ofertas-track .prod-card { flex: 0 0 clamp(216px, 68vw, 276px); min-width: 0; }
+.prod-badge-new, .prod-badge-rank {
+  display: inline-block; font-size: 10px; font-weight: 800; padding: 3px 10px; border-radius: 6px;
+  text-transform: uppercase; letter-spacing: .05em; line-height: 1.4;
+}
+.prod-badge-new { background: var(--accent); color: var(--soc-on-accent, #fff); }
+.prod-badge-rank { background: var(--accent-glow, #c9a86c); color: #16130f; }
+body .prod-badge-wrap { align-items: flex-start; }
+.prod-badge-rank { background: linear-gradient(135deg, #f6d36b, #e0a92e); color: #1a1200; box-shadow: 0 2px 10px rgba(224, 169, 46, .35); }
