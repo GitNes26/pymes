@@ -160,3 +160,11 @@ main .config-shell .config-catalog-link:hover { border-color: color-mix(in srgb,
 
 /* Configuración: el botón Guardar del final de cada sección no debe quedar tapado por la barra inferior del celular */
 @media (max-width: 1023px) { main .config-shell { padding-bottom: calc(110px + env(safe-area-inset-bottom)); } }
+
+/* Vista previa de logo y banner en Configuración: como se ven en el catálogo (logo completo, banner a todo el ancho) */
+.cfg-thumb { display: inline-flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid var(--pn-line); border-radius: 12px; background: repeating-conic-gradient(#ececee 0 25%, #fff 0 50%) 0 0 / 14px 14px; }
+.cfg-thumb img { display: block; width: 100%; height: 100%; }
+.cfg-thumb-logo { width: 84px; height: 84px; }
+.cfg-thumb-logo img { object-fit: contain; }
+.cfg-thumb-banner { display: flex; width: min(100%, 420px); aspect-ratio: 16 / 6; }
+.cfg-thumb-banner img { object-fit: cover; }

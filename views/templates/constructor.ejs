@@ -1068,7 +1068,7 @@
   </style>
   <link rel="stylesheet" href="/css/catalog-refine.css?v=20260917c">
   <link rel="stylesheet" href="/css/catalog-motion.css?v=20260919a">
-  <link rel="stylesheet" href="/css/catalog-media.css?v=20260919f">
+  <link rel="stylesheet" href="/css/catalog-media.css?v=20260920a">
   <link rel="stylesheet" href="/css/catalog-hero.css?v=20260919c">
   <script src="/js/catalog-motion.js?v=20260918a" defer></script>
   <script src="/js/catalog-gallery.js?v=20260919a" defer></script>
@@ -1197,8 +1197,7 @@
         <div class="oferta-card" onclick="location.href='/<%= biz.slug %>/p/<%= p.id %>'" style="cursor:pointer;">
           <div class="oferta-img-wrap"<%- _ph(p.image) %>>
             <img src="<%= p.image||'/img/sin-imagen.svg' %>"<%- _imgAttrs(p.image, '(max-width:640px) 62vw, 280px') %> loading="lazy" decoding="async" alt="<%= p.name %>">
-            <span class="oferta-badge-pct">-<%= _pct %>%</span>
-            <span class="oferta-badge-tag">OFERTA</span>
+            <div class="prod-badge-wrap"><span class="prod-badge-offer">-<%= _pct %>%</span><span class="prod-badge-promo">Oferta</span></div>
           </div>
           <div class="oferta-body">
             <div class="oferta-name"><%= p.name %></div>

@@ -2472,8 +2472,8 @@ function previewCatalog(biz, q, res) {
     header: Object.prototype.hasOwnProperty.call(q, 'header') ? String(q.header || '').trim() : biz.header,
     header_text: Object.prototype.hasOwnProperty.call(q, 'header_text') ? String(q.header_text || '').trim() : biz.header_text,
     page_bg: /^#[0-9a-fA-F]{6}$/.test(q.page_bg || '') ? q.page_bg : biz.page_bg,
-    logo: (q.logo || '').trim() || biz.logo,
-    banner: (q.banner || '').trim() || biz.banner,
+    logo: q.logo_clear ? '' : ((q.logo || '').trim() || biz.logo),
+    banner: q.banner_clear ? '' : ((q.banner || '').trim() || biz.banner),
     sections: Object.prototype.hasOwnProperty.call(q, 'sections') ? String(q.sections) : biz.sections,
     blocks: Object.prototype.hasOwnProperty.call(q, 'blocks') ? String(q.blocks) : biz.blocks
   };
@@ -4522,8 +4522,8 @@ function applyConfig(biz, body) {
     colorObj ? colorObj.c2 : cleanHex2,
     mode,
     cols,
-    logo || biz.logo,
-    banner || biz.banner,
+    body.logo_clear ? '' : (logo || biz.logo),
+    body.banner_clear ? '' : (banner || biz.banner),
     getGiros().includes(primaryGiro) ? primaryGiro : biz.giro,
     JSON.stringify(girosList.length ? girosList : (getGiros().includes(biz.giro) ? [biz.giro] : [])),
     estSel,

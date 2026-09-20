@@ -1001,26 +1001,32 @@
         <form data-noajax method="POST" action="<%= cfgAction %>#config-images" class="space-y-4">
           <div>
             <label class="config-label">Logo</label>
-            <div class="config-upload-row flex items-center gap-3">
+            <div class="config-upload-row flex items-center gap-3 flex-wrap">
               <label class="cursor-pointer bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-bold px-4 py-2.5 rounded-xl transition text-slate-700 dark:text-slate-300">
-                <span class="inline-flex items-center gap-2"><svg class="config-ui-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M4 7h4l1.5-2h5L16 7h4v12H4z"/><circle cx="12" cy="13" r="3"/></svg>Subir logo</span>
+                <span class="inline-flex items-center gap-2"><svg class="config-ui-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M4 7h4l1.5-2h5L16 7h4v12H4z"/><circle cx="12" cy="13" r="3"/></svg> Subir logo</span>
                 <input id="foto-logo" type="file" accept="image/*" class="hidden" onchange="subirConEditor('foto-logo', 'logo-url', 'prev-logo')">
               </label>
-              <img id="prev-logo" src="<%= biz.logo || '/img/sin-imagen.svg' %>" class="w-12 h-12 rounded-full object-cover border border-slate-200 dark:border-[#30363d]">
+              <span class="cfg-thumb cfg-thumb-logo"><img id="prev-logo" src="<%= biz.logo || '/img/sin-imagen.svg' %>" alt="Logo"></span>
+              <button type="button" onclick="quitarImagenTienda('logo')" id="quitar-logo" class="text-xs font-bold text-red-600 hover:text-red-800 <%= biz.logo ? '' : 'hidden' %>">Quitar logo</button>
             </div>
+            <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Se ve completo, sin recortar. Las franjas blancas o negras pegadas al borde se quitan solas.</p>
             <input name="logo" id="logo-url" type="hidden" value="<%= biz.logo || '' %>">
+            <input name="logo_clear" id="logo-clear" type="hidden" value="">
           </div>
 
           <div>
             <label class="config-label">Banner de portada <span class="text-slate-400 font-normal">(plantillas con portada)</span></label>
-            <div class="config-upload-row flex items-center gap-3">
+            <div class="config-upload-row flex items-center gap-3 flex-wrap">
               <label class="cursor-pointer bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-bold px-4 py-2.5 rounded-xl transition text-slate-700 dark:text-slate-300">
-                <span class="inline-flex items-center gap-2"><svg class="config-ui-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M4 7h4l1.5-2h5L16 7h4v12H4z"/><circle cx="12" cy="13" r="3"/></svg>Subir banner</span>
+                <span class="inline-flex items-center gap-2"><svg class="config-ui-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M4 7h4l1.5-2h5L16 7h4v12H4z"/><circle cx="12" cy="13" r="3"/></svg> Subir banner</span>
                 <input id="foto-banner" type="file" accept="image/*" class="hidden" onchange="subirConEditor('foto-banner', 'banner-url', 'prev-banner')">
               </label>
-              <img id="prev-banner" src="<%= biz.banner || '/img/sin-imagen.svg' %>" class="w-16 h-10 rounded-lg object-cover border border-slate-200 dark:border-[#30363d]">
+              <button type="button" onclick="quitarImagenTienda('banner')" id="quitar-banner" class="text-xs font-bold text-red-600 hover:text-red-800 <%= biz.banner ? '' : 'hidden' %>">Quitar banner</button>
             </div>
+            <span class="cfg-thumb cfg-thumb-banner mt-2"><img id="prev-banner" src="<%= biz.banner || '/img/sin-imagen.svg' %>" alt="Banner"></span>
+            <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Ocupa todo el ancho de la portada; lo que sobre se recorta. Mejor una foto horizontal.</p>
             <input name="banner" id="banner-url" type="hidden" value="<%= biz.banner || '' %>">
+            <input name="banner_clear" id="banner-clear" type="hidden" value="">
           </div>
 
           <div class="flex gap-3 pt-2">
@@ -1455,6 +1461,15 @@
 
   <%- include('partials/img-editor', { upUrl: (esMaestro ? '/maestro/' + biz.id + '/upload' : '/' + biz.slug + '/admin/upload'), z: 9000 }) %>
 <script>
+    // Quitar logo o banner por separado (el servidor recibe logo_clear / banner_clear)
+    function quitarImagenTienda(cual) {
+      var url = document.getElementById(cual + '-url'), clr = document.getElementById(cual + '-clear'), prev = document.getElementById('prev-' + cual), btn = document.getElementById('quitar-' + cual);
+      if (url) url.value = '';
+      if (clr) clr.value = '1';
+      if (prev) prev.src = '/img/sin-imagen.svg';
+      if (btn) btn.classList.add('hidden');
+      if (window.mostrarToast) mostrarToast((cual === 'logo' ? 'Logo' : 'Banner') + ' quitado: pulsa Guardar cambios para aplicarlo', 'info');
+    }
     function subirConEditor(inputId, campoId, previewId, aspecto) {
       // Logo y banner: el servidor recorta franjas vacías pegadas a un borde de la foto
       window.__imgeTrim = (campoId === 'logo-url' || campoId === 'banner-url');
@@ -1466,6 +1481,8 @@
         abrirEditorImagen(rd.result, function (url) {
           var campo = document.getElementById(campoId);
           if (campo) { campo.value = url; campo.dispatchEvent(new Event('change')); }
+          var fl = document.getElementById(String(campoId).replace('-url', '-clear')); if (fl) fl.value = '';
+          var qb = document.getElementById(String(campoId).replace('-url', '').replace(/^/, 'quitar-')); if (qb && /^(logo|banner)-url$/.test(campoId)) qb.classList.remove('hidden');
           var prev = document.getElementById(previewId);
           if (prev) prev.src = url;
           if (window.mostrarToast) mostrarToast('Imagen aplicada ✓', 'ok');
