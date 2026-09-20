@@ -61,3 +61,13 @@ html body .hero.hero-plain .hero-overlay { position: relative; inset: auto; back
 html body .hero.hero-plain .hero-name { color: var(--text); text-shadow: none; }
 html body .hero.hero-plain .hero-desc { color: var(--text-secondary); text-shadow: none; }
 html body .hero.hero-plain .hero-status { background: var(--bg-card); border-color: var(--border); color: var(--text-secondary); }
+
+/* ---------- PC: el banner se ve casi completo (altura según la proporción de la foto, con tope) ---------- */
+@media (min-width: 900px) {
+  html body .hero.has-banner { min-height: 0; }
+  html body .hero.has-banner img.bg {
+    position: relative; display: block; width: 100%; height: auto;
+    max-height: min(82vh, 780px); min-height: 360px; object-fit: cover; object-position: center;
+  }
+  html body .hero.has-banner .hero-overlay { position: absolute; inset: 0; }
+}
