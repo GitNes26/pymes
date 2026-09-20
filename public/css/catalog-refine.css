@@ -110,7 +110,7 @@
   box-shadow: 0 2px 10px color-mix(in srgb, var(--text) 7%, transparent);
 }
 .filter-header { padding-bottom: 14px; border-bottom: 1px solid var(--border); }
-.filter-header h3 { font-size: 18px; }
+.filter-header h2 { font-size: 18px; }
 .filter-group { margin-bottom: 20px; }
 .filter-label { margin-bottom: 8px; color: var(--text-secondary); opacity: 1; }
 .filter-search,
