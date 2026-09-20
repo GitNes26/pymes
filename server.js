@@ -274,11 +274,17 @@ function sanitizeExtras(raw) {
       text: str(t && t.text, 400),
       stars: Math.min(5, Math.max(1, parseInt(t && t.stars, 10) || 5))
     })).filter(t => t.name && t.text),
+    modelos: {
+      title: str(x.modelos && x.modelos.title, 80),
+      text: str(x.modelos && x.modelos.text, 400),
+      images: (Array.isArray(x.modelos && x.modelos.images) ? x.modelos.images : []).slice(0, 6)
+        .map(i => ({ src: safeImgUrl(i && i.src), cap: str(i && i.cap, 60) })).filter(i => i.src)
+    },
     showNew: !!x.showNew,
     showTop: !!x.showTop,
     showHow: !!x.showHow
   };
-  const vacio = !out.about.text && !out.envios && !out.pagos.length && !out.pagos_nota && !out.testimonios.length && !out.showNew && !out.showTop && !out.showHow;
+  const vacio = !out.about.text && !out.envios && !out.pagos.length && !out.pagos_nota && !out.testimonios.length && !out.modelos.images.length && !out.showNew && !out.showTop && !out.showHow;
   return vacio ? '' : JSON.stringify(out);
 }
 // Ids de los productos que más se han pedido (suma de unidades en pedidos no

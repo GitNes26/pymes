@@ -80,6 +80,7 @@
   var _ex = {};
   try { _ex = JSON.parse(biz.extras || '{}') || {}; } catch(e) { _ex = {}; }
   var _exAbout = (_ex.about && _ex.about.text) ? _ex.about : null;
+  var _exMod = (_ex.modelos && Array.isArray(_ex.modelos.images) && _ex.modelos.images.length) ? _ex.modelos : null;
   var _exTesti = Array.isArray(_ex.testimonios) ? _ex.testimonios.filter(function(t){ return t && t.name && t.text; }) : [];
   var _PAGO_LBL = { efectivo:['bi-cash-coin','Efectivo'], transferencia:['bi-bank','Transferencia'], tarjeta:['bi-credit-card','Tarjeta'], contra_entrega:['bi-box-seam','Contra entrega'], abonos:['bi-calendar2-check','Pagos en abonos'], mercado_pago:['bi-shield-check','Mercado Pago'] };
   var _exPagos = (Array.isArray(_ex.pagos) ? _ex.pagos : []).filter(function(k){ return _PAGO_LBL[k]; });
@@ -1036,7 +1037,7 @@
   </style>
   <link rel="stylesheet" href="/css/catalog-refine.css?v=20260917c">
   <link rel="stylesheet" href="/css/catalog-motion.css?v=20260919a">
-  <link rel="stylesheet" href="/css/catalog-media.css?v=20260919e">
+  <link rel="stylesheet" href="/css/catalog-media.css?v=20260919f">
   <link rel="stylesheet" href="/css/catalog-hero.css?v=20260919a">
   <script src="/js/catalog-motion.js?v=20260918a" defer></script>
   <script src="/js/catalog-gallery.js?v=20260919a" defer></script>
@@ -1402,6 +1403,29 @@
       </div>
     </div>
   </div>
+  <% } %>
+
+  <!-- ===== MODELOS (fotos de personas usando los productos; sale solo si hay fotos) ===== -->
+  <% if (_exMod) { var _mi = _exMod.images.slice(0, 6); %>
+  <section class="xs-sec<%- _xsBand() %>" aria-labelledby="xs-mod-t">
+    <div class="xs-in">
+      <%- _xsHead('Lookbook', _exMod.title || 'Nuestros modelos', _exMod.text || '', 'xs-mod-t') %>
+      <div class="xs-models mod-n<%= _mi.length %>">
+        <% _mi.forEach(function (m) { %>
+        <figure class="xs-model"<%- _ph(m.src) %> data-src="<%= m.src %>" data-cap="<%= m.cap || '' %>">
+          <img src="<%= m.src %>"<%- _imgAttrs(m.src, '(max-width:640px) 50vw, 360px') %> alt="<%= m.cap || 'Modelo' %>" loading="lazy" decoding="async">
+          <% if (m.cap) { %><figcaption><%= m.cap %></figcaption><% } %>
+        </figure>
+        <% }) %>
+      </div>
+    </div>
+  </section>
+  <script>
+    document.addEventListener('click', function (e) {
+      var f = e.target.closest && e.target.closest('.xs-model');
+      if (f && typeof expandImage === 'function') expandImage(f.getAttribute('data-src'), f.getAttribute('data-cap') || '');
+    });
+  </script>
   <% } %>
 
   <!-- ===== CONÓCENOS (sale solo si el dueño escribió su texto; la foto es opcional) ===== -->

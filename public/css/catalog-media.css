@@ -92,3 +92,34 @@ body .prod-img-wrap > img[src$="sin-imagen.svg"], body .oferta-img-wrap > img[sr
   body .prod-img-wrap::before, body .oferta-img-wrap::before { animation: none; }
   .prod-img-alt { transition: none !important; }
 }
+
+/* ---------- Modelos / Lookbook: fotos de personas usando los productos ---------- */
+.xs-models { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(10px, 2vw, 20px); margin-top: clamp(22px, 4vw, 40px); }
+.xs-models.mod-n1 { grid-template-columns: minmax(0, 440px); justify-content: center; }
+@media (max-width: 719px) {
+  .xs-models.mod-n3 .xs-model:last-child, .xs-models.mod-n5 .xs-model:last-child { grid-column: 1 / -1; aspect-ratio: 4 / 3; }
+}
+@media (min-width: 720px) {
+  .xs-models.mod-n2 { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 780px; margin-inline: auto; }
+  .xs-models.mod-n3, .xs-models.mod-n5, .xs-models.mod-n6 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .xs-models.mod-n4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  /* con 5 fotos la primera destaca */
+  .xs-models.mod-n5 .xs-model:first-child { grid-column: span 2; aspect-ratio: auto; }
+}
+.xs-model {
+  position: relative; margin: 0; aspect-ratio: 3 / 4; overflow: hidden; isolation: isolate; cursor: zoom-in;
+  border-radius: var(--radius, 16px);
+  background: color-mix(in srgb, var(--text) 5%, var(--bg-card));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 8%, transparent);
+}
+.xs-model::before {
+  content: ""; position: absolute; inset: -14%; z-index: 0; pointer-events: none;
+  background: var(--ph, none) center / cover no-repeat; filter: blur(22px) saturate(1.15); opacity: .85;
+}
+.xs-model > img { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; object-fit: contain; background: transparent !important; transition: transform .8s cubic-bezier(.22, 1, .36, 1); }
+.xs-model figcaption {
+  position: absolute; inset: auto 0 0 0; z-index: 2; padding: 26px 14px 12px; color: #fff;
+  font: 600 13px/1.3 var(--font-body, Inter, system-ui, sans-serif); letter-spacing: .01em;
+  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, .62));
+}
+@media (hover: hover) { .xs-model:hover > img { transform: scale(1.04); } }

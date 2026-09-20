@@ -745,6 +745,17 @@
               </div>
 
               <div class="rounded-xl border border-slate-200 dark:border-[#30363d] p-3 space-y-2">
+                <p class="text-xs font-black text-slate-500 dark:text-slate-400">Modelos <span class="font-normal">(fotos de personas usando tus productos, hasta 6)</span></p>
+                <input id="ex-mod-title" class="config-input" maxlength="80" placeholder="Título (opcional, por defecto “Nuestros modelos”)" value="<%= (_ex.modelos && _ex.modelos.title) || '' %>">
+                <input id="ex-mod-text" class="config-input" maxlength="400" placeholder="Frase corta (opcional). Ej: Así luce nuestra colección puesta." value="<%= (_ex.modelos && _ex.modelos.text) || '' %>">
+                <div id="modelos-rows" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
+                <button type="button" onclick="modeloAgregarFila()" class="m-btn m-btn-outline m-btn-sm !text-neutral-700 dark:!text-[#d4d4d4] dark:!border-[#d4d4d4]">
+                  <svg class="config-ui-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Agregar foto de modelo
+                </button>
+                <p class="text-[11px] text-slate-400 dark:text-slate-500">Se recortan en vertical (3:4) con el editor. La sección aparece sola en el catálogo cuando hay al menos una foto.</p>
+              </div>
+
+              <div class="rounded-xl border border-slate-200 dark:border-[#30363d] p-3 space-y-2">
                 <p class="text-xs font-black text-slate-500 dark:text-slate-400">Envíos y formas de pago</p>
                 <textarea id="ex-envios" rows="3" maxlength="1500" class="config-input" placeholder="Zonas de entrega, costo y tiempos. Ej: Entregamos en toda la ciudad. Envío gratis desde $500."><%= _ex.envios || '' %></textarea>
                 <div class="flex flex-wrap gap-x-4 gap-y-2 pt-1">
@@ -1337,6 +1348,32 @@
       if (h) h.value = JSON.stringify(filas);
     }
     // ===== Secciones extra: testimonios + serialización de todo el bloque =====
+    var MODELOS_INICIAL = <%- safeJson((_ex.modelos && Array.isArray(_ex.modelos.images)) ? _ex.modelos.images : []) %>;
+    var _modN = 0;
+    function modeloAgregarFila(src, cap) {
+      var c = document.getElementById('modelos-rows');
+      if (!c) return;
+      if (c.querySelectorAll('.modelo-row').length >= 6) { if (window.mostrarToast) mostrarToast('Máximo 6 fotos de modelos', 'error'); return; }
+      var id = 'mod' + (++_modN);
+      var wrap = document.createElement('div');
+      wrap.className = 'modelo-row rounded-xl border border-slate-200 dark:border-[#30363d] bg-white dark:bg-slate-900/40 p-2 space-y-2';
+      wrap.innerHTML =
+        '<div style="position:relative;aspect-ratio:3/4;border-radius:10px;overflow:hidden;background:#f1f1f2;">' +
+          '<img id="prev-' + id + '" alt="" style="width:100%;height:100%;object-fit:contain;display:block;">' +
+          '<label for="file-' + id + '" style="position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;padding:8px;cursor:pointer;">' +
+            '<span style="background:rgba(17,17,17,.78);color:#fff;font:700 11px Inter,system-ui,sans-serif;padding:6px 12px;border-radius:999px;">Subir foto</span></label>' +
+          '<input id="file-' + id + '" type="file" accept="image/*" class="hidden">' +
+          '<input id="src-' + id + '" type="hidden" class="modelo-src">' +
+        '</div>' +
+        '<div style="display:flex;gap:6px;align-items:center;"><input type="text" maxlength="60" class="config-input modelo-cap" placeholder="Pie de foto (opcional)"><button type="button" title="Quitar" class="modelo-del" style="flex:none;width:32px;height:32px;border-radius:8px;color:#dc2626;">✕</button></div>';
+      c.appendChild(wrap);
+      var srcEl = wrap.querySelector('.modelo-src'), prev = wrap.querySelector('img'), file = wrap.querySelector('input[type=file]');
+      srcEl.value = src || '';
+      prev.src = src || '/img/sin-imagen.svg';
+      wrap.querySelector('.modelo-cap').value = cap || '';
+      file.addEventListener('change', function () { subirConEditor('file-' + id, 'src-' + id, 'prev-' + id, '3:4'); });
+      wrap.querySelector('.modelo-del').addEventListener('click', function () { wrap.remove(); });
+    }
     var TESTI_INICIAL = <%- safeJson(Array.isArray(_ex.testimonios) ? _ex.testimonios : []) %>;
     function testiAgregarFila(name, text, stars) {
       var c = document.getElementById('testi-rows');
@@ -1374,6 +1411,11 @@
         var t = (r.querySelector('.testi-text').value || '').trim();
         if (n && t) testimonios.push({ name: n, text: t, stars: parseInt(r.querySelector('.testi-stars').value, 10) || 5 });
       });
+      var modelos = [];
+      document.querySelectorAll('#modelos-rows .modelo-row').forEach(function (r) {
+        var u = (r.querySelector('.modelo-src').value || '').trim();
+        if (u) modelos.push({ src: u, cap: (r.querySelector('.modelo-cap').value || '').trim() });
+      });
       var pagos = [];
       document.querySelectorAll('#extras-block .ex-pago:checked').forEach(function (c) { pagos.push(c.value); });
       var h = document.getElementById('extras-json');
@@ -1381,6 +1423,7 @@
         about: { title: v('ex-about-title'), text: v('ex-about-text'), image: v('ex-about-image') },
         envios: v('ex-envios'), pagos: pagos, pagos_nota: v('ex-pagos-nota'),
         testimonios: testimonios,
+        modelos: { title: v('ex-mod-title'), text: v('ex-mod-text'), images: modelos },
         showNew: !!(document.getElementById('ex-show-new') || {}).checked,
         showTop: !!(document.getElementById('ex-show-top') || {}).checked,
         showHow: !!(document.getElementById('ex-show-how') || {}).checked
@@ -1403,6 +1446,7 @@
       });
       (FAQ_INICIAL || []).forEach(function (f) { faqAgregarFila(f.q || '', f.a || ''); });
       (TESTI_INICIAL || []).forEach(function (t) { testiAgregarFila(t.name, t.text, t.stars); });
+      (MODELOS_INICIAL || []).forEach(function (m) { modeloAgregarFila(m.src, m.cap); });
     })();
   </script>
 
