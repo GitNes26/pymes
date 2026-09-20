@@ -2491,6 +2491,7 @@ app.get('/:slug/manifest.webmanifest', (req, res) => {
     short_name: name.slice(0, 12),
     description: biz.description || ('Catálogo de ' + name),
     id: '/' + biz.slug,
+    id: '/' + biz.slug,
     start_url: '/' + biz.slug,
     scope: '/' + biz.slug,
     display: 'standalone',
@@ -2500,7 +2501,8 @@ app.get('/:slug/manifest.webmanifest', (req, res) => {
     lang: 'es',
     icons: (biz.logo || biz.banner) ? [
       { src: '/' + biz.slug + '/icon/192.png?v=' + brandVersion(biz), sizes: '192x192', type: 'image/png', purpose: 'any' },
-      { src: '/' + biz.slug + '/icon/512.png?v=' + brandVersion(biz), sizes: '512x512', type: 'image/png', purpose: 'any' }
+      { src: '/' + biz.slug + '/icon/512.png?v=' + brandVersion(biz), sizes: '512x512', type: 'image/png', purpose: 'any' },
+      { src: '/' + biz.slug + '/icon/512.png?v=' + brandVersion(biz), sizes: '512x512', type: 'image/png', purpose: 'maskable' }
     ] : [
       { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
       { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
