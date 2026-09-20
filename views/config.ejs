@@ -745,6 +745,20 @@
               </div>
 
               <div class="rounded-xl border border-slate-200 dark:border-[#30363d] p-3 space-y-2">
+                <p class="text-xs font-black text-slate-500 dark:text-slate-400">Etiquetas para TODOS los productos <span class="font-normal">(hasta 3)</span></p>
+                <p class="text-[11px] text-slate-400 dark:text-slate-500">Salen en cada producto de tu tienda, además de las que le pongas a uno por uno. Ej: “Mayoreo desde 10 pzas”, “Envío gratis”.</p>
+                <div id="gt-rows" class="space-y-2"></div>
+                <button type="button" id="gt-add" onclick="gtAdd()" class="m-btn m-btn-outline m-btn-sm !text-neutral-700 dark:!text-[#d4d4d4] dark:!border-[#d4d4d4]">
+                  <svg class="config-ui-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Agregar etiqueta
+                </button>
+                <div class="flex flex-wrap gap-1.5">
+                  <button type="button" class="gt-sug" onclick="gtAdd('Mayoreo','#7c3aed')">Mayoreo</button>
+                  <button type="button" class="gt-sug" onclick="gtAdd('Envío gratis','#0f766e')">Envío gratis</button>
+                  <button type="button" class="gt-sug" onclick="gtAdd('Entrega inmediata','#1d4ed8')">Entrega inmediata</button>
+                </div>
+              </div>
+
+              <div class="rounded-xl border border-slate-200 dark:border-[#30363d] p-3 space-y-2">
                 <p class="text-xs font-black text-slate-500 dark:text-slate-400">Modelos <span class="font-normal">(fotos de personas usando tus productos, hasta 6)</span></p>
                 <input id="ex-mod-title" class="config-input" maxlength="80" placeholder="Título (opcional, por defecto “Nuestros modelos”)" value="<%= (_ex.modelos && _ex.modelos.title) || '' %>">
                 <input id="ex-mod-text" class="config-input" maxlength="400" placeholder="Frase corta (opcional). Ej: Así luce nuestra colección puesta." value="<%= (_ex.modelos && _ex.modelos.text) || '' %>">
@@ -1082,6 +1096,20 @@
     </div>
   </main>
 
+
+  <style>
+    .gt-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:8px; border:1px solid rgba(0,0,0,.1); border-radius:12px; }
+    .gt-row .gt-text { flex:1 1 170px; min-width:0; }
+    .gt-colors { display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
+    .gt-dot { width:22px; height:22px; border-radius:50%; border:2px solid transparent; cursor:pointer; box-shadow:0 0 0 1px rgba(0,0,0,.12); }
+    .gt-dot.on { border-color:#fff; box-shadow:0 0 0 2px #15181d; }
+    .gt-color { width:28px; height:28px; padding:0; border:0; background:none; cursor:pointer; }
+    .gt-prev { display:inline-block; padding:3px 10px; border-radius:6px; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .gt-del { width:32px; height:32px; border-radius:8px; color:#dc2626; background:none; border:0; cursor:pointer; }
+    .gt-del:hover { background:rgba(220,38,38,.08); }
+    .gt-sug { min-height:30px; padding:0 11px; border:1px solid rgba(0,0,0,.14); border-radius:999px; background:#fff; font-size:11.5px; font-weight:700; cursor:pointer; }
+    .gt-sug:hover { border-color:#15181d; }
+  </style>
   <%- include('admin/panel-ajax') %>
   <%- include('admin/toast') %>
   <%- include('admin/invalid-toast') %>
@@ -1354,6 +1382,36 @@
       if (h) h.value = JSON.stringify(filas);
     }
     // ===== Secciones extra: testimonios + serialización de todo el bloque =====
+    // ===== Etiquetas globales (todas las piezas de la tienda) =====
+    var GT_INICIAL = <%- safeJson(Array.isArray(_ex.globalTags) ? _ex.globalTags : []) %>;
+    var GT_COLORS = ['#2c2c2e', '#7c3aed', '#1d4ed8', '#0f766e', '#15803d', '#b45309', '#be123c', '#c2410c'];
+    function gtTextOn(hex) {
+      var m = /^#?([0-9a-f]{6})$/i.exec(hex || '');
+      if (!m) return '#fff';
+      var r = parseInt(m[1].slice(0, 2), 16), g = parseInt(m[1].slice(2, 4), 16), b = parseInt(m[1].slice(4, 6), 16);
+      return (r * 0.299 + g * 0.587 + b * 0.114) > 160 ? '#161513' : '#fff';
+    }
+    function gtCount() { return document.querySelectorAll('#gt-rows .gt-row').length; }
+    function gtAdd(text, color) {
+      var box = document.getElementById('gt-rows');
+      if (!box) return;
+      if (gtCount() >= 3) { if (window.mostrarToast) mostrarToast('Máximo 3 etiquetas globales', 'error'); return; }
+      var row = document.createElement('div');
+      row.className = 'gt-row';
+      var dots = GT_COLORS.map(function (c) { return '<button type="button" class="gt-dot" data-c="' + c + '" style="background:' + c + '" aria-label="Color ' + c + '"></button>'; }).join('');
+      row.innerHTML = '<input type="text" class="gt-text config-input" maxlength="24" placeholder="Texto de la etiqueta">' +
+        '<div class="gt-colors">' + dots + '<input type="color" class="gt-color" aria-label="Otro color"></div>' +
+        '<span class="gt-prev"></span><button type="button" class="gt-del" aria-label="Quitar">✕</button>';
+      box.appendChild(row);
+      var tx = row.querySelector('.gt-text'), cl = row.querySelector('.gt-color'), pv = row.querySelector('.gt-prev');
+      function paint() { pv.textContent = tx.value.trim() || 'Vista previa'; pv.style.background = cl.value; pv.style.color = gtTextOn(cl.value); row.querySelectorAll('.gt-dot').forEach(function (d) { d.classList.toggle('on', d.getAttribute('data-c').toLowerCase() === cl.value.toLowerCase()); }); }
+      tx.value = text || ''; cl.value = color || GT_COLORS[1];
+      tx.addEventListener('input', paint); cl.addEventListener('input', paint);
+      row.querySelectorAll('.gt-dot').forEach(function (d) { d.addEventListener('click', function () { cl.value = d.getAttribute('data-c'); paint(); }); });
+      row.querySelector('.gt-del').addEventListener('click', function () { row.remove(); });
+      paint();
+      if (!text) tx.focus();
+    }
     var MODELOS_INICIAL = <%- safeJson((_ex.modelos && Array.isArray(_ex.modelos.images)) ? _ex.modelos.images : []) %>;
     var _modN = 0;
     function modeloAgregarFila(src, cap) {
@@ -1417,6 +1475,11 @@
         var t = (r.querySelector('.testi-text').value || '').trim();
         if (n && t) testimonios.push({ name: n, text: t, stars: parseInt(r.querySelector('.testi-stars').value, 10) || 5 });
       });
+      var gtags = [];
+      document.querySelectorAll('#gt-rows .gt-row').forEach(function (r) {
+        var t = (r.querySelector('.gt-text').value || '').trim();
+        if (t) gtags.push({ t: t.slice(0, 24), c: r.querySelector('.gt-color').value || '#2c2c2e' });
+      });
       var modelos = [];
       document.querySelectorAll('#modelos-rows .modelo-row').forEach(function (r) {
         var u = (r.querySelector('.modelo-src').value || '').trim();
@@ -1430,6 +1493,7 @@
         envios: v('ex-envios'), pagos: pagos, pagos_nota: v('ex-pagos-nota'),
         testimonios: testimonios,
         modelos: { title: v('ex-mod-title'), text: v('ex-mod-text'), images: modelos },
+        globalTags: gtags,
         showNew: !!(document.getElementById('ex-show-new') || {}).checked,
         showTop: !!(document.getElementById('ex-show-top') || {}).checked,
         showHow: !!(document.getElementById('ex-show-how') || {}).checked
@@ -1453,6 +1517,7 @@
       (FAQ_INICIAL || []).forEach(function (f) { faqAgregarFila(f.q || '', f.a || ''); });
       (TESTI_INICIAL || []).forEach(function (t) { testiAgregarFila(t.name, t.text, t.stars); });
       (MODELOS_INICIAL || []).forEach(function (m) { modeloAgregarFila(m.src, m.cap); });
+      (GT_INICIAL || []).forEach(function (t) { gtAdd(t.t, t.c); });
     })();
   </script>
 

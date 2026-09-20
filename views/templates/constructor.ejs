@@ -125,6 +125,13 @@
   // Todos los productos activos (los sin foto usan el placeholder sin-imagen.svg en el <img>).
   // Se excluyen los slots de anuncios intercalados (isAd): se muestran en su propia sección "También te puede interesar".
   var _realProds = _prods.filter(function(p){ return p && !p.isAd; });
+  // Etiquetas globales de la tienda (Configuración): se suman a las propias de cada producto (máx. 4 a la vista)
+  var _gTags = Array.isArray(_ex.globalTags) ? _ex.globalTags.filter(function (t) { return t && t.t; }) : [];
+  _realProds.forEach(function (p) {
+    var own = Array.isArray(p.customTags) ? p.customTags : [], seen = {}, all = [];
+    own.concat(_gTags).forEach(function (t) { var k = String(t.t).toLowerCase(); if (!seen[k]) { seen[k] = 1; all.push(t); } });
+    p.customTags = all.slice(0, 4);
+  });
   // Filtros: solo lo que tiene productos (una categoría o un valor de atributo en 0 no aporta nada)
   var _catCount = {};
   _realProds.forEach(function (p) { var k = String(p.category_id || 0); _catCount[k] = (_catCount[k] || 0) + 1; });

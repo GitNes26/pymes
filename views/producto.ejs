@@ -241,6 +241,10 @@
       <!-- Información -->
       <div class="prod-info">
         <span class="prod-cat"><%= product.category_name || 'General' %></span>
+        <% var _gx = {}; try { _gx = JSON.parse(biz.extras || '{}') || {}; } catch (e) { _gx = {}; }
+           var _own = Array.isArray(product.customTags) ? product.customTags : [], _seen = {}, _allTags = [];
+           _own.concat(Array.isArray(_gx.globalTags) ? _gx.globalTags : []).forEach(function (t) { if (t && t.t) { var k = String(t.t).toLowerCase(); if (!_seen[k]) { _seen[k] = 1; _allTags.push(t); } } });
+           product.customTags = _allTags.slice(0, 4); %>
         <% if (product.customTags && product.customTags.length) { %><div class="prod-tags"><% product.customTags.forEach(function (t) { var _h = String(t.c || '#2c2c2e').replace('#', ''); var _lum = (parseInt(_h.substr(0, 2), 16) * 0.299 + parseInt(_h.substr(2, 2), 16) * 0.587 + parseInt(_h.substr(4, 2), 16) * 0.114); %><span class="prod-tag-custom" style="background:<%= t.c %>;color:<%= _lum > 160 ? '#161513' : '#fff' %>"><%= t.t %></span><% }) %></div><% } %>
         <h1 class="prod-title"><%= product.name %></h1>
 
