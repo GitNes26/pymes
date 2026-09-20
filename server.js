@@ -991,7 +991,7 @@ const TPL_ACCENTS = {
 
 // Íconos de pestaña y de pantalla de inicio: el logo de la tienda (si lo tiene) en vez del de la plataforma
 function brandIconLinks(biz) {
-  if (biz && biz.logo) {
+  if (biz && (biz.logo || biz.banner)) {
     const v = brandVersion(biz);
     return '<link rel="icon" type="image/png" href="/' + biz.slug + '/icon/192.png?v=' + v + '">' +
       '<link rel="apple-touch-icon" href="/' + biz.slug + '/icon/180.png?v=' + v + '">';
@@ -2439,8 +2439,12 @@ async function brandShareCard(biz) {
   return sharp(base).composite(layers).jpeg({ quality: 86 }).toBuffer();
 }
 async function brandIcon(biz, size) {
-  const logoB = await pedidoLoadImage(biz.logo);
-  if (!logoB) return null;
+  const logoB = biz.logo ? await pedidoLoadImage(biz.logo) : null;
+  if (!logoB) {
+    const banB = biz.banner ? await pedidoLoadImage(biz.banner) : null;
+    if (!banB) return null;
+    return sharp(banB).resize(size, size, { fit: 'cover', position: 'centre' }).png().toBuffer();
+  }
   const pad = Math.round(size * 0.12), inner = size - pad * 2;
   const logo = await sharp(logoB, { density: 300 }).resize(inner, inner, { fit: 'inside' }).png().toBuffer();
   const lm = await sharp(logo).metadata();
@@ -2463,7 +2467,7 @@ app.get('/:slug/icon/:size.png', ah(async (req, res) => {
   const size = [180, 192, 512].includes(parseInt(req.params.size, 10)) ? parseInt(req.params.size, 10) : 192;
   const biz = getBusiness(req.params.slug);
   const fallback = size === 180 ? '/icons/apple-touch-icon.png' : '/icons/icon-' + size + '.png';
-  if (!biz || !biz.active || !biz.logo) return res.redirect(fallback);
+  if (!biz || !biz.active || !(biz.logo || biz.banner)) return res.redirect(fallback);
   const key = 'icon:' + size + ':' + biz.slug + ':' + brandVersion(biz);
   let buf = _brandCache.get(key);
   if (!buf) {
@@ -2494,7 +2498,7 @@ app.get('/:slug/manifest.webmanifest', (req, res) => {
     background_color: designTokens.bg || '#ffffff',
     theme_color: designTokens.accent || '#17232d',
     lang: 'es',
-    icons: biz.logo ? [
+    icons: (biz.logo || biz.banner) ? [
       { src: '/' + biz.slug + '/icon/192.png?v=' + brandVersion(biz), sizes: '192x192', type: 'image/png', purpose: 'any' },
       { src: '/' + biz.slug + '/icon/512.png?v=' + brandVersion(biz), sizes: '512x512', type: 'image/png', purpose: 'any' }
     ] : [

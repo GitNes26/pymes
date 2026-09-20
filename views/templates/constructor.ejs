@@ -198,7 +198,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="<%= biz.name %>">
-  <% if (biz.logo && typeof brandV !== 'undefined') { %>
+  <% if ((biz.logo || biz.banner) && typeof brandV !== 'undefined') { %>
   <link rel="icon" type="image/png" href="/<%= biz.slug %>/icon/192.png?v=<%= brandV %>">
   <link rel="apple-touch-icon" href="/<%= biz.slug %>/icon/180.png?v=<%= brandV %>">
   <% } else { %>
