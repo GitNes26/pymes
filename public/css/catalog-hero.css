@@ -51,3 +51,21 @@ html body .hdr-logo { height: 44px; width: auto; min-width: 44px; max-width: 150
 @media (max-width: 480px) {
   html body .hero .hero-logo, html body .hero.has-banner .hero-logo { height: 112px; min-width: 112px; }
 }
+
+/* ---------- Banner: siempre cubre el ancho completo y nunca se ve "vacío" ---------- */
+/* Fondo propio: si la foto no carga (o es transparente) se ve un degradado del color de la apariencia, no el fondo de la página */
+html body .hero.has-banner {
+  width: 100%;
+  isolation: isolate;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 86%, #000), color-mix(in srgb, var(--accent-light, var(--accent)) 70%, #000));
+}
+html body .hero.has-banner img.bg { z-index: 1; width: 100%; min-width: 100%; }
+html body .hero.has-banner .hero-overlay { z-index: 2; }
+/* Banner vertical/cuadrado en portada ancha: completo, sobre su propio fondo desenfocado */
+html body .hero.has-banner::before {
+  content: ""; position: absolute; inset: -6%; z-index: 0; pointer-events: none;
+  background: var(--ph, none) center / cover no-repeat; filter: blur(30px) saturate(1.15) brightness(.85);
+  opacity: 0; transition: opacity .3s;
+}
+html body .hero.has-banner.hero-contain::before { opacity: 1; }
+html body .hero.has-banner.hero-contain img.bg { object-fit: contain; }

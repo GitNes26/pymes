@@ -1038,7 +1038,7 @@
   <link rel="stylesheet" href="/css/catalog-refine.css?v=20260917c">
   <link rel="stylesheet" href="/css/catalog-motion.css?v=20260919a">
   <link rel="stylesheet" href="/css/catalog-media.css?v=20260919f">
-  <link rel="stylesheet" href="/css/catalog-hero.css?v=20260919a">
+  <link rel="stylesheet" href="/css/catalog-hero.css?v=20260919b">
   <script src="/js/catalog-motion.js?v=20260918a" defer></script>
   <script src="/js/catalog-gallery.js?v=20260919a" defer></script>
   <script src="/js/btn-fit.js?v=20260918a" defer></script>
@@ -1048,7 +1048,7 @@
 <body>
 
   <% if (biz.banner) { %>
-  <div class="hero<%= biz.banner ? ' has-banner' : '' %>">
+  <div class="hero<%= biz.banner ? ' has-banner' : '' %>"<%- _ph(biz.banner) %>>
     <img src="<%= biz.banner %>" class="bg" alt="banner" data-hide-on-error>
     <div class="hero-overlay">
       <% if (biz.logo) { %><img src="<%= biz.logo %>" class="hero-logo" alt="logo" data-hide-on-error><% } %>
@@ -1865,6 +1865,18 @@
       }
 
       // Parallax sutil del hero, sin bloquear el hilo principal
+      // Banner que no cubre bien (vertical/cuadrado en una portada ancha): se muestra completo sobre su propio fondo desenfocado
+      (function () {
+        var hb = document.querySelector('.hero img.bg');
+        if (!hero || !hb) return;
+        function fitBanner() {
+          if (!hb.naturalWidth || !hero.clientHeight) return;
+          var imgR = hb.naturalWidth / hb.naturalHeight, heroR = hero.clientWidth / hero.clientHeight;
+          hero.classList.toggle('hero-contain', imgR < heroR * 0.62);
+        }
+        if (hb.complete) fitBanner(); else hb.addEventListener('load', fitBanner, { once: true });
+        window.addEventListener('resize', fitBanner);
+      })();
       var heroBg = document.querySelector('.hero img.bg');
       if (heroBg && !reducedMotion) {
         var ticking = false;
