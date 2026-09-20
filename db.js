@@ -65,6 +65,7 @@ addColumnIfMissing('businesses', 'horario_msg', "TEXT DEFAULT ''"); // mensaje c
 // guardado pero desactivado sin borrarlo).
 addColumnIfMissing('businesses', 'mp_access_token', "TEXT DEFAULT ''");
 addColumnIfMissing('businesses', 'mp_enabled', 'INTEGER DEFAULT 0');
+addColumnIfMissing('businesses', 'mp_public_key', "TEXT DEFAULT ''"); // clave pública de Mercado Pago (formulario de tarjeta dentro de la app)
 // Transferencia bancaria: el dueño publica su cuenta y el cliente transfiere
 // por su cuenta y manda el comprobante por WhatsApp — sin pasarela, sin
 // comisión, es como ya operan la mayoría de estas tiendas. transfer_enabled

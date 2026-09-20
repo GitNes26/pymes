@@ -2807,6 +2807,111 @@ app.get('/:slug/pagar-mp', async (req, res) => {
   res.redirect(data.init_point);
 });
 
+// Precio real de una línea: el del producto, o el de la variante elegida (la etiqueta llega como "A / B")
+function pagoUnitPrice(p, variantLabel) {
+  withPromo(p);
+  let price = Number(p.price) || 0;
+  const label = String(variantLabel || '').trim();
+  if (label) {
+    const vm = parseVariantModel(p.variants);
+    const key = label.split(' / ').map(x => x.trim()).join('|');
+    if (vm && vm.prices && vm.prices[key] !== undefined && vm.prices[key] !== '' && !isNaN(Number(vm.prices[key]))) price = Number(vm.prices[key]);
+  }
+  return price;
+}
+const MP_DETAIL_ES = {
+  cc_rejected_insufficient_amount: 'Fondos insuficientes en la tarjeta.',
+  cc_rejected_bad_filled_card_number: 'Revisa el número de tarjeta.',
+  cc_rejected_bad_filled_date: 'Revisa la fecha de vencimiento.',
+  cc_rejected_bad_filled_security_code: 'Revisa el código de seguridad (CVV).',
+  cc_rejected_bad_filled_other: 'Revisa los datos de la tarjeta.',
+  cc_rejected_call_for_authorize: 'Tu banco necesita que autorices este pago: llámales y vuelve a intentar.',
+  cc_rejected_card_disabled: 'La tarjeta está desactivada. Llama a tu banco.',
+  cc_rejected_blacklist: 'No pudimos procesar esta tarjeta.',
+  cc_rejected_duplicated_payment: 'Ya hiciste un pago igual hace un momento.',
+  cc_rejected_high_risk: 'El pago fue rechazado por seguridad. Prueba con otra tarjeta.',
+  cc_rejected_max_attempts: 'Llegaste al límite de intentos. Prueba con otra tarjeta.'
+};
+
+// Pago con tarjeta DENTRO de la app (Mercado Pago · Card Payment Brick). La tarjeta la tokeniza el navegador con la clave
+// pública de la tienda: este servidor solo recibe el token, recalcula el total desde la base y crea el pago con el
+// Access Token de esa tienda. Nunca ve ni guarda datos de tarjeta.
+app.post('/:slug/pagar-tarjeta', rateLimit(12), async (req, res) => {
+  const biz = getBusiness(req.params.slug);
+  if (!biz || !biz.active) return res.status(404).json({ ok: false, error: 'Tienda no encontrada' });
+  if (!biz.mp_enabled || !biz.mp_access_token || !biz.mp_public_key) return res.status(400).json({ ok: false, error: 'Esta tienda no tiene el pago con tarjeta activado' });
+  const body = req.body || {};
+  const fd = body.formData || {};
+  if (!fd.token || !fd.payment_method_id) return res.status(400).json({ ok: false, error: 'Faltan los datos de la tarjeta' });
+  const items = Array.isArray(body.items) ? body.items.slice(0, 40) : [];
+  const customerName = String(body.nombre || '').trim().slice(0, 80);
+  const customerPhone = String(body.telefono || '').replace(/[^0-9]/g, '').slice(0, 15);
+  let total = 0;
+  const lines = items.map((it) => {
+    const p = db.prepare('SELECT * FROM products WHERE id = ? AND business_id = ? AND active = 1').get(parseInt(it && it.id) || 0, biz.id);
+    if (!p) return null;
+    const qty = Math.max(1, Math.min(999, parseInt(it.qty) || 1));
+    const unit = pagoUnitPrice(p, it.variant);
+    const sub = unit * qty;
+    total += sub;
+    const variant = it.variant ? ' (' + String(it.variant).slice(0, 80) + ')' : '';
+    return `• ${qty} x ${p.name}${variant} = ${currencyInfo(biz.currency).symbol}${sub.toFixed(2)}`;
+  }).filter(Boolean);
+  total = Math.round(total * 100) / 100;
+  if (!lines.length || !(total > 0)) return res.status(400).json({ ok: false, error: 'El carrito está vacío' });
+  const clientTotal = Number(fd.transaction_amount);
+  if (isFinite(clientTotal) && Math.abs(clientTotal - total) > 0.5) return res.status(409).json({ ok: false, error: 'El total cambió (' + currencyInfo(biz.currency).symbol + total.toFixed(2) + '). Cierra esta ventana, revisa tu carrito y vuelve a intentar.' });
+
+  const customerData = customerName ? (customerName + (customerPhone ? ' (' + customerPhone + ')' : '')) : (customerPhone || '');
+  const orderId = db.prepare(
+    `INSERT INTO orders (business_id, items, total, customer_name, customer_phone, status) VALUES (?, ?, ?, ?, ?, 'nuevo')`
+  ).run(biz.id, lines.join(' | '), total, customerData, customerPhone).lastInsertRowid;
+  upsertCustomer(biz.id, customerName, customerPhone);
+
+  const payload = {
+    transaction_amount: total,
+    token: String(fd.token),
+    description: ('Pedido #' + orderId + ' · ' + biz.name).slice(0, 200),
+    installments: Math.max(1, parseInt(fd.installments) || 1),
+    payment_method_id: String(fd.payment_method_id),
+    payer: { email: String((fd.payer && fd.payer.email) || '').trim().slice(0, 120) },
+    external_reference: String(orderId),
+    notification_url: mpAbsUrl(req, '/webhooks/mercadopago?slug=' + encodeURIComponent(biz.slug))
+  };
+  if (fd.issuer_id) payload.issuer_id = Number(fd.issuer_id) || String(fd.issuer_id);
+  if (fd.payer && fd.payer.identification && fd.payer.identification.number) payload.payer.identification = { type: String(fd.payer.identification.type || ''), number: String(fd.payer.identification.number || '') };
+  if (!payload.payer.email) {
+    db.prepare('DELETE FROM orders WHERE id = ?').run(orderId);
+    return res.status(400).json({ ok: false, error: 'Escribe tu correo para recibir el comprobante' });
+  }
+
+  let result;
+  try {
+    result = await mpFetch(biz.mp_access_token, '/v1/payments', { method: 'POST', body: JSON.stringify(payload), headers: { 'X-Idempotency-Key': crypto.randomUUID() } });
+  } catch (e) {
+    console.error('Error de red con Mercado Pago:', e.message);
+    db.prepare('DELETE FROM orders WHERE id = ?').run(orderId);
+    return res.status(502).json({ ok: false, error: 'No pudimos comunicarnos con Mercado Pago. Intenta de nuevo.' });
+  }
+  const pay = result.data || {};
+  if (!result.ok || !pay.status) {
+    console.error('Mercado Pago rechazó crear el pago:', result.status, JSON.stringify(pay).slice(0, 400));
+    db.prepare('DELETE FROM orders WHERE id = ?').run(orderId);
+    return res.status(400).json({ ok: false, error: 'No se pudo procesar el pago. Revisa los datos de la tarjeta.' });
+  }
+  db.prepare('UPDATE orders SET mp_payment_id = ?, mp_status = ? WHERE id = ?').run(String(pay.id || ''), pay.status, orderId);
+  track(biz.id, 'mp', 'pedido');
+  if (pay.status === 'approved') {
+    db.prepare("UPDATE orders SET paid = 1, paid_at = datetime('now'), status = 'pagado' WHERE id = ?").run(orderId);
+    return res.json({ ok: true, status: 'approved', orderId, total });
+  }
+  if (pay.status === 'in_process' || pay.status === 'pending') {
+    return res.json({ ok: true, status: pay.status, orderId, total }); // el webhook lo marca pagado cuando se apruebe
+  }
+  db.prepare('DELETE FROM orders WHERE id = ?').run(orderId);
+  return res.status(402).json({ ok: false, status: pay.status, error: MP_DETAIL_ES[pay.status_detail] || 'La tarjeta fue rechazada. Prueba con otra tarjeta.' });
+});
+
 // Notificación de pago de Mercado Pago — confirma vía su API (nunca se confía
 // en el body del webhook a secas: cualquiera podría mandar un POST falso).
 app.post('/webhooks/mercadopago', async (req, res) => {
@@ -4675,6 +4780,7 @@ function applyConfig(biz, body) {
     try { pags = JSON.parse(body.paginas_sugeridas || '[]'); } catch (e) { pags = []; }
     db.crearPaginasSugeridas(biz.id, pags);
   }
+  if (mpFormPosted) db.prepare('UPDATE businesses SET mp_public_key = ? WHERE id = ?').run(String(body.mp_public_key || '').trim().slice(0, 300), biz.id);
   return getBusiness(biz.slug);
 }
 

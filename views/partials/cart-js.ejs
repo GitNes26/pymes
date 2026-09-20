@@ -54,6 +54,26 @@
   .vp-val-on, .var-filter-active { background: var(--accent, #2563eb) !important; color: var(--on-accent, var(--soc-on-accent, #fff)) !important; border-color: var(--accent, #2563eb) !important; }
   .vfilter-check { accent-color: var(--accent, #2563eb); }
 
+  /* ===== Pago con tarjeta dentro de la app ===== */
+  .cp-overlay { position:fixed; inset:0; z-index:10001; display:flex; align-items:flex-end; justify-content:center; background:rgba(8,8,10,.55); backdrop-filter:blur(3px); opacity:0; transition:opacity .25s; }
+  .cp-overlay.cp-in { opacity:1; }
+  .cp-panel { width:100%; max-width:460px; max-height:94vh; overflow-y:auto; background:var(--bg-card, #fff); color:var(--text, #0f172a); border:1px solid color-mix(in srgb, var(--text, #0f172a) 14%, transparent); border-radius:min(var(--radius, 16px), 24px) min(var(--radius, 16px), 24px) 0 0; padding:18px 18px calc(18px + env(safe-area-inset-bottom)); font-family:var(--font-body, inherit); transform:translateY(24px); transition:transform .3s cubic-bezier(.22,1,.36,1); }
+  .cp-overlay.cp-in .cp-panel { transform:none; }
+  @media (min-width:560px) { .cp-overlay { align-items:center; } .cp-panel { border-radius:min(var(--radius, 16px), 24px); } }
+  .cp-head { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:12px; }
+  .cp-head b { display:block; font-family:var(--font-heading, inherit); font-size:1.15rem; }
+  .cp-head span { font-size:13px; color:var(--text-secondary, #64748b); }
+  .cp-x { min-width:44px; min-height:44px; border:0; border-radius:12px; background:none; color:var(--text-secondary, #64748b); font-size:16px; cursor:pointer; }
+  .cp-x:hover { background:color-mix(in srgb, var(--text, #0f172a) 6%, transparent); }
+  .cp-load { text-align:center; padding:28px 8px; font-size:13px; color:var(--text-secondary, #64748b); }
+  .cp-err { color:#c2410c; font-weight:700; }
+  .cp-note { margin-top:12px; font-size:11.5px; text-align:center; color:var(--text-secondary, #64748b); }
+  .cp-ok { text-align:center; padding:20px 6px 6px; }
+  .cp-ok-ic { width:64px; height:64px; margin:0 auto 12px; display:grid; place-items:center; border-radius:50%; background:color-mix(in srgb, var(--accent, #1e293b) 16%, transparent); color:var(--accent, #1e293b); font-size:30px; font-weight:800; }
+  .cp-ok h3 { font-family:var(--font-heading, inherit); font-size:1.3rem; margin-bottom:6px; }
+  .cp-ok p { font-size:14px; color:var(--text-secondary, #64748b); }
+  .cp-done { margin-top:18px; width:100%; min-height:50px; border:0; border-radius:min(var(--radius, 16px), 14px); background:var(--accent, #1e293b); color:var(--on-accent, var(--soc-on-accent, #fff)); font-weight:700; font-size:15px; cursor:pointer; }
+
   /* ===== "Elige las opciones" (selector de variantes) con la apariencia de la tienda ===== */
   .vp-panel {
     --cx-on: var(--on-accent, var(--soc-on-accent, #fff));
@@ -121,6 +141,9 @@
   // cuenta de Mercado Pago, ver Configuración → Pagos en línea. Por ahora
   // está oculto en el admin (ver config.ejs) y por lo tanto siempre false.
   const MP_ENABLED = <%- biz.mp_enabled ? 'true' : 'false' %>;
+  // Pago con tarjeta dentro de la app: requiere Access Token + Public Key de la tienda
+  const MP_PUBLIC_KEY = <%- safeJson((biz.mp_enabled && biz.mp_access_token && biz.mp_public_key) ? biz.mp_public_key : '') %>;
+  const MP_CARD = !!MP_PUBLIC_KEY;
   // Transferencia bancaria: igual solo para el carrito de esta tienda.
   const TRANSFER = <%- safeJson(biz.transfer_enabled && (biz.transfer_bank || biz.transfer_account) ? { bank: biz.transfer_bank || '', account: biz.transfer_account || '', holder: biz.transfer_holder || '' } : null) %>;
   const HORARIO_RAW = <%- safeJson(biz.horario || '') %>;
@@ -622,7 +645,7 @@
             <div style="font-size:11px;color:#4d7c5f;margin-top:6px;">Transfiere y manda tu comprobante por WhatsApp junto con tu pedido.</div>
           </div>` : ''}
           <div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;">
-            ${(MP_ENABLED && g.store.slug === SLUG) ? `<button type="button" onclick="payWithMercadoPago(${jattr(g.store.slug)})" style="width:100%;background:#009ee3;color:#fff;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:14px;cursor:pointer;">💳 Pagar con Mercado Pago</button>` : ''}
+            ${(MP_CARD && g.store.slug === SLUG) ? `<button type="button" onclick="payCardInApp(${jattr(g.store.slug)})" style="width:100%;background:#009ee3;color:#fff;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:14px;cursor:pointer;">💳 Pagar con tarjeta</button>` : (MP_ENABLED && g.store.slug === SLUG) ? `<button type="button" onclick="payWithMercadoPago(${jattr(g.store.slug)})" style="width:100%;background:#009ee3;color:#fff;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:14px;cursor:pointer;">💳 Pagar con Mercado Pago</button>` : ''}
             <button type="button" onclick="sendStoreOrder(${jattr(g.store.slug)})" style="width:100%;background:#1e293b;color:#fff;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:14px;cursor:pointer;">Pedir por WhatsApp</button>
             ${canSharePhotos() ? `<button type="button" onclick="sendStoreOrder(${jattr(g.store.slug)}, true)" style="width:100%;margin-top:8px;background:none;border:1px solid #cbd5e1;color:#1e293b;border-radius:12px;padding:10px;font-weight:700;font-size:13px;cursor:pointer;">📷 Enviar con foto de los productos</button><p style="font-size:10.5px;color:#94a3b8;margin:5px 2px 0;text-align:center;">Elige el chat de ${esc(g.store.name)} en el menu que se abre.</p>` : ''}
           </div>
@@ -763,6 +786,86 @@
     const items = g.items.map(it => ({ id: it.id, qty: it.qty, variant: it.variant || '' }));
     const qs = new URLSearchParams({ items: JSON.stringify(items), nombre, telefono });
     window.location.href = '/' + slug + '/pagar-mp?' + qs.toString();
+  }
+  // ===== Pago con tarjeta dentro de la app (Mercado Pago · Card Payment Brick) =====
+  let _mpSdk = null;
+  function loadMpSdk() {
+    if (window.MercadoPago) return Promise.resolve();
+    if (_mpSdk) return _mpSdk;
+    _mpSdk = new Promise(function (resolve, reject) {
+      const sc = document.createElement('script');
+      sc.src = 'https://sdk.mercadopago.com/js/v2';
+      sc.onload = resolve;
+      sc.onerror = function () { _mpSdk = null; reject(new Error('sdk')); };
+      document.head.appendChild(sc);
+    });
+    return _mpSdk;
+  }
+  function closeCardPay() {
+    const ov = document.getElementById('cardpay-overlay');
+    if (!ov) return;
+    try { if (window.__cardBrick && window.__cardBrick.unmount) window.__cardBrick.unmount(); } catch (e) {}
+    window.__cardBrick = null;
+    ov.classList.remove('cp-in');
+    setTimeout(function () { ov.remove(); document.body.style.overflow = ''; }, 250);
+  }
+  function payCardInApp(slug) {
+    if (!validarDatosCliente()) return;
+    const g = storeGroups().find(x => x.store.slug === slug);
+    if (!g) return;
+    const total = Math.round(g.items.reduce((s, it) => s + it.qty * it.price, 0) * 100) / 100;
+    const nombre = (document.getElementById('chat-nombre') || {}).value || '';
+    const telefono = (document.getElementById('chat-telefono') || {}).value || '';
+    const items = g.items.map(it => ({ id: it.id, qty: it.qty, variant: it.variant || '' }));
+    toggleChat(false);
+    const ov = document.createElement('div');
+    ov.id = 'cardpay-overlay';
+    ov.className = 'cp-overlay';
+    ov.innerHTML =
+      '<div class="cp-panel" role="dialog" aria-modal="true" aria-label="Pagar con tarjeta">' +
+        '<div class="cp-head"><div><b>Pagar con tarjeta</b><span>' + esc(g.store.name) + ' · ' + money(total) + '</span></div><button type="button" class="cp-x" aria-label="Cerrar">✕</button></div>' +
+        '<div id="cp-body"><div id="cardPaymentBrick_container"></div><p class="cp-load" id="cp-load">Cargando formulario seguro…</p></div>' +
+        '<p class="cp-note">🔒 Pago procesado por Mercado Pago. Tu tarjeta nunca pasa por nuestro servidor.</p>' +
+      '</div>';
+    document.body.appendChild(ov);
+    document.body.style.overflow = 'hidden';
+    requestAnimationFrame(function () { requestAnimationFrame(function () { ov.classList.add('cp-in'); }); });
+    ov.querySelector('.cp-x').addEventListener('click', closeCardPay);
+    ov.addEventListener('click', function (e) { if (e.target === ov) closeCardPay(); });
+    const bodyEl = ov.querySelector('#cp-body');
+    const fail = function (msg) { const l = document.getElementById('cp-load'); if (l) { l.textContent = msg; l.classList.add('cp-err'); } };
+    // Si el formulario no aparece (clave pública mal puesta, red lenta) se avisa en vez de quedar cargando para siempre
+    setTimeout(function () { if (document.getElementById('cp-load') && !document.getElementById('cp-load').classList.contains('cp-err')) fail('El formulario tardó demasiado en cargar. Revisa tu conexión o pide por WhatsApp.'); }, 14000);
+    loadMpSdk().then(function () {
+      const mp = new window.MercadoPago(MP_PUBLIC_KEY, { locale: 'es-MX' });
+      const dark = (function () { const bg = getComputedStyle(document.body).backgroundColor.match(/\d+/g) || [255, 255, 255]; return (0.299 * bg[0] + 0.587 * bg[1] + 0.114 * bg[2]) < 90; })();
+      return mp.bricks().create('cardPayment', 'cardPaymentBrick_container', {
+        initialization: { amount: total },
+        customization: { visual: { style: { theme: dark ? 'dark' : 'default' } }, paymentMethods: { maxInstallments: 1 } },
+        callbacks: {
+          onReady: function () { const l = document.getElementById('cp-load'); if (l) l.remove(); },
+          onSubmit: function (formData) {
+            return fetch('/' + slug + '/pagar-tarjeta', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: items, nombre: nombre, telefono: telefono, formData: formData }) })
+              .then(function (r) { return r.json().catch(function () { return { ok: false, error: 'Respuesta inesperada del servidor' }; }); })
+              .then(function (d) {
+                if (!d.ok) { toast(d.error || 'No se pudo procesar el pago', false); return Promise.reject(new Error(d.error || 'pago')); }
+                g.items.forEach(it => { delete cart[it.key]; });
+                saveCart(); renderCart();
+                const aprobado = d.status === 'approved';
+                bodyEl.innerHTML =
+                  '<div class="cp-ok"><div class="cp-ok-ic">' + (aprobado ? '✓' : '⏳') + '</div>' +
+                  '<h3>' + (aprobado ? '¡Pago aprobado!' : 'Pago en revisión') + '</h3>' +
+                  '<p>' + (aprobado ? 'Recibimos tu pago de ' + money(d.total) + '. Tu pedido #' + d.orderId + ' ya está registrado.' : 'Mercado Pago está revisando tu pago. Te avisaremos cuando se apruebe (pedido #' + d.orderId + ').') + '</p>' +
+                  '<button type="button" class="cp-done">Listo</button></div>';
+                bodyEl.querySelector('.cp-done').addEventListener('click', closeCardPay);
+                if (window.haptic) window.haptic(30);
+              });
+          },
+          onError: function (err) { console.error('cardPayment brick:', err); if (document.getElementById('cp-load')) fail('No se pudo cargar el formulario de pago. Intenta de nuevo o pide por WhatsApp.'); }
+        }
+      });
+    }).then(function (brick) { window.__cardBrick = brick; })
+      .catch(function () { fail('No se pudo cargar el formulario de pago. Revisa tu conexión e intenta de nuevo, o pide por WhatsApp.'); });
   }
   function copiarCuentaTransferencia(btn, cuenta) {
     const done = function () { if (btn) { const t = btn.textContent; btn.textContent = '¡Copiada!'; setTimeout(function () { btn.textContent = t; }, 1400); } };

@@ -843,6 +843,14 @@
             </p>
           </div>
 
+          <div>
+            <label class="config-label">Public Key de Mercado Pago <span class="font-normal text-slate-400">(para cobrar con tarjeta dentro de tu catálogo)</span></label>
+            <input name="mp_public_key" value="<%= biz.mp_public_key || '' %>" type="text" autocomplete="off" class="config-input" placeholder="APP_USR-...">
+            <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">
+              Está en el mismo lugar: <b>Credenciales de producción → Public Key</b>. Esta sí es pública. Con ella y el Access Token, el cliente paga con tarjeta <b>sin salir de tu catálogo</b>; la tarjeta la procesa Mercado Pago y tu servidor nunca la ve. Si la dejas vacía, el botón lleva a la página de Mercado Pago.
+            </p>
+          </div>
+
           <div class="rounded-xl border border-slate-200 dark:border-[#30363d] p-3 text-xs text-slate-500 dark:text-slate-400">
             Cuando está activo, tus clientes verán un botón <b>"Pagar con Mercado Pago"</b> junto al de WhatsApp. El pedido se marca como <b>pagado</b> automáticamente en tu panel apenas Mercado Pago confirma el cobro — no tienes que revisar nada a mano.
           </div>
