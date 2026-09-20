@@ -194,8 +194,8 @@
       *, *::before, *::after { animation-duration:.001ms !important; transition-duration:.001ms !important; }
     }
   </style>
-  <link rel="stylesheet" href="/css/catalog-motion.css?v=20260918a">
-  <link rel="stylesheet" href="/css/catalog-media.css?v=20260919d">
+  <link rel="stylesheet" href="/css/catalog-motion.css?v=20260919a">
+  <link rel="stylesheet" href="/css/catalog-media.css?v=20260919e">
   <script src="/js/img-retry.js"></script>
   <script src="/js/catalog-motion.js?v=20260918a" defer></script>
   <script src="/js/btn-fit.js?v=20260918a" defer></script>
@@ -345,6 +345,22 @@
   </div>
 
   <script>
+    // Deslizar la foto principal cambia a la anterior/siguiente (modelos, otros ángulos)
+    (function () {
+      var st = document.getElementById('prod-stage'), x0 = 0, y0 = 0;
+      if (!st) return;
+      st.addEventListener('touchstart', function (e) { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+      st.addEventListener('touchend', function (e) {
+        var t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0;
+        if (Math.abs(dx) < 34 || Math.abs(dx) < Math.abs(dy) * 1.4) return;
+        var th = [].slice.call(document.querySelectorAll('.prod-thumb'));
+        if (th.length < 2) return;
+        var cur = th.findIndex(function (x) { return x.classList.contains('active'); });
+        var nx = (cur + (dx < 0 ? 1 : -1) + th.length) % th.length;
+        th[nx].click();
+        th[nx].scrollIntoView({ block: 'nearest', inline: 'center' });
+      }, { passive: true });
+    })();
     function setStageBg(src) {
       var st = document.getElementById('prod-stage');
       if (st && src) st.style.setProperty('--ph', 'url(' + encodeURI(src).replace(/[()']/g, function (c) { return '%' + c.charCodeAt(0).toString(16); }) + ')');

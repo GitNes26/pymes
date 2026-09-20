@@ -58,9 +58,18 @@ body .prod-card .prod-img-alt { opacity: 0 !important; transition: opacity .55s 
   transition: opacity .3s;
 }
 @media (hover: hover) {
-  body .prod-card:hover .prod-img-alt { opacity: 1 !important; }
-  body .prod-card:hover .prod-photos { opacity: 0; }
+  body .prod-card:hover .prod-img-alt[data-i="1"] { opacity: 1 !important; }
 }
+
+body .prod-card .prod-img-alt.is-on { opacity: 1 !important; }
+.prod-dots {
+  position: absolute; left: 50%; bottom: 9px; transform: translateX(-50%); z-index: 4;
+  display: inline-flex; align-items: center; gap: 5px; padding: 6px 9px; border-radius: 999px;
+  background: color-mix(in srgb, #0d0d0d 46%, transparent);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); pointer-events: none;
+}
+.prod-dots i { width: 6px; height: 6px; border-radius: 99px; background: rgba(255, 255, 255, .55); transition: width .3s cubic-bezier(.22, 1, .36, 1), background .3s; }
+.prod-dots i.on { width: 16px; background: #fff; }
 
 /* Insignias sobre la foto: siempre por encima del marco */
 body .prod-badge-wrap { z-index: 4; }

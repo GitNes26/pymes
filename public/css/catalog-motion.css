@@ -103,3 +103,9 @@ html.js-motion .prod-stage { animation: moUp .9s var(--mo-ease) both; }
 .fit-lbl { white-space: nowrap; }
 .icon-only .fit-lbl { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); }
 .icon-only { gap: 0 !important; }
+
+/* Sin desplazamiento lateral: las entradas desde los lados (.rv-l/.rv-r) sacaban 10px de la pantalla en móvil */
+html.js-motion body { overflow-x: clip; }
+html.js-motion .ftr, html.js-motion .ftr-inner { overflow-x: clip; }
+html.js-motion .rv.rv-l { transform: translateX(-18px) !important; }
+html.js-motion .rv.rv-r { transform: translateX(18px) !important; }
