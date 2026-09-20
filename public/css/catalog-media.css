@@ -1,0 +1,78 @@
+/* Fotos de producto del catálogo — encuadre parejo, carga sin saltos y segunda foto al pasar el mouse.
+   Cargado después de catalog-refine y catalog-motion; usa los tokens de cada apariencia. */
+:root { --img-ar: 1 / 1; --img-pos: 50% 40%; }
+
+/* Las apariencias de moda, joyería y belleza piden foto vertical: más presencia en la rejilla de 2 columnas */
+html[data-style="ropa"], html[data-style="joyeria"], html[data-style="belleza"], html[data-style="cosmeticos"],
+html[data-style="floreria"], html[data-style="postres"], html[data-style="eventos"], html[data-style="pastel"] { --img-ar: 4 / 5; }
+html[data-style="ferreteria"], html[data-style="industrial"], html[data-style="monocromo"] { --img-ar: 1 / 1; }
+
+/* ---------- Marco: proporción fija + esqueleto mientras carga ---------- */
+body .prod-img-wrap, body .oferta-img-wrap {
+  position: relative;
+  aspect-ratio: var(--img-ar);
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    linear-gradient(100deg, transparent 30%, color-mix(in srgb, var(--text) 7%, transparent) 50%, transparent 70%) 0 0 / 220% 100% no-repeat,
+    color-mix(in srgb, var(--text) 4%, var(--bg-card));
+  animation: mediaShimmer 1.5s linear infinite;
+}
+body .oferta-img-wrap { aspect-ratio: 4 / 3; }
+body .prod-img-wrap:has(> img.img-loaded), body .oferta-img-wrap:has(> img.img-loaded) { animation: none; background: color-mix(in srgb, var(--text) 4%, var(--bg-card)); }
+@keyframes mediaShimmer { from { background-position: 120% 0, 0 0; } to { background-position: -100% 0, 0 0; } }
+
+body .prod-img-wrap > img, body .oferta-img-wrap > img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  aspect-ratio: auto;
+  object-fit: cover;
+  object-position: var(--img-pos);
+  z-index: 0;
+}
+/* Filo interior: separa la foto del fondo de la tarjeta, sobre todo si la foto tiene fondo blanco o del mismo tono */
+body .prod-img-wrap::before, body .oferta-img-wrap::before {
+  content: ""; position: absolute; inset: 0; z-index: 3; pointer-events: none;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 8%, transparent);
+  border-radius: inherit;
+}
+/* Sombra inferior suave: las insignias y el precio siempre se leen */
+body .prod-img-wrap::after, body .oferta-img-wrap::after {
+  content: ""; position: absolute; inset: auto 0 0 0; height: 38%; z-index: 1; pointer-events: none;
+  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, .14));
+  opacity: .55 !important;
+}
+
+/* ---------- Segunda foto y contador ---------- */
+body .prod-card .prod-img-alt { opacity: 0 !important; transition: opacity .55s cubic-bezier(.22, 1, .36, 1), transform .9s cubic-bezier(.22, 1, .36, 1) !important; pointer-events: none; }
+.prod-photos {
+  position: absolute; right: 9px; bottom: 9px; z-index: 4;
+  display: inline-flex; align-items: center; gap: 4px;
+  min-height: 24px; padding: 0 9px; border-radius: 999px;
+  background: color-mix(in srgb, #0d0d0d 62%, transparent); color: #fff;
+  font: 700 11px var(--font-body, Inter, system-ui, sans-serif); letter-spacing: .02em;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  transition: opacity .3s;
+}
+@media (hover: hover) {
+  body .prod-card:hover .prod-img-alt { opacity: 1 !important; }
+  body .prod-card:hover .prod-photos { opacity: 0; }
+}
+
+/* Insignias sobre la foto: siempre por encima del encuadre */
+body .prod-badge-wrap { z-index: 4; }
+
+/* Foto de reemplazo ("sin imagen"): centrada y tenue, no recortada */
+body .prod-img-wrap > img[src$="sin-imagen.svg"], body .oferta-img-wrap > img[src$="sin-imagen.svg"] { object-fit: contain; padding: 14%; opacity: .55; }
+
+/* ---------- Ficha del producto: la galería usa el mismo lenguaje ---------- */
+.prod-stage { background: color-mix(in srgb, var(--text) 4%, var(--bg-card)); }
+.prod-main-img { object-position: var(--img-pos); }
+.prod-thumb { object-position: var(--img-pos); }
+html[data-style="ropa"] .prod-main-img, html[data-style="joyeria"] .prod-main-img, html[data-style="belleza"] .prod-main-img,
+html[data-style="cosmeticos"] .prod-main-img, html[data-style="eventos"] .prod-main-img { aspect-ratio: 4 / 5; }
+
+@media (prefers-reduced-motion: reduce) {
+  body .prod-img-wrap, body .oferta-img-wrap { animation: none; }
+  .prod-img-alt { transition: none !important; }
+}

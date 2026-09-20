@@ -10,6 +10,12 @@
     : 'https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap';
   var _cats = categories || [];
   var _prods = products || [];
+  // Fotos a la medida: las subidas al servidor se piden en varios anchos (ver /uploads/:file?w= en server.js)
+  var _srcset = function (src) {
+    if (!/^\/uploads\/[^\/?]+\.(jpe?g|png|webp)$/i.test(src || '')) return '';
+    return src + '?w=480 480w, ' + src + '?w=800 800w, ' + src + '?w=1200 1200w';
+  };
+  var _imgAttrs = function (src, sizes) { var ss = _srcset(src); return ss ? ' srcset="' + ss + '" sizes="' + sizes + '"' : ''; };
   var _rawMoney = (typeof money === "function") ? money : function(n){ return "$" + Number(n||0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); };
   var _money = function(p){ return _rawMoney(typeof p === "object" ? (p.price||0) : p); };
   var _whatsapp = biz.whatsapp ? (biz.whatsapp.startsWith('52') ? biz.whatsapp : '52' + biz.whatsapp) : '';
@@ -1024,6 +1030,7 @@
   </style>
   <link rel="stylesheet" href="/css/catalog-refine.css?v=20260917c">
   <link rel="stylesheet" href="/css/catalog-motion.css?v=20260918a">
+  <link rel="stylesheet" href="/css/catalog-media.css?v=20260919a">
   <script src="/js/catalog-motion.js?v=20260918a" defer></script>
   <script src="/js/btn-fit.js?v=20260918a" defer></script>
   <script src="/js/img-retry.js"></script>
@@ -1142,7 +1149,7 @@
         <% _ofertas.forEach(function(p){ var _pct=Math.round((1-p.price/p.old_price)*100); %>
         <div class="oferta-card" onclick="location.href='/<%= biz.slug %>/p/<%= p.id %>'" style="cursor:pointer;">
           <div class="oferta-img-wrap">
-            <img src="<%= p.image||'/img/sin-imagen.svg' %>" loading="lazy" alt="<%= p.name %>">
+            <img src="<%= p.image||'/img/sin-imagen.svg' %>"<%- _imgAttrs(p.image, '(max-width:640px) 62vw, 280px') %> loading="lazy" decoding="async" alt="<%= p.name %>">
             <span class="oferta-badge-pct">-<%= _pct %>%</span>
             <span class="oferta-badge-tag">OFERTA</span>
           </div>
@@ -1189,7 +1196,7 @@
         <% sec.list.forEach(function(p, pi){ %>
         <a href="/<%= biz.slug %>/p/<%= p.id %>" class="oferta-card" style="text-decoration:none;color:inherit;">
           <div class="oferta-img-wrap">
-            <img src="<%= p.image||'/img/sin-imagen.svg' %>" loading="lazy" alt="<%= p.name %>">
+            <img src="<%= p.image||'/img/sin-imagen.svg' %>"<%- _imgAttrs(p.image, '(max-width:640px) 62vw, 280px') %> loading="lazy" decoding="async" alt="<%= p.name %>">
             <span class="oferta-badge-tag"><%= sec.tag === 'TOP' ? ('#' + (pi + 1)) : sec.tag %></span>
           </div>
           <div class="oferta-body">
@@ -1268,7 +1275,8 @@
           <% _realProds.forEach(function(p) { %>
           <div class="prod-card" data-cat="<%= p.category_id || 0 %>" data-price="<%= p.price || 0 %>" data-name="<%= (p.name||'').toLowerCase() %>" onclick="location.href='/<%= biz.slug %>/p/<%= p.id %>'" style="cursor:pointer;">
             <div class="prod-img-wrap">
-              <img src="<%= p.image %>" alt="<%= p.name %>" loading="lazy">
+              <img src="<%= p.image %>"<%- _imgAttrs(p.image, '(max-width:640px) 50vw, (max-width:1100px) 33vw, 340px') %> alt="<%= p.name %>" loading="lazy" decoding="async">
+              <% if (p.imgs && p.imgs[1] && p.imgs[1] !== p.image) { %><img class="prod-img-alt" src="<%= p.imgs[1] %>"<%- _imgAttrs(p.imgs[1], '(max-width:640px) 50vw, 340px') %> alt="" aria-hidden="true" loading="lazy" decoding="async" data-no-fallback><span class="prod-photos" title="<%= p.imgs.length %> fotos"><i class="bi bi-images"></i> <%= p.imgs.length %></span><% } %>
               <div class="prod-badge-wrap">
                 <% if (p.old_price && p.old_price > p.price) { %><span class="prod-badge-offer">-<%= Math.round((1-p.price/p.old_price)*100) %>%</span><% } %>
                 <% if (p.promo_badge) { %><span class="prod-badge-promo"><%= p.promo_badge %></span><% } %>

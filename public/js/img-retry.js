@@ -38,6 +38,7 @@
     setTimeout(function () {
       // Si entre tanto cambió el src por otra causa (p. ej. variante), no lo pisamos
       if (img.getAttribute('src') === FALLBACK) return;
+      img.removeAttribute('srcset'); // con srcset el navegador ignoraría el nuevo src
       img.src = bust(base);
     }, RETRY_DELAY_MS * (n + 1));
   }

@@ -154,7 +154,7 @@
                    data-edit-installments="<%= p.allow_installments ? 1 : 0 %>" data-edit-inst-count="<%= p.installment_count || 6 %>" data-edit-inst-down="<%= p.installment_min_down || 0 %>" data-edit-inst-freq="<%= p.installment_frequency || 'semanal' %>">
                 <div class="product-card__main">
                 <button type="button" class="product-card__image-button" data-product-name="<%= p.name %>" onclick="abrirImagenProducto(this.querySelector('img'), this.dataset.productName)" aria-label="Ampliar imagen de <%= p.name %>">
-                  <img src="<%= p.image || '/img/sin-imagen.svg' %>" alt="Foto de <%= p.name %>" loading="lazy" class="product-card__image" onerror="this.onerror=null;this.src='/img/sin-imagen.svg'">
+                  <img src="<%= p.cover || p.image || "/img/sin-imagen.svg" %>" alt="Foto de <%= p.name %>" loading="lazy" class="product-card__image" onerror="this.onerror=null;this.src='/img/sin-imagen.svg'">
                   <span class="product-card__zoom" aria-hidden="true"><i class="bi bi-arrows-fullscreen"></i></span>
                 </button>
                 <div class="product-card__info">

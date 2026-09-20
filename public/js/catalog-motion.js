@@ -41,7 +41,7 @@
 
   // Fotos con fundido (solo las que aún no cargaron)
   function fadeImgs(scope) {
-    var imgs = (scope || document).querySelectorAll('.prod-img-wrap img, .oferta-img-wrap img, .related-img');
+    var imgs = (scope || document).querySelectorAll('.prod-img-wrap img:not(.prod-img-alt), .oferta-img-wrap img, .related-img');
     for (var i = 0; i < imgs.length; i++) {
       var im = imgs[i];
       if (im.__mo) continue;

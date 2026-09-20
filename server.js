@@ -350,6 +350,26 @@ app.get('/sw.js', (req, res) => {
   res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'sw.js'));
 });
+// Imágenes de /uploads a la medida: /uploads/foto.jpg?w=480 devuelve una versión webp más ligera (se guarda en
+// public/uploads/_cache). Las tarjetas del catálogo piden 480/800 px con srcset en vez de bajar la foto original.
+const _IMG_W = [240, 360, 480, 640, 800, 1200];
+app.get('/uploads/:file', (req, res, next) => {
+  const w = parseInt(req.query.w, 10);
+  const file = req.params.file;
+  if (!w || !/\.(jpe?g|png|webp)$/i.test(file) || file.startsWith('.')) return next();
+  const width = _IMG_W.reduce((a, b) => (Math.abs(b - w) < Math.abs(a - w) ? b : a));
+  const root = path.join(__dirname, 'public', 'uploads');
+  const src = path.join(root, file);
+  if (!src.startsWith(root) || !fs.existsSync(src)) return next();
+  const cacheDir = path.join(root, '_cache');
+  const out = path.join(cacheDir, file.replace(/\.[^.]+$/, '') + '-' + width + '.webp');
+  const send = () => { res.set('Cache-Control', 'public, max-age=2592000, immutable').type('image/webp'); res.sendFile(out); };
+  try {
+    if (fs.existsSync(out) && fs.statSync(out).mtimeMs >= fs.statSync(src).mtimeMs) return send();
+    fs.mkdirSync(cacheDir, { recursive: true });
+    sharp(src).rotate().resize({ width, withoutEnlargement: true }).webp({ quality: 80 }).toFile(out).then(send).catch(() => next());
+  } catch (e) { next(); }
+});
 app.use(express.static(path.join(__dirname, 'public')));
 // === RATE LIMITER ===
 var _rateLimit = {};
@@ -1692,6 +1712,7 @@ function getCatalog(businessId) {
      ORDER BY p.featured DESC, p.sort ASC, p.created_at DESC`
   ).all(businessId).map(withPromo).map(p => {
     p.imgs = productImgs(p);
+    if (variantCoverImage(p)) p.image = p.imgs[0]; // la tarjeta muestra la foto de la primera variante
     p.shortDesc = (p.description || '').replace(/\s+/g, ' ').trim().slice(0, 110);
     // Para que el cliente sepa si se va a acabar: con variantes el stock
     // vive por combinación (p.stock siempre null a propósito), así que se
@@ -2959,6 +2980,7 @@ function panelData(biz) {
     p.stock = p.stock === null || p.stock === undefined ? null : p.stock;
     p.variants = parseVariantList(p.variants);
     p.variantCount = variantCount(p.variants);
+    p.cover = variantCoverImage(p) || p.image;
     // Con variantes, el stock del producto (columna suelta) siempre queda en
     // null a propósito — vive repartido por combinación. Sin esto, cualquier
     // producto con variantes se mostraba "Agotado" aunque tuviera stock real.
@@ -3277,9 +3299,29 @@ function parseGaleria(v) {
 // Lista de imágenes de un producto: la principal + las de la galería.
 // Filtra cualquier entrada que no parezca ruta/URL real (defensa extra por
 // si queda algún dato viejo corrupto de la galería con basura tipo "[]").
+// Foto de portada de un producto con atributos: la de su PRIMERA variante (primera combinación en orden).
+// Si esa no tiene foto, la primera combinación que sí la tenga. Sin variantes o sin fotos por variante, ''.
+function variantCoverImage(p) {
+  const vm = parseVariantModel(p && p.variants);
+  if (!vm.attrs || !vm.attrs.length || !vm.images) return '';
+  const lists = vm.attrs.map(a => (a.values && a.values.length) ? a.values : ['']);
+  let combos = [[]];
+  for (const arr of lists) {
+    const next = [];
+    for (const prefix of combos) { for (const v of arr) { next.push(prefix.concat([v])); if (next.length > 400) break; } if (next.length > 400) break; }
+    combos = next;
+  }
+  for (const c of combos) {
+    const img = String(vm.images[c.join('|')] || '').trim();
+    if (img && (img[0] === '/' || /^https?:\/\//i.test(img))) return img;
+  }
+  return '';
+}
 function productImgs(p) {
   const looksLikeImg = s => s.length > 1 && (s[0] === '/' || /^https?:\/\//i.test(s));
-  const list = [p.image || '', ...parseVariantsArray(p.galeria || '')].map(s => String(s || '').trim()).filter(looksLikeImg);
+  const cover = variantCoverImage(p);
+  const raw = [cover, p.image || '', ...parseVariantsArray(p.galeria || '')].map(s => String(s || '').trim()).filter(looksLikeImg);
+  const list = raw.filter((s, i) => raw.indexOf(s) === i);
   return list.length ? list : [p.image || '/img/sin-imagen.svg'];
 }
 
