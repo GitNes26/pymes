@@ -979,6 +979,15 @@ const TPL_ACCENTS = {
   restaurante: { a: '#ea580c', b: '#c2410c', chip: '#1a1a1a' }
 };
 
+// Íconos de pestaña y de pantalla de inicio: el logo de la tienda (si lo tiene) en vez del de la plataforma
+function brandIconLinks(biz) {
+  if (biz && biz.logo) {
+    const v = brandVersion(biz);
+    return '<link rel="icon" type="image/png" href="/' + biz.slug + '/icon/192.png?v=' + v + '">' +
+      '<link rel="apple-touch-icon" href="/' + biz.slug + '/icon/180.png?v=' + v + '">';
+  }
+  return '<link rel="icon" type="image/png" href="/icons/icon-192.png"><link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">';
+}
 function paintCatalog(html, biz, pal, estilo) {
   const t = TPL_ACCENTS[biz.template] || TPL_ACCENTS.portada;
   const e = estilo || getEstilo('moderno');
@@ -1046,8 +1055,7 @@ function paintCatalog(html, biz, pal, estilo) {
     '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">' +
     '<meta name="apple-mobile-web-app-title" content="' + bizName + '">' +
     '<link rel="manifest" href="/' + biz.slug + '/manifest.webmanifest">' +
-    '<link rel="icon" type="image/png" href="/icons/icon-192.png">' +
-    '<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">';
+    brandIconLinks(biz);
   if (/<\/head>/i.test(html)) html = html.replace(/<\/head>/i, pwaHead + '</head>');
   else html += pwaHead;
 
@@ -1129,8 +1137,7 @@ function paintTheme(html, biz, pal, theme) {
     '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">' +
     '<meta name="apple-mobile-web-app-title" content="' + bizName + '">' +
     '<link rel="manifest" href="/' + biz.slug + '/manifest.webmanifest">' +
-    '<link rel="icon" type="image/png" href="/icons/icon-192.png">' +
-    '<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">' +
+    brandIconLinks(biz) +
     '<style>' + pageBgCss(biz.page_bg) + '</style>';
   if (/<\/head>/i.test(html)) html = html.replace(/<\/head>/i, pwaHead + '</head>');
   else html += pwaHead;
@@ -2309,10 +2316,11 @@ app.get('/:slug', (req, res, next) => {
   const catDesign = catDesignOf(biz).id;
   const catDesignTokens = catDesignOf(biz).tokens;
   const ogUrl = absoluteStoreUrl(req, biz);
-  const ogImage = absoluteImgUrl(req, biz.logo || biz.banner || '');
+  const brandV = brandVersion(biz);
+  const ogImage = (biz.logo || biz.banner) ? absoluteStoreUrl(req, biz) + '/share.jpg?v=' + brandV : '';
   let bestIds = [];
   try { if (JSON.parse(biz.extras || '{}').showTop) bestIds = bestSellerIds(biz.id, productsFinal, 8); } catch (e) {}
-  app.render('catalog', { biz, categories, products: productsFinal, bestIds, estilo, catDesign, catDesignTokens, theme: getTemplateTheme(biz.template), components: getComponents(biz), pages, seoUrl: BASE_URL ? BASE_URL + '/' + biz.slug : '', money: moneyFor(biz), currencySymbol: currencyInfo(biz.currency).symbol, currencyCode: biz.currency, mascaraCss: MASCARA_CSS, mascaraConfig: { MASCARA_SIZES, SHAPE_DEFS, getShapeClip }, adsEnabled: adsOn(biz), sponsoredAds, adminLink, ogUrl, ogImage }, (err, html) => {
+  app.render('catalog', { biz, brandV, categories, products: productsFinal, bestIds, estilo, catDesign, catDesignTokens, theme: getTemplateTheme(biz.template), components: getComponents(biz), pages, seoUrl: BASE_URL ? BASE_URL + '/' + biz.slug : '', money: moneyFor(biz), currencySymbol: currencyInfo(biz.currency).symbol, currencyCode: biz.currency, mascaraCss: MASCARA_CSS, mascaraConfig: { MASCARA_SIZES, SHAPE_DEFS, getShapeClip }, adsEnabled: adsOn(biz), sponsoredAds, adminLink, ogUrl, ogImage }, (err, html) => {
     if (err) return next(err);
     res.send(finishCatalog(html, biz, pal, estilo));
   });
@@ -2383,6 +2391,77 @@ app.get('/:slug/p/:id', (req, res, next) => {
   });
 });
 
+// ===== Identidad de cada tienda al compartir el enlace y al instalar la app =====
+// Tarjeta 1200x630 para la vista previa (WhatsApp, Facebook…): banner de fondo + logo completo al centro, o el logo
+// sobre el color de la apariencia. Íconos de pestaña / pantalla de inicio: el logo de la tienda, no el de la plataforma.
+const _brandCache = new Map();
+function brandVersion(biz) {
+  return crypto.createHash('md5').update(String(biz.logo || '') + '|' + String(biz.banner || '') + '|' + String((catDesignOf(biz).tokens || {}).accent || '')).digest('hex').slice(0, 8);
+}
+function brandCacheSet(key, buf) {
+  if (_brandCache.size > 200) _brandCache.delete(_brandCache.keys().next().value);
+  _brandCache.set(key, buf);
+}
+async function brandShareCard(biz) {
+  const W = 1200, H = 630;
+  const logoB = await pedidoLoadImage(biz.logo);
+  const banB = await pedidoLoadImage(biz.banner);
+  if (!logoB && !banB) return null;
+  let base;
+  if (banB) {
+    try { base = await sharp(banB, { density: 200 }).resize(W, H, { fit: 'cover' }).modulate({ brightness: logoB ? 0.62 : 0.95 }).png().toBuffer(); } catch (e) { base = null; }
+  }
+  if (!base) base = await sharp({ create: { width: W, height: H, channels: 3, background: (catDesignOf(biz).tokens || {}).accent || '#1a3c5e' } }).png().toBuffer();
+  const layers = [];
+  if (logoB) {
+    try {
+      const logo = await sharp(logoB, { density: 300 }).resize(700, 330, { fit: 'inside' }).png().toBuffer();
+      const lm = await sharp(logo).metadata();
+      const cw = lm.width + 64, ch = lm.height + 64;
+      const card = await sharp({ create: { width: cw, height: ch, channels: 4, background: '#ffffff' } }).composite([{ input: logo, left: 32, top: 32 }]).png().toBuffer();
+      const mask = Buffer.from('<svg width="' + cw + '" height="' + ch + '"><rect width="' + cw + '" height="' + ch + '" rx="34" ry="34"/></svg>');
+      const rounded = await sharp(card).composite([{ input: mask, blend: 'dest-in' }]).png().toBuffer();
+      layers.push({ input: rounded, left: Math.round((W - cw) / 2), top: Math.round((H - ch) / 2) });
+    } catch (e) { /* logo ilegible: queda solo el fondo */ }
+  }
+  return sharp(base).composite(layers).jpeg({ quality: 86 }).toBuffer();
+}
+async function brandIcon(biz, size) {
+  const logoB = await pedidoLoadImage(biz.logo);
+  if (!logoB) return null;
+  const pad = Math.round(size * 0.12), inner = size - pad * 2;
+  const logo = await sharp(logoB, { density: 300 }).resize(inner, inner, { fit: 'inside' }).png().toBuffer();
+  const lm = await sharp(logo).metadata();
+  return sharp({ create: { width: size, height: size, channels: 4, background: '#ffffff' } })
+    .composite([{ input: logo, left: Math.round((size - lm.width) / 2), top: Math.round((size - lm.height) / 2) }]).png().toBuffer();
+}
+app.get('/:slug/share.jpg', ah(async (req, res) => {
+  const biz = getBusiness(req.params.slug);
+  if (!biz || !biz.active) return res.status(404).end();
+  const key = 'share:' + biz.slug + ':' + brandVersion(biz);
+  let buf = _brandCache.get(key);
+  if (!buf) {
+    buf = await brandShareCard(biz);
+    if (!buf) return res.status(404).end();
+    brandCacheSet(key, buf);
+  }
+  res.set('Cache-Control', 'public, max-age=86400').type('jpeg').send(buf);
+}));
+app.get('/:slug/icon/:size.png', ah(async (req, res) => {
+  const size = [180, 192, 512].includes(parseInt(req.params.size, 10)) ? parseInt(req.params.size, 10) : 192;
+  const biz = getBusiness(req.params.slug);
+  const fallback = size === 180 ? '/icons/apple-touch-icon.png' : '/icons/icon-' + size + '.png';
+  if (!biz || !biz.active || !biz.logo) return res.redirect(fallback);
+  const key = 'icon:' + size + ':' + biz.slug + ':' + brandVersion(biz);
+  let buf = _brandCache.get(key);
+  if (!buf) {
+    try { buf = await brandIcon(biz, size); } catch (e) { buf = null; }
+    if (!buf) return res.redirect(fallback);
+    brandCacheSet(key, buf);
+  }
+  res.set('Cache-Control', 'public, max-age=86400').type('png').send(buf);
+}));
+
 // Manifest PWA por tienda (permite instalar el catálogo como app nativa)
 app.get('/:slug/manifest.webmanifest', (req, res) => {
   const biz = getBusiness(req.params.slug);
@@ -2403,7 +2482,10 @@ app.get('/:slug/manifest.webmanifest', (req, res) => {
     background_color: designTokens.bg || '#ffffff',
     theme_color: designTokens.accent || '#17232d',
     lang: 'es',
-    icons: [
+    icons: biz.logo ? [
+      { src: '/' + biz.slug + '/icon/192.png?v=' + brandVersion(biz), sizes: '192x192', type: 'image/png', purpose: 'any' },
+      { src: '/' + biz.slug + '/icon/512.png?v=' + brandVersion(biz), sizes: '512x512', type: 'image/png', purpose: 'any' }
+    ] : [
       { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
       { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
       { src: '/icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
