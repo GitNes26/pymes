@@ -2778,6 +2778,67 @@ async function mpFetch(token, path, options) {
   return { ok: resp.ok, status: resp.status, data };
 }
 
+// ===== Mercado Pago Marketplace (OAuth): cada negocio conecta SU cuenta con un botón y el dinero
+// le llega directo; la plataforma puede cobrar una comisión (MP_FEE_PERCENT, por defecto 0 %). =====
+const MP_CLIENT_ID = String(process.env.MP_CLIENT_ID || '').trim();
+const MP_CLIENT_SECRET = String(process.env.MP_CLIENT_SECRET || '').trim();
+const MP_FEE_PERCENT = Math.max(0, Math.min(30, parseFloat(process.env.MP_FEE_PERCENT) || 0));
+function mpFee(total) { return MP_FEE_PERCENT > 0 ? Math.round(total * MP_FEE_PERCENT) / 100 : 0; }
+function mpOauthReady() { return !!(MP_CLIENT_ID && MP_CLIENT_SECRET); }
+function mpRedirectUri(req) { return mpAbsUrl(req, '/mp/oauth'); }
+async function mpTokenRequest(params) {
+  const r = await fetch('https://api.mercadopago.com/oauth/token', {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify(Object.assign({ client_id: MP_CLIENT_ID, client_secret: MP_CLIENT_SECRET }, params))
+  });
+  const data = await r.json().catch(() => ({}));
+  return { ok: r.ok && !!data.access_token, data };
+}
+function mpSaveTokens(bizId, d) {
+  const exp = d.expires_in ? new Date(Date.now() + Number(d.expires_in) * 1000).toISOString() : '';
+  db.prepare("UPDATE businesses SET mp_access_token = ?, mp_refresh_token = ?, mp_public_key = COALESCE(NULLIF(?, ''), mp_public_key), mp_user_id = ?, mp_connected = 1, mp_enabled = 1, mp_token_expires = ? WHERE id = ?")
+    .run(String(d.access_token), String(d.refresh_token || ''), String(d.public_key || ''), String(d.user_id || ''), exp, bizId);
+}
+app.get('/:slug/admin/mp/conectar', requireAuth, can('config'), (req, res) => {
+  if (!mpOauthReady()) return res.redirect('/' + req.biz.slug + '/admin/config?error=' + encodeURIComponent('La conexión con Mercado Pago aún no está configurada en el servidor'));
+  const state = req.biz.slug + '.' + crypto.randomBytes(16).toString('hex');
+  res.cookie('mpstate', state, { httpOnly: true, sameSite: 'lax', maxAge: 15 * 60 * 1000, secure: req.secure });
+  res.redirect('https://auth.mercadopago.com.mx/authorization?client_id=' + encodeURIComponent(MP_CLIENT_ID) +
+    '&response_type=code&platform_id=mp&state=' + encodeURIComponent(state) + '&redirect_uri=' + encodeURIComponent(mpRedirectUri(req)));
+});
+app.get('/mp/oauth', ah(async (req, res) => {
+  const state = String(req.query.state || '');
+  const slug = state.split('.')[0];
+  const back = (msg, ok) => res.redirect('/' + slug + '/admin/config?' + (ok ? 'ok=' : 'error=') + encodeURIComponent(msg) + '#config-pagos');
+  const biz = slug ? getBusiness(slug) : null;
+  if (!biz || !state || state !== (req.cookies && req.cookies.mpstate)) return res.status(400).send('Solicitud no válida. Vuelve a intentarlo desde Configuración.');
+  res.clearCookie('mpstate');
+  if (req.query.error || !req.query.code) return back('No se conectó la cuenta de Mercado Pago');
+  const t = await mpTokenRequest({ grant_type: 'authorization_code', code: String(req.query.code), redirect_uri: mpRedirectUri(req) });
+  if (!t.ok) { console.error('MP OAuth falló:', JSON.stringify(t.data).slice(0, 300)); return back('Mercado Pago no aceptó la conexión. Intenta de nuevo'); }
+  mpSaveTokens(biz.id, t.data);
+  back('Mercado Pago conectado. Ya puedes cobrar en línea', true);
+}));
+app.post('/:slug/admin/mp/desconectar', requireAuth, can('config'), (req, res) => {
+  db.prepare("UPDATE businesses SET mp_access_token = '', mp_refresh_token = '', mp_public_key = '', mp_user_id = '', mp_connected = 0, mp_enabled = 0, mp_token_expires = '' WHERE id = ?").run(req.biz.id);
+  res.redirect('/' + req.biz.slug + '/admin/config?ok=' + encodeURIComponent('Mercado Pago desconectado') + '#config-pagos');
+});
+// Los tokens de OAuth duran ~6 meses: se renuevan solos cuando faltan menos de 30 días
+async function mpRefreshTokens() {
+  if (!mpOauthReady()) return;
+  try {
+    const rows = db.prepare("SELECT id, mp_refresh_token, mp_token_expires FROM businesses WHERE mp_connected = 1 AND mp_refresh_token != ''").all();
+    for (const b of rows) {
+      const exp = b.mp_token_expires ? Date.parse(b.mp_token_expires) : 0;
+      if (exp && exp - Date.now() > 30 * 86400000) continue;
+      const t = await mpTokenRequest({ grant_type: 'refresh_token', refresh_token: b.mp_refresh_token });
+      if (t.ok) mpSaveTokens(b.id, t.data); else console.error('MP: no se pudo renovar el token de la tienda', b.id);
+    }
+  } catch (e) { console.error('MP refresh:', e.message); }
+}
+setTimeout(mpRefreshTokens, 30000);
+setInterval(mpRefreshTokens, 24 * 3600 * 1000);
+
 app.get('/:slug/pagar-mp', async (req, res) => {
   const biz = getBusiness(req.params.slug);
   if (!biz) return res.status(404).json({ error: 'Tienda no encontrada' });
@@ -2815,6 +2876,7 @@ app.get('/:slug/pagar-mp', async (req, res) => {
     auto_return: 'approved',
     notification_url: mpAbsUrl(req, '/webhooks/mercadopago?slug=' + encodeURIComponent(biz.slug))
   };
+  if (biz.mp_connected && mpFee(total) > 0) pref.marketplace_fee = mpFee(total);
   const { ok, data } = await mpFetch(biz.mp_access_token, '/checkout/preferences', { method: 'POST', body: JSON.stringify(pref) });
   if (!ok || !data.init_point) {
     console.error('Error creando preferencia de Mercado Pago:', data);
@@ -2889,6 +2951,7 @@ app.post('/:slug/pagar-tarjeta', rateLimit(12), async (req, res) => {
     transaction_amount: total,
     token: String(fd.token),
     description: ('Pedido #' + orderId + ' · ' + biz.name).slice(0, 200),
+    ...((biz.mp_connected && mpFee(total) > 0) ? { application_fee: mpFee(total) } : {}),
     installments: Math.max(1, parseInt(fd.installments) || 1),
     payment_method_id: String(fd.payment_method_id),
     payer: { email: String((fd.payer && fd.payer.email) || '').trim().slice(0, 120) },
@@ -4504,6 +4567,7 @@ function configLocals(biz, opts) {
     : getPalette(biz, baseEstilo);
   return {
     biz,
+    mpOAuth: mpOauthReady(),
     TEMPLATES, COLORS, GIROS: getGiros(), ESTILOS, FONTS, CURRENCIES, GIRO_PRESETS,
     diseno,
     CAT_DESIGNS,

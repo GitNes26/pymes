@@ -66,6 +66,10 @@ addColumnIfMissing('businesses', 'horario_msg', "TEXT DEFAULT ''"); // mensaje c
 addColumnIfMissing('businesses', 'mp_access_token', "TEXT DEFAULT ''");
 addColumnIfMissing('businesses', 'mp_enabled', 'INTEGER DEFAULT 0');
 addColumnIfMissing('businesses', 'mp_public_key', "TEXT DEFAULT ''"); // clave pública de Mercado Pago (formulario de tarjeta dentro de la app)
+addColumnIfMissing('businesses', 'mp_refresh_token', "TEXT DEFAULT ''"); // OAuth de Mercado Pago (Marketplace)
+addColumnIfMissing('businesses', 'mp_user_id', "TEXT DEFAULT ''");
+addColumnIfMissing('businesses', 'mp_connected', 'INTEGER DEFAULT 0'); // 1 = cuenta conectada con el botón (no con token pegado)
+addColumnIfMissing('businesses', 'mp_token_expires', "TEXT DEFAULT ''");
 // Transferencia bancaria: el dueño publica su cuenta y el cliente transfiere
 // por su cuenta y manda el comprobante por WhatsApp — sin pasarela, sin
 // comisión, es como ya operan la mayoría de estas tiendas. transfer_enabled
