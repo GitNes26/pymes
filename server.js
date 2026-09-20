@@ -43,7 +43,11 @@ process.on('uncaughtException', (err) => {
 });
 
 const MASTER_KEY = process.env.MASTER_KEY || crypto.randomBytes(12).toString('hex');
-const BASE_URL = process.env.BASE_URL || '';
+// Sin esquema (p. ej. "cadi.nessik.net") el enlace no abre: se completa con https:// y se quita la "/" final
+const BASE_URL = (() => { let u = String(process.env.BASE_URL || '').trim().replace(/\/+$/, ''); if (u && !/^https?:\/\//i.test(u)) u = 'https://' + u; return u; })();
+// Si no hay BASE_URL, se aprende el dominio real de las visitas para armar enlaces COMPLETOS (compartir, copiar, QR)
+let _detectedOrigin = '';
+const siteOrigin = () => BASE_URL || _detectedOrigin;
 
 // Sesión persistente: mientras el dueño/empleado siga usando el panel, cada
 // request renueva tanto la cookie como la fila en `sessions` por otros 30 días
@@ -57,6 +61,7 @@ const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 // generaba enlaces para compartir, QR y og:image en http (rotos o inseguros).
 // Con esto, Express confía en el header X-Forwarded-Proto que pone el proxy.
 app.set('trust proxy', 1);
+app.use((req, res, next) => { if (!BASE_URL && req.get('host')) _detectedOrigin = req.protocol + '://' + req.get('host'); next(); });
 
 // Si BASE_URL apunta a https, cualquier visita que llegue por http se manda
 // a la versión https (evita contenido mixto y enlaces "http" que ya no cargan
@@ -3122,15 +3127,15 @@ function panelData(biz) {
   const stats = getStats(biz.id);
   const planMax = PLAN_MAX(biz);
   const planInfo = getPlan(biz);
-  const storeUrl = BASE_URL ? BASE_URL + '/' + biz.slug : '/' + biz.slug;
-  const shareUrl = BASE_URL ? BASE_URL + '/' + biz.slug : '';
+  const storeUrl = siteOrigin() ? siteOrigin() + '/' + biz.slug : '/' + biz.slug;
+  const shareUrl = siteOrigin() ? siteOrigin() + '/' + biz.slug : '';
   const lowStock = allProducts.filter(p => !p.made_to_order && (p.displayStock === null || p.displayStock <= 5));
   const priceHistory = db.prepare('SELECT * FROM price_history WHERE business_id = ? ORDER BY id DESC LIMIT 30').all(biz.id);
   return { categories, allProducts, orders, pending, stats, planMax, planInfo, storeUrl, shareUrl, attributeTemplates: getAttributeTemplates(biz.id), lowStock, priceHistory, canDesign: designAllowed(biz) };
 }
 
 async function qrFor(biz) {
-  const url = BASE_URL ? BASE_URL + '/' + biz.slug : '/' + biz.slug;
+  const url = siteOrigin() ? siteOrigin() + '/' + biz.slug : '/' + biz.slug;
   try {
     return await QRCode.toDataURL(url, { width: 300, margin: 1 });
   } catch (e) {
