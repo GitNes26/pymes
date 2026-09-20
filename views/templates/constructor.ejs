@@ -153,7 +153,7 @@
   <meta name="apple-mobile-web-app-title" content="<%= biz.name %>">
   <link rel="icon" href="/icons/icon-192.png">
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-  <script src="/pwa.js" defer></script>
+  <script src="/pwa.js?v=20260919" defer></script>
   <link rel="stylesheet" href="/vendor/bootstrap-icons/bootstrap-icons.min.css">
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="<%= _designFontHref %>" rel="stylesheet" />
@@ -1038,17 +1038,17 @@
   <link rel="stylesheet" href="/css/catalog-refine.css?v=20260917c">
   <link rel="stylesheet" href="/css/catalog-motion.css?v=20260919a">
   <link rel="stylesheet" href="/css/catalog-media.css?v=20260919f">
-  <link rel="stylesheet" href="/css/catalog-hero.css?v=20260919b">
+  <link rel="stylesheet" href="/css/catalog-hero.css?v=20260919c">
   <script src="/js/catalog-motion.js?v=20260918a" defer></script>
   <script src="/js/catalog-gallery.js?v=20260919a" defer></script>
   <script src="/js/btn-fit.js?v=20260918a" defer></script>
-  <script src="/js/img-retry.js"></script>
+  <script src="/js/img-retry.js?v=20260919b"></script>
   <script src="/js/masks.js"></script>
 </head>
 <body>
 
   <% if (biz.banner) { %>
-  <div class="hero<%= biz.banner ? ' has-banner' : '' %>"<%- _ph(biz.banner) %>>
+  <div class="hero<%= biz.banner ? ' has-banner' : '' %>">
     <img src="<%= biz.banner %>" class="bg" alt="banner" data-hide-on-error>
     <div class="hero-overlay">
       <% if (biz.logo) { %><img src="<%= biz.logo %>" class="hero-logo" alt="logo" data-hide-on-error><% } %>
@@ -1865,18 +1865,12 @@
       }
 
       // Parallax sutil del hero, sin bloquear el hilo principal
-      // Banner que no cubre bien (vertical/cuadrado en una portada ancha): se muestra completo sobre su propio fondo desenfocado
-      (function () {
-        var hb = document.querySelector('.hero img.bg');
-        if (!hero || !hb) return;
-        function fitBanner() {
-          if (!hb.naturalWidth || !hero.clientHeight) return;
-          var imgR = hb.naturalWidth / hb.naturalHeight, heroR = hero.clientWidth / hero.clientHeight;
-          hero.classList.toggle('hero-contain', imgR < heroR * 0.62);
+      // Si el banner no carga (foto borrada), la portada queda sencilla en vez de una franja gris
+      document.addEventListener('img-gaveup', function (e) {
+        if (hero && e.target && e.target.matches && e.target.matches('.hero img.bg')) {
+          hero.classList.remove('has-banner'); hero.classList.add('hero-plain');
         }
-        if (hb.complete) fitBanner(); else hb.addEventListener('load', fitBanner, { once: true });
-        window.addEventListener('resize', fitBanner);
-      })();
+      });
       var heroBg = document.querySelector('.hero img.bg');
       if (heroBg && !reducedMotion) {
         var ticking = false;

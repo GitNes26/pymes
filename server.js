@@ -1025,7 +1025,7 @@ function paintCatalog(html, biz, pal, estilo) {
     }
   }
   const pwaTail =
-    '<script src="/pwa.js"></script>' +
+    '<script src="/pwa.js?v=20260919"></script>' +
     '<style>' +
     'html{-webkit-tap-highlight-color:transparent}' +
     'body{overscroll-behavior-y:none;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}' +
@@ -1100,7 +1100,7 @@ function paintTheme(html, biz, pal, theme) {
   if (/<\/head>/i.test(html)) html = html.replace(/<\/head>/i, pwaHead + '</head>');
   else html += pwaHead;
   const pwaTail =
-    '<script src="/pwa.js"></script>' +
+    '<script src="/pwa.js?v=20260919"></script>' +
     '<style>html{-webkit-tap-highlight-color:transparent}body{overscroll-behavior-y:none;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}html.is-standalone{padding-top:env(safe-area-inset-top)}html.is-standalone body{padding-bottom:env(safe-area-inset-bottom)}a,button,img{-webkit-touch-callout:none}</style>';
   if (/<\/body>/i.test(html)) html = html.replace(/<\/body>/i, pwaTail + '</body>');
   else html += pwaTail;

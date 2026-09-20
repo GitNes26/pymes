@@ -15,7 +15,7 @@
 
   function giveUp(img) {
     var hide = img.getAttribute('data-hide-on-error') !== null;
-    if (hide) { img.style.display = 'none'; return; }
+    if (hide) { img.style.display = 'none'; try { img.dispatchEvent(new CustomEvent('img-gaveup', { bubbles: true })); } catch (e) {} return; }
     if (img.getAttribute('data-no-fallback') !== null) return;
     if (img.getAttribute('src') === FALLBACK) return;
     img.setAttribute('data-failed', '1');

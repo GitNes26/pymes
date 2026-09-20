@@ -48,6 +48,20 @@
   // ============================================================
   var deferredPrompt = null;
 
+  // "Ya instalada": se recuerda en este dispositivo (la app instalada y el navegador comparten almacenamiento en Android/escritorio).
+  // Si el navegador vuelve a ofrecer instalar (beforeinstallprompt), es prueba de que se desinstaló y el botón regresa.
+  var FLAG = 'pwa_installed';
+  function getFlag() { try { return localStorage.getItem(FLAG) === '1'; } catch (e) { return false; } }
+  function setFlag(v) { try { if (v) localStorage.setItem(FLAG, '1'); else localStorage.removeItem(FLAG); } catch (e) {} }
+  // iOS no permite saberlo: tras mostrar las instrucciones se oculta el botón 30 días
+  function iosHintRecent() { try { var t = parseInt(localStorage.getItem('pwa_ios_hint') || '0', 10); return t && (Date.now() - t) < 30 * 86400000; } catch (e) { return false; } }
+  if (standalone) setFlag(true);
+  if (navigator.getInstalledRelatedApps) {
+    navigator.getInstalledRelatedApps().then(function (apps) {
+      if (apps && apps.length) { setFlag(true); markInstallable(false); }
+    }).catch(function () {});
+  }
+
   function markInstallable(can) {
     document.documentElement.classList.toggle('pwa-installable', !!can);
     document.dispatchEvent(new CustomEvent('pwa-installable-change', { detail: { installable: !!can } }));
@@ -58,13 +72,13 @@
   window.addEventListener('beforeinstallprompt', function (e) {
     e.preventDefault();
     deferredPrompt = e;
-    if (!standalone) markInstallable(true);
+    if (!standalone) { setFlag(false); markInstallable(true); }
   });
 
   window.addEventListener('appinstalled', function () {
     deferredPrompt = null;
     markInstallable(false);
-    try { localStorage.setItem('pwa_installed', '1'); } catch (e) {}
+    setFlag(true);
   });
 
   var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
@@ -73,7 +87,7 @@
 
   // iOS no dispara beforeinstallprompt: si no está instalada, mostramos el
   // botón igual, pero con instrucciones manuales (Safari no automatiza esto).
-  if (isIOS && isSafari && !standalone) {
+  if (isIOS && isSafari && !standalone && !getFlag() && !iosHintRecent()) {
     markInstallable(true);
   }
 
@@ -109,6 +123,7 @@
       return;
     }
     if (isIOS) {
+      try { localStorage.setItem('pwa_ios_hint', String(Date.now())); } catch (e) {}
       pwaNote('Toca el ícono Compartir ⬆️ (abajo en Safari) y elige "Agregar a inicio"');
       return;
     }
