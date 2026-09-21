@@ -67,6 +67,9 @@
   .cp-x:hover { background:color-mix(in srgb, var(--text, #0f172a) 6%, transparent); }
   .cp-load { text-align:center; padding:28px 8px; font-size:13px; color:var(--text-secondary, #64748b); }
   .cp-err { color:#c2410c; font-weight:700; }
+  .cp-alert { display:flex; gap:10px; align-items:flex-start; margin:0 0 12px; padding:12px 14px; border-radius:12px; background:#fef2f2; border:1px solid #fecaca; color:#b91c1c; font-size:13.5px; font-weight:700; line-height:1.4; animation:cpShake .4s; }
+  .cp-alert i { font-style:normal; font-size:18px; line-height:1; }
+  @keyframes cpShake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
   .cp-note { margin-top:12px; font-size:11.5px; text-align:center; color:var(--text-secondary, #64748b); }
   .cp-ok { text-align:center; padding:20px 6px 6px; }
   .cp-ok-ic { width:64px; height:64px; margin:0 auto 12px; display:grid; place-items:center; border-radius:50%; background:color-mix(in srgb, var(--accent, #1e293b) 16%, transparent); color:var(--accent, #1e293b); font-size:30px; font-weight:800; }
@@ -860,6 +863,17 @@
     ov.querySelector('.cp-x').addEventListener('click', closeCardPay);
     ov.addEventListener('click', function (e) { if (e.target === ov) closeCardPay(); });
     const bodyEl = ov.querySelector('#cp-body');
+    const payAlert = function (msg) {
+      let a = document.getElementById('cp-alert');
+      if (!a) { a = document.createElement('div'); a.id = 'cp-alert'; a.className = 'cp-alert'; a.setAttribute('role', 'alert'); bodyEl.insertBefore(a, bodyEl.firstChild); }
+      a.innerHTML = '<i aria-hidden="true">⚠️</i><span></span>';
+      a.querySelector('span').textContent = 'El pago NO se realizó. ' + msg;
+      a.style.animation = 'none'; void a.offsetWidth; a.style.animation = '';
+      a.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      toast('El pago no se realizó ✕', false);
+      if (window.haptic) window.haptic(60);
+    };
+    window.__cardPayAlert = payAlert;
     const fail = function (msg) { const l = document.getElementById('cp-load'); if (l) { l.textContent = msg; l.classList.add('cp-err'); } };
     // Si el formulario no aparece (clave pública mal puesta, red lenta) se avisa en vez de quedar cargando para siempre
     setTimeout(function () { if (document.getElementById('cp-load') && !document.getElementById('cp-load').classList.contains('cp-err')) fail('El formulario tardó demasiado en cargar. Revisa tu conexión o pide por WhatsApp.'); }, 14000);
@@ -872,10 +886,11 @@
         callbacks: {
           onReady: function () { const l = document.getElementById('cp-load'); if (l) l.remove(); },
           onSubmit: function (formData) {
+            const old = document.getElementById('cp-alert'); if (old) old.remove();
             return fetch('/' + slug + '/pagar-tarjeta', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: items, nombre: nombre, telefono: telefono, formData: formData }) })
               .then(function (r) { return r.json().catch(function () { return { ok: false, error: 'Respuesta inesperada del servidor' }; }); })
               .then(function (d) {
-                if (!d.ok) { toast(d.error || 'No se pudo procesar el pago', false); return Promise.reject(new Error(d.error || 'pago')); }
+                if (!d.ok) { payAlert((d.error || 'No se pudo procesar el pago.').replace(/^No se pudo procesar el pago\.?\s*/i, '') || 'Intenta con otra tarjeta.'); return Promise.reject(new Error(d.error || 'pago')); }
                 g.items.forEach(it => { delete cart[it.key]; });
                 saveCart(); renderCart();
                 const aprobado = d.status === 'approved';
@@ -885,7 +900,12 @@
                   '<p>' + (aprobado ? 'Recibimos tu pago de ' + money(d.total) + '. Tu pedido #' + d.orderId + ' ya está registrado.' : 'Mercado Pago está revisando tu pago. Te avisaremos cuando se apruebe (pedido #' + d.orderId + ').') + '</p>' +
                   '<button type="button" class="cp-done">Listo</button></div>';
                 bodyEl.querySelector('.cp-done').addEventListener('click', closeCardPay);
+                toast(aprobado ? '¡Pago aprobado! ✓' : 'Pago en revisión ⏳', aprobado);
                 if (window.haptic) window.haptic(30);
+              }, function (err) {
+                if (!err || err.message === 'pago') return Promise.reject(err);
+                payAlert('No hay conexión con el servidor. Revisa tu internet e intenta de nuevo.');
+                return Promise.reject(err);
               });
           },
           onError: function (err) { console.error('cardPayment brick:', err); if (document.getElementById('cp-load')) fail('No se pudo cargar el formulario de pago. Intenta de nuevo o pide por WhatsApp.'); }
