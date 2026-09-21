@@ -589,19 +589,12 @@
 
               <div class="mc-controls">
                 <div class="mc-billing">
-                  <span class="mc-lbl">Plan y cobro</span>
+                  <span class="mc-lbl">Vencimiento</span>
                   <div class="mc-billing-row">
-                    <form method="POST" action="/maestro/<%= b.id %>/plan">
-                      <select name="plan" onchange="this.form.submit()" class="plan-select" aria-label="Plan">
-                        <% plans.forEach(p => { %>
-                          <option value="<%= p.key %>" <%= b.plan === p.key ? 'selected' : '' %> <%= p.active ? '' : 'disabled' %>><%= p.name %></option>
-                        <% }) %>
-                      </select>
-                    </form>
                     <form method="POST" action="/maestro/<%= b.id %>/vencimiento" class="mc-pay">
-                      <label class="mc-mini"><span>$</span><input name="plan_price" type="number" step="0.01" min="0" value="<%= b.plan_price || 0 %>" title="Precio ($)" aria-label="Precio" /></label>
+                      <input type="hidden" name="plan_price" value="<%= b.plan_price || 0 %>" />
                       <input name="plan_ends_at" type="date" value="<%= b.plan_ends_at || '' %>" title="Vence el" aria-label="Vence el" class="mc-date" />
-                      <button class="mc-save" title="Guardar precio y vencimiento">Guardar</button>
+                      <button class="mc-save" title="Guardar vencimiento">Guardar</button>
                     </form>
                   </div>
                 </div>
