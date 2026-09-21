@@ -1192,12 +1192,29 @@
             attr.values.forEach(function (v, vi) {
               var chip = document.createElement('span');
               chip.className = 'var-chip inline-flex items-center gap-1 bg-neutral-100 text-neutral-800 text-xs font-bold px-2 py-0.5 rounded-full';
-              chip.innerHTML = '<span class="var-chip-txt cursor-text" title="Toca para cambiar el nombre">' + esc(v) + '</span> <button type="button" class="var-chip-del leading-none hover:text-red-500">✕</button>';
-              chip.querySelector('.var-chip-txt').onclick = function () {
-                var nv = window.prompt('Cambiar "' + v + '" por:', v);
-                if (nv === null) return;
-                if (renameValue(vi, nv.trim())) { renderValues(); renderCombos(); save(); }
-              };
+              chip.innerHTML = '<span class="var-chip-txt cursor-text" title="Toca para editar">' + esc(v) + '</span> <button type="button" class="var-chip-edit leading-none text-neutral-500 hover:text-neutral-900" aria-label="Editar ' + esc(v) + '" title="Editar">✎</button> <button type="button" class="var-chip-del leading-none hover:text-red-500" aria-label="Quitar ' + esc(v) + '">✕</button>';
+              function editChip() {
+                var txt = chip.querySelector('.var-chip-txt');
+                var inp = document.createElement('input');
+                inp.type = 'text'; inp.value = v; inp.maxLength = 40;
+                inp.className = 'text-xs font-bold bg-white border border-neutral-400 rounded-md px-1.5 py-0.5 focus:outline-none';
+                inp.style.width = Math.max(60, v.length * 9 + 24) + 'px';
+                txt.replaceWith(inp);
+                inp.focus(); inp.select();
+                var done = false;
+                function commit(ok) {
+                  if (done) return; done = true;
+                  if (ok && renameValue(vi, inp.value.trim())) { renderValues(); renderCombos(); save(); }
+                  else renderValues();
+                }
+                inp.addEventListener('keydown', function (e) {
+                  if (e.key === 'Enter') { e.preventDefault(); commit(true); }
+                  else if (e.key === 'Escape') { e.preventDefault(); commit(false); }
+                });
+                inp.addEventListener('blur', function () { commit(true); });
+              }
+              chip.querySelector('.var-chip-txt').onclick = editChip;
+              chip.querySelector('.var-chip-edit').onclick = editChip;
               chip.querySelector('.var-chip-del').onclick = function () { attr.values.splice(vi, 1); renderValues(); renderCombos(); save(); };
               valuesWrap.insertBefore(chip, valInput);
             });
@@ -1755,6 +1772,7 @@
       if (pfTipo === 'variantes' && n === 2) n = n < pfStep ? 1 : 3;
       if (n > 1 && !validarPaso1()) { n = 1; }
       pfStep = n;
+      if (n === 3 && window.renderTplPills) renderTplPills('f');
       document.querySelectorAll('#nuevo-producto [data-step-pane]').forEach(function (p) {
         p.classList.toggle('hidden', p.getAttribute('data-step-pane') !== String(n));
       });
@@ -2331,7 +2349,24 @@
     function renderTplPills(pref) {
       var cont = document.getElementById(pref + '-tpl-pills');
       if (!cont) return;
-      var list = window.ATTR_TEMPLATES || [];
+      var list = (window.ATTR_TEMPLATES || []).slice();
+      // Atributos que ya existen en los productos del catálogo (aunque no estén en la pestaña Atributos)
+      (function () {
+        var seen = {};
+        list.forEach(function (t) { seen[String(t.name).toLowerCase()] = t; });
+        document.querySelectorAll('[data-edit-variants]').forEach(function (c) {
+          var vm = null;
+          try { vm = JSON.parse(decodeURIComponent(c.getAttribute('data-edit-variants') || '')); } catch (e) {}
+          if (!vm || Array.isArray(vm) || !Array.isArray(vm.attrs)) return;
+          vm.attrs.forEach(function (a) {
+            var nm = String((a && a.name) || '').trim();
+            if (!nm) return;
+            var k = nm.toLowerCase();
+            if (!seen[k]) { seen[k] = { name: nm, values: [], used: true }; list.push(seen[k]); }
+            (a.values || []).forEach(function (v) { v = String(v).trim(); if (v && seen[k].values.indexOf(v) === -1) seen[k].values.push(v); });
+          });
+        });
+      })();
       var ed = window.VAR_EDITORS && window.VAR_EDITORS[pref];
       var selected = (ed && ed.model.attrs || []).map(function (a) { return (a.name || '').toLowerCase(); });
       cont.innerHTML = '';
