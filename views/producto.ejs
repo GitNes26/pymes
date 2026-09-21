@@ -400,6 +400,8 @@
       var vm = { attrs: [], images: {} };
       try { var d = JSON.parse(<%- JSON.stringify(product.variants || '') %>); if (d && d.attrs) vm = d; } catch (e) {}
       var sel = {};
+      // Atributo con una sola opción (variante única): ya viene elegido, no hay que escogerlo
+      vm.attrs.forEach(function (a) { if (a.values && a.values.length === 1) sel[a.name] = a.values[0]; });
       function esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
       function colorFor(v) { var map={rojo:'#ef4444',azul:'#3b82f6',verde:'#22c55e',amarillo:'#eab308',negro:'#111827',blanco:'#f8fafc',gris:'#9ca3af',rosa:'#ec4899',morado:'#8b5cf6',naranja:'#f97316',cafe:'#8b5e3c'}; return map[String(v).toLowerCase().trim()] || '#94a3b8'; }
       function comboKey() { return vm.attrs.map(function(a){ return sel[a.name]||''; }).join('|'); }

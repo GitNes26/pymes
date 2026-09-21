@@ -236,6 +236,7 @@
     const vm = normVariantModel(p.variants);
     if (!vm.attrs.length) return;
     const sel = {};
+    vm.attrs.forEach(a => { if (a.values && a.values.length === 1) sel[a.name] = a.values[0]; });
     // Quién abrió el selector — para devolverle el foco al cerrar y para que
     // la relación espacial (tarjeta que originó la acción) se conserve.
     const opener = document.activeElement;
@@ -359,6 +360,8 @@
     if (!image) image = p.image;
     const pvm = normVariantModel(p.variants);
     if (!p.madeToOrder && !pvm.attrs.length && (p.stock === null || p.stock === undefined || p.stock <= 0)) { toast('Producto agotado 😕', false); return false; }
+    // Variante única (cada atributo con una sola opción): se agrega directo, sin selector
+    if (pvm.attrs.length && !variant && pvm.attrs.every(a => a.values && a.values.length === 1)) variant = pvm.attrs.map(a => a.values[0]).join(' / ');
     if (pvm.attrs.length && !variant) { variantPicker(id); return false; }
     const key = itemKey(s.slug, id, variant);
     // stock por combinación
