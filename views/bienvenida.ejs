@@ -216,35 +216,6 @@
           </div>
         </div>
 
-        <!-- Demo: con el plan gratis, el catálogo muestra productos de otras
-             tiendas ("también te puede interesar") — se enseña aquí para que
-             el dueño vea cómo se ve en vez de solo leerlo. Se anima una sola
-             vez, la primera vez que se llega a este paso. -->
-        <div class="rounded-2xl p-5 md:p-6 mt-4" style="background:var(--ap-card);border:1px solid var(--ap-border);box-shadow:var(--ap-shadow)">
-          <div class="flex items-center gap-2 mb-1">
-            <span class="wz-inline-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 11v2a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1Zm13.5-4.5a7 7 0 0 1 0 11M14 9a3 3 0 0 1 0 6"/></svg></span>
-            <p class="font-semibold text-[15px]" style="color:var(--ap-text)">Así se verán los anuncios de otras tiendas</p>
-          </div>
-          <p class="text-[13px] mb-4" style="color:var(--ap-text-sec)">Con el plan gratis, tu catálogo incluye una franja "También te puede interesar" con productos de otras tiendas — te ayuda a empezar sin costo. Puedes quitarla cuando quieras con el plan Pro.</p>
-          <div class="wz-ad-demo" id="wz-ad-demo">
-            <div class="wz-ad-demo-label">También te puede interesar</div>
-            <div class="wz-ad-demo-track" id="wz-ad-demo-track">
-              <% const wzAdDemo = [
-                { c1: '#fb923c', c2: '#ef4444', store: 'Ferretería El Toro', price: '$189.00' },
-                { c1: '#34d399', c2: '#0ea5e9', store: 'Cafetería Aroma', price: '$65.00' },
-                { c1: '#a78bfa', c2: '#ec4899', store: 'Boutique Lía', price: '$349.00' },
-                { c1: '#fbbf24', c2: '#f97316', store: 'Dulcería Sol', price: '$45.00' }
-              ]; %>
-              <% wzAdDemo.forEach((ad, i) => { %>
-                <div class="wz-ad-demo-card" data-ad-index="<%= i %>">
-                  <div class="wz-ad-demo-img" style="background:linear-gradient(135deg,<%= ad.c1 %>,<%= ad.c2 %>)"></div>
-                  <div class="wz-ad-demo-store"><%= ad.store %></div>
-                  <div class="wz-ad-demo-price"><%= ad.price %></div>
-                </div>
-              <% }) %>
-            </div>
-          </div>
-        </div>
 
         <div class="text-center mt-8 flex items-center justify-center gap-3">
           <button type="button" class="m-btn m-btn-outlined px-6" id="wz-back-3">← Atrás</button>

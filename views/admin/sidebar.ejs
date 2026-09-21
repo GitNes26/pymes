@@ -53,10 +53,10 @@ SIDEBAR NUEVO (diseño totalmente distinto)
       <img src="<%= avatar %>" class="w-9 h-9 rounded-lg object-cover shrink-0" style="box-shadow:0 0 0 2px var(--ap-card), 0 0 0 3.5px color-mix(in srgb, var(--ap-accent) 35%, transparent)">
       <div class="min-w-0 flex-1">
         <p class="font-semibold text-[13.5px] truncate leading-tight" style="color:var(--ap-text)"><%= esEmpleado ? (typeof empName !== 'undefined' ? empName : 'Empleado') : biz.name %></p>
-        <span class="inline-flex items-center mt-1.5 px-2 py-[3px] rounded-full text-[9.5px] font-bold uppercase tracking-[0.08em]"
+        <% if (esEmpleado) { %><span class="inline-flex items-center mt-1.5 px-2 py-[3px] rounded-full text-[9.5px] font-bold uppercase tracking-[0.08em]"
               style="<%= isPro ? 'background:color-mix(in srgb, var(--ap-accent) 16%, transparent);color:var(--ap-accent-text)' : 'background:var(--ap-bg);color:var(--ap-text-sec)' %>">
           <%= esEmpleado ? 'Empleado' : (isPro ? 'Plan Pro' : (biz.plan === 'demo' ? 'Demo' : 'Plan gratis')) %>
-        </span>
+        </span><% } %>
       </div>
     </div>
   </div>
