@@ -759,7 +759,7 @@
               </div>
 
               <div class="rounded-xl border border-slate-200 dark:border-[#30363d] p-3 space-y-2">
-                <p class="text-xs font-black text-slate-500 dark:text-slate-400">Modelos <span class="font-normal">(fotos de personas usando tus productos, hasta 6)</span></p>
+                <p class="text-xs font-black text-slate-500 dark:text-slate-400">Modelos <span class="font-normal">(fotos de personas usando tus productos, hasta 12)</span></p>
                 <input id="ex-mod-title" class="config-input" maxlength="80" placeholder="Título (opcional, por defecto “Así lo lucen”)" value="<%= (_ex.modelos && _ex.modelos.title) || '' %>">
                 <input id="ex-mod-text" class="config-input" maxlength="400" placeholder="Frase corta (opcional). Ej: Así luce nuestra colección puesta." value="<%= (_ex.modelos && _ex.modelos.text) || '' %>">
                 <div id="modelos-rows" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
@@ -1461,7 +1461,7 @@
     function modeloAgregarFila(src, cap) {
       var c = document.getElementById('modelos-rows');
       if (!c) return;
-      if (c.querySelectorAll('.modelo-row').length >= 6) { if (window.mostrarToast) mostrarToast('Máximo 6 fotos de modelos', 'error'); return; }
+      if (c.querySelectorAll('.modelo-row').length >= 12) { if (window.mostrarToast) mostrarToast('Máximo 12 fotos de modelos', 'error'); return; }
       var id = 'mod' + (++_modN);
       var wrap = document.createElement('div');
       wrap.className = 'modelo-row rounded-xl border border-slate-200 dark:border-[#30363d] bg-white dark:bg-slate-900/40 p-2 space-y-2';

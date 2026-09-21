@@ -283,7 +283,7 @@ function sanitizeExtras(raw) {
     modelos: {
       title: str(x.modelos && x.modelos.title, 80),
       text: str(x.modelos && x.modelos.text, 400),
-      images: (Array.isArray(x.modelos && x.modelos.images) ? x.modelos.images : []).slice(0, 6)
+      images: (Array.isArray(x.modelos && x.modelos.images) ? x.modelos.images : []).slice(0, 12)
         .map(i => ({ src: safeImgUrl(i && i.src), cap: str(i && i.cap, 60) })).filter(i => i.src)
     },
     showNew: !!x.showNew,

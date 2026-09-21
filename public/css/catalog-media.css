@@ -168,6 +168,9 @@ body .prod-img-wrap > img[src$="sin-imagen.svg"], body .oferta-img-wrap > img[sr
   .xs-models.mod-n5 .xs-model:first-child { grid-column: span 2; grid-row: span 2; aspect-ratio: auto; height: 100%; }
   .xs-models.mod-n6 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .xs-models.mod-n6 .xs-model:nth-child(3n + 2) { margin-top: clamp(28px, 5vw, 72px); }
+  .xs-models.mod-n7, .xs-models.mod-n8, .xs-models.mod-n9, .xs-models.mod-n10, .xs-models.mod-n11, .xs-models.mod-n12 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .xs-models.mod-n7 .xs-model:nth-child(4n + 2), .xs-models.mod-n8 .xs-model:nth-child(4n + 2), .xs-models.mod-n9 .xs-model:nth-child(4n + 2), .xs-models.mod-n10 .xs-model:nth-child(4n + 2), .xs-models.mod-n11 .xs-model:nth-child(4n + 2), .xs-models.mod-n12 .xs-model:nth-child(4n + 2),
+  .xs-models.mod-n7 .xs-model:nth-child(4n), .xs-models.mod-n8 .xs-model:nth-child(4n), .xs-models.mod-n9 .xs-model:nth-child(4n), .xs-models.mod-n10 .xs-model:nth-child(4n), .xs-models.mod-n11 .xs-model:nth-child(4n), .xs-models.mod-n12 .xs-model:nth-child(4n) { margin-top: clamp(24px, 4vw, 56px); }
   .mod-dots { display: none !important; }
 }
 
