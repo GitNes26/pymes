@@ -15,7 +15,7 @@
               <div class="prod-name"><a href="/<%= biz.slug %>/p/<%= p.id %>" onclick="event.stopPropagation();"><%= p.name %></a></div>
               <% if (p.description) { %><div class="prod-desc"><%= p.description %></div><% } %>
               <div class="prod-prices">
-                <span class="prod-price"><%= _money(p) %></span><% if (p.unit && p.unit !== 'pieza') { %><span class="prod-unit"> / <%= p.unit %></span><% } %>
+                <span class="prod-price"><%= _money(p) %></span>
                 <% if (p.old_price && p.old_price > p.price) { %><span class="prod-old"><%= _money(p.old_price) %></span><% } %>
               </div>
               <% if (p.promo_desc) { %><div class="prod-promo-strip"><i class="bi bi-tag-fill"></i> <%= p.promo_desc %></div><% } %>
@@ -29,9 +29,9 @@
                   <div class="stock-status stock-status--out">Agotado</div>
                 <% } else if (p.hideStock) { %>
                 <% } else if (p.displayStock <= 5) { %>
-                  <div class="stock-status stock-status--low">🔥 ¡Quedan <%= p.displayStock %><%= (p.unit && p.unit !== 'pieza') ? ' ' + p.unit : '' %>!</div>
+                  <div class="stock-status stock-status--low">🔥 ¡Quedan <%= p.displayStock %>!</div>
                 <% } else { %>
-                  <div class="stock-status stock-status--available"><%= p.displayStock %><%= (p.unit && p.unit !== 'pieza') ? ' ' + p.unit : '' %> disponibles</div>
+                  <div class="stock-status stock-status--available"><%= p.displayStock %> disponibles</div>
                 <% } %>
               <% } %>
               <div class="prod-actions">

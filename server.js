@@ -1717,10 +1717,6 @@ function pickSponsored(biz, limit) {
   return resultado;
 }
 
-function cleanUnit(v) {
-  const u = String(v || '').trim().toLowerCase().replace(/[^a-záéíóúñ0-9 .\/]/g, '').slice(0, 20);
-  return u || 'pieza';
-}
 function getBusiness(slug) {
   const b = db.prepare('SELECT * FROM businesses WHERE slug = ?').get(slug);
   // El pago en línea es obligatorio: está activo en cuanto la tienda tiene su cuenta de Mercado Pago conectada
@@ -3752,7 +3748,6 @@ app.post('/:slug/admin/producto', requireAuth, can('productos.crear'), (req, res
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).run(biz.id, category_id || null, String(name).trim(), price, old_price, description || '', image || '', parseGaleria(req.body.galeria), stockNum, madeToOrder, variantsJson, parsePromoEnd(req.body.promo_ends_at), req.body.featured ? 1 : 0, promo.promo_type, promo.promo_value, promo.promo_gift, (req.body.sku || '').toString().trim().slice(0, 60), (req.body.tags || '').toString().trim().slice(0, 300), (req.body.video || '').toString().trim().slice(0, 300), (req.body.specs || '').toString().slice(0, 2000), (req.body.barcode || '').toString().trim().slice(0, 60), inst.allow_installments, inst.installment_count, inst.installment_min_down, inst.installment_frequency, parseCost(req.body.cost));
     const created = db.prepare('SELECT * FROM products WHERE business_id = ? ORDER BY id DESC LIMIT 1').get(biz.id);
-    if (created && req.body.unit !== undefined) db.prepare('UPDATE products SET unit = ? WHERE id = ? AND business_id = ?').run(cleanUnit(req.body.unit), created.id, biz.id);
     if (created && req.body.show_stock_set) db.prepare('UPDATE products SET show_stock = ? WHERE id = ? AND business_id = ?').run(req.body.show_stock ? 1 : 0, created.id, biz.id);
     if (created && req.body.custom_tags !== undefined) db.prepare('UPDATE products SET custom_tags = ? WHERE id = ? AND business_id = ?').run(customTagsJson(req.body.custom_tags), created.id, biz.id);
     if (created) logPriceHistory(biz.id, created);
@@ -3845,7 +3840,6 @@ app.post('/:slug/admin/producto/:id', requireAuth, can('productos.editar'), (req
       `UPDATE products SET name = ?, price = ?, old_price = ?, category_id = ?, description = ?, image = ?, galeria = ?, stock = ?, made_to_order = ?, variants = ?, promo_ends_at = ?, featured = ?, promo_type = ?, promo_value = ?, promo_gift = ?, sku = ?, tags = ?, video = ?, specs = ?, barcode = ?, allow_installments = ?, installment_count = ?, installment_min_down = ?, installment_frequency = ?, cost = ?
        WHERE id = ? AND business_id = ?`
     ).run(name.trim(), price, old_price, category_id || null, description || '', image || '', parseGaleria(req.body.galeria), stockNum, madeToOrder, variantsJson, parsePromoEnd(req.body.promo_ends_at), req.body.featured ? 1 : 0, promo.promo_type, promo.promo_value, promo.promo_gift, (req.body.sku || '').toString().trim().slice(0, 60), (req.body.tags || '').toString().trim().slice(0, 300), (req.body.video || '').toString().trim().slice(0, 300), (req.body.specs || '').toString().slice(0, 2000), (req.body.barcode || '').toString().trim().slice(0, 60), inst.allow_installments, inst.installment_count, inst.installment_min_down, inst.installment_frequency, parseCost(req.body.cost), req.params.id, req.biz.id);
-    if (req.body.unit !== undefined) db.prepare('UPDATE products SET unit = ? WHERE id = ? AND business_id = ?').run(cleanUnit(req.body.unit), req.params.id, req.biz.id);
     if (req.body.show_stock_set) db.prepare('UPDATE products SET show_stock = ? WHERE id = ? AND business_id = ?').run(req.body.show_stock ? 1 : 0, req.params.id, req.biz.id);
     if (req.body.custom_tags !== undefined) db.prepare('UPDATE products SET custom_tags = ? WHERE id = ? AND business_id = ?').run(customTagsJson(req.body.custom_tags), req.params.id, req.biz.id);
     const updated = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);

@@ -249,7 +249,7 @@
         <h1 class="prod-title"><%= product.name %></h1>
 
         <div class="prod-prices">
-          <span class="prod-price" id="prod-price-main"><%= money(product.price) %></span><% if (product.unit && product.unit !== 'pieza') { %><span class="prod-unit" style="font-size:.95rem;color:var(--text-sec)"> / <%= product.unit %></span><% } %>
+          <span class="prod-price" id="prod-price-main"><%= money(product.price) %></span>
           <% if (_hasOld) { %>
             <span class="prod-old"><%= money(product.old_price) %></span>
             <span class="prod-off">Ahorras <%= money(product.old_price - product.price) %></span>
@@ -394,7 +394,6 @@
     (function () {
       var PROD_ID = <%- product.id %>;
       var PROD_HIDE_STOCK = <%= product.hideStock ? 'true' : 'false' %>;
-      var PROD_UNIT = <%- JSON.stringify((product.unit && product.unit !== 'pieza') ? ' ' + product.unit : '') %>;
       var PROD_STOCK = <%- (product.displayStock === null || product.displayStock === undefined) ? 'null' : product.displayStock %>;
       var PROD_MADE_TO_ORDER = <%= product.made_to_order ? 'true' : 'false' %>;
       var CUR = <%- JSON.stringify(typeof currencySymbol !== 'undefined' ? currencySymbol : '$') %>;
@@ -460,8 +459,8 @@
         if (stock === null || stock === undefined) { el.textContent = ''; return; }
         if (stock <= 0) { el.textContent = 'Agotado'; el.style.color = '#ef4444'; }
         else if (PROD_HIDE_STOCK) { el.textContent = ''; }
-        else if (stock <= 5) { el.textContent = '🔥 ¡Quedan ' + stock + PROD_UNIT + '!'; el.style.color = '#ea580c'; }
-        else { el.textContent = stock + PROD_UNIT + ' disponibles'; el.style.color = 'var(--text-sec)'; }
+        else if (stock <= 5) { el.textContent = '🔥 ¡Quedan ' + stock + '!'; el.style.color = '#ea580c'; }
+        else { el.textContent = stock + ' disponibles'; el.style.color = 'var(--text-sec)'; }
       }
       function fmtMoney(n) { return n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
       function updatePrice() {
