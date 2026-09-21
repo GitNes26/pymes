@@ -66,6 +66,7 @@ addColumnIfMissing('businesses', 'horario_msg', "TEXT DEFAULT ''"); // mensaje c
 addColumnIfMissing('businesses', 'mp_access_token', "TEXT DEFAULT ''");
 addColumnIfMissing('businesses', 'mp_enabled', 'INTEGER DEFAULT 0');
 addColumnIfMissing('businesses', 'mp_public_key', "TEXT DEFAULT ''"); // clave pública de Mercado Pago (formulario de tarjeta dentro de la app)
+addColumnIfMissing('businesses', 'cash_enabled', 'INTEGER DEFAULT 0'); // 1 = acepta pago en efectivo al recoger
 addColumnIfMissing('businesses', 'mp_fee_on', 'INTEGER DEFAULT 1'); // 1 = se suma al cliente la comisión de Mercado Pago (el negocio recibe el precio completo)
 addColumnIfMissing('businesses', 'mp_fee_pct', 'REAL DEFAULT 3.49');
 addColumnIfMissing('businesses', 'mp_fee_fixed', 'REAL DEFAULT 4');

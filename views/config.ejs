@@ -917,6 +917,12 @@
 
         <form data-noajax method="POST" action="<%= cfgAction %>#config-pagos" class="space-y-4" id="form-transferencia">
           <input type="hidden" name="transfer_form" value="1">
+          <label class="flex items-start gap-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl px-4 py-3 cursor-pointer">
+            <input type="checkbox" name="cash_enabled" value="1" <%= biz.cash_enabled ? 'checked' : '' %> class="mt-0.5 accent-emerald-500">
+            <span class="text-sm font-bold text-slate-700 dark:text-slate-200">Aceptar pago en efectivo al recoger
+              <span class="block text-xs font-normal text-slate-500 mt-0.5">El cliente registra su pedido y paga en efectivo cuando pasa por él. Aparece en tu panel como "por cobrar".</span>
+            </span>
+          </label>
           <label class="flex items-center gap-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl px-4 py-3 cursor-pointer">
             <input type="checkbox" name="transfer_enabled" value="1" <%= biz.transfer_enabled ? 'checked' : '' %> class="w-4.5 h-4.5 accent-emerald-500">
             <span class="text-sm font-bold text-slate-700 dark:text-slate-200">Mostrar mi cuenta en el catálogo para recibir transferencias</span>

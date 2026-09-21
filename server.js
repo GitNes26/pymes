@@ -5051,6 +5051,7 @@ function applyConfig(biz, body) {
     try { pags = JSON.parse(body.paginas_sugeridas || '[]'); } catch (e) { pags = []; }
     db.crearPaginasSugeridas(biz.id, pags);
   }
+  if (transferFormPosted) db.prepare('UPDATE businesses SET cash_enabled = ? WHERE id = ?').run(body.cash_enabled === '1' ? 1 : 0, biz.id);
   if (mpFormPosted) {
     const num = (v, def, max) => { const n = parseFloat(String(v || '').replace(',', '.')); return isFinite(n) && n >= 0 ? Math.min(n, max) : def; };
     db.prepare('UPDATE businesses SET mp_fee_on = ?, mp_fee_pct = ?, mp_fee_fixed = ?, mp_fee_iva = ? WHERE id = ?').run(
