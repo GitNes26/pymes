@@ -39,17 +39,6 @@
       <% } %>
 
 
-      <% if (biz.plan === 'free') { %>
-        <div class="pn-plan">
-          <span class="pn-plan-ic"><i class="bi bi-rocket-takeoff"></i></span>
-          <div class="pn-plan-txt">
-            <b>Plan Gratuito</b>
-            <span><%= allProducts.length %><%= (planMax && planMax !== Infinity) ? ' de ' + planMax : '' %> productos<%= (planMax && planMax !== Infinity) ? '' : ' · sin límite' %></span>
-          </div>
-          <% if (planMax && planMax !== Infinity) { %><div class="pn-plan-bar"><i style="width:<%= Math.min(100, Math.round(allProducts.length / planMax * 100)) %>%"></i></div><% } %>
-          <a href="/<%= biz.slug %>/admin/config" class="pn-btn pn-btn-sm">Mejorar plan</a>
-        </div>
-      <% } %>
 
       <!-- Métricas clave -->
       <% const cards = [

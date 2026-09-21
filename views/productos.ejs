@@ -79,7 +79,6 @@
             <p class="font-extrabold text-amber-900">Ya llegaste al límite de tu plan <%= planBlock.plan %></p>
             <p class="text-amber-800 mt-0.5">Tu plan permite hasta <b><%= planBlock.max %></b> producto<%= planBlock.max === 1 ? '' : 's' %> y ya tienes <b><%= planBlock.count %></b> registrados. Puedes seguir <b>editando o borrando</b> los que ya tienes, pero no registrar nuevos.</p>
           </div>
-          <a href="/<%= biz.slug %>/admin/planes" class="m-btn m-btn-sm !bg-amber-500 !border-amber-500 !text-white shrink-0">Ver planes</a>
         </div>
       <% } else if (error) { %>
         <div id="panel-error" class="mb-3 bg-[var(--md-error-container)] text-[#8c1d18] text-sm font-bold px-4 py-3 rounded-xl m-pop flex items-center gap-2">
@@ -93,7 +92,6 @@
             <p class="font-bold text-amber-900">Estás en el límite de productos de tu plan (<%= allProducts.length %> de <%= planMax %>)</p>
             <p class="text-amber-800 mt-0.5">Ya no puedes registrar productos nuevos con tu plan actual. Borra los que ya no vendas o mejora tu plan para tener productos ilimitados.</p>
           </div>
-          <a href="/<%= biz.slug %>/admin/planes" class="m-btn m-btn-outlined m-btn-sm !border-amber-300 !text-amber-800 shrink-0">Ver planes</a>
         </div>
       <% } %>
 

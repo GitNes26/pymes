@@ -527,7 +527,6 @@
       <!-- TAB NAV -->
       <nav class="flex gap-1 bg-slate-100 dark:bg-[#161b22] rounded-2xl p-1 mb-5 border border-slate-200 dark:border-[#21262d]">
         <button onclick="switchTab('tiendas')" id="tab-btn-tiendas" class="mt-tab active"><i class="bi bi-shop"></i> Tiendas <span class="mt-tab-count"><%= list.length %></span></button>
-        <button onclick="switchTab('planes')" id="tab-btn-planes" class="mt-tab"><i class="bi bi-sliders"></i> Planes <span class="mt-tab-count"><%= plans.length %></span></button>
       </nav>
 
       <!-- TAB: TIENDAS -->
@@ -619,48 +618,7 @@
       </div>
       </div><!-- /tab-tiendas -->
 
-      <!-- TAB: PLANES -->
-      <div id="tab-planes" class="mt-tab-panel">
-      <section class="bg-white dark:bg-[#161b22] rounded-2xl border border-slate-200 dark:border-[#21262d] p-4 md:p-5 shadow-sm">
-        <div class="flex items-center gap-3 mb-4">
-          <div class="w-9 h-9 rounded-xl bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 flex items-center justify-center text-lg">🎛</div>
-          <div>
-            <h2 class="font-extrabold text-slate-900 dark:text-white text-sm">Planes</h2>
-            <p class="text-xs text-slate-400 dark:text-slate-500">Precio, duración, límite de productos y publicidad.</p>
-          </div>
-        </div>
-        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
-          <% plans.forEach(p => { %>
-            <div class="border border-slate-200 dark:border-[#30363d] rounded-2xl p-3 <%= p.active ? 'bg-white dark:bg-[#0d1117]' : 'opacity-50 bg-slate-50 dark:bg-[#0d1117]/50' %>">
-              <div class="flex items-center justify-between">
-                <p class="font-bold text-sm text-slate-800 dark:text-white"><%= p.name %></p>
-                <div class="flex flex-col items-end gap-1">
-                  <span class="text-[10px] font-black px-2 py-0.5 rounded-full <%= p.ads ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600' %>">📣 <%= p.ads ? 'con publicidad' : 'sin publicidad' %></span>
-                </div>
-              </div>
-              <p class="text-xs text-slate-500 mt-1">$<%= p.price.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') %> · <%= p.days ? p.days + ' días' : 'sin vencimiento' %> · <%= p.max_products === -1 ? '∞ productos' : p.max_products + ' productos' %></p>
-              <p class="text-[10px] text-slate-400 mt-0.5"><%= planUsage[p.key] || 0 %> tiendas usándolo</p>
-              <% if (p.key !== 'free' && p.key !== 'pro') { %>
-                <form method="POST" action="/maestro/plan/<%= p.id %>/eliminar" data-confirm="¿Eliminar el plan <%= p.name.replace(/'/g, "\\'") %>?" class="mt-2">
-                  <button class="text-[11px] font-bold text-red-500 hover:text-red-700 transition">Eliminar</button>
-                </form>
-              <% } %>
-            </div>
-          <% }) %>
-        </div>
-        <details class="border border-dashed border-slate-300 rounded-2xl p-3 transition hover:border-slate-400">
-          <summary class="text-xs font-bold text-slate-600 cursor-pointer">＋ Crear nuevo plan</summary>
-          <form method="POST" action="/maestro/plan" class="grid sm:grid-cols-2 lg:grid-cols-5 gap-2 mt-3">
-            <input name="name" required placeholder="Nombre del plan" class="input-compact w-full rounded-xl px-3 py-2 text-sm" />
-            <input name="price" type="number" step="0.01" min="0" placeholder="Precio $/mes" class="input-compact w-full rounded-xl px-3 py-2 text-sm" />
-            <input name="days" type="number" min="0" placeholder="Días del periodo" class="input-compact w-full rounded-xl px-3 py-2 text-sm" />
-            <input name="max_products" type="number" min="-1" placeholder="Productos (-1 = ∞)" class="input-compact w-full rounded-xl px-3 py-2 text-sm" />
-            <label class="flex items-center gap-2 text-xs font-bold text-slate-600 cursor-pointer"><input type="checkbox" name="ads" class="w-4 h-4 accent-amber-500" /> Con publicidad cruzada</label>
-            <button class="m-btn m-btn-filled m-btn-sm sm:col-span-2 lg:col-span-5">Crear plan</button>
-          </form>
-        </details>
-      </section>
-      </div><!-- /tab-planes -->
+      
     </main>
   <% } %>
 

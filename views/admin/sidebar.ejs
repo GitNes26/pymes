@@ -11,7 +11,6 @@
     { id: 'clientes', label: 'Clientes', group: 'Negocio', show: () => has('clientes'), href: '/' + biz.slug + '/admin/clientes', icon: 'M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m9-6.13a4 4 0 100-8 4 4 0 000 8zM16 7a4 4 0 11-8 0 4 4 0 018 0z' },
     { id: 'proveedores', label: 'Proveedores', group: 'Negocio', show: () => has('config'), href: '/' + biz.slug + '/admin/proveedores', icon: 'M3 3v18h18M8 14h4m-4-4h4M7 7h10m-7 12h10' },
     { id: 'config', label: 'Configuración', group: 'Cuenta', show: () => has('config'), href: '/' + biz.slug + '/admin/config', icon: 'M4 6h16M4 12h16M4 18h10M14 18h6' },
-    { id: 'planes', label: 'Planes', group: 'Cuenta', show: () => has('config'), href: '/' + biz.slug + '/admin/planes', icon: 'M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2zm4 12h6m-6-4h6m-6-4h6' }
   ].filter(it => it.show());
   // Agrupa manteniendo el orden ya definido arriba (no alfabético) — un
   // pequeño rótulo por grupo es lo que separa un sidebar "lista de links"
