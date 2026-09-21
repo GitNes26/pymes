@@ -136,7 +136,7 @@
   const NO_IMAGE = '/img/sin-imagen.svg';
   function money(n) { return CURRENCY_SYMBOL + (Number(n || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')); }
   const PROMAP = Object.fromEntries(
-    <%- safeJson((products || []).filter(p => !p.isAd).map(p => [String(p.id), { name: p.name, price: p.price, stock: p.stock === null || p.stock === undefined ? null : p.stock, madeToOrder: !!p.made_to_order, image: p.image || '/img/sin-imagen.svg', imgs: (p.imgs && p.imgs.length ? p.imgs : [p.image || '/img/sin-imagen.svg']), variants: (typeof p.variants === 'string' ? p.variants : ''), promoType: p.promo_type || '', promoGift: p.promo_gift || '', promoDesc: p.promo_desc || '' }])) %>
+    <%- safeJson((products || []).filter(p => !p.isAd).map(p => [String(p.id), { name: p.name, price: p.price, priceBase: p.price_base == null ? p.price : p.price_base, stock: p.stock === null || p.stock === undefined ? null : p.stock, madeToOrder: !!p.made_to_order, image: p.image || '/img/sin-imagen.svg', imgs: (p.imgs && p.imgs.length ? p.imgs : [p.image || '/img/sin-imagen.svg']), variants: (typeof p.variants === 'string' ? p.variants : ''), promoType: p.promo_type || '', promoGift: p.promo_gift || '', promoDesc: p.promo_desc || '' }])) %>
   );
   const CURRENT_STORE = { slug: SLUG, name: STORE_NAME, whatsapp: STORE_WHATSAPP, logo: STORE_LOGO, wa_message: <%- safeJson(biz.wa_message || '') %> };
   // Pago en línea: solo aplica al carrito de ESTA tienda (no a productos de
@@ -184,7 +184,8 @@
       const images = (raw.images && typeof raw.images === 'object') ? raw.images : {};
       const stock = (raw.stock && typeof raw.stock === 'object') ? raw.stock : {};
       const prices = (raw.prices && typeof raw.prices === 'object') ? raw.prices : {};
-      return { attrs, images, stock, prices };
+      const baseprices = (raw.baseprices && typeof raw.baseprices === 'object') ? raw.baseprices : null;
+      return { attrs, images, stock, prices, baseprices };
     }
     if (Array.isArray(raw)) {
       const values = [];
@@ -653,7 +654,7 @@
             <div style="font-size:11px;color:#4d7c5f;margin-top:6px;">Transfiere y manda tu comprobante por WhatsApp junto con tu pedido.</div>
           </div>` : ''}
           <div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;">
-            ${(IS_ADMIN && g.store.slug === SLUG) ? `<button type="button" onclick="payCashAdmin(${jattr(g.store.slug)})" style="width:100%;background:#15803d;color:#fff;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:14px;cursor:pointer;">💵 Registrar pago en efectivo</button>` : ''}
+            ${(IS_ADMIN && g.store.slug === SLUG) ? `<button type="button" onclick="payCashAdmin(${jattr(g.store.slug)})" style="width:100%;background:#15803d;color:#fff;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:14px;cursor:pointer;">💵 Registrar en efectivo · ${money(cashTotalOf(g))} <small style=\"font-weight:600;opacity:.85\">(sin comisión)</small></button>` : ''}
             ${(MP_CARD && g.store.slug === SLUG) ? `<button type="button" onclick="payCardInApp(${jattr(g.store.slug)})" style="width:100%;background:#009ee3;color:#fff;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:14px;cursor:pointer;">💳 Pagar con tarjeta</button>` : (MP_ENABLED && g.store.slug === SLUG) ? `<button type="button" onclick="payWithMercadoPago(${jattr(g.store.slug)})" style="width:100%;background:#009ee3;color:#fff;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:14px;cursor:pointer;">💳 Pagar con Mercado Pago</button>` : ''}
             ${(g.store.slug === SLUG && (MP_CARD || MP_ENABLED)) ? '' : `<p style="margin:0;padding:10px 12px;border-radius:12px;background:#fef3c7;color:#92400e;font-size:12.5px;font-weight:600;text-align:center;">${g.store.slug === SLUG ? 'Esta tienda aún no tiene pagos en línea activados.' : 'Abre esta tienda para pagar tu pedido.'}</p>${g.store.slug === SLUG ? '' : `<a href="/${esc(g.store.slug)}" style="display:block;text-align:center;background:#1e293b;color:#fff;border-radius:12px;padding:11px;font-weight:700;font-size:14px;text-decoration:none;">Ir a la tienda</a>`}`}
           </div>
@@ -817,12 +818,24 @@
     ov.classList.remove('cp-in');
     setTimeout(function () { ov.remove(); document.body.style.overflow = ''; }, 250);
   }
+  // Precio de un renglón SIN la comisión de pago en línea (lo que se cobra en efectivo)
+  function cashUnitPrice(it) {
+    const p = PROMAP[String(it.id)];
+    if (!p) return it.price;
+    if (it.variant) {
+      const vm = normVariantModel(p.variants);
+      const key = String(it.variant).split(' / ').map(x => x.trim()).join('|');
+      if (vm.baseprices && vm.baseprices[key] !== undefined && vm.baseprices[key] !== '' && !isNaN(Number(vm.baseprices[key]))) return Number(vm.baseprices[key]);
+    }
+    return p.priceBase != null ? p.priceBase : it.price;
+  }
+  function cashTotalOf(g) { return Math.round(g.items.reduce((s, it) => s + cashUnitPrice(it) * it.qty, 0) * 100) / 100; }
   // Registra la venta como pagada en efectivo (solo con sesión de dueño/empleado)
   function payCashAdmin(slug) {
     const g = storeGroups().find(x => x.store.slug === slug);
     if (!g || !g.items.length) return;
     const total = Math.round(g.items.reduce((s, it) => s + it.qty * it.price, 0) * 100) / 100;
-    if (!window.confirm('¿Registrar esta venta como pago en efectivo? Se cobra el precio sin la comisión de pago en línea.')) return;
+    if (!window.confirm('¿Registrar esta venta como pago en efectivo por ' + money(cashTotalOf(g)) + '? (sin la comisión de pago en línea)')) return;
     const nombre = (document.getElementById('chat-nombre') || {}).value || '';
     const telefono = (document.getElementById('chat-telefono') || {}).value || '';
     const items = g.items.map(it => ({ id: it.id, qty: it.qty, variant: it.variant || '' }));

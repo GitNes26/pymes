@@ -1746,6 +1746,7 @@ function markupAmount(v, f) {
 }
 function applyMarkup(p, f) {
   if (!p || !f) return p;
+  p.price_base = p.price; // precio sin comisión (para el cobro en efectivo del mostrador)
   p.price = markupAmount(p.price, f);
   if (p.old_price) p.old_price = markupAmount(p.old_price, f);
   let raw = p.variants, obj = null, wasStr = false;
@@ -1754,7 +1755,7 @@ function applyMarkup(p, f) {
   if (obj && !Array.isArray(obj) && obj.prices && typeof obj.prices === 'object') {
     const np = {};
     Object.keys(obj.prices).forEach(k => { const v = obj.prices[k]; np[k] = (v === '' || v == null || isNaN(Number(v))) ? v : markupAmount(v, f); });
-    const out = Object.assign({}, obj, { prices: np });
+    const out = Object.assign({}, obj, { prices: np, baseprices: obj.prices });
     p.variants = wasStr ? JSON.stringify(out) : out;
   }
   return p;
