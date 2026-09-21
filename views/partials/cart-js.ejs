@@ -568,6 +568,7 @@
       <div id="chat-body" style="overflow-y:auto;padding:8px 12px;flex:1;"></div>
       <div style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:10px 16px;">
         <p style="font-size:11px;color:#64748b;margin-bottom:6px;">Déjanos tu nombre y teléfono para confirmar tu pedido</p>
+        <% if (typeof showHow !== 'undefined' && showHow) { %><p style="font-size:12px;margin:0 0 8px;"><a href="#como-comprar" onclick="toggleChat(false); var s=document.getElementById('como-comprar'); if(s){ setTimeout(function(){ s.scrollIntoView({behavior:'smooth',block:'start'}); }, 260); } return false;" style="color:#2563eb;font-weight:700;text-decoration:underline;">¿No sabes cómo comprar? Mira los pasos</a></p><% } %>
         <div style="display:flex;gap:8px;margin-bottom:8px;">
           <input id="chat-nombre" type="text" required placeholder="Tu nombre *" style="flex:1;min-width:0;border:1px solid #e2e8f0;border-radius:10px;padding:9px 12px;font-size:13px;outline:none;">
           <input id="chat-telefono" type="tel" inputmode="numeric" maxlength="12" pattern="[0-9]{3} [0-9]{3} [0-9]{4}" data-mask="phone" required placeholder="Teléfono *" style="flex:1;min-width:0;border:1px solid #e2e8f0;border-radius:10px;padding:9px 12px;font-size:13px;outline:none;">

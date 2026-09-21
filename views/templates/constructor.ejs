@@ -1199,6 +1199,7 @@
         <% if (biz.banner || biz.logo) { %><span class="hdr-title"><%= biz.name %></span><% } else { %><h1 class="hdr-title"><%= biz.name %></h1><% } %>
       </div>
       <div class="hdr-right">
+        <% if (_ex.showHow) { %><a href="#como-comprar" class="install-pill how-pill" onclick="var s=document.getElementById('como-comprar'); if(s){ s.scrollIntoView({behavior:'smooth',block:'start'}); return false; }"><i class="bi bi-question-circle"></i> ¿Cómo comprar?</a><% } %>
         <button type="button" id="pwa-install-btn-public" class="install-pill" onclick="window.installPWA && window.installPWA()"><i class="bi bi-download"></i> Instalar app</button>
         <% if (adminLink) { %><a href="<%= adminLink %>" class="admin-pill"><i class="bi bi-speedometer2"></i> Panel</a><% } %>
       </div>
@@ -1517,14 +1518,22 @@
   <% } %>
 
   <!-- ===== CÓMO PEDIR (interruptor en Configuración) ===== -->
-  <% if (_ex.showHow) { %>
-  <section class="xs-sec<%- _xsBand() %>" aria-labelledby="xs-how-t">
+  <% if (_ex.showHow) {
+       var _howCard = !!(biz.mp_enabled && biz.mp_public_key);
+       var _howTr = !_howCard && !!(biz.transfer_enabled && (biz.transfer_bank || biz.transfer_account));
+       var _how3 = _howCard
+         ? ['bi-credit-card', 'Paga con tarjeta', 'Pagas seguro en el mismo carrito con tu tarjeta y tu pedido queda registrado al instante.']
+         : (_howTr
+           ? ['bi-bank', 'Transfiere y manda tu comprobante', 'Haz la transferencia por el total con los datos del carrito y mándanos el comprobante por WhatsApp.']
+           : ['bi-chat-dots', 'Confirmamos tu pedido', 'Nos escribes o te escribimos para coordinar el pago y la entrega.']);
+  %>
+  <section class="xs-sec<%- _xsBand() %>" id="como-comprar" aria-labelledby="xs-how-t">
     <div class="xs-in">
-      <%- _xsHead('Es muy fácil', 'Cómo pedir', 'Sin registros ni complicaciones: eliges, confirmas y lo cerramos por WhatsApp.', 'xs-how-t') %>
+      <%- _xsHead('Es muy fácil', 'Cómo comprar', 'Sin registros ni complicaciones: eliges, revisas tu pedido y ' + (_howCard ? 'pagas con tarjeta.' : (_howTr ? 'pagas por transferencia.' : 'lo confirmamos contigo.')), 'xs-how-t') %>
       <div class="xs-steps">
         <div class="xs-step"><span class="xs-step-ic" aria-hidden="true"><i class="bi bi-bag-plus"></i><span class="xs-step-n">1</span></span><h3>Elige lo que te guste</h3><p>Explora el catálogo y toca “Agregar” en tus favoritos.</p></div>
         <div class="xs-step"><span class="xs-step-ic" aria-hidden="true"><i class="bi bi-card-checklist"></i><span class="xs-step-n">2</span></span><h3>Revisa tu pedido</h3><p>Abre el carrito, ajusta cantidades y déjanos tu nombre y teléfono.</p></div>
-        <div class="xs-step"><span class="xs-step-ic" aria-hidden="true"><i class="bi bi-chat-dots"></i><span class="xs-step-n">3</span></span><h3>Lo cerramos por WhatsApp</h3><p>Te llega el pedido armado y ahí coordinamos pago y entrega.</p></div>
+        <div class="xs-step"><span class="xs-step-ic" aria-hidden="true"><i class="bi <%= _how3[0] %>"></i><span class="xs-step-n">3</span></span><h3><%= _how3[1] %></h3><p><%= _how3[2] %></p></div>
       </div>
     </div>
   </section>
@@ -2145,7 +2154,7 @@
     }
   </script>
 
-  <%- include("../partials/cart-js", { biz, products, currencySymbol: typeof currencySymbol !== "undefined" ? currencySymbol : "$" }) %>
+  <%- include("../partials/cart-js", { biz, products, showHow: !!_ex.showHow, currencySymbol: typeof currencySymbol !== "undefined" ? currencySymbol : "$" }) %>
   <script src="/js/searchable-select.js?v=20260920"></script>
 </body>
 </html>
