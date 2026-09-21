@@ -147,14 +147,6 @@
   // Pago con tarjeta dentro de la app: requiere Access Token + Public Key de la tienda
   const MP_PUBLIC_KEY = <%- safeJson((biz.mp_enabled && biz.mp_access_token && biz.mp_public_key) ? biz.mp_public_key : '') %>;
   const MP_CARD = !!MP_PUBLIC_KEY;
-  // Comisión de Mercado Pago que se suma al cliente (el negocio recibe el precio completo). El servidor es quien manda.
-  const MP_FEE = <%- safeJson({ on: biz.mp_fee_on === 0 || biz.mp_fee_on === '0' ? 0 : 1, pct: Number(biz.mp_fee_pct == null ? 3.49 : biz.mp_fee_pct), fixed: Number(biz.mp_fee_fixed == null ? 4 : biz.mp_fee_fixed), iva: Number(biz.mp_fee_iva == null ? 16 : biz.mp_fee_iva) }) %>;
-  function mpFeeFor(net) {
-    if (!MP_FEE.on || !(net > 0)) return 0;
-    const k = 1 + MP_FEE.iva / 100, denom = 1 - (MP_FEE.pct / 100) * k;
-    if (denom <= 0.2) return 0;
-    return Math.round(((net + MP_FEE.fixed * k) / denom - net) * 100) / 100;
-  }
   // Dueño/empleado con sesión activa: puede registrar la venta como pago en efectivo
   const IS_ADMIN = <%- (typeof isAdmin !== 'undefined' && isAdmin) ? 'true' : 'false' %>;
   // Transferencia bancaria: igual solo para el carrito de esta tienda.
@@ -660,7 +652,6 @@
             ${TRANSFER.holder ? `<div style="font-size:11px;color:#4d7c5f;margin-top:2px;">A nombre de ${esc(TRANSFER.holder)}</div>` : ''}
             <div style="font-size:11px;color:#4d7c5f;margin-top:6px;">Transfiere y manda tu comprobante por WhatsApp junto con tu pedido.</div>
           </div>` : ''}
-          ${((MP_CARD || MP_ENABLED) && g.store.slug === SLUG && mpFeeFor(t) > 0) ? `<div style="margin:0 12px 2px;padding:9px 12px;border-radius:12px;background:#f1f5f9;font-size:12px;color:#475569;line-height:1.5;"><div style="display:flex;justify-content:space-between;"><span>Productos</span><b>${money(t)}</b></div><div style="display:flex;justify-content:space-between;"><span>Cargo por pago en línea</span><b>${money(mpFeeFor(t))}</b></div><div style="display:flex;justify-content:space-between;font-size:13.5px;color:#0f172a;margin-top:3px;padding-top:4px;border-top:1px solid #e2e8f0;"><span><b>Total a pagar</b></span><b>${money(t + mpFeeFor(t))}</b></div></div>` : ''}
           <div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;">
             ${(IS_ADMIN && g.store.slug === SLUG) ? `<button type="button" onclick="payCashAdmin(${jattr(g.store.slug)})" style="width:100%;background:#15803d;color:#fff;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:14px;cursor:pointer;">💵 Registrar pago en efectivo</button>` : ''}
             ${(MP_CARD && g.store.slug === SLUG) ? `<button type="button" onclick="payCardInApp(${jattr(g.store.slug)})" style="width:100%;background:#009ee3;color:#fff;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:14px;cursor:pointer;">💳 Pagar con tarjeta</button>` : (MP_ENABLED && g.store.slug === SLUG) ? `<button type="button" onclick="payWithMercadoPago(${jattr(g.store.slug)})" style="width:100%;background:#009ee3;color:#fff;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:14px;cursor:pointer;">💳 Pagar con Mercado Pago</button>` : ''}
@@ -831,7 +822,7 @@
     const g = storeGroups().find(x => x.store.slug === slug);
     if (!g || !g.items.length) return;
     const total = Math.round(g.items.reduce((s, it) => s + it.qty * it.price, 0) * 100) / 100;
-    if (!window.confirm('¿Registrar ' + money(total) + ' como pago en efectivo?')) return;
+    if (!window.confirm('¿Registrar esta venta como pago en efectivo? Se cobra el precio sin la comisión de pago en línea.')) return;
     const nombre = (document.getElementById('chat-nombre') || {}).value || '';
     const telefono = (document.getElementById('chat-telefono') || {}).value || '';
     const items = g.items.map(it => ({ id: it.id, qty: it.qty, variant: it.variant || '' }));
@@ -844,7 +835,7 @@
       if (!d.ok) { toast(d.error || 'No se pudo registrar la venta', false); return; }
       g.items.forEach(it => { delete cart[it.key]; });
       saveCart(); renderCart();
-      toast('Venta en efectivo registrada · pedido #' + d.orderId + ' ✓', true);
+      toast('Venta en efectivo registrada · ' + money(d.total) + ' · pedido #' + d.orderId + ' ✓', true);
       if (window.haptic) window.haptic(30);
     }).catch(() => toast('Sin conexión. Intenta de nuevo', false));
   }
@@ -853,7 +844,7 @@
     const g = storeGroups().find(x => x.store.slug === slug);
     if (!g) return;
     const net = Math.round(g.items.reduce((s, it) => s + it.qty * it.price, 0) * 100) / 100;
-    const total = Math.round((net + mpFeeFor(net)) * 100) / 100;
+    const total = net; // la comisión ya va incluida en el precio de cada producto
     const nombre = (document.getElementById('chat-nombre') || {}).value || '';
     const telefono = (document.getElementById('chat-telefono') || {}).value || '';
     const items = g.items.map(it => ({ id: it.id, qty: it.qty, variant: it.variant || '' }));

@@ -1725,6 +1725,36 @@ function getBusiness(slug) {
 }
 
 // Si la promo tiene fecha de vencimiento y ya pasó, la promo deja de mostrarse.
+// La comisión de Mercado Pago va DENTRO del precio que ve el cliente (un solo precio final, sin cargos aparte):
+// precio mostrado = precio base / (1 - comisión% * (1 + IVA%)), redondeado hacia arriba al peso.
+// Solo aplica si la tienda cobra en línea. El cobro en efectivo del mostrador usa el precio base.
+function priceMarkupFactor(biz) {
+  if (!biz || !biz.mp_access_token || biz.mp_fee_on === 0 || biz.mp_fee_on === '0') return 1;
+  const pct = Math.max(0, Math.min(30, Number(biz.mp_fee_pct == null ? 3.49 : biz.mp_fee_pct)));
+  const iva = Math.max(0, Math.min(30, Number(biz.mp_fee_iva == null ? 16 : biz.mp_fee_iva)));
+  const denom = 1 - (pct / 100) * (1 + iva / 100);
+  return denom > 0.2 ? 1 / denom : 1;
+}
+function markupAmount(v, f) {
+  const n = Number(v);
+  if (!(n > 0) || !(f > 1) || isNaN(n)) return v;
+  return Math.ceil(n * f - 1e-9);
+}
+function applyMarkup(p, f) {
+  if (!p || !(f > 1)) return p;
+  p.price = markupAmount(p.price, f);
+  if (p.old_price) p.old_price = markupAmount(p.old_price, f);
+  let raw = p.variants, obj = null, wasStr = false;
+  if (typeof raw === 'string') { wasStr = true; try { obj = JSON.parse(raw); } catch (e) { obj = null; } }
+  else if (raw && typeof raw === 'object') obj = raw;
+  if (obj && !Array.isArray(obj) && obj.prices && typeof obj.prices === 'object') {
+    const np = {};
+    Object.keys(obj.prices).forEach(k => { const v = obj.prices[k]; np[k] = (v === '' || v == null || isNaN(Number(v))) ? v : markupAmount(v, f); });
+    const out = Object.assign({}, obj, { prices: np });
+    p.variants = wasStr ? JSON.stringify(out) : out;
+  }
+  return p;
+}
 function withPromo(p) {
   if (p && p.old_price) {
     const today = new Date().toISOString().slice(0, 10);
@@ -1766,12 +1796,14 @@ function getCatalog(businessId) {
   const catCounts = {};
   db.prepare('SELECT category_id, COUNT(*) AS c FROM products WHERE business_id = ? AND active = 1 GROUP BY category_id').all(businessId).forEach(r => { catCounts[r.category_id] = r.c; });
   categories.forEach(c => { c.count = catCounts[c.id] || 0; });
+  const _mkF = priceMarkupFactor(db.prepare('SELECT mp_access_token, mp_fee_on, mp_fee_pct, mp_fee_iva FROM businesses WHERE id = ?').get(businessId));
   const products = db.prepare(
     `SELECT p.*, c.name AS category_name FROM products p
      LEFT JOIN categories c ON c.id = p.category_id
      WHERE p.business_id = ? AND p.active = 1
      ORDER BY p.featured DESC, p.sort ASC, p.created_at DESC`
   ).all(businessId).map(withPromo).map(p => {
+    applyMarkup(p, _mkF);
     p.imgs = productImgs(p);
     if (variantCoverImage(p)) p.image = p.imgs[0]; // la tarjeta muestra la foto de la primera variante
     p.hideStock = p.show_stock === 0 || p.show_stock === '0';
@@ -2385,6 +2417,7 @@ app.get('/:slug/p/:id', (req, res, next) => {
   }
   p.imgs = productImgs(p);
   withPromo(p);
+  applyMarkup(p, priceMarkupFactor(biz));
   const pvm0 = parseVariantList(p.variants);
   p.hideStock = p.show_stock === 0 || p.show_stock === '0';
   p.customTags = parseCustomTags(p.custom_tags);
@@ -2664,8 +2697,6 @@ app.get('/:slug/pedir', (req, res) => {
   }).filter(Boolean);
 
   if (lines.length === 0) return res.redirect('/' + req.params.slug);
-  const proFee = mpCardFee(biz, total);
-  if (proFee > 0) { mpItems.push({ title: 'Cargo por pago en línea', quantity: 1, unit_price: proFee, currency_id: biz.currency || 'MXN' }); lines.push('• Cargo por pago en línea = ' + currencyInfo(biz.currency).symbol + proFee.toFixed(2)); }
 
   const instInfo = hasInstallment ? { isInstallment: true, count: instProduct.installment_count || 6, frequency: instProduct.installment_frequency || 'semanal', minDown: instProduct.installment_min_down || 0 } : null;
   let message = buildOrderMessage(biz.name, lines, total, biz.wa_message, currencyInfo(biz.currency).symbol, instInfo);
@@ -2876,10 +2907,11 @@ app.get('/:slug/pagar-mp', async (req, res) => {
     const p = db.prepare('SELECT * FROM products WHERE id = ? AND business_id = ?').get(it.id, biz.id);
     if (!p) return null;
     const qty = Math.max(1, parseInt(it.qty) || 1);
-    const sub = p.price * qty;
+    const unitP = pagoUnitPrice(p, it.variant, priceMarkupFactor(biz));
+    const sub = unitP * qty;
     total += sub;
     const variant = it.variant ? ` (${it.variant})` : '';
-    mpItems.push({ title: (p.name + variant).slice(0, 250), quantity: qty, unit_price: Number(p.price), currency_id: biz.currency || 'MXN' });
+    mpItems.push({ title: (p.name + variant).slice(0, 250), quantity: qty, unit_price: Number(unitP), currency_id: biz.currency || 'MXN' });
     return `• ${qty} x ${p.name}${variant} = ${currencyInfo(biz.currency).symbol}${sub.toFixed(2)}`;
   }).filter(Boolean);
   if (lines.length === 0) return res.redirect('/' + req.params.slug);
@@ -2910,7 +2942,7 @@ app.get('/:slug/pagar-mp', async (req, res) => {
 });
 
 // Precio real de una línea: el del producto, o el de la variante elegida (la etiqueta llega como "A / B")
-function pagoUnitPrice(p, variantLabel) {
+function pagoUnitPrice(p, variantLabel, f) {
   withPromo(p);
   let price = Number(p.price) || 0;
   const label = String(variantLabel || '').trim();
@@ -2919,7 +2951,7 @@ function pagoUnitPrice(p, variantLabel) {
     const key = label.split(' / ').map(x => x.trim()).join('|');
     if (vm && vm.prices && vm.prices[key] !== undefined && vm.prices[key] !== '' && !isNaN(Number(vm.prices[key]))) price = Number(vm.prices[key]);
   }
-  return price;
+  return f > 1 ? markupAmount(price, f) : price;
 }
 const MP_DETAIL_ES = {
   cc_rejected_insufficient_amount: 'Fondos insuficientes en la tarjeta.',
@@ -2953,7 +2985,7 @@ app.post('/:slug/pagar-tarjeta', rateLimit(12), async (req, res) => {
     const p = db.prepare('SELECT * FROM products WHERE id = ? AND business_id = ? AND active = 1').get(parseInt(it && it.id) || 0, biz.id);
     if (!p) return null;
     const qty = Math.max(1, Math.min(999, parseInt(it.qty) || 1));
-    const unit = pagoUnitPrice(p, it.variant);
+    const unit = pagoUnitPrice(p, it.variant, priceMarkupFactor(biz));
     const sub = unit * qty;
     total += sub;
     const variant = it.variant ? ' (' + String(it.variant).slice(0, 80) + ')' : '';
@@ -2962,9 +2994,7 @@ app.post('/:slug/pagar-tarjeta', rateLimit(12), async (req, res) => {
   total = Math.round(total * 100) / 100;
   if (!lines.length || !(total > 0)) return res.status(400).json({ ok: false, error: 'El carrito está vacío' });
   const clientTotal = Number(fd.transaction_amount);
-  const cardFee = mpCardFee(biz, total);
-  const charge = Math.round((total + cardFee) * 100) / 100;
-  if (cardFee > 0) lines.push('• Cargo por pago en línea = ' + currencyInfo(biz.currency).symbol + cardFee.toFixed(2));
+  const charge = total; // la comisión ya viene incluida en el precio de cada producto
   if (isFinite(clientTotal) && Math.abs(clientTotal - charge) > 0.5) return res.status(409).json({ ok: false, error: 'El total cambió (' + currencyInfo(biz.currency).symbol + charge.toFixed(2) + '). Cierra esta ventana, revisa tu carrito y vuelve a intentar.' });
 
   const customerData = customerName ? (customerName + (customerPhone ? ' (' + customerPhone + ')' : '')) : (customerPhone || '');

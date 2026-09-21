@@ -866,25 +866,21 @@
           <div class="rounded-xl border border-slate-200 dark:border-[#30363d] p-4 space-y-3">
             <label class="flex items-start gap-2.5 cursor-pointer">
               <input type="checkbox" name="mp_fee_on" value="1" <%= (biz.mp_fee_on === 0 || biz.mp_fee_on === '0') ? '' : 'checked' %> class="mt-0.5 accent-sky-500">
-              <span class="text-sm font-bold text-slate-700 dark:text-slate-200">Sumar la comisión de Mercado Pago al cliente
-                <span class="block text-xs font-normal text-slate-500 mt-0.5">Así te llega el precio completo. El cliente ve una línea "Cargo por pago en línea" en su carrito, sin cambiar el precio de tus productos.</span>
+              <span class="text-sm font-bold text-slate-700 dark:text-slate-200">Incluir la comisión de Mercado Pago en el precio de mis productos
+                <span class="block text-xs font-normal text-slate-500 mt-0.5">El cliente ve un solo precio final, sin cargos aparte, y a ti te llega el precio que tú pusiste. Tú sigues capturando el precio base; el catálogo muestra el precio ya ajustado.</span>
               </span>
             </label>
-            <div class="grid grid-cols-3 gap-3">
+            <div class="grid grid-cols-2 gap-3">
               <div>
                 <label class="config-label">Comisión %</label>
                 <input name="mp_fee_pct" value="<%= biz.mp_fee_pct == null ? 3.49 : biz.mp_fee_pct %>" inputmode="decimal" class="config-input" placeholder="3.49">
-              </div>
-              <div>
-                <label class="config-label">Cargo fijo $</label>
-                <input name="mp_fee_fixed" value="<%= biz.mp_fee_fixed == null ? 4 : biz.mp_fee_fixed %>" inputmode="decimal" class="config-input" placeholder="4">
               </div>
               <div>
                 <label class="config-label">IVA %</label>
                 <input name="mp_fee_iva" value="<%= biz.mp_fee_iva == null ? 16 : biz.mp_fee_iva %>" inputmode="decimal" class="config-input" placeholder="16">
               </div>
             </div>
-            <p class="text-xs text-slate-400">Ejemplo con estos valores: un producto de $1,000 se cobra al cliente <b>$1,047.03</b> y a ti te llegan $1,000. Revisa la tarifa vigente en tu cuenta de Mercado Pago y ajusta los números si cambian.</p>
+            <p class="text-xs text-slate-400">Ejemplo: un producto que capturas en $1,000 se muestra a $1,043 y a ti te llegan $1,000 menos el cargo fijo por operación de Mercado Pago. Revisa la tarifa vigente en tu cuenta y ajusta el porcentaje (súbelo un poco si quieres cubrir también el cargo fijo).</p>
           </div>
 
           <div class="rounded-xl border border-slate-200 dark:border-[#30363d] p-3 text-xs text-slate-500 dark:text-slate-400">
