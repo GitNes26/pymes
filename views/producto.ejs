@@ -302,18 +302,6 @@
           <% if (biz.address) { %><span><i class="bi bi-geo-alt"></i> Recoge en tienda</span><% } %>
         </div>
 
-        <!-- Características -->
-        <% var specsLines = (product.specs || '').split('\n').map(function(s){ return s.trim(); }).filter(function(s){ return s.indexOf(':') > -1; }); %>
-        <% if (specsLines.length) { %>
-          <div class="specs-wrap">
-            <div class="specs-title"><i class="bi bi-list-check"></i> Características</div>
-            <dl>
-              <% specsLines.forEach(function(line) { var idx = line.indexOf(':'); var k = line.slice(0, idx).trim(); var v = line.slice(idx+1).trim(); %>
-                <div class="specs-row"><dt class="specs-key"><%= k %></dt><dd class="specs-val"><%= v %></dd></div>
-              <% }) %>
-            </dl>
-          </div>
-        <% } %>
       </div>
     </div>
 
