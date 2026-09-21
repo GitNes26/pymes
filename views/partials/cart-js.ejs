@@ -759,7 +759,7 @@
     // wa.me no adjunta imágenes; WhatsApp sí muestra una tarjeta con foto del enlace: apunta a la página del pedido con collage
     const photoFile = withPhoto ? _orderPhotos[orderPhotoKey(g)] : null;
     const sharePhoto = photoFile && photoFile !== 'loading' && canSharePhotos();
-    if (!sharePhoto) msg += '\n\n📸 Fotos de mi pedido:\n' + location.origin + '/' + g.store.slug + '/pedido?ids=' + g.items.map(it => it.id).join(',') + '&q=' + g.items.map(it => it.qty).join(',');
+    if (!sharePhoto) msg += '\n\n📸 Fotos de mi pedido:\n' + location.origin + '/' + g.store.slug + '/pedido?ids=' + g.items.map(it => it.id).join(',') + '&q=' + g.items.map(it => it.qty).join(',') + (nombre ? '&n=' + encodeURIComponent(nombre) : '') + (telefono ? '&t=' + encodeURIComponent(telefono) : '');
     const url = 'https://wa.me/' + waNumber(g.store.whatsapp) + '?text=' + encodeURIComponent(msg);
     try {
       fetch('/api/pedir', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: g.items.map(it => ({ store: it.store.slug, id: it.id, qty: it.qty, variant: it.variant })), nombre: nombre, telefono: telefono }) }).catch(() => {});

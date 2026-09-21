@@ -2708,7 +2708,7 @@ app.get('/:slug/pedir', (req, res) => {
   if (customerName) message += `\n\nMi nombre: ${customerName}`;
   if (customerPhone) message += `\nMi teléfono: ${customerPhone}`;
   const okItems = items.filter(it => it && parseInt(it.id) > 0).slice(0, 12);
-  if (okItems.length) message += `\n\n📸 Fotos de mi pedido:\n${absoluteStoreUrl(req, biz)}/pedido?ids=${okItems.map(it => parseInt(it.id)).join(',')}&q=${okItems.map(it => Math.max(1, parseInt(it.qty) || 1)).join(',')}`;
+  if (okItems.length) message += `\n\n📸 Fotos de mi pedido:\n${absoluteStoreUrl(req, biz)}/pedido?ids=${okItems.map(it => parseInt(it.id)).join(',')}&q=${okItems.map(it => Math.max(1, parseInt(it.qty) || 1)).join(',')}${customerName ? '&n=' + encodeURIComponent(customerName) : ''}${customerPhone ? '&t=' + encodeURIComponent(customerPhone) : ''}`;
 
   const customerData = customerName ? (customerName + (customerPhone ? ' (' + customerPhone + ')' : '')) : (customerPhone || '');
   db.prepare(
@@ -2798,11 +2798,14 @@ app.get('/:slug/pedido', (req, res, next) => {
   const items = pedidoItems(biz, req.query);
   if (!items.length) return res.redirect('/' + biz.slug);
   const qs = 'ids=' + items.map(it => it.p.id).join(',') + '&q=' + items.map(it => it.qty).join(',');
+  // Quién hizo el pedido (si lo dejó): nombre y WhatsApp llegan en el enlace (?n= y ?t=)
+  const cliente = String(req.query.n || '').replace(/[<>]/g, '').trim().slice(0, 80);
+  const telCliente = String(req.query.t || '').replace(/[^0-9]/g, '').slice(0, 15);
   const total = items.reduce((s, it) => s + it.p.price * it.qty, 0);
   const base = absoluteStoreUrl(req, biz);
   res.set('Cache-Control', 'no-store');
   app.render('pedido-fotos', {
-    biz, items, total, ogUrl: base + '/pedido?' + qs, ogImage: base + '/pedido-img?' + qs,
+    biz, items, total, cliente, telCliente, ogUrl: base + '/pedido?' + qs, ogImage: base + '/pedido-img?' + qs,
     catDesign: catDesignOf(biz).id, catDesignTokens: catDesignOf(biz).tokens,
     money: moneyFor(biz)
   }, (err, html) => { if (err) return next(err); res.send(html); });

@@ -37,6 +37,11 @@
     .head { display: flex; align-items: center; gap: 12px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
     .head img { width: 46px; height: 46px; border-radius: 50%; object-fit: contain; background: var(--card); border: 1px solid var(--border); }
     .head p { font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--sec); font-weight: 700; }
+    .cli { display: flex; gap: 12px; flex-wrap: wrap; margin: 14px 0 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); }
+    .cli > div { flex: 1 1 140px; min-width: 0; }
+    .cli small { display: block; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--sec); font-weight: 700; }
+    .cli b { display: block; font-size: 15px; margin-top: 2px; overflow-wrap: anywhere; }
+    .cli a { color: inherit; text-decoration: underline; }
     .head h1 { font-family: var(--hf); font-size: 1.35rem; line-height: 1.15; }
     .list { display: flex; flex-direction: column; gap: 12px; margin-top: 18px; }
     .it { display: flex; gap: 14px; align-items: center; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); transition: transform .25s cubic-bezier(.22,1,.36,1), border-color .2s; }
@@ -58,6 +63,12 @@
       <% if (biz.logo) { %><img src="<%= biz.logo %>" alt="" data-hide-on-error><% } %>
       <div><p>Pedido recibido</p><h1><%= biz.name %></h1></div>
     </header>
+    <% if (cliente || telCliente) { %>
+    <div class="cli">
+      <% if (cliente) { %><div><small>Pedido a nombre de</small><b><%= cliente %></b></div><% } %>
+      <% if (telCliente) { %><div><small>WhatsApp</small><b><a href="https://wa.me/<%= telCliente.length === 10 ? '52' + telCliente : telCliente %>" target="_blank" rel="noopener"><%= telCliente %></a></b></div><% } %>
+    </div>
+    <% } %>
     <div class="list">
       <% items.forEach(function (it) { %>
         <a class="it" href="/<%= biz.slug %>/p/<%= it.p.id %>">
