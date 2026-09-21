@@ -97,16 +97,6 @@
         </div>
       <% } %>
 
-      <% if (biz.plan === 'free') { %>
-        <div class="prod-plan">
-          <span class="prod-plan__ic" aria-hidden="true"><i class="bi bi-stars"></i></span>
-          <p class="prod-plan__txt">
-            <b>Plan Gratuito</b> · <%= planMax === Infinity ? (allProducts.length + ' productos') : (allProducts.length + '/' + planMax + ' productos') %>
-            <span><%= planMax === Infinity ? 'Atributos y más funciones con el plan Pro.' : 'Productos ilimitados y atributos con el plan Pro.' %></span>
-          </p>
-          <a href="/<%= biz.slug %>/admin/config" class="m-btn m-btn-outlined m-btn-sm">Mejorar plan</a>
-        </div>
-      <% } %>
 
       <div class="products-workspace">
       <!-- Lista de productos -->
