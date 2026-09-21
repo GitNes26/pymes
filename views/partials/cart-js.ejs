@@ -65,6 +65,16 @@
   .cp-head span { font-size:13px; color:var(--text-secondary, #64748b); }
   .cp-x { min-width:44px; min-height:44px; border:0; border-radius:12px; background:none; color:var(--text-secondary, #64748b); font-size:16px; cursor:pointer; }
   .cp-x:hover { background:color-mix(in srgb, var(--text, #0f172a) 6%, transparent); }
+  .cash-list { border:1px solid color-mix(in srgb, var(--text, #0f172a) 12%, transparent); border-radius:12px; overflow:hidden; }
+  .cash-row { display:grid; grid-template-columns:1fr auto auto; gap:10px; align-items:center; padding:10px 12px; font-size:13.5px; }
+  .cash-row + .cash-row { border-top:1px solid color-mix(in srgb, var(--text, #0f172a) 10%, transparent); }
+  .cash-name { font-weight:700; min-width:0; } .cash-name small { display:block; font-weight:500; opacity:.7; font-size:11.5px; }
+  .cash-qty { opacity:.7; font-size:12.5px; white-space:nowrap; } .cash-sub { font-weight:800; white-space:nowrap; }
+  .cash-total { display:flex; justify-content:space-between; align-items:center; margin:12px 2px 0; font-size:1.05rem; } .cash-total b { font-size:1.35rem; }
+  .cash-cli { margin:8px 2px 0; font-size:12.5px; opacity:.75; }
+  .cash-note { margin:8px 2px 12px; font-size:12px; opacity:.7; }
+  .cash-actions { display:flex; gap:8px; } .cash-actions button { min-height:46px; border-radius:12px; font-weight:800; font-size:14px; cursor:pointer; border:1px solid color-mix(in srgb, var(--text, #0f172a) 18%, transparent); background:none; color:inherit; padding:0 16px; }
+  .cash-actions .cash-ok { flex:1; background:#15803d; border-color:#15803d; color:#fff; } .cash-actions .cash-ok:disabled { opacity:.6; cursor:default; }
   .cp-load { text-align:center; padding:28px 8px; font-size:13px; color:var(--text-secondary, #64748b); }
   .cp-err { color:#c2410c; font-weight:700; }
   .cp-alert { display:flex; gap:10px; align-items:flex-start; margin:0 0 12px; padding:12px 14px; border-radius:12px; background:#fef2f2; border:1px solid #fecaca; color:#b91c1c; font-size:13.5px; font-weight:700; line-height:1.4; animation:cpShake .4s; }
@@ -834,23 +844,56 @@
   function payCashAdmin(slug) {
     const g = storeGroups().find(x => x.store.slug === slug);
     if (!g || !g.items.length) return;
-    const total = Math.round(g.items.reduce((s, it) => s + it.qty * it.price, 0) * 100) / 100;
-    if (!window.confirm('¿Registrar esta venta como pago en efectivo por ' + money(cashTotalOf(g)) + '? (sin la comisión de pago en línea)')) return;
+    const total = cashTotalOf(g);
     const nombre = (document.getElementById('chat-nombre') || {}).value || '';
     const telefono = (document.getElementById('chat-telefono') || {}).value || '';
     const items = g.items.map(it => ({ id: it.id, qty: it.qty, variant: it.variant || '' }));
-    const tok = ((document.cookie.match(/(?:^|; )csrf=([^;]+)/) || [])[1]) || '';
-    fetch('/' + slug + '/admin/venta-efectivo', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-csrf-token': tok },
-      body: JSON.stringify({ items: items, nombre: nombre, telefono: telefono })
-    }).then(r => r.json()).then(d => {
-      if (!d.ok) { toast(d.error || 'No se pudo registrar la venta', false); return; }
-      g.items.forEach(it => { delete cart[it.key]; });
-      saveCart(); renderCart();
-      toast('Venta en efectivo registrada · ' + money(d.total) + ' · pedido #' + d.orderId + ' ✓', true);
-      if (window.haptic) window.haptic(30);
-    }).catch(() => toast('Sin conexión. Intenta de nuevo', false));
+    toggleChat(false);
+    const rows = g.items.map(it => {
+      const u = cashUnitPrice(it);
+      return '<div class="cash-row"><div class="cash-name">' + esc(it.name) + (it.variant ? '<small>' + esc(it.variant) + '</small>' : '') + '</div>' +
+        '<div class="cash-qty">' + it.qty + ' × ' + money(u) + '</div><div class="cash-sub">' + money(u * it.qty) + '</div></div>';
+    }).join('');
+    const ov = document.createElement('div');
+    ov.id = 'cash-overlay';
+    ov.className = 'cp-overlay';
+    ov.innerHTML =
+      '<div class="cp-panel" role="dialog" aria-modal="true" aria-label="Pago en efectivo">' +
+        '<div class="cp-head"><div><b>💵 Pago en efectivo</b><span>' + esc(g.store.name) + ' · precios reales, sin comisión</span></div><button type="button" class="cp-x" aria-label="Cerrar">✕</button></div>' +
+        '<div class="cash-list">' + rows + '</div>' +
+        '<div class="cash-total"><span>Total a cobrar</span><b>' + money(total) + '</b></div>' +
+        (nombre || telefono ? '<p class="cash-cli">Cliente: ' + esc(nombre) + (telefono ? ' · ' + esc(telefono) : '') + '</p>' : '') +
+        '<p class="cash-note">Se registra como pedido <b>pagado</b> en efectivo. No lleva la comisión de Mercado Pago.</p>' +
+        '<div class="cash-actions"><button type="button" class="cash-cancel">Cancelar</button><button type="button" class="cash-ok">Confirmar cobro ' + money(total) + '</button></div>' +
+      '</div>';
+    document.body.appendChild(ov);
+    document.body.style.overflow = 'hidden';
+    requestAnimationFrame(function () { requestAnimationFrame(function () { ov.classList.add('cp-in'); }); });
+    const close = function () { ov.classList.remove('cp-in'); setTimeout(function () { ov.remove(); document.body.style.overflow = ''; }, 250); };
+    ov.querySelector('.cp-x').addEventListener('click', close);
+    ov.querySelector('.cash-cancel').addEventListener('click', close);
+    ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
+    const okBtn = ov.querySelector('.cash-ok');
+    okBtn.addEventListener('click', function () {
+      okBtn.disabled = true; okBtn.textContent = 'Registrando…';
+      const tok = ((document.cookie.match(/(?:^|; )csrf=([^;]+)/) || [])[1]) || '';
+      fetch('/' + slug + '/admin/venta-efectivo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-csrf-token': tok },
+        body: JSON.stringify({ items: items, nombre: nombre, telefono: telefono })
+      }).then(r => r.json()).then(d => {
+        if (!d.ok) { okBtn.disabled = false; okBtn.textContent = 'Confirmar cobro ' + money(total); toast(d.error || 'No se pudo registrar la venta', false); return; }
+        g.items.forEach(it => { delete cart[it.key]; });
+        saveCart(); renderCart();
+        ov.querySelector('.cp-panel').innerHTML =
+          '<div class="cp-ok"><div class="cp-ok-ic">✓</div><h3>Venta registrada</h3>' +
+          '<p>Cobro en efectivo de ' + money(d.total) + '. Pedido #' + d.orderId + ' pagado.</p>' +
+          '<button type="button" class="cp-done">Listo</button></div>';
+        ov.querySelector('.cp-done').addEventListener('click', close);
+        toast('Venta en efectivo registrada ✓', true);
+        if (window.haptic) window.haptic(30);
+      }).catch(function () { okBtn.disabled = false; okBtn.textContent = 'Confirmar cobro ' + money(total); toast('Sin conexión. Intenta de nuevo', false); });
+    });
   }
   function payCardInApp(slug) {
     if (!validarDatosCliente()) return;
