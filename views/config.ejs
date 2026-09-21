@@ -809,156 +809,129 @@
       </section>
 
       <!-- ============================================================
-      SECCIÓN: PAGOS EN LÍNEA (Mercado Pago — Checkout Pro)
-      Queda pendiente por el momento — se decidió que para el tipo de
-      negocio que usa esto, transferencia + comprobante por WhatsApp
-      (ver la sección de abajo) tiene más sentido como primera opción.
-      El código y la ruta de pago siguen intactos, solo se oculta del
-      admin; basta con quitar este "false" para reactivarla.
+      SECCIÓN: FORMA DE PAGO — un interruptor: Mercado Pago (tarjeta) O transferencia. Nunca las dos.
+      El efectivo no se configura aquí: solo lo cobra el dueño/empleado en caja.
       ============================================================ -->
-      <% if (!esMaestro) { %>
+      <% if (!esMaestro) { var _payMode = biz.mp_enabled ? 'mp' : (biz.transfer_enabled ? 'transfer' : 'mp'); %>
+      <style>
+        .pay-switch { display:grid; grid-template-columns:1fr 1fr; gap:6px; padding:5px; border-radius:16px; background:rgba(100,116,139,.12); }
+        .pay-opt { display:flex; align-items:center; justify-content:center; gap:8px; min-height:48px; padding:0 12px; border:0; border-radius:12px; background:transparent; color:inherit; font-weight:800; font-size:14px; cursor:pointer; transition:background .18s, box-shadow .18s, color .18s; }
+        .pay-opt[aria-checked="true"] { background:#fff; color:#0f172a; box-shadow:0 2px 10px rgba(0,0,0,.14); }
+        .dark .pay-opt[aria-checked="true"] { background:#d4d4d4; color:#062e6f; }
+        .pay-panel[hidden] { display:none; }
+        .pay-panel { display:grid; gap:14px; }
+      </style>
       <section id="config-pagos" class="m-card config-section p-5 md:p-6 dark:bg-[#161b22] dark:border-[#21262d]">
         <div class="config-section-head flex items-center gap-3 mb-5">
           <div class="w-10 h-10 rounded-xl bg-sky-50 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M2 8h20M2 8v10a2 2 0 002 2h16a2 2 0 002-2V8M2 8l1.5-3.5A2 2 0 015.3 3h13.4a2 2 0 011.8 1.5L22 8M6 15h4"/></svg>
           </div>
           <div>
-            <h2 class="font-extrabold text-slate-900 dark:text-white">Pagos en línea</h2>
-            <p class="text-xs text-slate-400 dark:text-slate-500">Deja que tus clientes paguen con tarjeta antes de recoger — con tu propia cuenta de Mercado Pago</p>
+            <h2 class="font-extrabold text-slate-900 dark:text-white">Forma de pago</h2>
+            <p class="text-xs text-slate-400 dark:text-slate-500">Elige cómo te pagan tus clientes en el carrito. Es una u otra, no las dos.</p>
           </div>
         </div>
 
-        <% if (typeof mpOAuth !== 'undefined' && mpOAuth) { %>
-        <div class="rounded-xl border border-sky-200 dark:border-sky-900/50 bg-sky-50/60 dark:bg-sky-900/10 p-4 mb-5">
-          <% if (biz.mp_connected) { %>
-            <p class="text-sm font-bold text-slate-800 dark:text-slate-100">✅ Tu cuenta de Mercado Pago está conectada</p>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">El dinero de cada venta llega directo a tu cuenta de Mercado Pago.</p>
-            <form method="POST" action="/<%= biz.slug %>/admin/mp/desconectar" data-noajax class="mt-3">
-              <input type="hidden" name="_csrf" value="<%= csrf %>">
-              <button class="m-btn !min-h-10 text-sm" onclick="return confirm('¿Desconectar Mercado Pago? Dejarás de cobrar en línea.')">Desconectar</button>
-            </form>
-          <% } else { %>
-            <p class="text-sm font-bold text-slate-800 dark:text-slate-100">Cobra en línea con un solo clic</p>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Conecta tu cuenta de Mercado Pago (la creas gratis si no tienes). Sin copiar tokens.</p>
-            <a href="/<%= biz.slug %>/admin/mp/conectar" class="m-btn m-btn-filled inline-flex items-center justify-center !min-h-11 mt-3 px-5 text-sm">Conectar mi cuenta de Mercado Pago</a>
-          <% } %>
-        </div>
-        <% } %>
-
-        <form data-noajax method="POST" action="<%= cfgAction %>#config-pagos" class="space-y-4" id="form-pagos">
+        <form data-noajax method="POST" action="<%= cfgAction %>#config-pagos" class="space-y-5" id="form-pagos">
           <input type="hidden" name="mp_form" value="1">
-          <label class="flex items-start gap-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl px-4 py-3 cursor-pointer">
-            <input type="checkbox" name="mp_enabled" value="1" <%= (biz.mp_enabled || !biz.mp_access_token) ? 'checked' : '' %> class="mt-0.5 accent-sky-500">
-            <span class="text-sm font-bold text-slate-700 dark:text-slate-200">Cobrar con tarjeta (Mercado Pago)
-              <span class="block text-xs font-normal text-slate-500 mt-0.5">Apagado, el catálogo no ofrece pago con tarjeta y no se le suma comisión a los precios. Prendido y sin Access Token no cobra.</span>
-            </span>
-          </label>
-
-          <div>
-            <label class="config-label">Access Token de Mercado Pago <span class="font-normal text-slate-400">(de producción)</span></label>
-            <input name="mp_access_token" value="<%= biz.mp_access_token || '' %>" type="password" autocomplete="off" class="config-input" placeholder="APP_USR-...">
-            <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">
-              Sácalo de tu cuenta de Mercado Pago: <b>Tu negocio → Configuración → Credenciales → Credenciales de producción</b>. Nunca lo compartas — con él se cobra directo a tu cuenta, nadie más la toca.
-            </p>
-          </div>
-
-          <div>
-            <label class="config-label">Public Key de Mercado Pago <span class="font-normal text-slate-400">(para cobrar con tarjeta dentro de tu catálogo)</span></label>
-            <input name="mp_public_key" value="<%= biz.mp_public_key || '' %>" type="text" autocomplete="off" class="config-input" placeholder="APP_USR-...">
-            <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">
-              Está en el mismo lugar: <b>Credenciales de producción → Public Key</b>. Esta sí es pública. Con ella y el Access Token, el cliente paga con tarjeta <b>sin salir de tu catálogo</b>; la tarjeta la procesa Mercado Pago y tu servidor nunca la ve. Si la dejas vacía, el botón lleva a la página de Mercado Pago.
-            </p>
-          </div>
-
-          <div class="rounded-xl border border-slate-200 dark:border-[#30363d] p-4 space-y-3">
-            <label class="flex items-start gap-2.5 cursor-pointer">
-              <input type="checkbox" name="mp_fee_on" value="1" <%= (biz.mp_fee_on === 0 || biz.mp_fee_on === '0') ? '' : 'checked' %> class="mt-0.5 accent-sky-500">
-              <span class="text-sm font-bold text-slate-700 dark:text-slate-200">Incluir la comisión de Mercado Pago en el precio de mis productos
-                <span class="block text-xs font-normal text-slate-500 mt-0.5">El cliente ve un solo precio final, sin cargos aparte, y a ti te llega el precio que tú pusiste. Tú sigues capturando el precio base; el catálogo muestra el precio ya ajustado.</span>
-              </span>
-            </label>
-            <div class="grid grid-cols-3 gap-3">
-              <div>
-                <label class="config-label">Comisión %</label>
-                <input name="mp_fee_pct" value="<%= biz.mp_fee_pct == null ? 3.49 : biz.mp_fee_pct %>" inputmode="decimal" class="config-input" placeholder="3.49">
-              </div>
-              <div>
-                <label class="config-label">Cargo fijo $</label>
-                <input name="mp_fee_fixed" value="<%= biz.mp_fee_fixed == null ? 4 : biz.mp_fee_fixed %>" inputmode="decimal" class="config-input" placeholder="4">
-              </div>
-              <div>
-                <label class="config-label">IVA %</label>
-                <input name="mp_fee_iva" value="<%= biz.mp_fee_iva == null ? 16 : biz.mp_fee_iva %>" inputmode="decimal" class="config-input" placeholder="16">
-              </div>
-            </div>
-            <p class="text-xs text-slate-400">Ejemplo con estos valores: un producto que capturas en $180 se muestra a $193 (el cálculo exacto es $192.43) y a ti te llegan $180 limpios. Cada producto lleva incluido el cargo fijo por operación, así que en una compra de varios productos el cliente paga un poco de más. Revisa la tarifa vigente en tu cuenta de Mercado Pago y ajusta los números.</p>
-          </div>
-
-          <div class="rounded-xl border border-slate-200 dark:border-[#30363d] p-3 text-xs text-slate-500 dark:text-slate-400">
-            Es la única forma de pago del catálogo. Al conectar tu cuenta, tus clientes verán un botón <b>"Pagar con Mercado Pago"</b> junto al de WhatsApp. El pedido se marca como <b>pagado</b> automáticamente en tu panel apenas Mercado Pago confirma el cobro — no tienes que revisar nada a mano.
-          </div>
-
-          <div class="flex gap-3 pt-2">
-            <button class="m-btn m-btn-filled flex-1 !min-h-11 dark:bg-[#d4d4d4] dark:text-[#062e6f] dark:hover:bg-[#a0c4ff]">
-              Guardar cambios
-            </button>
-          </div>
-        </form>
-      </section>
-      <% } %>
-
-      <!-- ============================================================
-      SECCIÓN: TRANSFERENCIA BANCARIA
-      ============================================================ -->
-      <% if (!esMaestro) { %>
-      <section id="config-transferencia" class="m-card config-section p-5 md:p-6 dark:bg-[#161b22] dark:border-[#21262d]">
-        <div class="config-section-head flex items-center gap-3 mb-5">
-          <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 10h18M6 10v8M10 10v8M14 10v8M18 10v8M4 18h16M12 3l9 5H3l9-5z"/></svg>
-          </div>
-          <div>
-            <h2 class="font-extrabold text-slate-900 dark:text-white">Transferencia bancaria</h2>
-            <p class="text-xs text-slate-400 dark:text-slate-500">Publica tu cuenta para que te transfieran — sin comisiones ni pasarela</p>
-          </div>
-        </div>
-
-        <% if (biz.mp_enabled) { %>
-        <div class="rounded-xl border border-amber-200 bg-amber-50 text-amber-800 text-xs font-semibold p-3 mb-4">
-          La transferencia no se puede usar mientras tengas Mercado Pago activo: son una u otra. Para usar transferencia, quita el Access Token de Pagos en línea.
-        </div>
-        <% } %>
-        <form data-noajax method="POST" action="<%= cfgAction %>#config-pagos" class="space-y-4" id="form-transferencia">
           <input type="hidden" name="transfer_form" value="1">
-          <label class="flex items-center gap-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl px-4 py-3 cursor-pointer">
-            <input type="checkbox" name="transfer_enabled" value="1" <%= biz.transfer_enabled ? 'checked' : '' %> class="w-4.5 h-4.5 accent-emerald-500">
-            <span class="text-sm font-bold text-slate-700 dark:text-slate-200">Mostrar mi cuenta en el catálogo para recibir transferencias</span>
-          </label>
+          <input type="hidden" name="pay_mode" id="pay-mode" value="<%= _payMode %>">
 
-          <div class="grid md:grid-cols-2 gap-4">
+          <div class="pay-switch" role="radiogroup" aria-label="Forma de pago">
+            <button type="button" class="pay-opt" role="radio" data-mode="mp" aria-checked="<%= _payMode === 'mp' ? 'true' : 'false' %>">💳 Mercado Pago</button>
+            <button type="button" class="pay-opt" role="radio" data-mode="transfer" aria-checked="<%= _payMode === 'transfer' ? 'true' : 'false' %>">🏦 Transferencia</button>
+          </div>
+
+          <!-- ===== Mercado Pago ===== -->
+          <div class="pay-panel" id="pay-panel-mp" <%= _payMode === 'mp' ? '' : 'hidden' %>>
+            <% if (typeof mpOAuth !== 'undefined' && mpOAuth) { %>
+            <div class="rounded-xl border border-sky-200 dark:border-sky-900/50 bg-sky-50/60 dark:bg-sky-900/10 p-4">
+              <% if (biz.mp_connected) { %>
+                <p class="text-sm font-bold text-slate-800 dark:text-slate-100">✅ Tu cuenta de Mercado Pago está conectada</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">El dinero de cada venta llega directo a tu cuenta de Mercado Pago.</p>
+                <button type="submit" formaction="/<%= biz.slug %>/admin/mp/desconectar" formmethod="POST" class="m-btn !min-h-10 text-sm mt-3" onclick="return confirm('¿Desconectar Mercado Pago? Dejarás de cobrar en línea.')">Desconectar</button>
+              <% } else { %>
+                <p class="text-sm font-bold text-slate-800 dark:text-slate-100">Cobra en línea con un solo clic</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Conecta tu cuenta de Mercado Pago (la creas gratis si no tienes). Sin copiar tokens.</p>
+                <a href="/<%= biz.slug %>/admin/mp/conectar" class="m-btn m-btn-filled inline-flex items-center justify-center !min-h-11 mt-3 px-5 text-sm">Conectar mi cuenta de Mercado Pago</a>
+              <% } %>
+            </div>
+            <% } %>
+
             <div>
-              <label class="config-label">Banco</label>
-              <input name="transfer_bank" value="<%= biz.transfer_bank || '' %>" maxlength="120" class="config-input" placeholder="Ej: BBVA">
+              <label class="config-label">Access Token</label>
+              <input name="mp_access_token" value="<%= biz.mp_access_token || '' %>" type="password" autocomplete="off" class="config-input" placeholder="APP_USR-...">
+              <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Está en tu cuenta de Mercado Pago: <b>Tu negocio → Configuración → Credenciales</b>. No lo compartas con nadie.</p>
             </div>
             <div>
-              <label class="config-label">Cuenta / CLABE</label>
-              <input name="transfer_account" value="<%= biz.transfer_account || '' %>" maxlength="20" inputmode="numeric" pattern="[0-9]{10,20}" title="Solo números, de 10 a 20 dígitos (la CLABE tiene 18)" class="config-input" placeholder="Ej: 012180001234567895">
+              <label class="config-label">Public Key</label>
+              <input name="mp_public_key" value="<%= biz.mp_public_key || '' %>" type="text" autocomplete="off" class="config-input" placeholder="APP_USR-...">
+              <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Se pide en el mismo lugar. Con ella el cliente paga con tarjeta sin salir de tu catálogo.</p>
+            </div>
+
+            <div class="rounded-xl border border-slate-200 dark:border-[#30363d] p-4 space-y-3">
+              <label class="flex items-start gap-2.5 cursor-pointer">
+                <input type="checkbox" name="mp_fee_on" value="1" <%= (biz.mp_fee_on === 0 || biz.mp_fee_on === '0') ? '' : 'checked' %> class="mt-0.5 accent-sky-500">
+                <span class="text-sm font-bold text-slate-700 dark:text-slate-200">Incluir la comisión en el precio de mis productos
+                  <span class="block text-xs font-normal text-slate-500 mt-0.5">El cliente ve un solo precio final y a ti te llega el precio que capturas. Tú sigues poniendo el precio base.</span>
+                </span>
+              </label>
+              <div class="grid grid-cols-3 gap-3">
+                <div>
+                  <label class="config-label">Comisión %</label>
+                  <input name="mp_fee_pct" value="<%= biz.mp_fee_pct == null ? 3.49 : biz.mp_fee_pct %>" inputmode="decimal" class="config-input" placeholder="3.49">
+                </div>
+                <div>
+                  <label class="config-label">Cargo fijo $</label>
+                  <input name="mp_fee_fixed" value="<%= biz.mp_fee_fixed == null ? 4 : biz.mp_fee_fixed %>" inputmode="decimal" class="config-input" placeholder="4">
+                </div>
+                <div>
+                  <label class="config-label">IVA %</label>
+                  <input name="mp_fee_iva" value="<%= biz.mp_fee_iva == null ? 16 : biz.mp_fee_iva %>" inputmode="decimal" class="config-input" placeholder="16">
+                </div>
+              </div>
+              <p class="text-xs text-slate-400">Con estos valores, un producto de $180 se muestra a $193 y a ti te llegan $180. Revisa la tarifa vigente de tu cuenta.</p>
             </div>
           </div>
-          <div>
-            <label class="config-label">A nombre de</label>
-            <input name="transfer_holder" value="<%= biz.transfer_holder || '' %>" maxlength="120" class="config-input" placeholder="Ej: Juan Pérez Gómez">
+
+          <!-- ===== Transferencia ===== -->
+          <div class="pay-panel" id="pay-panel-transfer" <%= _payMode === 'transfer' ? '' : 'hidden' %>>
+            <div class="grid md:grid-cols-2 gap-4">
+              <div>
+                <label class="config-label">Banco</label>
+                <input name="transfer_bank" value="<%= biz.transfer_bank || '' %>" maxlength="120" class="config-input" placeholder="Ej: BBVA">
+              </div>
+              <div>
+                <label class="config-label">Cuenta / CLABE</label>
+                <input name="transfer_account" value="<%= biz.transfer_account || '' %>" maxlength="20" inputmode="numeric" pattern="[0-9]{10,20}" title="Solo números, de 10 a 20 dígitos (la CLABE tiene 18)" class="config-input" placeholder="18 dígitos">
+              </div>
+            </div>
+            <div>
+              <label class="config-label">A nombre de</label>
+              <input name="transfer_holder" value="<%= biz.transfer_holder || '' %>" maxlength="120" class="config-input" placeholder="Ej: Juan Pérez Gómez">
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Tus clientes verán estos datos en el carrito, sin comisión. Transfieren y te mandan el comprobante por WhatsApp; tú marcas el pedido como pagado.</p>
           </div>
 
-          <div class="rounded-xl border border-slate-200 dark:border-[#30363d] p-3 text-xs text-slate-500 dark:text-slate-400">
-            Cuando está activo, tus clientes verán estos datos en el carrito con instrucciones de <b>transferir y mandar su comprobante por WhatsApp</b> junto con su pedido — tú confirmas el pago a mano, como ya lo haces hoy.
-          </div>
+          <p class="text-xs text-slate-400 dark:text-slate-500">💵 El <b>efectivo</b> no se configura: lo cobras tú (o un empleado) en caja desde el carrito, con tu sesión iniciada.</p>
 
-          <div class="flex gap-3 pt-2">
-            <button class="m-btn m-btn-filled flex-1 !min-h-11 dark:bg-[#d4d4d4] dark:text-[#062e6f] dark:hover:bg-[#a0c4ff]">
-              Guardar cambios
-            </button>
-          </div>
+          <button class="m-btn m-btn-filled w-full !min-h-11 dark:bg-[#d4d4d4] dark:text-[#062e6f] dark:hover:bg-[#a0c4ff]">Guardar cambios</button>
         </form>
+        <script>
+          (function () {
+            var form = document.getElementById('form-pagos');
+            if (!form) return;
+            var mode = document.getElementById('pay-mode');
+            var opts = form.querySelectorAll('.pay-opt');
+            function set(m) {
+              mode.value = m;
+              opts.forEach(function (b) { b.setAttribute('aria-checked', b.getAttribute('data-mode') === m ? 'true' : 'false'); });
+              document.getElementById('pay-panel-mp').hidden = m !== 'mp';
+              document.getElementById('pay-panel-transfer').hidden = m !== 'transfer';
+            }
+            opts.forEach(function (b) { b.addEventListener('click', function () { set(b.getAttribute('data-mode')); }); });
+          })();
+        </script>
       </section>
       <% } %>
 

@@ -4977,7 +4977,8 @@ function applyConfig(biz, body) {
   // porque el dueño mandó otro de los formularios de Configuración.
   const mpFormPosted = Object.prototype.hasOwnProperty.call(body, 'mp_form');
   const mpAccessToken = mpFormPosted ? String(body.mp_access_token || '').trim().slice(0, 300) : biz.mp_access_token;
-  const mpEnabled = mpFormPosted ? ((mpAccessToken && body.mp_enabled === '1') ? 1 : 0) : (biz.mp_access_token ? biz.mp_enabled : 0);
+  const payMode = ['mp', 'transfer'].includes(body.pay_mode) ? body.pay_mode : null; // interruptor: Mercado Pago O transferencia
+  const mpEnabled = mpFormPosted ? ((mpAccessToken && (payMode ? payMode === 'mp' : body.mp_enabled === '1')) ? 1 : 0) : (biz.mp_access_token ? biz.mp_enabled : 0);
   // Transferencia bancaria: mismo patrón (marcador transfer_form en su propio
   // <form>) — el dueño publica su cuenta y el cliente transfiere y manda el
   // comprobante por WhatsApp, sin pasarela de por medio.
@@ -4992,7 +4993,7 @@ function applyConfig(biz, body) {
     ? (transferAccountRaw === '' ? '' : (/^\d{10,20}$/.test(transferAccountRaw) ? transferAccountRaw : biz.transfer_account))
     : biz.transfer_account;
   const transferHolder = transferFormPosted ? String(body.transfer_holder || '').trim().slice(0, 120) : biz.transfer_holder;
-  const transferEnabled = (mpEnabled ? 0 : (transferFormPosted ? (body.transfer_enabled === '1' ? 1 : 0) : biz.transfer_enabled)); // transferencia y Mercado Pago son excluyentes
+  const transferEnabled = (mpEnabled ? 0 : (transferFormPosted ? ((payMode ? payMode === 'transfer' : body.transfer_enabled === '1') ? 1 : 0) : biz.transfer_enabled)); // transferencia y Mercado Pago son excluyentes
   db.prepare(
     `UPDATE businesses SET name = ?, whatsapp = ?, description = ?, template = ?, color = ?, color_hex = ?, color_hex2 = ?, color_mode = ?, grid_cols = ?, logo = ?, banner = ?, giro = ?, giros = ?, estilo = ?, bg = ?, card = ?, text = ?, muted = ?, border = ?, radius = ?, font = ?, accent = ?, accent2 = ?, header = ?, header_text = ?, wa_message = ?, currency = ?, sections = ?, demo = ?, horario = ?, horario_msg = ?, blocks = ?, page_bg = ?, redes = ?, faq = ?, extras = ?, address = ?, catalog_design = ?, mp_access_token = ?, mp_enabled = ?, transfer_bank = ?, transfer_account = ?, transfer_holder = ?, transfer_enabled = ? WHERE id = ?`
   ).run(
