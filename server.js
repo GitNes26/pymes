@@ -2664,6 +2664,8 @@ app.get('/:slug/pedir', (req, res) => {
   }).filter(Boolean);
 
   if (lines.length === 0) return res.redirect('/' + req.params.slug);
+  const proFee = mpCardFee(biz, total);
+  if (proFee > 0) { mpItems.push({ title: 'Cargo por pago en línea', quantity: 1, unit_price: proFee, currency_id: biz.currency || 'MXN' }); lines.push('• Cargo por pago en línea = ' + currencyInfo(biz.currency).symbol + proFee.toFixed(2)); }
 
   const instInfo = hasInstallment ? { isInstallment: true, count: instProduct.installment_count || 6, frequency: instProduct.installment_frequency || 'semanal', minDown: instProduct.installment_min_down || 0 } : null;
   let message = buildOrderMessage(biz.name, lines, total, biz.wa_message, currencyInfo(biz.currency).symbol, instInfo);
@@ -2791,6 +2793,18 @@ async function mpFetch(token, path, options) {
 const MP_CLIENT_ID = String(process.env.MP_CLIENT_ID || '').trim();
 const MP_CLIENT_SECRET = String(process.env.MP_CLIENT_SECRET || '').trim();
 const MP_FEE_PERCENT = Math.max(0, Math.min(30, parseFloat(process.env.MP_FEE_PERCENT) || 0));
+// Comisión de Mercado Pago que se suma al cliente para que el negocio reciba el precio completo:
+// cobro = (neto + fijo*(1+IVA)) / (1 - porcentaje*(1+IVA)); cargo = cobro - neto.
+function mpCardFee(biz, net) {
+  if (!biz || biz.mp_fee_on === 0 || biz.mp_fee_on === '0') return 0;
+  const pct = Math.max(0, Math.min(30, Number(biz.mp_fee_pct == null ? 3.49 : biz.mp_fee_pct)));
+  const fixed = Math.max(0, Math.min(100, Number(biz.mp_fee_fixed == null ? 4 : biz.mp_fee_fixed)));
+  const iva = Math.max(0, Math.min(30, Number(biz.mp_fee_iva == null ? 16 : biz.mp_fee_iva)));
+  const k = 1 + iva / 100;
+  const denom = 1 - (pct / 100) * k;
+  if (!(net > 0) || denom <= 0.2) return 0;
+  return Math.round(((net + fixed * k) / denom - net) * 100) / 100;
+}
 function mpFee(total) { return MP_FEE_PERCENT > 0 ? Math.round(total * MP_FEE_PERCENT) / 100 : 0; }
 function mpOauthReady() { return !!(MP_CLIENT_ID && MP_CLIENT_SECRET); }
 function mpRedirectUri(req) { return mpAbsUrl(req, '/mp/oauth'); }
@@ -2948,7 +2962,10 @@ app.post('/:slug/pagar-tarjeta', rateLimit(12), async (req, res) => {
   total = Math.round(total * 100) / 100;
   if (!lines.length || !(total > 0)) return res.status(400).json({ ok: false, error: 'El carrito está vacío' });
   const clientTotal = Number(fd.transaction_amount);
-  if (isFinite(clientTotal) && Math.abs(clientTotal - total) > 0.5) return res.status(409).json({ ok: false, error: 'El total cambió (' + currencyInfo(biz.currency).symbol + total.toFixed(2) + '). Cierra esta ventana, revisa tu carrito y vuelve a intentar.' });
+  const cardFee = mpCardFee(biz, total);
+  const charge = Math.round((total + cardFee) * 100) / 100;
+  if (cardFee > 0) lines.push('• Cargo por pago en línea = ' + currencyInfo(biz.currency).symbol + cardFee.toFixed(2));
+  if (isFinite(clientTotal) && Math.abs(clientTotal - charge) > 0.5) return res.status(409).json({ ok: false, error: 'El total cambió (' + currencyInfo(biz.currency).symbol + charge.toFixed(2) + '). Cierra esta ventana, revisa tu carrito y vuelve a intentar.' });
 
   const customerData = customerName ? (customerName + (customerPhone ? ' (' + customerPhone + ')' : '')) : (customerPhone || '');
   const orderId = db.prepare(
@@ -2957,10 +2974,10 @@ app.post('/:slug/pagar-tarjeta', rateLimit(12), async (req, res) => {
   upsertCustomer(biz.id, customerName, customerPhone);
 
   const payload = {
-    transaction_amount: total,
+    transaction_amount: charge,
     token: String(fd.token),
     description: ('Pedido #' + orderId + ' · ' + biz.name).slice(0, 200),
-    ...((biz.mp_connected && mpFee(total) > 0) ? { application_fee: mpFee(total) } : {}),
+    ...((biz.mp_connected && mpFee(charge) > 0) ? { application_fee: mpFee(charge) } : {}),
     installments: Math.max(1, parseInt(fd.installments) || 1),
     payment_method_id: String(fd.payment_method_id),
     payer: { email: String((fd.payer && fd.payer.email) || '').trim().slice(0, 120) },
@@ -2998,10 +3015,10 @@ app.post('/:slug/pagar-tarjeta', rateLimit(12), async (req, res) => {
   if (pay.status === 'approved') {
     db.prepare("UPDATE orders SET paid = 1, paid_at = datetime('now'), status = 'pagado' WHERE id = ?").run(orderId);
     notifyOwnerPaid(biz, orderId);
-    return res.json({ ok: true, status: 'approved', orderId, total });
+    return res.json({ ok: true, status: 'approved', orderId, total: charge });
   }
   if (pay.status === 'in_process' || pay.status === 'pending') {
-    return res.json({ ok: true, status: pay.status, orderId, total }); // el webhook lo marca pagado cuando se apruebe
+    return res.json({ ok: true, status: pay.status, orderId, total: charge }); // el webhook lo marca pagado cuando se apruebe
   }
   db.prepare('DELETE FROM orders WHERE id = ?').run(orderId);
   return res.status(402).json({ ok: false, status: pay.status, error: MP_DETAIL_ES[pay.status_detail] || 'La tarjeta fue rechazada. Prueba con otra tarjeta.' });
@@ -4991,6 +5008,11 @@ function applyConfig(biz, body) {
     let pags = [];
     try { pags = JSON.parse(body.paginas_sugeridas || '[]'); } catch (e) { pags = []; }
     db.crearPaginasSugeridas(biz.id, pags);
+  }
+  if (mpFormPosted) {
+    const num = (v, def, max) => { const n = parseFloat(String(v || '').replace(',', '.')); return isFinite(n) && n >= 0 ? Math.min(n, max) : def; };
+    db.prepare('UPDATE businesses SET mp_fee_on = ?, mp_fee_pct = ?, mp_fee_fixed = ?, mp_fee_iva = ? WHERE id = ?').run(
+      body.mp_fee_on === '1' ? 1 : 0, num(body.mp_fee_pct, 3.49, 30), num(body.mp_fee_fixed, 4, 100), num(body.mp_fee_iva, 16, 30), biz.id);
   }
   if (mpFormPosted) db.prepare('UPDATE businesses SET mp_public_key = ? WHERE id = ?').run(String(body.mp_public_key || '').trim().slice(0, 300), biz.id);
   return getBusiness(biz.slug);
