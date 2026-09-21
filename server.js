@@ -174,7 +174,8 @@ const PLAN_MAX = (biz) => {
 };
 // El plan decide si la tienda DEBE mostrar publicidad cruzada (los que la tienen en su plan, la ven)
 function adsOn(biz) {
-  return getPlan(biz).ads === 1;
+  return false; // los anuncios/patrocinados y 'También te puede interesar' ya no se muestran en ninguna tienda
+  // return getPlan(biz).ads === 1;
 }
 // El plan decide si el dueño puede personalizar el diseño de su catálogo (siempre: ya no depende del plan)
 function designAllowed(biz) {
