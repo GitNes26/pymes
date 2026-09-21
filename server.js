@@ -1728,8 +1728,13 @@ function getBusiness(slug) {
 // La comisión de Mercado Pago va DENTRO del precio que ve el cliente (un solo precio final, sin cargos aparte):
 // precio mostrado = (precio base + cargo fijo con IVA) / (1 - comisión% * (1 + IVA%)), redondeado hacia arriba al peso.
 // Solo aplica si la tienda cobra en línea. El cobro en efectivo del mostrador usa el precio base.
+// ¿Además de Mercado Pago la tienda acepta transferencia o efectivo? Entonces el precio es el base para todos
+// y la comisión solo se le suma a quien paga con tarjeta.
+function mpHasOtherMethods(biz) {
+  return !!(biz && ((biz.transfer_enabled && (biz.transfer_bank || biz.transfer_account)) || biz.cash_enabled));
+}
 function priceMarkupFactor(biz) {
-  if (!biz || !biz.mp_access_token || biz.mp_fee_on === 0 || biz.mp_fee_on === '0') return null;
+  if (!biz || !biz.mp_access_token || biz.mp_fee_on === 0 || biz.mp_fee_on === '0' || mpHasOtherMethods(biz)) return null;
   const pct = Math.max(0, Math.min(30, Number(biz.mp_fee_pct == null ? 3.49 : biz.mp_fee_pct)));
   const fixed = Math.max(0, Math.min(100, Number(biz.mp_fee_fixed == null ? 4 : biz.mp_fee_fixed)));
   const iva = Math.max(0, Math.min(30, Number(biz.mp_fee_iva == null ? 16 : biz.mp_fee_iva)));
@@ -1801,7 +1806,7 @@ function getCatalog(businessId) {
   const catCounts = {};
   db.prepare('SELECT category_id, COUNT(*) AS c FROM products WHERE business_id = ? AND active = 1 GROUP BY category_id').all(businessId).forEach(r => { catCounts[r.category_id] = r.c; });
   categories.forEach(c => { c.count = catCounts[c.id] || 0; });
-  const _mkF = priceMarkupFactor(db.prepare('SELECT mp_access_token, mp_fee_on, mp_fee_pct, mp_fee_fixed, mp_fee_iva FROM businesses WHERE id = ?').get(businessId));
+  const _mkF = priceMarkupFactor(db.prepare('SELECT mp_access_token, mp_fee_on, mp_fee_pct, mp_fee_fixed, mp_fee_iva, transfer_enabled, transfer_bank, transfer_account, cash_enabled FROM businesses WHERE id = ?').get(businessId));
   const products = db.prepare(
     `SELECT p.*, c.name AS category_name FROM products p
      LEFT JOIN categories c ON c.id = p.category_id
@@ -3006,7 +3011,10 @@ app.post('/:slug/pagar-tarjeta', rateLimit(12), async (req, res) => {
   if (total > baseTotal) lines.push('Cobrado con tarjeta: ' + currencyInfo(biz.currency).symbol + total.toFixed(2) + ' (incluye comisión de pago en línea)');
   if (!lines.length || !(total > 0)) return res.status(400).json({ ok: false, error: 'El carrito está vacío' });
   const clientTotal = Number(fd.transaction_amount);
-  const charge = total; // la comisión ya viene incluida en el precio de cada producto
+  // Con solo Mercado Pago la comisión ya viene dentro del precio; si hay transferencia/efectivo, se suma solo a quien paga con tarjeta
+  const cardFee = priceMarkupFactor(biz) ? 0 : mpCardFee(biz, total);
+  const charge = Math.round((total + cardFee) * 100) / 100;
+  if (cardFee > 0) lines.push('Cargo por pagar con tarjeta: ' + currencyInfo(biz.currency).symbol + cardFee.toFixed(2) + ' (comisión de Mercado Pago; no es ganancia)');
   if (isFinite(clientTotal) && Math.abs(clientTotal - charge) > 0.5) return res.status(409).json({ ok: false, error: 'El total cambió (' + currencyInfo(biz.currency).symbol + charge.toFixed(2) + '). Cierra esta ventana, revisa tu carrito y vuelve a intentar.' });
 
   const customerData = customerName ? (customerName + (customerPhone ? ' (' + customerPhone + ')' : '')) : (customerPhone || '');
