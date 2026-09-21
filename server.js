@@ -3764,6 +3764,20 @@ app.post('/:slug/admin/productos/etiquetas', requireAuth, can('productos.editar'
   if (!text) return res.status(400).json({ ok: false, error: 'Escribe el texto de la etiqueta' });
   const color = /^#[0-9a-fA-F]{6}$/.test(String(b.color || '')) ? String(b.color) : '#2c2c2e';
   const remove = b.action === 'remove';
+  if (b.action === 'edit') {
+    const oldText = String(b.old || '').trim().toLowerCase();
+    if (!oldText) return res.status(400).json({ ok: false, error: 'Falta la etiqueta a editar' });
+    let n = 0;
+    db.prepare('SELECT id, custom_tags FROM products WHERE business_id = ?').all(req.biz.id).forEach(r => {
+      const tags = parseCustomTags(r.custom_tags);
+      const i = tags.findIndex(x => x.t.toLowerCase() === oldText);
+      if (i < 0) return;
+      const next = tags.slice(); next[i] = { t: text, c: color };
+      db.prepare('UPDATE products SET custom_tags = ? WHERE id = ? AND business_id = ?').run(customTagsJson(next), r.id, req.biz.id);
+      n++;
+    });
+    return res.json({ ok: true, changed: n, full: 0, total: n });
+  }
   const catId = parseInt(b.category_id, 10) || 0;
   const rows = catId
     ? db.prepare('SELECT id, custom_tags FROM products WHERE business_id = ? AND category_id = ?').all(req.biz.id, catId)

@@ -57,8 +57,8 @@
           </a>
 
           <% if (perms.includes('productos.editar') && allProducts.length) { %>
-          <button type="button" class="m-btn m-btn-outlined m-btn-sm" onclick="bulkTagOpen()" title="Poner una etiqueta a todos los productos">
-            <i class="bi bi-tags" aria-hidden="true"></i> Etiquetar todos
+          <button type="button" class="m-btn m-btn-outlined m-btn-sm" onclick="bulkTagOpen()" title="Poner, editar o borrar etiquetas de todos los productos">
+            <i class="bi bi-tags" aria-hidden="true"></i> Etiquetas
           </button>
           <% } %>
           <% if (perms.includes('productos.crear')) { %>
@@ -3784,62 +3784,109 @@
     }
   </script>
 
-<!-- Etiquetar todos los productos -->
+<!-- Etiquetas de todos los productos -->
+<script type="application/json" id="bt-data"><%- safeJson(allProducts.map(function (p) { return p.custom_tags || ''; })) %></script>
 <div id="bulk-tag" class="hidden" style="position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.45);align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this)bulkTagClose()">
-  <div role="dialog" aria-modal="true" aria-labelledby="bulk-tag-t" style="background:var(--ap-card,#fff);color:inherit;border-radius:16px;padding:20px;width:100%;max-width:420px;box-shadow:0 20px 50px rgba(0,0,0,.3)">
-    <h2 id="bulk-tag-t" class="text-base font-black mb-1">Etiquetar todos los productos</h2>
-    <p class="text-xs text-slate-500 mb-3">Cada producto puede tener hasta 3 etiquetas propias. Si ya tiene 3, se omite.</p>
-    <label class="text-xs font-bold" for="bt-text">Texto de la etiqueta</label>
-    <input id="bt-text" maxlength="24" class="w-full border rounded-lg px-3 py-2 text-sm mb-2" style="border-color:var(--ap-border,#e5e7eb)" placeholder="Ej. Mayoreo, Envío gratis">
-    <div class="ct-colors mb-3" id="bt-colors"></div>
-    <label class="text-xs font-bold" for="bt-scope">¿A cuáles productos?</label>
-    <select id="bt-scope" class="w-full border rounded-lg px-3 py-2 text-sm mb-3" style="border-color:var(--ap-border,#e5e7eb)">
-      <option value="0">Todos los productos</option>
-      <% categories.forEach(c => { %><option value="<%= c.id %>">Solo: <%= c.name %></option><% }) %>
-    </select>
-    <p id="bt-msg" class="text-xs font-bold mb-2" style="min-height:16px"></p>
-    <div class="flex gap-2 flex-wrap">
-      <button type="button" class="m-btn m-btn-filled flex-1 !min-h-11" onclick="bulkTagSend('add')">Poner a todos</button>
-      <button type="button" class="m-btn m-btn-outlined !min-h-11" onclick="bulkTagSend('remove')">Quitar</button>
-      <button type="button" class="m-btn !min-h-11" onclick="bulkTagClose()">Cerrar</button>
+  <div role="dialog" aria-modal="true" aria-labelledby="bulk-tag-t" style="background:var(--ap-card,#fff);color:inherit;border-radius:16px;padding:20px;width:100%;max-width:460px;max-height:92vh;overflow:auto;box-shadow:0 20px 50px rgba(0,0,0,.3)">
+    <h2 id="bulk-tag-t" class="text-base font-black mb-1">Etiquetas de tus productos</h2>
+    <p class="text-xs text-slate-500 mb-3">Cada producto puede tener hasta 3 etiquetas propias.</p>
+
+    <div id="bt-list" class="mb-4"></div>
+
+    <div class="rounded-xl border p-3" style="border-color:var(--ap-border,#e5e7eb)">
+      <p class="text-xs font-black mb-2">Poner una etiqueta nueva</p>
+      <div class="flex items-center gap-2 mb-2">
+        <input id="bt-color" type="color" value="#7c3aed" aria-label="Color de la etiqueta" style="width:44px;height:40px;padding:2px;border:1px solid var(--ap-border,#e5e7eb);border-radius:10px;background:none;cursor:pointer">
+        <input id="bt-text" maxlength="24" class="flex-1 min-w-0 border rounded-lg px-3 py-2 text-sm" style="border-color:var(--ap-border,#e5e7eb)" placeholder="Ej. Mayoreo, Envío gratis" aria-label="Texto de la etiqueta">
+      </div>
+      <div class="ct-colors mb-2" id="bt-colors"></div>
+      <label class="text-xs font-bold" for="bt-scope">¿A cuáles productos?</label>
+      <select id="bt-scope" class="w-full border rounded-lg px-3 py-2 text-sm mb-2" style="border-color:var(--ap-border,#e5e7eb)">
+        <option value="0">Todos los productos</option>
+        <% categories.forEach(c => { %><option value="<%= c.id %>">Solo: <%= c.name %></option><% }) %>
+      </select>
+      <button type="button" class="m-btn m-btn-filled w-full !min-h-11" onclick="bulkTagAdd()">Poner a los productos</button>
     </div>
+    <p id="bt-msg" class="text-xs font-bold my-2" style="min-height:16px"></p>
+    <button type="button" class="m-btn w-full !min-h-11" onclick="bulkTagClose()">Cerrar</button>
   </div>
 </div>
 <script>
 (function () {
   var COLORS = ['#2c2c2e', '#7c3aed', '#1d4ed8', '#0f766e', '#15803d', '#b45309', '#be123c', '#c2410c'];
-  var sel = COLORS[1];
-  var box = document.getElementById('bt-colors');
-  function paint() {
-    box.innerHTML = '';
-    COLORS.forEach(function (c) {
-      var b = document.createElement('button');
-      b.type = 'button'; b.setAttribute('aria-label', 'Color ' + c);
-      b.style.cssText = 'width:28px;height:28px;border-radius:50%;background:' + c + ';border:3px solid ' + (c === sel ? '#fff' : 'transparent') + ';box-shadow:0 0 0 ' + (c === sel ? '2px ' + c : '1px rgba(0,0,0,.15)') + ';cursor:pointer';
-      b.onclick = function () { sel = c; paint(); };
-      box.appendChild(b);
+  var el = document.getElementById('bulk-tag');
+  var msg = document.getElementById('bt-msg');
+  var colorIn = document.getElementById('bt-color');
+  var raw = []; try { raw = JSON.parse(document.getElementById('bt-data').textContent || '[]'); } catch (e) {}
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function say(t, ok) { msg.style.color = ok === false ? '#dc2626' : (ok ? '#15803d' : '#64748b'); msg.textContent = t; }
+
+  var sw = document.getElementById('bt-colors');
+  COLORS.forEach(function (c) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.setAttribute('aria-label', 'Color ' + c);
+    b.style.cssText = 'width:28px;height:28px;border-radius:50%;background:' + c + ';border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.2);cursor:pointer';
+    b.onclick = function () { colorIn.value = c; };
+    sw.appendChild(b);
+  });
+
+  function summary() {
+    var map = {};
+    raw.forEach(function (r) {
+      var a = []; try { a = JSON.parse(r || '[]'); } catch (e) {}
+      (a || []).forEach(function (x) {
+        if (!x || !x.t) return;
+        var k = x.t.toLowerCase();
+        if (!map[k]) map[k] = { t: x.t, c: x.c || '#2c2c2e', n: 0 };
+        map[k].n++;
+      });
+    });
+    return Object.keys(map).map(function (k) { return map[k]; });
+  }
+  function post(body) {
+    return fetch('/<%= biz.slug %>/admin/productos/etiquetas', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'x-csrf-token': '<%= csrf %>' }, body: JSON.stringify(body)
+    }).then(function (r) { return r.json(); });
+  }
+  function done(d, verb) {
+    if (!d.ok) { say(d.error || 'No se pudo', false); return; }
+    say(verb + ' en ' + d.changed + ' producto(s)' + (d.full ? ' · ' + d.full + ' ya tenían 3 etiquetas' : ''), true);
+    setTimeout(function () { location.reload(); }, 900);
+  }
+  function render() {
+    var box = document.getElementById('bt-list');
+    var list = summary();
+    if (!list.length) { box.innerHTML = '<p class="text-xs text-slate-400">Todavía no hay etiquetas propias en tus productos.</p>'; return; }
+    box.innerHTML = '<p class="text-xs font-black mb-2">Las que ya tienes (cambia el color o el texto y guarda)</p>';
+    list.forEach(function (it) {
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:6px;margin-bottom:6px';
+      row.innerHTML = '<input type="color" value="' + esc(it.c) + '" aria-label="Color de ' + esc(it.t) + '" style="width:40px;height:36px;padding:2px;border:1px solid var(--ap-border,#e5e7eb);border-radius:9px;background:none;cursor:pointer;flex:none">' +
+        '<input type="text" maxlength="24" value="' + esc(it.t) + '" aria-label="Texto de la etiqueta" class="flex-1 min-w-0 border rounded-lg px-2 py-1.5 text-sm" style="border-color:var(--ap-border,#e5e7eb)">' +
+        '<span class="text-[11px] text-slate-400" style="flex:none">' + it.n + '</span>' +
+        '<button type="button" class="m-btn m-btn-filled m-btn-sm" data-a="save" style="flex:none">Guardar</button>' +
+        '<button type="button" class="m-btn m-btn-outlined m-btn-sm" data-a="del" aria-label="Borrar la etiqueta ' + esc(it.t) + '" style="flex:none"><i class="bi bi-trash" aria-hidden="true"></i></button>';
+      row.querySelector('[data-a=save]').onclick = function () {
+        var t = row.querySelector('input[type=text]').value.trim();
+        if (!t) { say('El texto no puede quedar vacío', false); return; }
+        say('Guardando…'); post({ action: 'edit', old: it.t, text: t, color: row.querySelector('input[type=color]').value }).then(function (d) { done(d, 'Actualizada'); });
+      };
+      row.querySelector('[data-a=del]').onclick = function () {
+        if (!confirm('¿Borrar la etiqueta "' + it.t + '" de todos los productos?')) return;
+        say('Borrando…'); post({ action: 'remove', text: it.t, category_id: 0 }).then(function (d) { done(d, 'Borrada'); });
+      };
+      box.appendChild(row);
     });
   }
-  paint();
-  var el = document.getElementById('bulk-tag');
-  window.bulkTagOpen = function () { document.getElementById('bt-msg').textContent = ''; el.classList.remove('hidden'); el.style.display = 'flex'; document.getElementById('bt-text').focus(); };
+  window.bulkTagOpen = function () { say(''); render(); el.classList.remove('hidden'); el.style.display = 'flex'; };
   window.bulkTagClose = function () { el.classList.add('hidden'); el.style.display = 'none'; };
-  window.bulkTagSend = function (action) {
-    var msg = document.getElementById('bt-msg');
+  window.bulkTagAdd = function () {
     var text = document.getElementById('bt-text').value.trim();
-    if (!text) { msg.style.color = '#dc2626'; msg.textContent = 'Escribe el texto de la etiqueta'; return; }
-    var scope = document.getElementById('bt-scope');
-    if (action === 'add' && !confirm('¿Poner "' + text + '" a ' + (scope.value === '0' ? 'TODOS los productos' : scope.options[scope.selectedIndex].text.replace('Solo: ', 'los productos de ') ) + '?')) return;
-    msg.style.color = '#64748b'; msg.textContent = 'Aplicando…';
-    fetch('/<%= biz.slug %>/admin/productos/etiquetas', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'x-csrf-token': '<%= csrf %>' },
-      body: JSON.stringify({ text: text, color: sel, action: action, category_id: scope.value })
-    }).then(function (r) { return r.json(); }).then(function (d) {
-      if (!d.ok) { msg.style.color = '#dc2626'; msg.textContent = d.error || 'No se pudo'; return; }
-      msg.style.color = '#15803d';
-      msg.textContent = (action === 'remove' ? 'Quitada en ' : 'Lista en ') + d.changed + ' producto(s)' + (d.full ? ' · ' + d.full + ' ya tenían 3 etiquetas' : '');
-      setTimeout(function () { location.reload(); }, 1100);
-    }).catch(function () { msg.style.color = '#dc2626'; msg.textContent = 'Error de conexión'; });
+    if (!text) { say('Escribe el texto de la etiqueta', false); return; }
+    var sc = document.getElementById('bt-scope');
+    if (!confirm('¿Poner "' + text + '" a ' + (sc.value === '0' ? 'TODOS los productos' : sc.options[sc.selectedIndex].text.replace('Solo: ', 'los productos de ')) + '?')) return;
+    say('Aplicando…');
+    post({ action: 'add', text: text, color: colorIn.value, category_id: sc.value }).then(function (d) { done(d, 'Lista'); });
   };
 })();
 </script>
