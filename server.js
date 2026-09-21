@@ -1726,22 +1726,26 @@ function getBusiness(slug) {
 
 // Si la promo tiene fecha de vencimiento y ya pasó, la promo deja de mostrarse.
 // La comisión de Mercado Pago va DENTRO del precio que ve el cliente (un solo precio final, sin cargos aparte):
-// precio mostrado = precio base / (1 - comisión% * (1 + IVA%)), redondeado hacia arriba al peso.
+// precio mostrado = (precio base + cargo fijo con IVA) / (1 - comisión% * (1 + IVA%)), redondeado hacia arriba al peso.
 // Solo aplica si la tienda cobra en línea. El cobro en efectivo del mostrador usa el precio base.
 function priceMarkupFactor(biz) {
-  if (!biz || !biz.mp_access_token || biz.mp_fee_on === 0 || biz.mp_fee_on === '0') return 1;
+  if (!biz || !biz.mp_access_token || biz.mp_fee_on === 0 || biz.mp_fee_on === '0') return null;
   const pct = Math.max(0, Math.min(30, Number(biz.mp_fee_pct == null ? 3.49 : biz.mp_fee_pct)));
+  const fixed = Math.max(0, Math.min(100, Number(biz.mp_fee_fixed == null ? 4 : biz.mp_fee_fixed)));
   const iva = Math.max(0, Math.min(30, Number(biz.mp_fee_iva == null ? 16 : biz.mp_fee_iva)));
-  const denom = 1 - (pct / 100) * (1 + iva / 100);
-  return denom > 0.2 ? 1 / denom : 1;
+  const k = 1 + iva / 100;
+  const denom = 1 - (pct / 100) * k;
+  if (denom <= 0.2) return null;
+  // cobro = (neto + fijo*(1+IVA)) / (1 - pct*(1+IVA))  ->  cobro = neto*m + b
+  return { m: 1 / denom, b: (fixed * k) / denom };
 }
 function markupAmount(v, f) {
   const n = Number(v);
-  if (!(n > 0) || !(f > 1) || isNaN(n)) return v;
-  return Math.ceil(n * f - 1e-9);
+  if (!f || !(n > 0) || isNaN(n)) return v;
+  return Math.ceil(n * f.m + f.b - 1e-9);
 }
 function applyMarkup(p, f) {
-  if (!p || !(f > 1)) return p;
+  if (!p || !f) return p;
   p.price = markupAmount(p.price, f);
   if (p.old_price) p.old_price = markupAmount(p.old_price, f);
   let raw = p.variants, obj = null, wasStr = false;
@@ -1796,7 +1800,7 @@ function getCatalog(businessId) {
   const catCounts = {};
   db.prepare('SELECT category_id, COUNT(*) AS c FROM products WHERE business_id = ? AND active = 1 GROUP BY category_id').all(businessId).forEach(r => { catCounts[r.category_id] = r.c; });
   categories.forEach(c => { c.count = catCounts[c.id] || 0; });
-  const _mkF = priceMarkupFactor(db.prepare('SELECT mp_access_token, mp_fee_on, mp_fee_pct, mp_fee_iva FROM businesses WHERE id = ?').get(businessId));
+  const _mkF = priceMarkupFactor(db.prepare('SELECT mp_access_token, mp_fee_on, mp_fee_pct, mp_fee_fixed, mp_fee_iva FROM businesses WHERE id = ?').get(businessId));
   const products = db.prepare(
     `SELECT p.*, c.name AS category_name FROM products p
      LEFT JOIN categories c ON c.id = p.category_id
@@ -2951,7 +2955,7 @@ function pagoUnitPrice(p, variantLabel, f) {
     const key = label.split(' / ').map(x => x.trim()).join('|');
     if (vm && vm.prices && vm.prices[key] !== undefined && vm.prices[key] !== '' && !isNaN(Number(vm.prices[key]))) price = Number(vm.prices[key]);
   }
-  return f > 1 ? markupAmount(price, f) : price;
+  return f ? markupAmount(price, f) : price;
 }
 const MP_DETAIL_ES = {
   cc_rejected_insufficient_amount: 'Fondos insuficientes en la tarjeta.',
