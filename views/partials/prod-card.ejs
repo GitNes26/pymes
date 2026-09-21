@@ -13,6 +13,7 @@
             <div class="prod-body">
               <% if (p.customTags && p.customTags.length) { %><div class="prod-tags-row"><% p.customTags.forEach(function (t) { var _h = String(t.c || '#2c2c2e').replace('#', ''); var _lum = (parseInt(_h.substr(0, 2), 16) * 0.299 + parseInt(_h.substr(2, 2), 16) * 0.587 + parseInt(_h.substr(4, 2), 16) * 0.114); %><span class="prod-tag-custom" style="background:<%= t.c %>;color:<%= _lum > 160 ? '#161513' : '#fff' %>"><%= t.t %></span><% }) %></div><% } %>
               <div class="prod-name"><a href="/<%= biz.slug %>/p/<%= p.id %>" onclick="event.stopPropagation();"><%= p.name %></a></div>
+              <% if (p.specsList && p.specsList.length) { %><div class="prod-specs"><%= p.specsList.map(function (x) { return x.v; }).join(' · ') %></div><% } %>
               <% if (p.description) { %><div class="prod-desc"><%= p.description %></div><% } %>
               <div class="prod-prices">
                 <span class="prod-price"><%= _money(p) %></span>

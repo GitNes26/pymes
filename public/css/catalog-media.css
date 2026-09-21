@@ -246,3 +246,6 @@ body:has(.hero, .brand-hero) .hdr:not(.hdr-compact) .hdr-left { opacity: 0; poin
 html body .hdr-left { min-width: 0; flex: 1 1 auto; }
 html body .hdr-logo { flex: none; }
 html body .hdr-right { flex: none; }
+
+/* Atributos informativos del producto (Medida, Color...) */
+.prod-specs { margin-top: 3px; font-size: 12px; font-weight: 600; color: var(--text-secondary); line-height: 1.35; }

@@ -1776,6 +1776,7 @@ function getCatalog(businessId) {
     if (variantCoverImage(p)) p.image = p.imgs[0]; // la tarjeta muestra la foto de la primera variante
     p.hideStock = p.show_stock === 0 || p.show_stock === '0';
     p.customTags = parseCustomTags(p.custom_tags);
+    p.specsList = parseSpecs(p.specs);
     p.shortDesc = (p.description || '').replace(/\s+/g, ' ').trim().slice(0, 110);
     // Para que el cliente sepa si se va a acabar: con variantes el stock
     // vive por combinación (p.stock siempre null a propósito), así que se
@@ -2387,6 +2388,7 @@ app.get('/:slug/p/:id', (req, res, next) => {
   const pvm0 = parseVariantList(p.variants);
   p.hideStock = p.show_stock === 0 || p.show_stock === '0';
   p.customTags = parseCustomTags(p.custom_tags);
+  p.specsList = parseSpecs(p.specs);
   p.displayStock = p.made_to_order ? null : (pvm0.attrs && pvm0.attrs.length)
     ? Object.values(pvm0.stock || {}).reduce((s, v) => s + (parseInt(v, 10) || 0), 0)
     : p.stock;
@@ -3672,6 +3674,13 @@ function parseCustomTags(raw) {
     t: String((x && x.t) || '').trim().slice(0, 24),
     c: /^#[0-9a-fA-F]{6}$/.test(String((x && x.c) || '')) ? String(x.c) : '#2c2c2e'
   })).filter(x => x.t);
+}
+function parseSpecs(raw) {
+  // products.specs = una característica por línea, "Clave: Valor"
+  return String(raw || '').split(/\r?\n/).map(l => {
+    const i = l.indexOf(':');
+    return i > 0 ? { n: l.slice(0, i).trim().slice(0, 30), v: l.slice(i + 1).trim().slice(0, 60) } : null;
+  }).filter(x => x && x.n && x.v).slice(0, 8);
 }
 function customTagsJson(raw) {
   const a = parseCustomTags(raw);

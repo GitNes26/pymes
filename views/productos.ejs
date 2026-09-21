@@ -306,6 +306,24 @@
               <input type="checkbox" name="show_stock" id="f-show-stock" value="1" checked class="mt-0.5 accent-neutral-800">
               <span><strong class="block text-xs" style="color:var(--ap-text)">Mostrar el stock en el catálogo</strong><span class="block text-[11px] mt-0.5" style="color:var(--ap-text-sec)">El cliente verá "Quedan 3" o "12 disponibles". Si lo desmarcas no se muestra la cantidad; "Agotado" siempre se avisa.</span></span>
             </label>
+            <div class="md:col-span-2 rounded-xl border px-4 py-3" style="border-color:var(--ap-border);background:var(--ap-card)" id="sp-box">
+              <div class="flex items-center justify-between gap-2 flex-wrap">
+                <div>
+                  <strong class="block text-xs" style="color:var(--ap-text)">Atributos del producto</strong>
+                  <span class="block text-[11px] mt-0.5" style="color:var(--ap-text-sec)">Datos que ve el cliente, sin cambiar precio ni stock. Ej: Medida → 500 ml, Color → Azul.</span>
+                </div>
+                <button type="button" onclick="spAdd()" class="pn-btn pn-btn-sm">+ Agregar atributo</button>
+              </div>
+              <div id="sp-rows" class="mt-3 space-y-2"></div>
+              <div class="mt-3 flex flex-wrap gap-1.5">
+                <span class="text-[11px] font-semibold" style="color:var(--ap-text-sec)">Sugeridos:</span>
+                <button type="button" class="ct-sug" onclick="spAdd('Medida','')">Medida</button>
+                <button type="button" class="ct-sug" onclick="spAdd('Color','')">Color</button>
+                <button type="button" class="ct-sug" onclick="spAdd('Material','')">Material</button>
+                <button type="button" class="ct-sug" onclick="spAdd('Peso','')">Peso</button>
+                <button type="button" class="ct-sug" onclick="spAdd('Marca','')">Marca</button>
+              </div>
+            </div>
             <div class="md:col-span-2 rounded-xl border px-4 py-3" style="border-color:var(--ap-border);background:var(--ap-card)" id="ct-box">
               <div class="flex items-center justify-between gap-2 flex-wrap">
                 <div>
@@ -383,7 +401,7 @@
                   <label for="f-video">Video <span class="font-normal text-slate-400">(opcional, 1 por producto — pega una URL)</span></label>
                   <input name="video" id="f-video" placeholder="https://… (YouTube, Vimeo o .mp4)">
                 </div>
-                <div class="m-field md:col-span-2">
+                <div class="m-field md:col-span-2 hidden" id="f-specs-old">
                   <label for="f-specs">Características <span class="font-normal text-slate-400">(una por línea: "Marca: Bosch")</span></label>
                   <textarea name="specs" id="f-specs" rows="3" placeholder="Marca: Bosch&#10;Material: Acero&#10;Garantía: 1 año"></textarea>
                 </div>
@@ -1962,6 +1980,7 @@
       document.getElementById('f-made-to-order').checked = card.getAttribute('data-edit-made-to-order') === '1';
       document.getElementById('f-show-stock').checked = card.getAttribute('data-edit-show-stock') !== '0';
       ctLoad(card.getAttribute('data-edit-custom-tags') || '');
+      spLoad(card.getAttribute('data-edit-specs') || '');
       setVal('f-desc', card.getAttribute('data-edit-desc'));
       setVal('f-promo-type', card.getAttribute('data-edit-promo-type') || '');
       setVal('f-promo-value', card.getAttribute('data-edit-promo-value') || '');
@@ -2034,6 +2053,7 @@
       document.getElementById('f-made-to-order').checked = false;
       document.getElementById('f-show-stock').checked = true;
       ctLoad('');
+      spLoad('');
       setVal('f-cat', '');
       form.action = '/<%= biz.slug %>/admin/producto';
       document.getElementById('pf-title').textContent = 'Agregar producto';
@@ -2207,6 +2227,7 @@
         document.getElementById('f-made-to-order').checked = fd.made_to_order === '1' || fd.made_to_order === 1;
         document.getElementById('f-show-stock').checked = fd.show_stock_set ? !!fd.show_stock : true;
         ctLoad(fd.custom_tags || '');
+        spLoad(fd.specs || '');
         setVal('f-cost', fd.cost || '');
         setVal('f-sku', fd.sku || '');
         setVal('f-tags', fd.tags || '');
@@ -3629,6 +3650,42 @@
       row.querySelector('.ct-del').addEventListener('click', function () { row.remove(); ctSync(); });
       paint();
       if (!text) tx.focus();
+    }
+    function spSync() {
+      var out = [];
+      document.querySelectorAll('#sp-rows .sp-row').forEach(function (r) {
+        var n = (r.querySelector('.sp-n').value || '').trim(), v = (r.querySelector('.sp-v').value || '').trim();
+        if (n && v) out.push(n.slice(0, 30) + ': ' + v.slice(0, 60));
+      });
+      var h = document.getElementById('f-specs');
+      if (h) h.value = out.join('\n');
+    }
+    function spAdd(n, v) {
+      var box = document.getElementById('sp-rows');
+      if (!box) return;
+      if (box.querySelectorAll('.sp-row').length >= 8) { if (window.mostrarToast) mostrarToast('Máximo 8 atributos', 'error'); return; }
+      var row = document.createElement('div');
+      row.className = 'sp-row';
+      row.style.cssText = 'display:flex;gap:6px;align-items:center';
+      row.innerHTML = '<input type="text" class="sp-n" maxlength="30" placeholder="Atributo (Medida)" aria-label="Nombre del atributo" style="flex:1;min-width:0;border:1px solid var(--ap-border,#e5e7eb);border-radius:10px;padding:8px 10px;text-align:left;font-size:13px">' +
+        '<input type="text" class="sp-v" maxlength="60" placeholder="Valor (500 ml)" aria-label="Valor del atributo" style="flex:1;min-width:0;border:1px solid var(--ap-border,#e5e7eb);border-radius:10px;padding:8px 10px;text-align:left;font-size:13px">' +
+        '<button type="button" class="ct-del" aria-label="Quitar atributo">✕</button>';
+      box.appendChild(row);
+      row.querySelector('.sp-n').value = n || '';
+      row.querySelector('.sp-v').value = v || '';
+      row.querySelector('.sp-n').addEventListener('input', spSync);
+      row.querySelector('.sp-v').addEventListener('input', spSync);
+      row.querySelector('.ct-del').addEventListener('click', function () { row.remove(); spSync(); });
+      spSync();
+      (n ? row.querySelector('.sp-v') : row.querySelector('.sp-n')).focus();
+    }
+    function spLoad(raw) {
+      var box = document.getElementById('sp-rows');
+      if (!box) return;
+      box.innerHTML = '';
+      var arr = [];
+      String(raw || '').split(/\r?\n/).forEach(function (l) { var i = l.indexOf(':'); if (i > 0 && arr.length < 8) { arr.push(1); spAdd(l.slice(0, i).trim(), l.slice(i + 1).trim()); } });
+      spSync();
     }
     function ctLoad(raw) {
       var box = document.getElementById('ct-rows');
