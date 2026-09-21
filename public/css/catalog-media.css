@@ -248,4 +248,5 @@ html body .hdr-logo { flex: none; }
 html body .hdr-right { flex: none; }
 
 /* Atributos informativos del producto (Medida, Color...) */
-.prod-specs { margin-top: 3px; font-size: 12px; font-weight: 600; color: var(--text-secondary); line-height: 1.35; }
+.prod-specs { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.prod-spec { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--border, rgba(0,0,0,.14)); background: color-mix(in srgb, var(--accent) 7%, var(--bg-card, #fff)); color: var(--text-secondary); font-size: 11.5px; font-weight: 600; line-height: 1.5; white-space: nowrap; }

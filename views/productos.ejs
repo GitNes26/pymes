@@ -273,6 +273,7 @@
               </div>
               <input type="hidden" name="tipo" id="f-tipo" value="unico">
             </div>
+            <h3 class="pf-sec pf-sec--first"><i class="bi bi-info-circle" aria-hidden="true"></i> Información básica</h3>
             <div class="m-field">
               <label for="f-name">Nombre *</label>
               <input name="name" id="f-name" required placeholder="Ej: Taladro percutor 13mm">
@@ -287,6 +288,7 @@
               </select>
               <p id="f-cat-hint" class="text-[11px] text-slate-400 mt-1 <%= categories.length ? 'hidden' : '' %>"><% if (puedeCategorias) { %>Aún no tienes categorías. Créala en la pestaña <button type="button" class="font-bold text-neutral-800 hover:underline" onclick="switchCrudTab('categorias')">Categorías</button>.<% } else { %>Aún no hay categorías. Pídele al dueño de la tienda que las cree.<% } %></p>
             </div>
+            <h3 class="pf-sec"><i class="bi bi-cash-coin" aria-hidden="true"></i> Precio y stock</h3>
             <div class="m-field" id="f-price-wrap">
               <label for="f-price" id="f-price-label">Precio *</label>
               <input name="price" id="f-price" required type="text" inputmode="decimal" data-mask="money" placeholder="0.00">
@@ -306,6 +308,7 @@
               <input type="checkbox" name="show_stock" id="f-show-stock" value="1" checked class="mt-0.5 accent-neutral-800">
               <span><strong class="block text-xs" style="color:var(--ap-text)">Mostrar el stock en el catálogo</strong><span class="block text-[11px] mt-0.5" style="color:var(--ap-text-sec)">El cliente verá "Quedan 3" o "12 disponibles". Si lo desmarcas no se muestra la cantidad; "Agotado" siempre se avisa.</span></span>
             </label>
+            <h3 class="pf-sec"><i class="bi bi-tags" aria-hidden="true"></i> Atributos y etiquetas</h3>
             <div class="md:col-span-2 rounded-xl border px-4 py-3" style="border-color:var(--ap-border);background:var(--ap-card)" id="sp-box">
               <div class="flex items-center justify-between gap-2 flex-wrap">
                 <div>
@@ -343,6 +346,7 @@
                 <button type="button" class="ct-sug" onclick="ctAdd('Edición limitada','#be123c')">Edición limitada</button>
               </div>
             </div>
+            <h3 class="pf-sec"><i class="bi bi-card-text" aria-hidden="true"></i> Costo y descripción</h3>
             <div class="m-field md:col-span-2">
               <label for="f-cost">Costo del proveedor <span class="font-normal text-slate-400">(opcional — para tus reportes de ganancia)</span></label>
               <input name="cost" id="f-cost" type="text" inputmode="decimal" data-mask="money" placeholder="0.00">
@@ -2568,6 +2572,15 @@
   <style>
     .ct-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:8px; border:1px solid var(--ap-border); border-radius:12px; background:var(--ap-bg); }
     .ct-text { flex:1 1 170px; min-width:0; min-height:40px; padding:0 12px; border:1px solid var(--ap-border); border-radius:10px; background:var(--ap-card); font-size:13px; }
+    /* Paso 1 del formulario de producto: secciones con título y aire entre bloques */
+    #pf-form [data-step-pane] { row-gap: 14px; }
+    #pf-form [data-step-pane="1"] .m-field { margin: 0; }
+    #pf-form [data-step-pane="1"] > label.md\:col-span-2,
+    #pf-form [data-step-pane="1"] > #sp-box,
+    #pf-form [data-step-pane="1"] > #ct-box { border-radius: 14px; padding: 14px 16px; }
+    .pf-sec { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; margin: 12px 0 0; padding-top: 16px; border-top: 1px solid var(--ap-border, #e5e7eb); font-size: 11px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: var(--ap-text-sec, #64748b); }
+    .pf-sec i { font-size: 14px; opacity: .8; }
+    .pf-sec--first { margin-top: 4px; }
     .ct-colors { display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
     .ct-dot { width:22px; height:22px; border-radius:50%; border:2px solid transparent; cursor:pointer; box-shadow:0 0 0 1px rgba(0,0,0,.12); }
     .ct-dot.on { border-color:#fff; box-shadow:0 0 0 2px var(--ap-text); }
