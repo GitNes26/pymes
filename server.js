@@ -1718,7 +1718,10 @@ function pickSponsored(biz, limit) {
 }
 
 function getBusiness(slug) {
-  return db.prepare('SELECT * FROM businesses WHERE slug = ?').get(slug);
+  const b = db.prepare('SELECT * FROM businesses WHERE slug = ?').get(slug);
+  // El pago en línea es obligatorio: está activo en cuanto la tienda tiene su cuenta de Mercado Pago conectada
+  if (b) b.mp_enabled = b.mp_access_token ? 1 : 0;
+  return b;
 }
 
 // Si la promo tiene fecha de vencimiento y ya pasó, la promo deja de mostrarse.
@@ -4812,7 +4815,7 @@ function applyConfig(biz, body) {
   // porque el dueño mandó otro de los formularios de Configuración.
   const mpFormPosted = Object.prototype.hasOwnProperty.call(body, 'mp_form');
   const mpAccessToken = mpFormPosted ? String(body.mp_access_token || '').trim().slice(0, 300) : biz.mp_access_token;
-  const mpEnabled = mpFormPosted ? (body.mp_enabled === '1' ? 1 : 0) : biz.mp_enabled;
+  const mpEnabled = mpAccessToken ? 1 : 0;
   // Transferencia bancaria: mismo patrón (marcador transfer_form en su propio
   // <form>) — el dueño publica su cuenta y el cliente transfiere y manda el
   // comprobante por WhatsApp, sin pasarela de por medio.
