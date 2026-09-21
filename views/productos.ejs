@@ -576,7 +576,9 @@
     .pf-advanced summary::before { content:'›'; display:inline-block; margin-right:6px; font-size:15px; font-weight:900; transition:transform .2s cubic-bezier(.22,1,.36,1); }
     .pf-advanced[open] summary::before { transform:rotate(90deg); }
     .pf-advanced summary:hover { color:#1e293b; }
-    .pf-advanced-body { margin-top:12px; }
+    .pf-advanced-body { margin-top:14px; row-gap:16px; }
+    .pf-advanced-body .m-field { margin:0; }
+    .pf-advanced-body > .rounded-2xl { padding:14px 16px; }
     /* Tabs: Productos | Categorías | Atributos */
     .prod-tabs { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; background:var(--ap-card); border:1px solid var(--ap-border); padding:6px; border-radius:var(--ap-radius); box-shadow:var(--ap-shadow); }
     .prod-tab { display:inline-flex; align-items:center; gap:8px; padding:8px 14px; border-radius:12px; font-size:12px; font-weight:800; color:var(--ap-text-sec); background:transparent; border:none; cursor:pointer; transition:all .25s cubic-bezier(.22,1,.36,1); }
