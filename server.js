@@ -3757,6 +3757,15 @@ app.post('/:slug/admin/producto', requireAuth, can('productos.crear'), (req, res
   res.redirect('/' + req.params.slug + '/admin/productos');
 });
 
+// Etiquetas de toda la tienda (globales): se guardan en extras.globalTags y salen en todos los productos
+app.post('/:slug/admin/etiquetas-globales', requireAuth, can('config'), (req, res) => {
+  const tags = parseCustomTags((req.body || {}).tags);
+  let ex = {};
+  try { ex = JSON.parse(req.biz.extras || '{}') || {}; } catch (e) { ex = {}; }
+  ex.globalTags = tags;
+  db.prepare('UPDATE businesses SET extras = ? WHERE id = ?').run(JSON.stringify(ex), req.biz.id);
+  res.json({ ok: true, tags });
+});
 // Etiqueta en bloque: agrega o quita una etiqueta en todos los productos (o los de una categoría)
 app.post('/:slug/admin/productos/etiquetas', requireAuth, can('productos.editar'), (req, res) => {
   const b = req.body || {};

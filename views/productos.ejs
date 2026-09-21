@@ -3785,12 +3785,17 @@
   </script>
 
 <!-- Etiquetas de todos los productos -->
+<script type="application/json" id="bt-global"><%- safeJson((function () { try { var g = JSON.parse(biz.extras || '{}').globalTags; return Array.isArray(g) ? g : []; } catch (e) { return []; } })()) %></script>
 <script type="application/json" id="bt-data"><%- safeJson(allProducts.map(function (p) { return p.custom_tags || ''; })) %></script>
 <div id="bulk-tag" class="hidden" style="position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.45);align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this)bulkTagClose()">
   <div role="dialog" aria-modal="true" aria-labelledby="bulk-tag-t" style="background:var(--ap-card,#fff);color:inherit;border-radius:16px;padding:20px;width:100%;max-width:460px;max-height:92vh;overflow:auto;box-shadow:0 20px 50px rgba(0,0,0,.3)">
     <h2 id="bulk-tag-t" class="text-base font-black mb-1">Etiquetas de tus productos</h2>
     <p class="text-xs text-slate-500 mb-3">Cada producto puede tener hasta 3 etiquetas propias.</p>
 
+    <p class="text-xs font-black mb-1">En todos los productos de la tienda</p>
+    <p class="text-[11px] text-slate-400 mb-2">Se muestran en cada producto sin ocupar sus 3 lugares (hasta 3). Se cambian aquí y en Configuración.</p>
+    <div id="bt-global-list" class="mb-4"></div>
+    <p class="text-xs font-black mb-1">Etiquetas propias de cada producto</p>
     <div id="bt-list" class="mb-4"></div>
 
     <div class="rounded-xl border p-3" style="border-color:var(--ap-border,#e5e7eb)">
@@ -3878,7 +3883,53 @@
       box.appendChild(row);
     });
   }
-  window.bulkTagOpen = function () { say(''); render(); el.classList.remove('hidden'); el.style.display = 'flex'; };
+  var GT = []; try { GT = JSON.parse(document.getElementById('bt-global').textContent || '[]'); } catch (e) {}
+  GT = GT.filter(function (t) { return t && t.t; });
+  function saveGT(verb) {
+    say('Guardando…');
+    post2({ tags: GT }).then(function (d) { if (!d.ok) { say('No se pudo guardar', false); return; } GT = d.tags; say(verb, true); renderGT(); });
+  }
+  function post2(body) {
+    return fetch('/<%= biz.slug %>/admin/etiquetas-globales', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'x-csrf-token': '<%= csrf %>' }, body: JSON.stringify(body)
+    }).then(function (r) { return r.json(); });
+  }
+  function renderGT() {
+    var box = document.getElementById('bt-global-list');
+    box.innerHTML = '';
+    GT.forEach(function (it, i) {
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:6px;margin-bottom:6px';
+      row.innerHTML = '<input type="color" value="' + esc(it.c || '#2c2c2e') + '" aria-label="Color" style="width:40px;height:36px;padding:2px;border:1px solid var(--ap-border,#e5e7eb);border-radius:9px;background:none;cursor:pointer;flex:none">' +
+        '<input type="text" maxlength="24" value="' + esc(it.t) + '" aria-label="Texto de la etiqueta" class="flex-1 min-w-0 border rounded-lg px-2 py-1.5 text-sm" style="border-color:var(--ap-border,#e5e7eb)">' +
+        '<button type="button" class="m-btn m-btn-filled m-btn-sm" data-a="save" style="flex:none">Guardar</button>' +
+        '<button type="button" class="m-btn m-btn-outlined m-btn-sm" data-a="del" aria-label="Borrar la etiqueta ' + esc(it.t) + '" style="flex:none"><i class="bi bi-trash" aria-hidden="true"></i></button>';
+      row.querySelector('[data-a=save]').onclick = function () {
+        var t = row.querySelector('input[type=text]').value.trim();
+        if (!t) { say('El texto no puede quedar vacío', false); return; }
+        GT[i] = { t: t, c: row.querySelector('input[type=color]').value }; saveGT('Etiqueta actualizada');
+      };
+      row.querySelector('[data-a=del]').onclick = function () {
+        if (!confirm('¿Borrar la etiqueta "' + it.t + '" de toda la tienda?')) return;
+        GT.splice(i, 1); saveGT('Etiqueta borrada');
+      };
+      box.appendChild(row);
+    });
+    if (GT.length < 3) {
+      var add = document.createElement('div');
+      add.style.cssText = 'display:flex;align-items:center;gap:6px';
+      add.innerHTML = '<input type="color" value="#0f766e" aria-label="Color de la nueva etiqueta" style="width:40px;height:36px;padding:2px;border:1px solid var(--ap-border,#e5e7eb);border-radius:9px;background:none;cursor:pointer;flex:none">' +
+        '<input type="text" maxlength="24" placeholder="Nueva etiqueta para toda la tienda" aria-label="Nueva etiqueta global" class="flex-1 min-w-0 border rounded-lg px-2 py-1.5 text-sm" style="border-color:var(--ap-border,#e5e7eb)">' +
+        '<button type="button" class="m-btn m-btn-outlined m-btn-sm" style="flex:none">Agregar</button>';
+      add.querySelector('button').onclick = function () {
+        var t = add.querySelector('input[type=text]').value.trim();
+        if (!t) { say('Escribe el texto de la etiqueta', false); return; }
+        GT.push({ t: t, c: add.querySelector('input[type=color]').value }); saveGT('Etiqueta agregada');
+      };
+      box.appendChild(add);
+    }
+  }
+  window.bulkTagOpen = function () { say(''); render(); renderGT(); el.classList.remove('hidden'); el.style.display = 'flex'; };
   window.bulkTagClose = function () { el.classList.add('hidden'); el.style.display = 'none'; };
   window.bulkTagAdd = function () {
     var text = document.getElementById('bt-text').value.trim();
