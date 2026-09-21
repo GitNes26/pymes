@@ -585,7 +585,6 @@
                   <span class="badge-status <%= b.expired ? 'expired' : 'warning' %>">Vence <%= fmtFecha(b.plan_ends_at, 'fecha') %><%= b.expired ? ' · VENCIDO' : '' %></span>
                 <% } %>
                 <% if (b.suspended) { %><span class="badge-status suspended">Suspendida</span><% } %>
-                <span class="badge-status <%= b.ads_enabled ? 'ads' : 'no-ads' %>"><%= b.ads_enabled ? 'Con anuncio' : 'Sin anuncio' %></span>
               </div>
 
               <div class="mc-controls">
@@ -608,16 +607,9 @@
                 </div>
 
                 <div class="mc-actions">
-                  <form method="POST" action="/maestro/<%= b.id %>/ads">
-                    <button class="mc-act <%= b.ads_enabled ? 'is-on' : '' %>" title="Mostrar como anuncio en otros catálogos"><i class="bi bi-megaphone"></i><span><%= b.ads_enabled ? 'Quitar anuncio' : 'Anunciar' %></span></button>
-                  </form>
                   <% if (b.suspended) { %>
                     <form method="POST" action="/maestro/<%= b.id %>/reactivar">
                       <button class="mc-act ok"><i class="bi bi-play-circle"></i><span>Reactivar</span></button>
-                    </form>
-                  <% } else { %>
-                    <form method="POST" action="/maestro/<%= b.id %>/suspender">
-                      <button class="mc-act warn" title="Pausar catálogo y panel"><i class="bi bi-pause-circle"></i><span>Suspender</span></button>
                     </form>
                   <% } %>
                   <form method="POST" action="/maestro/<%= b.id %>/toggle">
