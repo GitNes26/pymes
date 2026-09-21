@@ -1243,6 +1243,7 @@
         renderCombos();
         syncStockField();
         syncPriceField();
+        save(); // el campo oculto siempre refleja el modelo (si no, al guardar sin tocar nada se perdían las variantes)
       }
 
       function renderCombos() {
@@ -2249,6 +2250,7 @@
         }
         if (pfTipo !== 'variantes') return;
         var ed = window.VAR_EDITORS && window.VAR_EDITORS.f;
+        if (ed && typeof ed.save === 'function') ed.save();
         // Sin al menos un atributo con valores, "Con variantes" no genera
         // ninguna variante real — no tiene caso guardar así.
         if (!ed || !ed.model || !ed.model.attrs.length) {
