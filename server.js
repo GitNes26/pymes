@@ -1728,13 +1728,8 @@ function getBusiness(slug) {
 // La comisión de Mercado Pago va DENTRO del precio que ve el cliente (un solo precio final, sin cargos aparte):
 // precio mostrado = (precio base + cargo fijo con IVA) / (1 - comisión% * (1 + IVA%)), redondeado hacia arriba al peso.
 // Solo aplica si la tienda cobra en línea. El cobro en efectivo del mostrador usa el precio base.
-// ¿Además de Mercado Pago la tienda acepta transferencia o efectivo? Entonces el precio es el base para todos
-// y la comisión solo se le suma a quien paga con tarjeta.
-function mpHasOtherMethods(biz) {
-  return !!(biz && ((biz.transfer_enabled && (biz.transfer_bank || biz.transfer_account)) || biz.cash_enabled));
-}
 function priceMarkupFactor(biz) {
-  if (!biz || !biz.mp_access_token || biz.mp_fee_on === 0 || biz.mp_fee_on === '0' || mpHasOtherMethods(biz)) return null;
+  if (!biz || !biz.mp_access_token || biz.mp_fee_on === 0 || biz.mp_fee_on === '0') return null;
   const pct = Math.max(0, Math.min(30, Number(biz.mp_fee_pct == null ? 3.49 : biz.mp_fee_pct)));
   const fixed = Math.max(0, Math.min(100, Number(biz.mp_fee_fixed == null ? 4 : biz.mp_fee_fixed)));
   const iva = Math.max(0, Math.min(30, Number(biz.mp_fee_iva == null ? 16 : biz.mp_fee_iva)));
@@ -3011,10 +3006,7 @@ app.post('/:slug/pagar-tarjeta', rateLimit(12), async (req, res) => {
   if (total > baseTotal) lines.push('Cobrado con tarjeta: ' + currencyInfo(biz.currency).symbol + total.toFixed(2) + ' (incluye comisión de pago en línea)');
   if (!lines.length || !(total > 0)) return res.status(400).json({ ok: false, error: 'El carrito está vacío' });
   const clientTotal = Number(fd.transaction_amount);
-  // Con solo Mercado Pago la comisión ya viene dentro del precio; si hay transferencia/efectivo, se suma solo a quien paga con tarjeta
-  const cardFee = priceMarkupFactor(biz) ? 0 : mpCardFee(biz, total);
-  const charge = Math.round((total + cardFee) * 100) / 100;
-  if (cardFee > 0) lines.push('Cargo por pagar con tarjeta: ' + currencyInfo(biz.currency).symbol + cardFee.toFixed(2) + ' (comisión de Mercado Pago; no es ganancia)');
+  const charge = total; // la comisión ya viene incluida en el precio de cada producto
   if (isFinite(clientTotal) && Math.abs(clientTotal - charge) > 0.5) return res.status(409).json({ ok: false, error: 'El total cambió (' + currencyInfo(biz.currency).symbol + charge.toFixed(2) + '). Cierra esta ventana, revisa tu carrito y vuelve a intentar.' });
 
   const customerData = customerName ? (customerName + (customerPhone ? ' (' + customerPhone + ')' : '')) : (customerPhone || '');
@@ -5000,7 +4992,7 @@ function applyConfig(biz, body) {
     ? (transferAccountRaw === '' ? '' : (/^\d{10,20}$/.test(transferAccountRaw) ? transferAccountRaw : biz.transfer_account))
     : biz.transfer_account;
   const transferHolder = transferFormPosted ? String(body.transfer_holder || '').trim().slice(0, 120) : biz.transfer_holder;
-  const transferEnabled = transferFormPosted ? (body.transfer_enabled === '1' ? 1 : 0) : biz.transfer_enabled;
+  const transferEnabled = (mpAccessToken ? 0 : (transferFormPosted ? (body.transfer_enabled === '1' ? 1 : 0) : biz.transfer_enabled)); // transferencia y Mercado Pago son excluyentes
   db.prepare(
     `UPDATE businesses SET name = ?, whatsapp = ?, description = ?, template = ?, color = ?, color_hex = ?, color_hex2 = ?, color_mode = ?, grid_cols = ?, logo = ?, banner = ?, giro = ?, giros = ?, estilo = ?, bg = ?, card = ?, text = ?, muted = ?, border = ?, radius = ?, font = ?, accent = ?, accent2 = ?, header = ?, header_text = ?, wa_message = ?, currency = ?, sections = ?, demo = ?, horario = ?, horario_msg = ?, blocks = ?, page_bg = ?, redes = ?, faq = ?, extras = ?, address = ?, catalog_design = ?, mp_access_token = ?, mp_enabled = ?, transfer_bank = ?, transfer_account = ?, transfer_holder = ?, transfer_enabled = ? WHERE id = ?`
   ).run(
@@ -5059,7 +5051,6 @@ function applyConfig(biz, body) {
     try { pags = JSON.parse(body.paginas_sugeridas || '[]'); } catch (e) { pags = []; }
     db.crearPaginasSugeridas(biz.id, pags);
   }
-  if (transferFormPosted) db.prepare('UPDATE businesses SET cash_enabled = ? WHERE id = ?').run(body.cash_enabled === '1' ? 1 : 0, biz.id);
   if (mpFormPosted) {
     const num = (v, def, max) => { const n = parseFloat(String(v || '').replace(',', '.')); return isFinite(n) && n >= 0 ? Math.min(n, max) : def; };
     db.prepare('UPDATE businesses SET mp_fee_on = ?, mp_fee_pct = ?, mp_fee_fixed = ?, mp_fee_iva = ? WHERE id = ?').run(
