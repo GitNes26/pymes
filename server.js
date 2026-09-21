@@ -2772,13 +2772,16 @@ app.get('/:slug/pedido', (req, res, next) => {
 // ================= PAGO EN LÍNEA (MERCADO PAGO — CHECKOUT PRO) =================
 // Cada tienda usa su propia cuenta/Access Token (guardado en businesses.mp_access_token,
 // ver Configuración → Pagos en línea) — nunca una cuenta central compartida.
+// MP solo acepta URLs públicas https en notification_url; en localhost se omite (el pago aprobado igual responde al momento)
+function mpIsPublicUrl(u) { return /^https:\/\/(?!localhost|127\.|192\.168\.|10\.)/i.test(String(u || '')); }
 function mpAbsUrl(req, path) {
   return (BASE_URL ? BASE_URL : req.protocol + '://' + req.get('host')) + path;
 }
 async function mpFetch(token, path, options) {
-  const resp = await fetch('https://api.mercadopago.com' + path, Object.assign({
-    headers: Object.assign({ 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, (options && options.headers) || {})
-  }, options || {}));
+  // Los headers propios (p. ej. X-Idempotency-Key) se SUMAN a Authorization; antes lo pisaban y MP respondía 401
+  const opts = Object.assign({}, options || {});
+  opts.headers = Object.assign({ 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, (options && options.headers) || {});
+  const resp = await fetch('https://api.mercadopago.com' + path, opts);
   const data = await resp.json().catch(() => ({}));
   return { ok: resp.ok, status: resp.status, data };
 }
@@ -2881,6 +2884,7 @@ app.get('/:slug/pagar-mp', async (req, res) => {
     auto_return: 'approved',
     notification_url: mpAbsUrl(req, '/webhooks/mercadopago?slug=' + encodeURIComponent(biz.slug))
   };
+  if (!mpIsPublicUrl(pref.notification_url)) { delete pref.notification_url; delete pref.auto_return; }
   if (biz.mp_connected && mpFee(total) > 0) pref.marketplace_fee = mpFee(total);
   const { ok, data } = await mpFetch(biz.mp_access_token, '/checkout/preferences', { method: 'POST', body: JSON.stringify(pref) });
   if (!ok || !data.init_point) {
@@ -2963,6 +2967,7 @@ app.post('/:slug/pagar-tarjeta', rateLimit(12), async (req, res) => {
     external_reference: String(orderId),
     notification_url: mpAbsUrl(req, '/webhooks/mercadopago?slug=' + encodeURIComponent(biz.slug))
   };
+  if (!mpIsPublicUrl(payload.notification_url)) delete payload.notification_url;
   if (fd.issuer_id) payload.issuer_id = Number(fd.issuer_id) || String(fd.issuer_id);
   if (fd.payer && fd.payer.identification && fd.payer.identification.number) payload.payer.identification = { type: String(fd.payer.identification.type || ''), number: String(fd.payer.identification.number || '') };
   if (!payload.payer.email) {
