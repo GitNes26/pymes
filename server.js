@@ -2950,6 +2950,60 @@ app.get('/:slug/pagar-mp', async (req, res) => {
 });
 
 // Precio real de una línea: el del producto, o el de la variante elegida (la etiqueta llega como "A / B")
+// ===== Stock de los pedidos: se descuenta al PAGARSE (tarjeta aprobada, efectivo en caja, transferencia marcada
+// pagada) o al ENTREGARSE, una sola vez por pedido (orders.stock_applied); si se cancela, se devuelve. =====
+function orderLines(order) {
+  return String(order.items || '').split(/[\n|]/).map(l => {
+    const m = l.match(/^\s*•\s*(\d+)\s*x\s+(.+?)\s*=\s*[^=]*$/);
+    if (!m) return null;
+    const qty = parseInt(m[1], 10) || 1;
+    let name = m[2].trim(), variant = '';
+    return { qty, name, variant };
+  }).filter(Boolean);
+}
+function orderFindProduct(bizId, ln) {
+  let p = db.prepare('SELECT * FROM products WHERE business_id = ? AND name = ?').get(bizId, ln.name);
+  if (p) return { p, variant: '' };
+  const m = ln.name.match(/^(.*?)\s*\(([^()]*)\)\s*$/);
+  if (m) {
+    p = db.prepare('SELECT * FROM products WHERE business_id = ? AND name = ?').get(bizId, m[1].trim());
+    if (p) return { p, variant: m[2].trim() };
+  }
+  return null;
+}
+function moveOrderStock(orderId, dir) { // dir = -1 descuenta, +1 devuelve
+  const o = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId);
+  if (!o) return;
+  if (dir < 0 && o.stock_applied) return;
+  if (dir > 0 && !o.stock_applied) return;
+  orderLines(o).forEach(ln => {
+    const f = orderFindProduct(o.business_id, ln);
+    if (!f || f.p.made_to_order) return;
+    const p = f.p;
+    const vm = parseVariantModel(p.variants);
+    if (vm.attrs && vm.attrs.length) {
+      const key = String(f.variant || '').split(' / ').map(x => x.trim()).join('|');
+      const cur = vm.stock && vm.stock[key];
+      if (cur === undefined || cur === '' || isNaN(Number(cur))) return;
+      vm.stock[key] = Math.max(0, Number(cur) + dir * ln.qty);
+      db.prepare('UPDATE products SET variants = ? WHERE id = ?').run(JSON.stringify(vm), p.id);
+    } else if (p.stock !== null && p.stock !== undefined) {
+      db.prepare('UPDATE products SET stock = ? WHERE id = ?').run(Math.max(0, Number(p.stock) + dir * ln.qty), p.id);
+    }
+  });
+  db.prepare('UPDATE orders SET stock_applied = ? WHERE id = ?').run(dir < 0 ? 1 : 0, orderId);
+}
+// Cuánto hay disponible de un producto (null = sin control de stock / por pedido)
+function stockAvailable(p, variantLabel) {
+  if (!p || p.made_to_order) return null;
+  const vm = parseVariantModel(p.variants);
+  if (vm.attrs && vm.attrs.length) {
+    const key = String(variantLabel || '').split(' / ').map(x => x.trim()).join('|');
+    const cur = vm.stock && vm.stock[key];
+    return (cur === undefined || cur === '' || isNaN(Number(cur))) ? null : Number(cur);
+  }
+  return (p.stock === null || p.stock === undefined) ? null : Number(p.stock);
+}
 function pagoUnitPrice(p, variantLabel, f) {
   withPromo(p);
   let price = Number(p.price) || 0;
@@ -2989,11 +3043,13 @@ app.post('/:slug/pagar-tarjeta', rateLimit(12), async (req, res) => {
   const customerName = String(body.nombre || '').trim().slice(0, 80);
   const customerPhone = String(body.telefono || '').replace(/[^0-9]/g, '').slice(0, 15);
   let total = 0;
-  let baseTotal = 0;
+  let baseTotal = 0, stockError = '';
   const lines = items.map((it) => {
     const p = db.prepare('SELECT * FROM products WHERE id = ? AND business_id = ? AND active = 1').get(parseInt(it && it.id) || 0, biz.id);
     if (!p) return null;
     const qty = Math.max(1, Math.min(999, parseInt(it.qty) || 1));
+    const av = stockAvailable(p, it.variant);
+    if (av !== null && qty > av) { stockError = 'No hay suficiente stock de ' + p.name + ' (quedan ' + av + ').'; return null; }
     const unit = pagoUnitPrice(p, it.variant, priceMarkupFactor(biz));
     const baseUnit = pagoUnitPrice(p, it.variant);
     total += unit * qty;
@@ -3001,6 +3057,7 @@ app.post('/:slug/pagar-tarjeta', rateLimit(12), async (req, res) => {
     const variant = it.variant ? ' (' + String(it.variant).slice(0, 80) + ')' : '';
     return `• ${qty} x ${p.name}${variant} = ${currencyInfo(biz.currency).symbol}${(baseUnit * qty).toFixed(2)}`;
   }).filter(Boolean);
+  if (stockError) return res.status(409).json({ ok: false, error: stockError });
   total = Math.round(total * 100) / 100;
   baseTotal = Math.round(baseTotal * 100) / 100;
   if (total > baseTotal) lines.push('Cobrado con tarjeta: ' + currencyInfo(biz.currency).symbol + total.toFixed(2) + ' (incluye comisión de pago en línea)');
@@ -3056,6 +3113,7 @@ app.post('/:slug/pagar-tarjeta', rateLimit(12), async (req, res) => {
   track(biz.id, 'mp', 'pedido');
   if (pay.status === 'approved') {
     db.prepare("UPDATE orders SET paid = 1, paid_at = datetime('now'), status = 'pagado' WHERE id = ?").run(orderId);
+    moveOrderStock(orderId, -1);
     notifyOwnerPaid(biz, orderId);
     return res.json({ ok: true, status: 'approved', orderId, total: charge });
   }
@@ -3106,6 +3164,7 @@ app.post('/webhooks/mercadopago', async (req, res) => {
     db.prepare('UPDATE orders SET mp_payment_id = ?, mp_status = ? WHERE id = ?').run(String(paymentId), payment.status || '', order.id);
     if (payment.status === 'approved' && !order.paid) {
       db.prepare("UPDATE orders SET paid = 1, paid_at = datetime('now'), status = 'pagado' WHERE id = ?").run(order.id);
+      moveOrderStock(order.id, -1);
       notifyOwnerPaid(biz, order.id);
     }
   } catch (e) {
@@ -3845,23 +3904,27 @@ app.post('/:slug/admin/venta-efectivo', requireAuth, can('pedidos.gestionar'), (
   const items = Array.isArray(body.items) ? body.items.slice(0, 60) : [];
   const customerName = String(body.nombre || '').trim().slice(0, 80);
   const customerPhone = String(body.telefono || '').replace(/[^0-9]/g, '').slice(0, 15);
-  let total = 0;
+  let total = 0, cashStockError = '';
   const lines = items.map((it) => {
     const p = db.prepare('SELECT * FROM products WHERE id = ? AND business_id = ? AND active = 1').get(parseInt(it && it.id) || 0, biz.id);
     if (!p) return null;
     const qty = Math.max(1, Math.min(999, parseInt(it.qty) || 1));
+    const av = stockAvailable(p, it.variant);
+    if (av !== null && qty > av) { cashStockError = 'No hay suficiente stock de ' + p.name + ' (quedan ' + av + ').'; return null; }
     const unit = pagoUnitPrice(p, it.variant);
     const sub = unit * qty;
     total += sub;
     const variant = it.variant ? ' (' + String(it.variant).slice(0, 80) + ')' : '';
     return `• ${qty} x ${p.name}${variant} = ${currencyInfo(biz.currency).symbol}${sub.toFixed(2)}`;
   }).filter(Boolean);
+  if (cashStockError) return res.status(409).json({ ok: false, error: cashStockError });
   total = Math.round(total * 100) / 100;
   if (!lines.length || !(total > 0)) return res.status(400).json({ ok: false, error: 'El carrito está vacío' });
   const who = customerName ? (customerName + (customerPhone ? ' (' + customerPhone + ')' : '')) : (customerPhone || 'Mostrador');
   const orderId = db.prepare(
     `INSERT INTO orders (business_id, items, total, customer_name, customer_phone, status, paid, paid_at, mp_status) VALUES (?, ?, ?, ?, ?, 'pagado', 1, datetime('now'), 'efectivo')`
   ).run(biz.id, lines.join(' | ') + ' | 💵 Pago en efectivo', total, who, customerPhone).lastInsertRowid;
+  moveOrderStock(orderId, -1);
   if (customerName || customerPhone) upsertCustomer(biz.id, customerName, customerPhone);
   track(biz.id, 'efectivo', 'pedido');
   res.json({ ok: true, orderId, total });
@@ -4083,6 +4146,7 @@ app.post('/:slug/admin/atributo/:id', requireAuth, can('atributos.gestionar'), (
 // ================= PEDIDOS =================
 app.post('/:slug/admin/order/:id/pagado', requireAuth, can('pedidos.gestionar'), (req, res) => {
   db.prepare("UPDATE orders SET paid = 1, status = 'pagado', paid_at = datetime('now') WHERE id = ? AND business_id = ?").run(req.params.id, req.biz.id);
+  moveOrderStock(req.params.id, -1);
   res.redirect('/' + req.params.slug + '/admin/panel');
 });
 
@@ -4096,11 +4160,13 @@ app.post('/:slug/admin/order/:id/entregado', requireAuth, can('pedidos.gestionar
   // paid_at = ahora solo si al entregar se cobró todo; si queda saldo por cobrar se entrega sin cobrar.
   db.prepare("UPDATE orders SET paid = ?, status = 'entregado', paid_at = CASE WHEN ? = 1 THEN datetime('now') ELSE NULL END WHERE id = ? AND business_id = ?")
     .run(liquidado ? 1 : 0, liquidado ? 1 : 0, req.params.id, req.biz.id);
+  moveOrderStock(req.params.id, -1); // al entregar baja el stock si aún no se había descontado
   res.redirect('/' + req.params.slug + '/admin/panel');
 });
 
 app.post('/:slug/admin/order/:id/cancelado', requireAuth, can('pedidos.gestionar'), (req, res) => {
   // Un pedido cancelado no es ingreso: sale de lo cobrado.
+  moveOrderStock(req.params.id, 1); // si ya se había descontado, se devuelve
   db.prepare("UPDATE orders SET status = 'cancelado', paid = 0, paid_at = NULL WHERE id = ? AND business_id = ?").run(req.params.id, req.biz.id);
   res.redirect('/' + req.params.slug + '/admin/panel');
 });

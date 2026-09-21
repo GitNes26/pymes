@@ -302,6 +302,7 @@ db.prepare("UPDATE orders SET paid_at = created_at WHERE paid = 1 AND (paid_at I
 // y para poder mostrar "pendiente/rechazado" en vez de solo pagado/no pagado.
 addColumnIfMissing('orders', 'mp_payment_id', "TEXT DEFAULT ''");
 addColumnIfMissing('orders', 'mp_status', "TEXT DEFAULT ''");
+addColumnIfMissing('orders', 'stock_applied', 'INTEGER DEFAULT 0'); // 1 = ya se descontó el stock de este pedido
 
 // ================= PLANES (creados por el administrador maestro) =================
 db.exec(`
