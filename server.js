@@ -2906,25 +2906,28 @@ app.get('/:slug/pagar-mp', async (req, res) => {
   try { items = JSON.parse(req.query.items || '[]'); } catch (e) { items = []; }
   const customerName = (req.query.nombre || '').toString().trim();
   const customerPhone = (req.query.telefono || '').toString().trim().replace(/[^0-9]/g, '');
-  let total = 0;
+  let total = 0, baseTotalMp = 0;
   const mpItems = [];
   const lines = items.map((it) => {
     const p = db.prepare('SELECT * FROM products WHERE id = ? AND business_id = ?').get(it.id, biz.id);
     if (!p) return null;
     const qty = Math.max(1, parseInt(it.qty) || 1);
     const unitP = pagoUnitPrice(p, it.variant, priceMarkupFactor(biz));
-    const sub = unitP * qty;
-    total += sub;
+    const baseP = pagoUnitPrice(p, it.variant);
+    total += unitP * qty;
+    baseTotalMp += baseP * qty;
     const variant = it.variant ? ` (${it.variant})` : '';
     mpItems.push({ title: (p.name + variant).slice(0, 250), quantity: qty, unit_price: Number(unitP), currency_id: biz.currency || 'MXN' });
-    return `• ${qty} x ${p.name}${variant} = ${currencyInfo(biz.currency).symbol}${sub.toFixed(2)}`;
+    return `• ${qty} x ${p.name}${variant} = ${currencyInfo(biz.currency).symbol}${(baseP * qty).toFixed(2)}`;
   }).filter(Boolean);
   if (lines.length === 0) return res.redirect('/' + req.params.slug);
+  baseTotalMp = Math.round(baseTotalMp * 100) / 100;
+  if (total > baseTotalMp) lines.push('Cobrado en línea: ' + currencyInfo(biz.currency).symbol + total.toFixed(2) + ' (incluye comisión de pago en línea)');
 
   const customerData = customerName ? (customerName + (customerPhone ? ' (' + customerPhone + ')' : '')) : (customerPhone || '');
   const orderId = db.prepare(
     `INSERT INTO orders (business_id, items, total, customer_name, customer_phone, status) VALUES (?, ?, ?, ?, ?, 'nuevo')`
-  ).run(biz.id, lines.join(' | '), total, customerData, customerPhone).lastInsertRowid;
+  ).run(biz.id, lines.join(' | '), baseTotalMp, customerData, customerPhone).lastInsertRowid;
   upsertCustomer(biz.id, customerName, customerPhone);
 
   const storeUrl = mpAbsUrl(req, '/' + biz.slug);
@@ -2986,17 +2989,21 @@ app.post('/:slug/pagar-tarjeta', rateLimit(12), async (req, res) => {
   const customerName = String(body.nombre || '').trim().slice(0, 80);
   const customerPhone = String(body.telefono || '').replace(/[^0-9]/g, '').slice(0, 15);
   let total = 0;
+  let baseTotal = 0;
   const lines = items.map((it) => {
     const p = db.prepare('SELECT * FROM products WHERE id = ? AND business_id = ? AND active = 1').get(parseInt(it && it.id) || 0, biz.id);
     if (!p) return null;
     const qty = Math.max(1, Math.min(999, parseInt(it.qty) || 1));
     const unit = pagoUnitPrice(p, it.variant, priceMarkupFactor(biz));
-    const sub = unit * qty;
-    total += sub;
+    const baseUnit = pagoUnitPrice(p, it.variant);
+    total += unit * qty;
+    baseTotal += baseUnit * qty;
     const variant = it.variant ? ' (' + String(it.variant).slice(0, 80) + ')' : '';
-    return `• ${qty} x ${p.name}${variant} = ${currencyInfo(biz.currency).symbol}${sub.toFixed(2)}`;
+    return `• ${qty} x ${p.name}${variant} = ${currencyInfo(biz.currency).symbol}${(baseUnit * qty).toFixed(2)}`;
   }).filter(Boolean);
   total = Math.round(total * 100) / 100;
+  baseTotal = Math.round(baseTotal * 100) / 100;
+  if (total > baseTotal) lines.push('Cobrado con tarjeta: ' + currencyInfo(biz.currency).symbol + total.toFixed(2) + ' (incluye comisión de pago en línea)');
   if (!lines.length || !(total > 0)) return res.status(400).json({ ok: false, error: 'El carrito está vacío' });
   const clientTotal = Number(fd.transaction_amount);
   const charge = total; // la comisión ya viene incluida en el precio de cada producto
@@ -3005,7 +3012,7 @@ app.post('/:slug/pagar-tarjeta', rateLimit(12), async (req, res) => {
   const customerData = customerName ? (customerName + (customerPhone ? ' (' + customerPhone + ')' : '')) : (customerPhone || '');
   const orderId = db.prepare(
     `INSERT INTO orders (business_id, items, total, customer_name, customer_phone, status) VALUES (?, ?, ?, ?, ?, 'nuevo')`
-  ).run(biz.id, lines.join(' | '), total, customerData, customerPhone).lastInsertRowid;
+  ).run(biz.id, lines.join(' | '), baseTotal, customerData, customerPhone).lastInsertRowid; // total del pedido = precio base (la comisión de MP no es ganancia)
   upsertCustomer(biz.id, customerName, customerPhone);
 
   const payload = {
