@@ -3757,6 +3757,33 @@ app.post('/:slug/admin/producto', requireAuth, can('productos.crear'), (req, res
   res.redirect('/' + req.params.slug + '/admin/productos');
 });
 
+// Etiqueta en bloque: agrega o quita una etiqueta en todos los productos (o los de una categoría)
+app.post('/:slug/admin/productos/etiquetas', requireAuth, can('productos.editar'), (req, res) => {
+  const b = req.body || {};
+  const text = String(b.text || '').trim().slice(0, 24);
+  if (!text) return res.status(400).json({ ok: false, error: 'Escribe el texto de la etiqueta' });
+  const color = /^#[0-9a-fA-F]{6}$/.test(String(b.color || '')) ? String(b.color) : '#2c2c2e';
+  const remove = b.action === 'remove';
+  const catId = parseInt(b.category_id, 10) || 0;
+  const rows = catId
+    ? db.prepare('SELECT id, custom_tags FROM products WHERE business_id = ? AND category_id = ?').all(req.biz.id, catId)
+    : db.prepare('SELECT id, custom_tags FROM products WHERE business_id = ?').all(req.biz.id);
+  let changed = 0, full = 0;
+  rows.forEach(r => {
+    const tags = parseCustomTags(r.custom_tags);
+    const has = tags.findIndex(x => x.t.toLowerCase() === text.toLowerCase());
+    let next = null;
+    if (remove) { if (has >= 0) next = tags.filter((x, i) => i !== has); }
+    else if (has >= 0) { if (tags[has].c !== color) { next = tags.slice(); next[has] = { t: tags[has].t, c: color }; } }
+    else if (tags.length >= 3) full++;
+    else next = tags.concat([{ t: text, c: color }]);
+    if (next) {
+      db.prepare('UPDATE products SET custom_tags = ? WHERE id = ? AND business_id = ?').run(customTagsJson(next), r.id, req.biz.id);
+      changed++;
+    }
+  });
+  res.json({ ok: true, changed, full, total: rows.length });
+});
 app.post('/:slug/admin/producto/:id/eliminar', requireAuth, can('productos.eliminar'), (req, res) => {
   db.prepare('DELETE FROM products WHERE id = ? AND business_id = ?').run(req.params.id, req.biz.id);
   res.redirect('/' + req.params.slug + '/admin/productos');
