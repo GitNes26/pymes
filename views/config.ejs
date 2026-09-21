@@ -1590,7 +1590,7 @@
         abrirEditorImagen(rd.result, function (url) {
           var campo = document.getElementById(campoId);
           if (campo) { campo.value = url; campo.dispatchEvent(new Event('change')); }
-          var fl = document.getElementById(String(campoId).replace('-url', '-clear')); if (fl) fl.value = '';
+          var fl = /-url$/.test(String(campoId)) ? document.getElementById(String(campoId).replace(/-url$/, '-clear')) : null; if (fl) fl.value = '';
           var qb = document.getElementById(String(campoId).replace('-url', '').replace(/^/, 'quitar-')); if (qb && /^(logo|banner)-url$/.test(campoId)) qb.classList.remove('hidden');
           var prev = document.getElementById(previewId);
           if (prev) prev.src = url;
