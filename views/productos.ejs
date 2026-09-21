@@ -2258,6 +2258,14 @@
           goStep(3);
           return;
         }
+        var sinValores = ed.model.attrs.filter(function (a) { return !(a.values && a.values.length); });
+        if (sinValores.length) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (window.mostrarToast) window.mostrarToast('⚠ El atributo "' + (sinValores[0].name || 'sin nombre') + '" no tiene valores. Agrega al menos uno (escribe y pulsa +) o quítalo.', 'error');
+          goStep(3);
+          return;
+        }
         var faltanStock = [], faltanPrecio = [];
         (function walk(i, prefix) {
           if (i === ed.model.attrs.length) {

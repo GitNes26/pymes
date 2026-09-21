@@ -3734,6 +3734,9 @@ app.post('/:slug/admin/producto', requireAuth, can('productos.crear'), (req, res
     const combosPrices = Object.values(variantModel.prices || {}).map(Number).filter(n => !isNaN(n) && n >= 0);
     price = combosPrices.length ? Math.min(...combosPrices) : bodyPrice;
   } else {
+        if (req.body.tipo === 'variantes') {
+      return renderError('Elegiste "Con variantes" pero no hay ningún atributo con valores. En el paso Variantes agrega un atributo y al menos un valor (escribe y pulsa +), o cambia a "Producto único".');
+    }
     if (price < 0) {
       return renderError('El precio no puede ser negativo.');
     }
@@ -3877,6 +3880,9 @@ app.post('/:slug/admin/producto/:id', requireAuth, can('productos.editar'), (req
     const combosPrices = Object.values(variantModel.prices || {}).map(Number).filter(n => !isNaN(n) && n >= 0);
     price = combosPrices.length ? Math.min(...combosPrices) : bodyPrice;
   } else {
+    if (req.body.tipo === 'variantes') {
+      return renderError('Elegiste "Con variantes" pero no hay ningún atributo con valores. En el paso Variantes agrega un atributo y al menos un valor (escribe y pulsa +), o cambia a "Producto único".');
+    }
     if (req.body.price === '' || req.body.price === undefined || req.body.price === null || isNaN(parseFloat(req.body.price))) {
       return renderError('El precio es obligatorio (usa un número, ej: 25.50).');
     }
