@@ -160,7 +160,8 @@
   // Dueño/empleado con sesión activa: puede registrar la venta como pago en efectivo
   const IS_ADMIN = <%- (typeof isAdmin !== 'undefined' && isAdmin) ? 'true' : 'false' %>;
   // Transferencia bancaria: igual solo para el carrito de esta tienda.
-  const TRANSFER = null; // la transferencia bancaria ya no se ofrece: solo pago en línea
+  // Transferencia bancaria: solo si la tienda NO cobra en línea (Mercado Pago apagado) y tiene sus datos puestos
+  const TRANSFER = <%- safeJson((!biz.mp_enabled && biz.transfer_enabled && (biz.transfer_bank || biz.transfer_account)) ? { bank: biz.transfer_bank || '', account: biz.transfer_account || '', holder: biz.transfer_holder || '' } : null) %>;
   const HORARIO_RAW = <%- safeJson(biz.horario || '') %>;
   const HORARIO_MSG = <%- safeJson(biz.horario_msg || '') %>;
 
@@ -661,12 +662,13 @@
             ${TRANSFER.bank ? `<div style="font-size:12px;color:#166534;">${esc(TRANSFER.bank)}</div>` : ''}
             ${TRANSFER.account ? `<div style="display:flex;align-items:center;gap:6px;margin-top:2px;"><span style="font-size:13px;font-weight:700;color:#14532d;letter-spacing:.02em;">${esc(TRANSFER.account)}</span><button type="button" onclick="copiarCuentaTransferencia(this,${jattr(TRANSFER.account)})" aria-label="Copiar cuenta" style="border:none;background:#dcfce7;color:#166534;border-radius:7px;padding:2px 7px;font-size:10px;font-weight:800;cursor:pointer;">Copiar</button></div>` : ''}
             ${TRANSFER.holder ? `<div style="font-size:11px;color:#4d7c5f;margin-top:2px;">A nombre de ${esc(TRANSFER.holder)}</div>` : ''}
-            <div style="font-size:11px;color:#4d7c5f;margin-top:6px;">Transfiere y manda tu comprobante por WhatsApp junto con tu pedido.</div>
+            <div style="font-size:11px;color:#4d7c5f;margin-top:6px;">Haz tu transferencia por el total y pulsa el botón de abajo para mandar tu comprobante por WhatsApp.</div>
           </div>` : ''}
           <div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;">
             ${(IS_ADMIN && g.store.slug === SLUG) ? `<button type="button" onclick="payCashAdmin(${jattr(g.store.slug)})" style="width:100%;background:#15803d;color:#fff;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:14px;cursor:pointer;">💵 Registrar en efectivo · ${money(cashTotalOf(g))} <small style=\"font-weight:600;opacity:.85\">(sin comisión)</small></button>` : ''}
             ${(MP_CARD && g.store.slug === SLUG) ? `<button type="button" onclick="payCardInApp(${jattr(g.store.slug)})" style="width:100%;background:#009ee3;color:#fff;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:14px;cursor:pointer;">💳 Pagar con tarjeta</button>` : (MP_ENABLED && g.store.slug === SLUG) ? `<button type="button" onclick="payWithMercadoPago(${jattr(g.store.slug)})" style="width:100%;background:#009ee3;color:#fff;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:14px;cursor:pointer;">💳 Pagar con Mercado Pago</button>` : ''}
-            ${(g.store.slug === SLUG && (MP_CARD || MP_ENABLED)) ? '' : `<p style="margin:0;padding:10px 12px;border-radius:12px;background:#fef3c7;color:#92400e;font-size:12.5px;font-weight:600;text-align:center;">${g.store.slug === SLUG ? 'Esta tienda aún no tiene pagos en línea activados.' : 'Abre esta tienda para pagar tu pedido.'}</p>${g.store.slug === SLUG ? '' : `<a href="/${esc(g.store.slug)}" style="display:block;text-align:center;background:#1e293b;color:#fff;border-radius:12px;padding:11px;font-weight:700;font-size:14px;text-decoration:none;">Ir a la tienda</a>`}`}
+            ${(TRANSFER && g.store.slug === SLUG) ? `<button type="button" onclick="sendStoreOrder(${jattr(g.store.slug)})" style="width:100%;background:#166534;color:#fff;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:14px;cursor:pointer;">🏦 Ya transferí · enviar comprobante</button>` : ''}
+            ${(g.store.slug === SLUG && (MP_CARD || MP_ENABLED || TRANSFER)) ? '' : `<p style="margin:0;padding:10px 12px;border-radius:12px;background:#fef3c7;color:#92400e;font-size:12.5px;font-weight:600;text-align:center;">${g.store.slug === SLUG ? 'Esta tienda aún no tiene pagos en línea activados.' : 'Abre esta tienda para pagar tu pedido.'}</p>${g.store.slug === SLUG ? '' : `<a href="/${esc(g.store.slug)}" style="display:block;text-align:center;background:#1e293b;color:#fff;border-radius:12px;padding:11px;font-weight:700;font-size:14px;text-decoration:none;">Ir a la tienda</a>`}`}
           </div>
         </div>`;
     }).join('');
@@ -746,6 +748,7 @@
     const nombre = (document.getElementById('chat-nombre') || {}).value || '';
     const telefono = (document.getElementById('chat-telefono') || {}).value || '';
     let msg = orderMessage(g.store, lines, total);
+    if (TRANSFER && g.store.slug === SLUG) msg += '\n\n🏦 Pago por transferencia: te mando mi comprobante.';
     if (nombre || telefono) {
       const datos = [];
       if (nombre) datos.push('Mi nombre: ' + nombre);
