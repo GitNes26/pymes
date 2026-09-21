@@ -85,6 +85,7 @@
   .cp-ok-ic { width:64px; height:64px; margin:0 auto 12px; display:grid; place-items:center; border-radius:50%; background:color-mix(in srgb, var(--accent, #1e293b) 16%, transparent); color:var(--accent, #1e293b); font-size:30px; font-weight:800; }
   .cp-ok h3 { font-family:var(--font-heading, inherit); font-size:1.3rem; margin-bottom:6px; }
   .cp-ok p { font-size:14px; color:var(--text-secondary, #64748b); }
+  .cp-wa { display:block; margin-top:14px; min-height:46px; line-height:46px; text-align:center; border-radius:min(var(--radius, 16px), 14px); background:#25d366; color:#fff; font-weight:800; font-size:14px; text-decoration:none; }
   .cp-done { margin-top:18px; width:100%; min-height:50px; border:0; border-radius:min(var(--radius, 16px), 14px); background:var(--accent, #1e293b); color:var(--on-accent, var(--soc-on-accent, #fff)); font-weight:700; font-size:15px; cursor:pointer; }
 
   /* ===== "Elige las opciones" (selector de variantes) con la apariencia de la tienda ===== */
@@ -958,6 +959,7 @@
                   '<div class="cp-ok"><div class="cp-ok-ic">' + (aprobado ? '✓' : '⏳') + '</div>' +
                   '<h3>' + (aprobado ? '¡Pago aprobado!' : 'Pago en revisión') + '</h3>' +
                   '<p>' + (aprobado ? 'Recibimos tu pago de ' + money(d.total) + '. Tu pedido #' + d.orderId + ' ya está registrado.' : 'Mercado Pago está revisando tu pago. Te avisaremos cuando se apruebe (pedido #' + d.orderId + ').') + '</p>' +
+                  (STORE_WHATSAPP ? '<a class="cp-wa" target="_blank" rel="noopener" href="https://wa.me/' + waNumber(STORE_WHATSAPP) + '?text=' + encodeURIComponent('Hola ' + STORE_NAME + ', ya pagué mi pedido #' + d.orderId + ' por ' + money(d.total) + ' con tarjeta.' + (nombre ? ' Soy ' + nombre + '.' : '')) + '">📲 Avisar por WhatsApp</a>' : '') +
                   '<button type="button" class="cp-done">Listo</button></div>';
                 bodyEl.querySelector('.cp-done').addEventListener('click', closeCardPay);
                 toast(aprobado ? '¡Pago aprobado! ✓' : 'Pago en revisión ⏳', aprobado);
