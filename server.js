@@ -2987,7 +2987,11 @@ app.post('/:slug/pagar-tarjeta', rateLimit(12), async (req, res) => {
   if (!result.ok || !pay.status) {
     console.error('Mercado Pago rechazó crear el pago:', result.status, JSON.stringify(pay).slice(0, 400));
     db.prepare('DELETE FROM orders WHERE id = ?').run(orderId);
-    return res.status(400).json({ ok: false, error: 'No se pudo procesar el pago. Revisa los datos de la tarjeta.' });
+    let why = 'Revisa los datos de la tarjeta.';
+    const msg = String(pay.message || '');
+    if (result.status === 401) why = /live credentials/i.test(msg) ? 'Las credenciales de Mercado Pago de esta tienda son de PRODUCCIÓN y no están habilitadas para cobrar (para probar usa las credenciales de PRUEBA).' : 'Mercado Pago no aceptó el Access Token de esta tienda. Revisa que esté completo y sea el correcto.';
+    else if (msg) why = msg.slice(0, 160);
+    return res.status(400).json({ ok: false, error: 'No se pudo procesar el pago. ' + why });
   }
   db.prepare('UPDATE orders SET mp_payment_id = ?, mp_status = ? WHERE id = ?').run(String(pay.id || ''), pay.status, orderId);
   track(biz.id, 'mp', 'pedido');
