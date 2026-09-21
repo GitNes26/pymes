@@ -144,6 +144,8 @@
   // Pago con tarjeta dentro de la app: requiere Access Token + Public Key de la tienda
   const MP_PUBLIC_KEY = <%- safeJson((biz.mp_enabled && biz.mp_access_token && biz.mp_public_key) ? biz.mp_public_key : '') %>;
   const MP_CARD = !!MP_PUBLIC_KEY;
+  // Dueño/empleado con sesión activa: puede registrar la venta como pago en efectivo
+  const IS_ADMIN = <%- (typeof isAdmin !== 'undefined' && isAdmin) ? 'true' : 'false' %>;
   // Transferencia bancaria: igual solo para el carrito de esta tienda.
   const TRANSFER = null; // la transferencia bancaria ya no se ofrece: solo pago en línea
   const HORARIO_RAW = <%- safeJson(biz.horario || '') %>;
@@ -648,6 +650,7 @@
             <div style="font-size:11px;color:#4d7c5f;margin-top:6px;">Transfiere y manda tu comprobante por WhatsApp junto con tu pedido.</div>
           </div>` : ''}
           <div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;">
+            ${(IS_ADMIN && g.store.slug === SLUG) ? `<button type="button" onclick="payCashAdmin(${jattr(g.store.slug)})" style="width:100%;background:#15803d;color:#fff;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:14px;cursor:pointer;">💵 Registrar pago en efectivo</button>` : ''}
             ${(MP_CARD && g.store.slug === SLUG) ? `<button type="button" onclick="payCardInApp(${jattr(g.store.slug)})" style="width:100%;background:#009ee3;color:#fff;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:14px;cursor:pointer;">💳 Pagar con tarjeta</button>` : (MP_ENABLED && g.store.slug === SLUG) ? `<button type="button" onclick="payWithMercadoPago(${jattr(g.store.slug)})" style="width:100%;background:#009ee3;color:#fff;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:14px;cursor:pointer;">💳 Pagar con Mercado Pago</button>` : ''}
             ${(g.store.slug === SLUG && (MP_CARD || MP_ENABLED)) ? '' : `<p style="margin:0;padding:10px 12px;border-radius:12px;background:#fef3c7;color:#92400e;font-size:12.5px;font-weight:600;text-align:center;">${g.store.slug === SLUG ? 'Esta tienda aún no tiene pagos en línea activados.' : 'Abre esta tienda para pagar tu pedido.'}</p>${g.store.slug === SLUG ? '' : `<a href="/${esc(g.store.slug)}" style="display:block;text-align:center;background:#1e293b;color:#fff;border-radius:12px;padding:11px;font-weight:700;font-size:14px;text-decoration:none;">Ir a la tienda</a>`}`}
           </div>
@@ -810,6 +813,28 @@
     window.__cardBrick = null;
     ov.classList.remove('cp-in');
     setTimeout(function () { ov.remove(); document.body.style.overflow = ''; }, 250);
+  }
+  // Registra la venta como pagada en efectivo (solo con sesión de dueño/empleado)
+  function payCashAdmin(slug) {
+    const g = storeGroups().find(x => x.store.slug === slug);
+    if (!g || !g.items.length) return;
+    const total = Math.round(g.items.reduce((s, it) => s + it.qty * it.price, 0) * 100) / 100;
+    if (!window.confirm('¿Registrar ' + money(total) + ' como pago en efectivo?')) return;
+    const nombre = (document.getElementById('chat-nombre') || {}).value || '';
+    const telefono = (document.getElementById('chat-telefono') || {}).value || '';
+    const items = g.items.map(it => ({ id: it.id, qty: it.qty, variant: it.variant || '' }));
+    const tok = ((document.cookie.match(/(?:^|; )csrf=([^;]+)/) || [])[1]) || '';
+    fetch('/' + slug + '/admin/venta-efectivo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-csrf-token': tok },
+      body: JSON.stringify({ items: items, nombre: nombre, telefono: telefono })
+    }).then(r => r.json()).then(d => {
+      if (!d.ok) { toast(d.error || 'No se pudo registrar la venta', false); return; }
+      g.items.forEach(it => { delete cart[it.key]; });
+      saveCart(); renderCart();
+      toast('Venta en efectivo registrada · pedido #' + d.orderId + ' ✓', true);
+      if (window.haptic) window.haptic(30);
+    }).catch(() => toast('Sin conexión. Intenta de nuevo', false));
   }
   function payCardInApp(slug) {
     if (!validarDatosCliente()) return;

@@ -2335,7 +2335,7 @@ app.get('/:slug', (req, res, next) => {
   const ogImage = (biz.logo || biz.banner) ? absoluteStoreUrl(req, biz) + '/share.jpg?v=' + brandV : '';
   let bestIds = [];
   try { if (JSON.parse(biz.extras || '{}').showTop) bestIds = bestSellerIds(biz.id, productsFinal, 8); } catch (e) {}
-  app.render('catalog', { biz, brandV, categories, products: productsFinal, bestIds, estilo, catDesign, catDesignTokens, theme: getTemplateTheme(biz.template), components: getComponents(biz), pages, seoUrl: BASE_URL ? BASE_URL + '/' + biz.slug : '', money: moneyFor(biz), currencySymbol: currencyInfo(biz.currency).symbol, currencyCode: biz.currency, mascaraCss: MASCARA_CSS, mascaraConfig: { MASCARA_SIZES, SHAPE_DEFS, getShapeClip }, adsEnabled: adsOn(biz), sponsoredAds, adminLink, ogUrl, ogImage }, (err, html) => {
+  app.render('catalog', { biz, brandV, categories, products: productsFinal, bestIds, estilo, catDesign, catDesignTokens, theme: getTemplateTheme(biz.template), components: getComponents(biz), pages, seoUrl: BASE_URL ? BASE_URL + '/' + biz.slug : '', money: moneyFor(biz), currencySymbol: currencyInfo(biz.currency).symbol, currencyCode: biz.currency, mascaraCss: MASCARA_CSS, mascaraConfig: { MASCARA_SIZES, SHAPE_DEFS, getShapeClip }, adsEnabled: adsOn(biz), sponsoredAds, adminLink, isAdmin: !!adminLink, ogUrl, ogImage }, (err, html) => {
     if (err) return next(err);
     res.send(finishCatalog(html, biz, pal, estilo));
   });
@@ -2401,7 +2401,7 @@ app.get('/:slug/p/:id', (req, res, next) => {
   const ogUrl = absoluteStoreUrl(req, biz) + '/p/' + p.id;
   const ogImage = absoluteImgUrl(req, p.imgs[0] || '');
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
-  app.render('producto', { biz, product: p, categories: [{ id: p.category_id || 0, name: p.category_name || 'General' }], related, ads, estilo, catDesign: catDesignOf(biz).id, catDesignTokens: catDesignOf(biz).tokens, money: moneyFor(biz), currencySymbol: currencyInfo(biz.currency).symbol, currencyCode: biz.currency, ogUrl, ogImage }, (err, html) => {
+  app.render('producto', { biz, product: p, categories: [{ id: p.category_id || 0, name: p.category_name || 'General' }], related, ads, estilo, catDesign: catDesignOf(biz).id, catDesignTokens: catDesignOf(biz).tokens, money: moneyFor(biz), currencySymbol: currencyInfo(biz.currency).symbol, currencyCode: biz.currency, isAdmin: (function () { const ss = findSession(req.cookies && req.cookies.sid); return !!(ss && (ss.kind === 'owner' || ss.kind === 'employee') && ss.biz_id === biz.id); })(), ogUrl, ogImage }, (err, html) => {
     if (err) return next(err);
     // La ficha usa los mismos tokens de apariencia que el catálogo (sin repintado por estilo)
     res.send(html);
@@ -3769,6 +3769,35 @@ app.post('/:slug/admin/producto', requireAuth, can('productos.crear'), (req, res
   res.redirect('/' + req.params.slug + '/admin/productos');
 });
 
+// Venta en efectivo registrada por el dueño/empleado desde el carrito del catálogo (con su sesión activa):
+// crea el pedido ya pagado para que entre a reportes, clientes y panel.
+app.post('/:slug/admin/venta-efectivo', requireAuth, can('pedidos.gestionar'), (req, res) => {
+  const biz = req.biz;
+  const body = req.body || {};
+  const items = Array.isArray(body.items) ? body.items.slice(0, 60) : [];
+  const customerName = String(body.nombre || '').trim().slice(0, 80);
+  const customerPhone = String(body.telefono || '').replace(/[^0-9]/g, '').slice(0, 15);
+  let total = 0;
+  const lines = items.map((it) => {
+    const p = db.prepare('SELECT * FROM products WHERE id = ? AND business_id = ? AND active = 1').get(parseInt(it && it.id) || 0, biz.id);
+    if (!p) return null;
+    const qty = Math.max(1, Math.min(999, parseInt(it.qty) || 1));
+    const unit = pagoUnitPrice(p, it.variant);
+    const sub = unit * qty;
+    total += sub;
+    const variant = it.variant ? ' (' + String(it.variant).slice(0, 80) + ')' : '';
+    return `• ${qty} x ${p.name}${variant} = ${currencyInfo(biz.currency).symbol}${sub.toFixed(2)}`;
+  }).filter(Boolean);
+  total = Math.round(total * 100) / 100;
+  if (!lines.length || !(total > 0)) return res.status(400).json({ ok: false, error: 'El carrito está vacío' });
+  const who = customerName ? (customerName + (customerPhone ? ' (' + customerPhone + ')' : '')) : (customerPhone || 'Mostrador');
+  const orderId = db.prepare(
+    `INSERT INTO orders (business_id, items, total, customer_name, customer_phone, status, paid, paid_at, mp_status) VALUES (?, ?, ?, ?, ?, 'pagado', 1, datetime('now'), 'efectivo')`
+  ).run(biz.id, lines.join(' | ') + ' | 💵 Pago en efectivo', total, who, customerPhone).lastInsertRowid;
+  if (customerName || customerPhone) upsertCustomer(biz.id, customerName, customerPhone);
+  track(biz.id, 'efectivo', 'pedido');
+  res.json({ ok: true, orderId, total });
+});
 // Etiquetas de toda la tienda (globales): se guardan en extras.globalTags y salen en todos los productos
 app.post('/:slug/admin/etiquetas-globales', requireAuth, can('config'), (req, res) => {
   const tags = parseCustomTags((req.body || {}).tags);
