@@ -262,11 +262,11 @@
             <div class="md:col-span-2">
               <label class="font-bold text-xs text-slate-600 mb-2 block">Tipo de producto</label>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2" id="f-tipo-cards">
-                <button type="button" data-tipo="unico" class="pf-tipo-card active" onclick="setTipo('unico')">
+                <button type="button" data-tipo="unico" class="pf-tipo-card active" onclick="setTipo('unico', true)">
                   <span class="pf-tipo-ico"><i class="bi bi-box-seam" aria-hidden="true"></i></span>
                   <span><span class="pf-tipo-tit">Producto único</span><span class="pf-tipo-sub">Un precio; stock opcional si vendes por pedido</span></span>
                 </button>
-                <button type="button" data-tipo="variantes" class="pf-tipo-card" onclick="setTipo('variantes')">
+                <button type="button" data-tipo="variantes" class="pf-tipo-card" onclick="setTipo('variantes', true)">
                   <span class="pf-tipo-ico"><i class="bi bi-diagram-3" aria-hidden="true"></i></span>
                   <span><span class="pf-tipo-tit">Con variantes</span><span class="pf-tipo-sub">Tallas o colores con precio propio; stock opcional por pedido</span></span>
                 </button>
@@ -1714,7 +1714,20 @@
       if (el.tagName === 'SELECT') el.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
-    function setTipo(t) {
+    function setTipo(t, byUser) {
+      var prevTipo = pfTipo;
+      // Pasar de "único" a "con variantes": las fotos del producto único (portada y galería)
+      // dejan de valer — cada variante lleva las suyas. Se quitan al elegirlo.
+      if (byUser && t === 'variantes' && prevTipo === 'unico') {
+        var fbox = document.getElementById('f-fotos');
+        var hay = fbox && fbox.querySelectorAll('[data-url]').length;
+        if (hay) {
+          if (!window.confirm('Al pasar a "Con variantes" se quitarán las fotos del producto único (portada y galería): cada variante lleva sus propias fotos. ¿Continuar?')) return;
+          fbox.innerHTML = '';
+          setVal('f-image', ''); setVal('f-galeria', '');
+          if (window.renderGenFotos) window.renderGenFotos();
+        }
+      }
       pfTipo = t;
       setVal('f-tipo', t);
       document.querySelectorAll('#f-tipo-cards .pf-tipo-card').forEach(function (b) {
