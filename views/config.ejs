@@ -720,8 +720,6 @@
             var _ex = {};
             try { _ex = JSON.parse(biz.extras || '{}') || {}; } catch (e) { _ex = {}; }
             var _exAbout = _ex.about || {};
-            var _exPagos = Array.isArray(_ex.pagos) ? _ex.pagos : [];
-            var _PAGOS_OPC = [['efectivo','Efectivo'],['transferencia','Transferencia'],['tarjeta','Tarjeta'],['contra_entrega','Contra entrega'],['abonos','Pagos en abonos'],['mercado_pago','Mercado Pago']];
           %>
           <div class="border-t border-slate-200 dark:border-[#30363d] pt-4 mt-3" id="extras-block">
             <label class="config-label">Secciones extra de tu catálogo <span class="font-normal text-slate-400">(opcional)</span></label>
@@ -772,13 +770,6 @@
               <div class="rounded-xl border border-slate-200 dark:border-[#30363d] p-3 space-y-2">
                 <p class="text-xs font-black text-slate-500 dark:text-slate-400">Envíos y formas de pago</p>
                 <textarea id="ex-envios" rows="3" maxlength="1500" class="config-input" placeholder="Zonas de entrega, costo y tiempos. Ej: Entregamos en toda la ciudad. Envío gratis desde $500."><%= _ex.envios || '' %></textarea>
-                <div class="flex flex-wrap gap-x-4 gap-y-2 pt-1">
-                  <% _PAGOS_OPC.forEach(function (o) { %>
-                    <label class="inline-flex items-center gap-1.5 text-sm text-slate-700 dark:text-slate-200 cursor-pointer">
-                      <input type="checkbox" class="ex-pago" value="<%= o[0] %>" <%= _exPagos.indexOf(o[0]) !== -1 ? 'checked' : '' %>> <%= o[1] %>
-                    </label>
-                  <% }) %>
-                </div>
                 <input id="ex-pagos-nota" class="config-input" maxlength="300" placeholder="Nota sobre pagos (opcional). Ej: Aceptamos pago al recibir en la ciudad." value="<%= _ex.pagos_nota || '' %>">
               </div>
 
@@ -1515,7 +1506,6 @@
         if (u) modelos.push({ src: u, cap: (r.querySelector('.modelo-cap').value || '').trim() });
       });
       var pagos = [];
-      document.querySelectorAll('#extras-block .ex-pago:checked').forEach(function (c) { pagos.push(c.value); });
       var h = document.getElementById('extras-json');
       if (h) h.value = JSON.stringify({
         about: { title: v('ex-about-title'), text: v('ex-about-text'), image: v('ex-about-image') },

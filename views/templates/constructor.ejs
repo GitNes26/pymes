@@ -97,8 +97,9 @@
   var _exMod = (_ex.modelos && Array.isArray(_ex.modelos.images) && _ex.modelos.images.length) ? _ex.modelos : null;
   var _exTesti = Array.isArray(_ex.testimonios) ? _ex.testimonios.filter(function(t){ return t && t.name && t.text; }) : [];
   var _PAGO_LBL = { efectivo:['bi-cash-coin','Efectivo'], transferencia:['bi-bank','Transferencia'], tarjeta:['bi-credit-card','Tarjeta'], contra_entrega:['bi-box-seam','Contra entrega'], abonos:['bi-calendar2-check','Pagos en abonos'], mercado_pago:['bi-shield-check','Mercado Pago'] };
-  var _exPagos = (Array.isArray(_ex.pagos) ? _ex.pagos : []).filter(function(k){ return _PAGO_LBL[k]; });
-  var _exShip = !!(_ex.envios || _exPagos.length || _ex.pagos_nota);
+  // Formas de pago: salen solas según lo que la tienda tenga activo (Mercado Pago o transferencia)
+  var _exPagos = (biz.mp_enabled && biz.mp_public_key) ? ['tarjeta'] : ((biz.transfer_enabled && (biz.transfer_bank || biz.transfer_account)) ? ['transferencia'] : []);
+  var _exShip = !!(_ex.envios || _ex.pagos_nota);
   function _xe(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   function _xsHead(eyebrow, title, sub, id) {
     return '<div class="xs-head"><span class="xs-eyebrow">' + _xe(eyebrow) + '</span><h2 class="xs-title"' + (id ? ' id="' + id + '"' : '') + '>' + _xe(title) + '</h2>' + (sub ? '<p class="xs-sub">' + _xe(sub) + '</p>' : '') + '</div>';
