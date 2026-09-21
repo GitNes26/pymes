@@ -3791,9 +3791,10 @@
   <div role="dialog" aria-modal="true" aria-labelledby="bulk-tag-t" style="background:var(--ap-card,#fff);color:inherit;border-radius:16px;padding:20px;width:100%;max-width:460px;max-height:92vh;overflow:auto;box-shadow:0 20px 50px rgba(0,0,0,.3)">
     <h2 id="bulk-tag-t" class="text-base font-black mb-1">Etiquetas de tus productos</h2>
     <p class="text-xs text-slate-500 mb-3">Cada producto puede tener hasta 3 etiquetas propias.</p>
+    <p id="bt-msg" role="status" class="text-xs font-bold mb-2" style="min-height:18px;position:sticky;top:0;z-index:2;background:var(--ap-card,#fff);padding:2px 0"></p>
 
     <p class="text-xs font-black mb-1">En todos los productos de la tienda</p>
-    <p class="text-[11px] text-slate-400 mb-2">Se muestran en cada producto sin ocupar sus 3 lugares (hasta 3). Se cambian aquí y en Configuración.</p>
+    <p class="text-[11px] text-slate-400 mb-2">Se muestran en cada producto sin ocupar sus 3 lugares (hasta 3). Al cambiar el color o el texto se guarda solo.</p>
     <div id="bt-global-list" class="mb-4"></div>
     <p class="text-xs font-black mb-1">Etiquetas propias de cada producto</p>
     <div id="bt-list" class="mb-4"></div>
@@ -3812,7 +3813,6 @@
       </select>
       <button type="button" class="m-btn m-btn-filled w-full !min-h-11" onclick="bulkTagAdd()">Poner a los productos</button>
     </div>
-    <p id="bt-msg" class="text-xs font-bold my-2" style="min-height:16px"></p>
     <button type="button" class="m-btn w-full !min-h-11" onclick="bulkTagClose()">Cerrar</button>
   </div>
 </div>
@@ -3902,13 +3902,17 @@
       row.style.cssText = 'display:flex;align-items:center;gap:6px;margin-bottom:6px';
       row.innerHTML = '<input type="color" value="' + esc(it.c || '#2c2c2e') + '" aria-label="Color" style="width:40px;height:36px;padding:2px;border:1px solid var(--ap-border,#e5e7eb);border-radius:9px;background:none;cursor:pointer;flex:none">' +
         '<input type="text" maxlength="24" value="' + esc(it.t) + '" aria-label="Texto de la etiqueta" class="flex-1 min-w-0 border rounded-lg px-2 py-1.5 text-sm" style="border-color:var(--ap-border,#e5e7eb)">' +
-        '<button type="button" class="m-btn m-btn-filled m-btn-sm" data-a="save" style="flex:none">Guardar</button>' +
         '<button type="button" class="m-btn m-btn-outlined m-btn-sm" data-a="del" aria-label="Borrar la etiqueta ' + esc(it.t) + '" style="flex:none"><i class="bi bi-trash" aria-hidden="true"></i></button>';
-      row.querySelector('[data-a=save]').onclick = function () {
-        var t = row.querySelector('input[type=text]').value.trim();
-        if (!t) { say('El texto no puede quedar vacío', false); return; }
-        GT[i] = { t: t, c: row.querySelector('input[type=color]').value }; saveGT('Etiqueta actualizada');
-      };
+      var txt = row.querySelector('input[type=text]'), col = row.querySelector('input[type=color]');
+      function autosave() {
+        var t = txt.value.trim();
+        if (!t) { say('El texto no puede quedar vacío', false); txt.value = it.t; return; }
+        if (t === it.t && col.value.toLowerCase() === String(it.c || '').toLowerCase()) return;
+        GT[i] = { t: t, c: col.value }; saveGT('Guardado ✓');
+      }
+      txt.addEventListener('change', autosave);
+      col.addEventListener('change', autosave);
+      txt.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); txt.blur(); } });
       row.querySelector('[data-a=del]').onclick = function () {
         if (!confirm('¿Borrar la etiqueta "' + it.t + '" de toda la tienda?')) return;
         GT.splice(i, 1); saveGT('Etiqueta borrada');
@@ -3921,6 +3925,7 @@
       add.innerHTML = '<input type="color" value="#0f766e" aria-label="Color de la nueva etiqueta" style="width:40px;height:36px;padding:2px;border:1px solid var(--ap-border,#e5e7eb);border-radius:9px;background:none;cursor:pointer;flex:none">' +
         '<input type="text" maxlength="24" placeholder="Nueva etiqueta para toda la tienda" aria-label="Nueva etiqueta global" class="flex-1 min-w-0 border rounded-lg px-2 py-1.5 text-sm" style="border-color:var(--ap-border,#e5e7eb)">' +
         '<button type="button" class="m-btn m-btn-outlined m-btn-sm" style="flex:none">Agregar</button>';
+      add.querySelector('input[type=text]').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); add.querySelector('button').click(); } });
       add.querySelector('button').onclick = function () {
         var t = add.querySelector('input[type=text]').value.trim();
         if (!t) { say('Escribe el texto de la etiqueta', false); return; }
