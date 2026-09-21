@@ -847,6 +847,13 @@
 
         <form data-noajax method="POST" action="<%= cfgAction %>#config-pagos" class="space-y-4" id="form-pagos">
           <input type="hidden" name="mp_form" value="1">
+          <label class="flex items-start gap-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl px-4 py-3 cursor-pointer">
+            <input type="checkbox" name="mp_enabled" value="1" <%= (biz.mp_enabled || !biz.mp_access_token) ? 'checked' : '' %> class="mt-0.5 accent-sky-500">
+            <span class="text-sm font-bold text-slate-700 dark:text-slate-200">Cobrar con tarjeta (Mercado Pago)
+              <span class="block text-xs font-normal text-slate-500 mt-0.5">Apagado, el catálogo no ofrece pago con tarjeta y no se le suma comisión a los precios. Prendido y sin Access Token no cobra.</span>
+            </span>
+          </label>
+
           <div>
             <label class="config-label">Access Token de Mercado Pago <span class="font-normal text-slate-400">(de producción)</span></label>
             <input name="mp_access_token" value="<%= biz.mp_access_token || '' %>" type="password" autocomplete="off" class="config-input" placeholder="APP_USR-...">

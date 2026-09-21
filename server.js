@@ -1720,7 +1720,7 @@ function pickSponsored(biz, limit) {
 function getBusiness(slug) {
   const b = db.prepare('SELECT * FROM businesses WHERE slug = ?').get(slug);
   // El pago en línea es obligatorio: está activo en cuanto la tienda tiene su cuenta de Mercado Pago conectada
-  if (b) b.mp_enabled = b.mp_access_token ? 1 : 0;
+  if (b) b.mp_enabled = (b.mp_enabled && b.mp_access_token) ? 1 : 0; // solo cobra en línea si está prendido Y tiene su cuenta
   return b;
 }
 
@@ -1729,7 +1729,7 @@ function getBusiness(slug) {
 // precio mostrado = (precio base + cargo fijo con IVA) / (1 - comisión% * (1 + IVA%)), redondeado hacia arriba al peso.
 // Solo aplica si la tienda cobra en línea. El cobro en efectivo del mostrador usa el precio base.
 function priceMarkupFactor(biz) {
-  if (!biz || !biz.mp_access_token || biz.mp_fee_on === 0 || biz.mp_fee_on === '0') return null;
+  if (!biz || !biz.mp_enabled || !biz.mp_access_token || biz.mp_fee_on === 0 || biz.mp_fee_on === '0') return null;
   const pct = Math.max(0, Math.min(30, Number(biz.mp_fee_pct == null ? 3.49 : biz.mp_fee_pct)));
   const fixed = Math.max(0, Math.min(100, Number(biz.mp_fee_fixed == null ? 4 : biz.mp_fee_fixed)));
   const iva = Math.max(0, Math.min(30, Number(biz.mp_fee_iva == null ? 16 : biz.mp_fee_iva)));
@@ -1801,7 +1801,7 @@ function getCatalog(businessId) {
   const catCounts = {};
   db.prepare('SELECT category_id, COUNT(*) AS c FROM products WHERE business_id = ? AND active = 1 GROUP BY category_id').all(businessId).forEach(r => { catCounts[r.category_id] = r.c; });
   categories.forEach(c => { c.count = catCounts[c.id] || 0; });
-  const _mkF = priceMarkupFactor(db.prepare('SELECT mp_access_token, mp_fee_on, mp_fee_pct, mp_fee_fixed, mp_fee_iva, transfer_enabled, transfer_bank, transfer_account, cash_enabled FROM businesses WHERE id = ?').get(businessId));
+  const _mkF = priceMarkupFactor(db.prepare('SELECT mp_enabled, mp_access_token, mp_fee_on, mp_fee_pct, mp_fee_fixed, mp_fee_iva, transfer_enabled, transfer_bank, transfer_account, cash_enabled FROM businesses WHERE id = ?').get(businessId));
   const products = db.prepare(
     `SELECT p.*, c.name AS category_name FROM products p
      LEFT JOIN categories c ON c.id = p.category_id
@@ -4977,7 +4977,7 @@ function applyConfig(biz, body) {
   // porque el dueño mandó otro de los formularios de Configuración.
   const mpFormPosted = Object.prototype.hasOwnProperty.call(body, 'mp_form');
   const mpAccessToken = mpFormPosted ? String(body.mp_access_token || '').trim().slice(0, 300) : biz.mp_access_token;
-  const mpEnabled = mpAccessToken ? 1 : 0;
+  const mpEnabled = mpFormPosted ? ((mpAccessToken && body.mp_enabled === '1') ? 1 : 0) : (biz.mp_access_token ? biz.mp_enabled : 0);
   // Transferencia bancaria: mismo patrón (marcador transfer_form en su propio
   // <form>) — el dueño publica su cuenta y el cliente transfiere y manda el
   // comprobante por WhatsApp, sin pasarela de por medio.
@@ -4992,7 +4992,7 @@ function applyConfig(biz, body) {
     ? (transferAccountRaw === '' ? '' : (/^\d{10,20}$/.test(transferAccountRaw) ? transferAccountRaw : biz.transfer_account))
     : biz.transfer_account;
   const transferHolder = transferFormPosted ? String(body.transfer_holder || '').trim().slice(0, 120) : biz.transfer_holder;
-  const transferEnabled = (mpAccessToken ? 0 : (transferFormPosted ? (body.transfer_enabled === '1' ? 1 : 0) : biz.transfer_enabled)); // transferencia y Mercado Pago son excluyentes
+  const transferEnabled = (mpEnabled ? 0 : (transferFormPosted ? (body.transfer_enabled === '1' ? 1 : 0) : biz.transfer_enabled)); // transferencia y Mercado Pago son excluyentes
   db.prepare(
     `UPDATE businesses SET name = ?, whatsapp = ?, description = ?, template = ?, color = ?, color_hex = ?, color_hex2 = ?, color_mode = ?, grid_cols = ?, logo = ?, banner = ?, giro = ?, giros = ?, estilo = ?, bg = ?, card = ?, text = ?, muted = ?, border = ?, radius = ?, font = ?, accent = ?, accent2 = ?, header = ?, header_text = ?, wa_message = ?, currency = ?, sections = ?, demo = ?, horario = ?, horario_msg = ?, blocks = ?, page_bg = ?, redes = ?, faq = ?, extras = ?, address = ?, catalog_design = ?, mp_access_token = ?, mp_enabled = ?, transfer_bank = ?, transfer_account = ?, transfer_holder = ?, transfer_enabled = ? WHERE id = ?`
   ).run(
