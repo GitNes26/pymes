@@ -84,6 +84,7 @@ addColumnIfMissing('businesses', 'transfer_enabled', 'INTEGER DEFAULT 0');
 // Las de texto salen solas cuando el dueño las llena; las automáticas se prenden aquí.
 addColumnIfMissing('businesses', 'extras', "TEXT DEFAULT ''");
 addColumnIfMissing('products', 'show_stock', 'INTEGER DEFAULT 1'); // 1 = el catálogo muestra el stock (Quedan X / N disponibles); 0 = lo oculta
+addColumnIfMissing('products', 'unit', "VARCHAR(20) DEFAULT 'pieza'"); // unidad de medida (pieza, kg, litro...)
 addColumnIfMissing('products', 'custom_tags', "TEXT DEFAULT ''"); // etiquetas personalizadas: JSON [{"t":"Mayoreo","c":"#7c3aed"}]
 
 // Sesiones con token aleatorio (el dueño y el maestro). Ya no se usa cookie estática.
