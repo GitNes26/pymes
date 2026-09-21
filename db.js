@@ -303,6 +303,9 @@ db.prepare("UPDATE orders SET paid_at = created_at WHERE paid = 1 AND (paid_at I
 addColumnIfMissing('orders', 'mp_payment_id', "TEXT DEFAULT ''");
 addColumnIfMissing('orders', 'mp_status', "TEXT DEFAULT ''");
 addColumnIfMissing('orders', 'stock_applied', 'INTEGER DEFAULT 0'); // 1 = ya se descontó el stock de este pedido
+addColumnIfMissing('orders', 'items_json', 'TEXT'); // [{id, qty, variant}] para descontar/devolver stock por id de producto
+// Pedidos anteriores al control de stock (antes del 2026-09-21 14:26 hora de México): su stock ya lo manejó el dueño a mano
+db.exec("UPDATE orders SET stock_applied = 1 WHERE (stock_applied IS NULL OR stock_applied = 0) AND created_at < '2026-09-21 20:26:22'");
 
 // ================= PLANES (creados por el administrador maestro) =================
 db.exec(`

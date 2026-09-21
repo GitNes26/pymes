@@ -2688,10 +2688,12 @@ app.get('/:slug/pedir', (req, res) => {
   let total = 0;
   let hasInstallment = false;
   let instProduct = null;
+  const stockItems = [];
   const lines = items.map((it) => {
     const p = db.prepare('SELECT * FROM products WHERE id = ? AND business_id = ?').get(it.id, biz.id);
     if (!p) return null;
     const qty = Math.max(1, parseInt(it.qty) || 1);
+    stockItems.push({ id: p.id, qty, variant: String(it.variant || '') });
     const sub = p.price * qty;
     total += sub;
     track(biz.id, 'view', p.name);
@@ -2711,9 +2713,10 @@ app.get('/:slug/pedir', (req, res) => {
   if (okItems.length) message += `\n\n📸 Fotos de mi pedido:\n${absoluteStoreUrl(req, biz)}/pedido?ids=${okItems.map(it => parseInt(it.id)).join(',')}&q=${okItems.map(it => Math.max(1, parseInt(it.qty) || 1)).join(',')}${customerName ? '&n=' + encodeURIComponent(customerName) : ''}${customerPhone ? '&t=' + encodeURIComponent(customerPhone) : ''}`;
 
   const customerData = customerName ? (customerName + (customerPhone ? ' (' + customerPhone + ')' : '')) : (customerPhone || '');
-  db.prepare(
+  const _oidWa = db.prepare(
     `INSERT INTO orders (business_id, items, total, customer_name, customer_phone, status, is_installment, installment_count, installment_frequency) VALUES (?, ?, ?, ?, ?, 'nuevo', ?, ?, ?)`
-  ).run(biz.id, lines.join(' | '), total, customerData, customerPhone, hasInstallment ? 1 : 0, hasInstallment ? (instProduct.installment_count || 6) : 0, hasInstallment ? (instProduct.installment_frequency || 'semanal') : 'semanal');
+  ).run(biz.id, lines.join(' | '), total, customerData, customerPhone, hasInstallment ? 1 : 0, hasInstallment ? (instProduct.installment_count || 6) : 0, hasInstallment ? (instProduct.installment_frequency || 'semanal') : 'semanal').lastInsertRowid;
+  reserveOrder(_oidWa, stockItems);
   upsertCustomer(biz.id, customerName, customerPhone);
   track(biz.id, 'wa', 'pedido');
 
@@ -2911,10 +2914,12 @@ app.get('/:slug/pagar-mp', async (req, res) => {
   const customerPhone = (req.query.telefono || '').toString().trim().replace(/[^0-9]/g, '');
   let total = 0, baseTotalMp = 0;
   const mpItems = [];
+  const stockItems = [];
   const lines = items.map((it) => {
     const p = db.prepare('SELECT * FROM products WHERE id = ? AND business_id = ?').get(it.id, biz.id);
     if (!p) return null;
     const qty = Math.max(1, parseInt(it.qty) || 1);
+    stockItems.push({ id: p.id, qty, variant: String(it.variant || '') });
     const unitP = pagoUnitPrice(p, it.variant, priceMarkupFactor(biz));
     const baseP = pagoUnitPrice(p, it.variant);
     total += unitP * qty;
@@ -2931,6 +2936,7 @@ app.get('/:slug/pagar-mp', async (req, res) => {
   const orderId = db.prepare(
     `INSERT INTO orders (business_id, items, total, customer_name, customer_phone, status) VALUES (?, ?, ?, ?, ?, 'nuevo')`
   ).run(biz.id, lines.join(' | '), baseTotalMp, customerData, customerPhone).lastInsertRowid;
+  reserveOrder(orderId, stockItems);
   upsertCustomer(biz.id, customerName, customerPhone);
 
   const storeUrl = mpAbsUrl(req, '/' + biz.slug);
@@ -2974,13 +2980,27 @@ function orderFindProduct(bizId, ln) {
   }
   return null;
 }
+// Apartar el stock al crear el pedido (tarjeta, transferencia, WhatsApp, caja) y guardar qué productos son, por id
+function reserveOrder(orderId, itemsArr) {
+  try {
+    if (Array.isArray(itemsArr) && itemsArr.length) db.prepare('UPDATE orders SET items_json = ? WHERE id = ?').run(JSON.stringify(itemsArr), orderId);
+    moveOrderStock(orderId, -1);
+  } catch (e) { console.error('reserveOrder:', e.message); }
+}
 function moveOrderStock(orderId, dir) { // dir = -1 descuenta, +1 devuelve
   const o = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId);
   if (!o) return;
   if (dir < 0 && o.stock_applied) return;
   if (dir > 0 && !o.stock_applied) return;
-  orderLines(o).forEach(ln => {
-    const f = orderFindProduct(o.business_id, ln);
+  let structured = null;
+  try { const a = JSON.parse(o.items_json || 'null'); if (Array.isArray(a) && a.length) structured = a; } catch (e) {}
+  const lines = structured
+    ? structured.map(x => ({ qty: Math.max(1, parseInt(x.qty) || 1), pid: parseInt(x.id) || 0, variant: String(x.variant || '') }))
+    : orderLines(o);
+  lines.forEach(ln => {
+    const f = ln.pid
+      ? ((rowP) => rowP ? { p: rowP, variant: ln.variant } : null)(db.prepare('SELECT * FROM products WHERE id = ? AND business_id = ?').get(ln.pid, o.business_id))
+      : orderFindProduct(o.business_id, ln);
     if (!f || f.p.made_to_order) return;
     const p = f.p;
     const vm = parseVariantModel(p.variants);
@@ -3047,12 +3067,14 @@ app.post('/:slug/pagar-tarjeta', rateLimit(12), async (req, res) => {
   const customerPhone = String(body.telefono || '').replace(/[^0-9]/g, '').slice(0, 15);
   let total = 0;
   let baseTotal = 0, stockError = '';
+  const stockItems = [];
   const lines = items.map((it) => {
     const p = db.prepare('SELECT * FROM products WHERE id = ? AND business_id = ? AND active = 1').get(parseInt(it && it.id) || 0, biz.id);
     if (!p) return null;
     const qty = Math.max(1, Math.min(999, parseInt(it.qty) || 1));
     const av = stockAvailable(p, it.variant);
     if (av !== null && qty > av) { stockError = 'No hay suficiente stock de ' + p.name + ' (quedan ' + av + ').'; return null; }
+    stockItems.push({ id: p.id, qty, variant: String(it.variant || '') });
     const unit = pagoUnitPrice(p, it.variant, priceMarkupFactor(biz));
     const baseUnit = pagoUnitPrice(p, it.variant);
     total += unit * qty;
@@ -3073,6 +3095,7 @@ app.post('/:slug/pagar-tarjeta', rateLimit(12), async (req, res) => {
   const orderId = db.prepare(
     `INSERT INTO orders (business_id, items, total, customer_name, customer_phone, status) VALUES (?, ?, ?, ?, ?, 'nuevo')`
   ).run(biz.id, lines.join(' | '), baseTotal, customerData, customerPhone).lastInsertRowid; // total del pedido = precio base (la comisión de MP no es ganancia)
+  reserveOrder(orderId, stockItems);
   upsertCustomer(biz.id, customerName, customerPhone);
 
   const payload = {
@@ -3090,7 +3113,7 @@ app.post('/:slug/pagar-tarjeta', rateLimit(12), async (req, res) => {
   if (fd.issuer_id) payload.issuer_id = Number(fd.issuer_id) || String(fd.issuer_id);
   if (fd.payer && fd.payer.identification && fd.payer.identification.number) payload.payer.identification = { type: String(fd.payer.identification.type || ''), number: String(fd.payer.identification.number || '') };
   if (!payload.payer.email) {
-    db.prepare('DELETE FROM orders WHERE id = ?').run(orderId);
+    moveOrderStock(orderId, 1); db.prepare('DELETE FROM orders WHERE id = ?').run(orderId);
     return res.status(400).json({ ok: false, error: 'Escribe tu correo para recibir el comprobante' });
   }
 
@@ -3099,13 +3122,13 @@ app.post('/:slug/pagar-tarjeta', rateLimit(12), async (req, res) => {
     result = await mpFetch(biz.mp_access_token, '/v1/payments', { method: 'POST', body: JSON.stringify(payload), headers: { 'X-Idempotency-Key': crypto.randomUUID() } });
   } catch (e) {
     console.error('Error de red con Mercado Pago:', e.message);
-    db.prepare('DELETE FROM orders WHERE id = ?').run(orderId);
+    moveOrderStock(orderId, 1); db.prepare('DELETE FROM orders WHERE id = ?').run(orderId);
     return res.status(502).json({ ok: false, error: 'No pudimos comunicarnos con Mercado Pago. Intenta de nuevo.' });
   }
   const pay = result.data || {};
   if (!result.ok || !pay.status) {
     console.error('Mercado Pago rechazó crear el pago:', result.status, JSON.stringify(pay).slice(0, 400));
-    db.prepare('DELETE FROM orders WHERE id = ?').run(orderId);
+    moveOrderStock(orderId, 1); db.prepare('DELETE FROM orders WHERE id = ?').run(orderId);
     let why = 'Revisa los datos de la tarjeta.';
     const msg = String(pay.message || '');
     if (result.status === 401) why = /live credentials/i.test(msg) ? 'Las credenciales de Mercado Pago de esta tienda son de PRODUCCIÓN y no están habilitadas para cobrar (para probar usa las credenciales de PRUEBA).' : 'Mercado Pago no aceptó el Access Token de esta tienda. Revisa que esté completo y sea el correcto.';
@@ -3123,7 +3146,7 @@ app.post('/:slug/pagar-tarjeta', rateLimit(12), async (req, res) => {
   if (pay.status === 'in_process' || pay.status === 'pending') {
     return res.json({ ok: true, status: pay.status, orderId, total: charge }); // el webhook lo marca pagado cuando se apruebe
   }
-  db.prepare('DELETE FROM orders WHERE id = ?').run(orderId);
+  moveOrderStock(orderId, 1); db.prepare('DELETE FROM orders WHERE id = ?').run(orderId);
   return res.status(402).json({ ok: false, status: pay.status, error: MP_DETAIL_ES[pay.status_detail] || 'La tarjeta fue rechazada. Prueba con otra tarjeta.' });
 });
 
@@ -3208,9 +3231,10 @@ app.post('/api/pedir', (req, res) => {
     });
     if (lines.length) {
       const customerData = nombre ? (nombre + (telefono ? ' (' + telefono + ')' : '')) : (telefono || '');
-      db.prepare(
+      const _oidCart = db.prepare(
         `INSERT INTO orders (business_id, items, total, customer_name, customer_phone, status, is_installment, installment_count, installment_frequency) VALUES (?, ?, ?, ?, ?, 'nuevo', ?, ?, ?)`
-      ).run(b.id, lines.join(' | '), total, customerData, telefono, hasInst ? 1 : 0, hasInst ? (instP.installment_count || 6) : 0, hasInst ? (instP.installment_frequency || 'semanal') : 'semanal');
+      ).run(b.id, lines.join(' | '), total, customerData, telefono, hasInst ? 1 : 0, hasInst ? (instP.installment_count || 6) : 0, hasInst ? (instP.installment_frequency || 'semanal') : 'semanal').lastInsertRowid;
+      reserveOrder(_oidCart, list.map(x => ({ id: x.p.id, qty: x.qty, variant: x.variant })));
       upsertCustomer(b.id, nombre, telefono);
       track(b.id, 'wa', 'pedido');
     }
@@ -3908,12 +3932,14 @@ app.post('/:slug/admin/venta-efectivo', requireAuth, can('pedidos.gestionar'), (
   const customerName = String(body.nombre || '').trim().slice(0, 80);
   const customerPhone = String(body.telefono || '').replace(/[^0-9]/g, '').slice(0, 15);
   let total = 0, cashStockError = '';
+  const cashItems = [];
   const lines = items.map((it) => {
     const p = db.prepare('SELECT * FROM products WHERE id = ? AND business_id = ? AND active = 1').get(parseInt(it && it.id) || 0, biz.id);
     if (!p) return null;
     const qty = Math.max(1, Math.min(999, parseInt(it.qty) || 1));
     const av = stockAvailable(p, it.variant);
     if (av !== null && qty > av) { cashStockError = 'No hay suficiente stock de ' + p.name + ' (quedan ' + av + ').'; return null; }
+    cashItems.push({ id: p.id, qty, variant: String(it.variant || '') });
     const unit = pagoUnitPrice(p, it.variant);
     const sub = unit * qty;
     total += sub;
@@ -3927,7 +3953,7 @@ app.post('/:slug/admin/venta-efectivo', requireAuth, can('pedidos.gestionar'), (
   const orderId = db.prepare(
     `INSERT INTO orders (business_id, items, total, customer_name, customer_phone, status, paid, paid_at, mp_status) VALUES (?, ?, ?, ?, ?, 'pagado', 1, datetime('now'), 'efectivo')`
   ).run(biz.id, lines.join(' | ') + ' | 💵 Pago en efectivo', total, who, customerPhone).lastInsertRowid;
-  moveOrderStock(orderId, -1);
+  reserveOrder(orderId, cashItems);
   if (customerName || customerPhone) upsertCustomer(biz.id, customerName, customerPhone);
   track(biz.id, 'efectivo', 'pedido');
   res.json({ ok: true, orderId, total });
@@ -4175,6 +4201,7 @@ app.post('/:slug/admin/order/:id/cancelado', requireAuth, can('pedidos.gestionar
 });
 
 app.post('/:slug/admin/order/:id/eliminar', requireAuth, can('pedidos.gestionar'), (req, res) => {
+  moveOrderStock(req.params.id, 1);
   db.prepare('DELETE FROM orders WHERE id = ? AND business_id = ?').run(req.params.id, req.biz.id);
   res.redirect('/' + req.params.slug + '/admin/panel');
 });
