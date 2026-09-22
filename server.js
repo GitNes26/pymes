@@ -1877,6 +1877,9 @@ function getStats(businessId) {
   const total = db.prepare("SELECT COUNT(*) AS c FROM tracking WHERE business_id = ? AND type = 'visit'").get(businessId).c;
   const waClicks = db.prepare("SELECT COUNT(*) AS c FROM tracking WHERE business_id = ? AND type = 'wa'").get(businessId).c;
   const orders = db.prepare("SELECT COUNT(*) AS c FROM orders WHERE business_id = ?").get(businessId).c;
+  // La tarjeta de pedidos debe reflejar lo que sigue activo en el panel.
+  // Los clics de WhatsApp son históricos y no desaparecen al borrar un pedido.
+  const activeOrders = db.prepare("SELECT COUNT(*) AS c FROM orders WHERE business_id = ? AND status != 'cancelado'").get(businessId).c;
   const paid = db.prepare("SELECT COUNT(*) AS c FROM orders WHERE business_id = ? AND paid = 1 AND status != 'cancelado'").get(businessId).c;
 
   // ==== Ingresos = dinero REALMENTE cobrado (no lo pedido) ====
@@ -1974,7 +1977,7 @@ function getStats(businessId) {
   const profit = revenue - costTotal - supplierSpend;
 
   return {
-    today, week, prevWeek, total, waClicks, orders, paid, revenue, revenueWeek, prevRevenue, avgOrder,
+    today, week, prevWeek, total, waClicks, orders, activeOrders, paid, revenue, revenueWeek, prevRevenue, avgOrder,
     weekDelta: pct(week, prevWeek), revenueDelta: pct(revenueWeek, prevRevenue),
     topProducts, topWaProducts, topSellers: topSellersArr, daily, ordersDaily, conv, clickRate,
     hasCostData, costTotal, supplierSpend, profit

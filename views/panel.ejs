@@ -44,7 +44,7 @@
       <% const cards = [
         { label: 'Visitas hoy', value: stats.today, isNum: true, delta: stats.weekDelta, deltaLabel: 'vs. semana pasada', target: '#sec-charts' },
         { label: 'Ingresos cobrados', value: stats.revenue, isMoney: true, delta: stats.revenueDelta, deltaLabel: 'vs. semana pasada', title: 'Dinero que realmente entró: abonos cobrados + pedidos de contado cobrados (sin pendientes ni cancelados)', target: '#sec-pedidos' },
-        { label: 'Pedidos WhatsApp', value: stats.waClicks, isNum: true, target: '#sec-funnel' },
+        { label: 'Pedidos WhatsApp', value: stats.activeOrders, isNum: true, title: 'Pedidos activos que siguen en el panel; no incluye pedidos cancelados ni eliminados.', target: '#sec-pedidos' },
         { label: 'Conversión', value: stats.conv, isPct: true, target: '#sec-funnel' }
       ]; %>
       <% if (stats.hasCostData || stats.supplierSpend > 0) { cards.push({ label: 'Ganancia estimada', value: stats.profit, isMoney: true, title: 'Ingresos cobrados menos el costo de los productos vendidos que ya tienen costo capturado y menos lo pagado a proveedores — si un producto no tiene costo, no se descuenta (es una estimación, no exacta).', target: '#sec-pedidos' }); } %>
