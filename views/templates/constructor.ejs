@@ -2185,7 +2185,7 @@
     }
   </script>
 
-  <%- include("../partials/cart-js", { biz, products, showHow: !!_ex.showHow, currencySymbol: typeof currencySymbol !== "undefined" ? currencySymbol : "$" }) %>
+  <%- include("../partials/cart-js", { biz, products, showHow: !!_ex.showHow, shippingZones: typeof shippingZones !== "undefined" ? shippingZones : [], currencySymbol: typeof currencySymbol !== "undefined" ? currencySymbol : "$" }) %>
   <script src="/js/searchable-select.js?v=20260920"></script>
 </body>
 </html>

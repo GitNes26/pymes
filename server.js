@@ -1760,6 +1760,20 @@ function withPromo(p) {
   return p;
 }
 
+// ===== Zonas de entrega: costo fijo que se suma al pedido según a dónde lo lleven
+// (ej. "Torreón $50", "Fuera de la ciudad $100"). El cliente elige una en el carrito;
+// "Recoger en tienda" (sin zona) no cuesta nada. El precio SIEMPRE se relee aquí en el
+// servidor al cobrar — nunca se confía en lo que mande el navegador. =====
+function getShippingZones(businessId) {
+  return db.prepare('SELECT * FROM shipping_zones WHERE business_id = ? AND active = 1 ORDER BY sort ASC, name COLLATE NOCASE ASC').all(businessId);
+}
+function zoneLookup(businessId, zoneId) {
+  const raw = String(zoneId || '').trim();
+  if (!raw) return { cost: 0, name: '' };
+  const z = db.prepare('SELECT * FROM shipping_zones WHERE id = ? AND business_id = ? AND active = 1').get(parseInt(raw, 10) || 0, businessId);
+  return z ? { cost: Math.max(0, Number(z.price) || 0), name: z.name } : { cost: 0, name: '' };
+}
+
 function getCatalog(businessId) {
   const categories = db.prepare(
     `SELECT c.*, g.name AS group_name FROM categories c LEFT JOIN category_groups g ON g.id = c.group_id
@@ -1795,7 +1809,8 @@ function getCatalog(businessId) {
   const pages = db.prepare(
     'SELECT id, slug, title, icon, sort FROM pages WHERE business_id = ? AND active = 1 ORDER BY sort ASC, id ASC'
   ).all(businessId);
-  return { categories, products, pages };
+  const shippingZones = getShippingZones(businessId);
+  return { categories, products, pages, shippingZones };
 }
 
 // Pila de componentes que arma la página. Si la tienda no tiene bloques guardados,
@@ -2297,7 +2312,7 @@ app.get('/:slug', (req, res, next) => {
   if (block.blocked) {
     return res.status(403).render('store-off', { biz, reason: block.reason });
   }
-  const { categories, products, pages } = getCatalog(biz.id);
+  const { categories, products, pages, shippingZones } = getCatalog(biz.id);
   track(biz.id, 'visit', '');
 
   let productsFinal = products;
@@ -2339,7 +2354,7 @@ app.get('/:slug', (req, res, next) => {
   const ogImage = (biz.logo || biz.banner) ? absoluteStoreUrl(req, biz) + '/share.jpg?v=' + brandV : '';
   let bestIds = [];
   try { if (JSON.parse(biz.extras || '{}').showTop) bestIds = bestSellerIds(biz.id, productsFinal, 8); } catch (e) {}
-  app.render('catalog', { biz, brandV, categories, products: productsFinal, bestIds, estilo, catDesign, catDesignTokens, theme: getTemplateTheme(biz.template), components: getComponents(biz), pages, seoUrl: BASE_URL ? BASE_URL + '/' + biz.slug : '', money: moneyFor(biz), currencySymbol: currencyInfo(biz.currency).symbol, currencyCode: biz.currency, mascaraCss: MASCARA_CSS, mascaraConfig: { MASCARA_SIZES, SHAPE_DEFS, getShapeClip }, adsEnabled: adsOn(biz), sponsoredAds, adminLink, isAdmin: !!adminLink, ogUrl, ogImage }, (err, html) => {
+  app.render('catalog', { biz, brandV, categories, shippingZones, products: productsFinal, bestIds, estilo, catDesign, catDesignTokens, theme: getTemplateTheme(biz.template), components: getComponents(biz), pages, seoUrl: BASE_URL ? BASE_URL + '/' + biz.slug : '', money: moneyFor(biz), currencySymbol: currencyInfo(biz.currency).symbol, currencyCode: biz.currency, mascaraCss: MASCARA_CSS, mascaraConfig: { MASCARA_SIZES, SHAPE_DEFS, getShapeClip }, adsEnabled: adsOn(biz), sponsoredAds, adminLink, isAdmin: !!adminLink, ogUrl, ogImage }, (err, html) => {
     if (err) return next(err);
     res.send(finishCatalog(html, biz, pal, estilo));
   });
@@ -2369,7 +2384,7 @@ app.get('/:slug/p/:id', (req, res, next) => {
   if (!p) {
     const page = db.prepare('SELECT * FROM pages WHERE business_id = ? AND slug = ? AND active = 1').get(biz.id, String(req.params.id));
     if (page) {
-      const { categories, products, pages } = getCatalog(biz.id);
+      const { categories, products, pages, shippingZones } = getCatalog(biz.id);
       const bizOv = { ...biz, blocks: page.blocks || '[]', name: biz.name + ' · ' + page.title };
       const estilo = getEffectiveEstilo(biz);
       const pal = getPalette(biz, estilo);
@@ -2377,7 +2392,7 @@ app.get('/:slug/p/:id', (req, res, next) => {
       res.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
       console.log('=== ROUTE HIT: Rendering catalog for:', bizOv.slug);
       console.log('bizOv.blocks:', bizOv.blocks ? 'present' : 'empty');
-      app.render('catalog', { biz: bizOv, categories, products, estilo, catDesign: catDesignOf(biz).id, catDesignTokens: catDesignOf(biz).tokens, theme: getTemplateTheme(biz.template), components: getComponents(bizOv), pages, seoUrl: BASE_URL ? BASE_URL + '/' + biz.slug : '', money: moneyFor(biz), currencySymbol: currencyInfo(biz.currency).symbol, currencyCode: biz.currency, mascaraCss: MASCARA_CSS, mascaraConfig: { MASCARA_SIZES, SHAPE_DEFS, getShapeClip } }, (err, html) => {
+      app.render('catalog', { biz: bizOv, categories, shippingZones, products, estilo, catDesign: catDesignOf(biz).id, catDesignTokens: catDesignOf(biz).tokens, theme: getTemplateTheme(biz.template), components: getComponents(bizOv), pages, seoUrl: BASE_URL ? BASE_URL + '/' + biz.slug : '', money: moneyFor(biz), currencySymbol: currencyInfo(biz.currency).symbol, currencyCode: biz.currency, mascaraCss: MASCARA_CSS, mascaraConfig: { MASCARA_SIZES, SHAPE_DEFS, getShapeClip } }, (err, html) => {
         if (err) return next(err);
         try {
           res.send(finishCatalog(html, bizOv, pal, estilo));
@@ -2400,13 +2415,13 @@ app.get('/:slug/p/:id', (req, res, next) => {
   track(biz.id, 'view', p.name);
   const estilo = getEffectiveEstilo(biz);
   const pal = getPalette(biz, estilo);
-  const { products } = getCatalog(biz.id);
+  const { products, shippingZones } = getCatalog(biz.id);
   const related = products.filter(x => x.id !== p.id).slice(0, 8);
   const ads = adsOn(biz) ? pickSponsored(biz, 4) : [];
   const ogUrl = absoluteStoreUrl(req, biz) + '/p/' + p.id;
   const ogImage = absoluteImgUrl(req, p.imgs[0] || '');
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
-  app.render('producto', { biz, product: p, categories: [{ id: p.category_id || 0, name: p.category_name || 'General' }], related, ads, estilo, catDesign: catDesignOf(biz).id, catDesignTokens: catDesignOf(biz).tokens, money: moneyFor(biz), currencySymbol: currencyInfo(biz.currency).symbol, currencyCode: biz.currency, isAdmin: (function () { const ss = findSession(req.cookies && req.cookies.sid); return !!(ss && (ss.kind === 'owner' || ss.kind === 'employee') && ss.biz_id === biz.id); })(), ogUrl, ogImage }, (err, html) => {
+  app.render('producto', { biz, product: p, categories: [{ id: p.category_id || 0, name: p.category_name || 'General' }], shippingZones, related, ads, estilo, catDesign: catDesignOf(biz).id, catDesignTokens: catDesignOf(biz).tokens, money: moneyFor(biz), currencySymbol: currencyInfo(biz.currency).symbol, currencyCode: biz.currency, isAdmin: (function () { const ss = findSession(req.cookies && req.cookies.sid); return !!(ss && (ss.kind === 'owner' || ss.kind === 'employee') && ss.biz_id === biz.id); })(), ogUrl, ogImage }, (err, html) => {
     if (err) return next(err);
     // La ficha usa los mismos tokens de apariencia que el catálogo (sin repintado por estilo)
     res.send(html);
@@ -2614,7 +2629,7 @@ function previewCatalog(biz, q, res) {
     fontLink: (FONTS.find(f => f.css === font) || {}).link || base.fontLink
   };
   const pal = getPalette(bizOv, estilo);
-  const { categories, products, pages } = getCatalog(biz.id);
+  const { categories, products, pages, shippingZones } = getCatalog(biz.id);
   const useDemo = q.demo === '1';
   let cats = categories, prods = products;
   if (useDemo) {
@@ -2628,7 +2643,7 @@ function previewCatalog(biz, q, res) {
   }
   prods = prods.map(p => { p.imgs = productImgs(p); return p; });
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
-  app.render('catalog', { biz: bizOv, categories: cats, products: prods, estilo, catDesign: catDesignOf(biz).id, catDesignTokens: catDesignOf(biz).tokens, theme: getTemplateTheme(bizOv.template), components: q.edit === '1' ? parseComponents(bizOv) : getComponents(bizOv), pages, editMode: q.edit === '1', seoUrl: '', money: moneyFor(biz), currencySymbol: currencyInfo(biz.currency).symbol, currencyCode: biz.currency, mascaraCss: MASCARA_CSS, mascaraConfig: { MASCARA_SIZES, SHAPE_DEFS, getShapeClip } }, (err, html) => {
+  app.render('catalog', { biz: bizOv, categories: cats, shippingZones, products: prods, estilo, catDesign: catDesignOf(biz).id, catDesignTokens: catDesignOf(biz).tokens, theme: getTemplateTheme(bizOv.template), components: q.edit === '1' ? parseComponents(bizOv) : getComponents(bizOv), pages, editMode: q.edit === '1', seoUrl: '', money: moneyFor(biz), currencySymbol: currencyInfo(biz.currency).symbol, currencyCode: biz.currency, mascaraCss: MASCARA_CSS, mascaraConfig: { MASCARA_SIZES, SHAPE_DEFS, getShapeClip } }, (err, html) => {
     if (err) return sendErrorPage(res, err);
     try { res.send(finishCatalog(html, bizOv, pal, estilo)); } catch (e) { sendErrorPage(res, e); }
   });
@@ -3026,8 +3041,13 @@ app.post('/:slug/pagar-tarjeta', rateLimit(12), async (req, res) => {
     return `• ${qty} x ${p.name}${variant} = ${currencyInfo(biz.currency).symbol}${(baseUnit * qty).toFixed(2)}`;
   }).filter(Boolean);
   if (stockError) return res.status(409).json({ ok: false, error: stockError });
-  total = Math.round(total * 100) / 100;
-  baseTotal = Math.round(baseTotal * 100) / 100;
+  // Zona de entrega: el costo se relee aquí, nunca se confía en lo que mande el navegador
+  const zone = zoneLookup(biz.id, body.zone_id);
+  const _mkF = priceMarkupFactor(biz);
+  const zoneCharge = _mkF ? markupAmount(zone.cost, _mkF) : zone.cost;
+  total = Math.round((total + zoneCharge) * 100) / 100;
+  baseTotal = Math.round((baseTotal + zone.cost) * 100) / 100;
+  if (zone.name) lines.push('Entrega: ' + zone.name + (zone.cost > 0 ? ' = ' + currencyInfo(biz.currency).symbol + zone.cost.toFixed(2) : ' (sin costo)'));
   if (total > baseTotal) lines.push('Cobrado con tarjeta: ' + currencyInfo(biz.currency).symbol + total.toFixed(2) + ' (incluye comisión de pago en línea)');
   if (!lines.length || !(total > 0)) return res.status(400).json({ ok: false, error: 'El carrito está vacío' });
   const clientTotal = Number(fd.transaction_amount);
@@ -3036,8 +3056,8 @@ app.post('/:slug/pagar-tarjeta', rateLimit(12), async (req, res) => {
 
   const customerData = customerName ? (customerName + (customerPhone ? ' (' + customerPhone + ')' : '')) : (customerPhone || '');
   const orderId = db.prepare(
-    `INSERT INTO orders (business_id, items, total, customer_name, customer_phone, status) VALUES (?, ?, ?, ?, ?, 'nuevo')`
-  ).run(biz.id, lines.join(' | '), baseTotal, customerData, customerPhone).lastInsertRowid; // total del pedido = precio base (la comisión de MP no es ganancia)
+    `INSERT INTO orders (business_id, items, total, customer_name, customer_phone, status, shipping_cost, shipping_zone) VALUES (?, ?, ?, ?, ?, 'nuevo', ?, ?)`
+  ).run(biz.id, lines.join(' | '), baseTotal, customerData, customerPhone, zone.cost, zone.name).lastInsertRowid; // total del pedido = precio base (la comisión de MP no es ganancia)
   reserveOrder(orderId, stockItems);
   upsertCustomer(biz.id, customerName, customerPhone);
 
@@ -3148,6 +3168,7 @@ app.post('/api/pedir', (req, res) => {
   const items = Array.isArray(req.body && req.body.items) ? req.body.items : [];
   const nombre = String((req.body && req.body.nombre) || '').trim();
   const telefono = String((req.body && req.body.telefono) || '').replace(/[^0-9]/g, '');
+  const zoneIdRaw = (req.body && req.body.zone_id) || '';
   const byStore = {};
   for (const it of items) {
     const slug = String((it && it.store) || '').trim();
@@ -3172,11 +3193,14 @@ app.post('/api/pedir', (req, res) => {
       track(b.id, 'wa_product', x.p.name);
       return `• ${x.qty} x ${x.p.name}${x.variant ? ` (${x.variant})` : ''} = $${sub.toFixed(2)}`;
     });
+    // Zona de entrega: el costo se relee aquí por tienda, nunca se confía en lo que mande el navegador
+    const zone = zoneLookup(b.id, zoneIdRaw);
+    if (zone.name) { total = Math.round((total + zone.cost) * 100) / 100; lines.push(`Entrega: ${zone.name}${zone.cost > 0 ? ' = ' + currencyInfo(b.currency).symbol + zone.cost.toFixed(2) : ' (sin costo)'}`); }
     if (lines.length) {
       const customerData = nombre ? (nombre + (telefono ? ' (' + telefono + ')' : '')) : (telefono || '');
       const _oidCart = db.prepare(
-        `INSERT INTO orders (business_id, items, total, customer_name, customer_phone, status, is_installment, installment_count, installment_frequency) VALUES (?, ?, ?, ?, ?, 'nuevo', ?, ?, ?)`
-      ).run(b.id, lines.join(' | '), total, customerData, telefono, hasInst ? 1 : 0, hasInst ? (instP.installment_count || 6) : 0, hasInst ? (instP.installment_frequency || 'semanal') : 'semanal').lastInsertRowid;
+        `INSERT INTO orders (business_id, items, total, customer_name, customer_phone, status, is_installment, installment_count, installment_frequency, shipping_cost, shipping_zone) VALUES (?, ?, ?, ?, ?, 'nuevo', ?, ?, ?, ?, ?)`
+      ).run(b.id, lines.join(' | '), total, customerData, telefono, hasInst ? 1 : 0, hasInst ? (instP.installment_count || 6) : 0, hasInst ? (instP.installment_frequency || 'semanal') : 'semanal', zone.cost, zone.name).lastInsertRowid;
       reserveOrder(_oidCart, list.map(x => ({ id: x.p.id, qty: x.qty, variant: x.variant })));
       upsertCustomer(b.id, nombre, telefono);
       track(b.id, 'wa', 'pedido');
@@ -4114,6 +4138,37 @@ app.post('/:slug/admin/categoria/:id/grupo', requireAuth, can('categorias.gestio
   res.json({ ok: r.changes > 0, id, group_id: groupId });
 });
 
+// ===== Zonas de entrega (Configuración → Envíos y formas de pago) =====
+function parseZonePrice(v) {
+  const n = parseFloat(String(v || '').replace(',', '.'));
+  return isFinite(n) && n >= 0 ? Math.round(Math.min(n, 99999) * 100) / 100 : null;
+}
+app.post('/:slug/admin/zona', requireAuth, can('config'), (req, res) => {
+  const name = (req.body.name || '').trim().slice(0, 60);
+  const price = parseZonePrice(req.body.price);
+  if (!name) return res.json({ ok: false, error: 'Escribe el nombre de la zona.' });
+  if (price === null) return res.json({ ok: false, error: 'Escribe un costo válido (0 o más).' });
+  const dup = db.prepare('SELECT * FROM shipping_zones WHERE business_id = ? AND name = ? COLLATE NOCASE AND active = 1').get(req.biz.id, name);
+  if (dup) return res.json({ ok: false, error: 'Ya tienes una zona con ese nombre.' });
+  const r = db.prepare('INSERT INTO shipping_zones (business_id, name, price) VALUES (?, ?, ?)').run(req.biz.id, name, price);
+  res.json({ ok: true, id: r.lastInsertRowid, name, price });
+});
+app.post('/:slug/admin/zona/:id', requireAuth, can('config'), (req, res) => {
+  const id = parseInt(req.params.id);
+  const name = (req.body.name || '').trim().slice(0, 60);
+  const price = parseZonePrice(req.body.price);
+  if (!name) return res.json({ ok: false, error: 'Escribe el nombre de la zona.' });
+  if (price === null) return res.json({ ok: false, error: 'Escribe un costo válido (0 o más).' });
+  const dup = db.prepare('SELECT * FROM shipping_zones WHERE business_id = ? AND name = ? COLLATE NOCASE AND active = 1 AND id != ?').get(req.biz.id, name, id);
+  if (dup) return res.json({ ok: false, error: 'Ya tienes una zona con ese nombre.' });
+  const r = db.prepare('UPDATE shipping_zones SET name = ?, price = ? WHERE id = ? AND business_id = ?').run(name, price, id, req.biz.id);
+  res.json({ ok: r.changes > 0, id, name, price });
+});
+app.post('/:slug/admin/zona/:id/eliminar', requireAuth, can('config'), (req, res) => {
+  db.prepare('DELETE FROM shipping_zones WHERE id = ? AND business_id = ?').run(parseInt(req.params.id), req.biz.id);
+  res.json({ ok: true });
+});
+
 // ================= CATÁLOGO DE ATRIBUTOS (JSON, no recarga el formulario) =================
 app.post('/:slug/admin/atributo/guardar', requireAuth, can('atributos.gestionar'), (req, res) => {
   res.json(upsertAttributeTemplate(req.biz.id, req.body.name, req.body.values));
@@ -4794,6 +4849,7 @@ function configLocals(biz, opts) {
     : getPalette(biz, baseEstilo);
   return {
     biz,
+    shippingZonesAdmin: getShippingZones(biz.id),
     mpOAuth: mpOauthReady(),
     TEMPLATES, COLORS, GIROS: getGiros(), ESTILOS, FONTS, CURRENCIES, GIRO_PRESETS,
     diseno,

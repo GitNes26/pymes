@@ -175,6 +175,22 @@
   // Transferencia bancaria: igual solo para el carrito de esta tienda.
   // Transferencia: solo con Mercado Pago APAGADO (son excluyentes). Tarjeta: solo con Mercado Pago activo y su Public Key.
   const TRANSFER = <%- safeJson((!biz.mp_enabled && biz.transfer_enabled && (biz.transfer_bank || biz.transfer_account)) ? { bank: biz.transfer_bank || '', account: biz.transfer_account || '', holder: biz.transfer_holder || '' } : null) %>;
+  // Zonas de entrega con costo (Configuración → Envíos): el cliente elige a dónde se lo llevas y ese costo se suma.
+  // El precio real SIEMPRE se vuelve a leer en el servidor al cobrar — esto solo es para mostrarlo antes de pagar.
+  const SHIPPING_ZONES = <%- safeJson(typeof shippingZones !== 'undefined' ? shippingZones : []) %>;
+  const _zoneSel = {};
+  function zoneFor(slug) { return SHIPPING_ZONES.find(function (z) { return String(z.id) === String(_zoneSel[slug] || ''); }) || null; }
+  function zoneCostFor(slug) { const z = zoneFor(slug); return z ? Number(z.price) || 0 : 0; } // costo base de la zona, sin comisión
+  // Con tarjeta y comisión incluida en el precio, la zona también la lleva (mismo cálculo que hace el servidor al cobrar)
+  const MP_FEE_INFO = <%- safeJson((biz.mp_enabled && !(biz.mp_fee_on === 0 || biz.mp_fee_on === '0')) ? { pct: Number(biz.mp_fee_pct == null ? 3.49 : biz.mp_fee_pct), fixed: Number(biz.mp_fee_fixed == null ? 4 : biz.mp_fee_fixed), iva: Number(biz.mp_fee_iva == null ? 16 : biz.mp_fee_iva) } : null) %>;
+  function zoneChargeFor(slug) {
+    const base = zoneCostFor(slug);
+    if (!base || !MP_FEE_INFO) return base;
+    const k = 1 + MP_FEE_INFO.iva / 100, denom = 1 - (MP_FEE_INFO.pct / 100) * k;
+    if (denom <= 0.2) return base;
+    return Math.ceil(base / denom + (MP_FEE_INFO.fixed * k) / denom - 1e-9);
+  }
+  function setZone(slug, val) { _zoneSel[slug] = val; renderChat(); }
   const HORARIO_RAW = <%- safeJson(biz.horario || '') %>;
   const HORARIO_MSG = <%- safeJson(biz.horario_msg || '') %>;
 
@@ -670,6 +686,15 @@
             </div>
           </div>
           <div style="padding:0 12px;">${itemsHtml}</div>
+          ${(SHIPPING_ZONES.length && g.store.slug === SLUG && (MP_CARD || TRANSFER)) ? `
+          <div style="margin:2px 12px 10px;padding:10px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;">
+            <label for="zone-select" style="display:block;font-size:11.5px;font-weight:800;color:#334155;margin-bottom:5px;">📍 ¿A dónde te lo llevamos?</label>
+            <select id="zone-select" onchange="setZone(${jattr(g.store.slug)}, this.value)" style="width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:8px 10px;font-size:13px;background:#fff;color:#0f172a;">
+              <option value="">Recoger en tienda (sin costo)</option>
+              ${SHIPPING_ZONES.map(z => `<option value="${esc(String(z.id))}" ${String(_zoneSel[g.store.slug] || '') === String(z.id) ? 'selected' : ''}>${esc(z.name)}${Number(z.price) > 0 ? ' — ' + money(z.price) : ' (gratis)'}</option>`).join('')}
+            </select>
+            ${zoneFor(g.store.slug) ? `<div style="margin-top:6px;font-size:12px;color:#475569;">Envío: <b>${money(zoneChargeFor(g.store.slug))}</b> · Total con envío: <b>${money(t + zoneChargeFor(g.store.slug))}</b></div>` : ''}
+          </div>` : ''}
           <div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;">
             ${(IS_ADMIN && g.store.slug === SLUG) ? `<button type="button" onclick="payCashAdmin(${jattr(g.store.slug)})" style="width:100%;background:#15803d;color:#fff;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:14px;cursor:pointer;">💵 Registrar en efectivo · ${money(cashTotalOf(g))} <small style=\"font-weight:600;opacity:.85\">(sin comisión)</small></button>` : ''}
             ${(MP_CARD && g.store.slug === SLUG) ? `<button type="button" onclick="payCardInApp(${jattr(g.store.slug)})" style="width:100%;background:#009ee3;color:#fff;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:14px;cursor:pointer;">💳 Pagar con tarjeta</button>` : ''}
@@ -750,7 +775,10 @@
       if (pIt && pIt.promoDesc) l += '  (' + pIt.promoDesc + ')';
       return l;
     });
-    const total = g.items.reduce((s, it) => s + it.qty * it.price, 0);
+    const zone = zoneFor(slug);
+    const zoneIdSel = _zoneSel[slug] || '';
+    if (zone) lines.push('Entrega: ' + zone.name + (Number(zone.price) > 0 ? ' = ' + money(zone.price) : ' (sin costo)'));
+    const total = g.items.reduce((s, it) => s + it.qty * it.price, 0) + zoneCostFor(slug);
     const nombre = (document.getElementById('chat-nombre') || {}).value || '';
     const telefono = (document.getElementById('chat-telefono') || {}).value || '';
     let msg = orderMessage(g.store, lines, total);
@@ -767,7 +795,7 @@
     if (!sharePhoto) msg += '\n\n📸 Fotos de mi pedido:\n' + location.origin + '/' + g.store.slug + '/pedido?ids=' + g.items.map(it => it.id).join(',') + '&q=' + g.items.map(it => it.qty).join(',') + (nombre ? '&n=' + encodeURIComponent(nombre) : '') + (telefono ? '&t=' + encodeURIComponent(telefono) : '');
     const url = 'https://wa.me/' + waNumber(g.store.whatsapp) + '?text=' + encodeURIComponent(msg);
     try {
-      fetch('/api/pedir', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: g.items.map(it => ({ store: it.store.slug, id: it.id, qty: it.qty, variant: it.variant })), nombre: nombre, telefono: telefono }) }).catch(() => {});
+      fetch('/api/pedir', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: g.items.map(it => ({ store: it.store.slug, id: it.id, qty: it.qty, variant: it.variant })), nombre: nombre, telefono: telefono, zone_id: zoneIdSel }) }).catch(() => {});
     } catch (e) {}
     if (sharePhoto) {
       // Sale la foto adjunta: el cliente elige el chat de la tienda en el menu de compartir
@@ -909,7 +937,8 @@
     if (!validarDatosCliente()) return;
     const g = storeGroups().find(x => x.store.slug === slug);
     if (!g || !TRANSFER) return;
-    const total = g.items.reduce((s, it) => s + it.qty * it.price, 0);
+    const zone = zoneFor(slug);
+    const total = Math.round((g.items.reduce((s, it) => s + it.qty * it.price, 0) + zoneCostFor(slug)) * 100) / 100;
     toggleChat(false);
     const ov = document.createElement('div');
     ov.id = 'transfer-overlay';
@@ -921,6 +950,7 @@
           (TRANSFER.bank ? '<div class="tr-row"><span class="tr-lbl">Banco</span><span class="tr-val">' + esc(TRANSFER.bank) + '</span></div>' : '') +
           (TRANSFER.account ? '<div class="tr-row"><span class="tr-lbl">Cuenta / CLABE</span><span class="tr-val tr-acc">' + esc(TRANSFER.account) + '</span></div>' : '') +
           (TRANSFER.holder ? '<div class="tr-row"><span class="tr-lbl">A nombre de</span><span class="tr-val">' + esc(TRANSFER.holder) + '</span></div>' : '') +
+          (zone ? '<div class="tr-row"><span class="tr-lbl">Entrega</span><span class="tr-val">' + esc(zone.name) + (Number(zone.price) > 0 ? ' · ' + money(zone.price) : ' · sin costo') + '</span></div>' : '') +
           '<div class="tr-row tr-total"><span class="tr-lbl">Total a transferir</span><span class="tr-val">' + money(total) + '</span></div>' +
           (TRANSFER.account ? '<button type="button" class="tr-copy">Copiar cuenta</button>' : '') +
         '</div>' +
@@ -941,10 +971,11 @@
     const g = storeGroups().find(x => x.store.slug === slug);
     if (!g) return;
     const net = Math.round(g.items.reduce((s, it) => s + it.qty * it.price, 0) * 100) / 100;
-    const total = net; // la comisión ya va incluida en el precio de cada producto
+    const total = Math.round((net + zoneChargeFor(slug)) * 100) / 100; // la comisión ya va incluida en el precio de cada producto y de la zona
     const nombre = (document.getElementById('chat-nombre') || {}).value || '';
     const telefono = (document.getElementById('chat-telefono') || {}).value || '';
     const items = g.items.map(it => ({ id: it.id, qty: it.qty, variant: it.variant || '' }));
+    const zoneIdSel = _zoneSel[slug] || '';
     toggleChat(false);
     const ov = document.createElement('div');
     ov.id = 'cardpay-overlay';
@@ -985,7 +1016,7 @@
           onReady: function () { const l = document.getElementById('cp-load'); if (l) l.remove(); },
           onSubmit: function (formData) {
             const old = document.getElementById('cp-alert'); if (old) old.remove();
-            return fetch('/' + slug + '/pagar-tarjeta', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: items, nombre: nombre, telefono: telefono, formData: formData }) })
+            return fetch('/' + slug + '/pagar-tarjeta', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: items, nombre: nombre, telefono: telefono, zone_id: zoneIdSel, formData: formData }) })
               .then(function (r) { return r.json().catch(function () { return { ok: false, error: 'Respuesta inesperada del servidor' }; }); })
               .then(function (d) {
                 if (!d.ok) { payAlert((d.error || 'No se pudo procesar el pago.').replace(/^No se pudo procesar el pago\.?\s*/i, '') || 'Intenta con otra tarjeta.'); return Promise.reject(new Error(d.error || 'pago')); }

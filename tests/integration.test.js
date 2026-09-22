@@ -181,6 +181,40 @@ t('la página del pedido muestra a nombre de quién es y su WhatsApp', async () 
   assert.doesNotMatch(sin, /class="cli"/);
 });
 
+t('zonas de entrega: se crean, se muestran en el catálogo y se pueden editar y borrar', async () => {
+  const created = await (await admin('zona', { name: 'Torreón', price: '75' })).json();
+  assert.equal(created.ok, true);
+  const h = await (await http('/' + slug)).text();
+  assert.match(h, /"name":"Torreón","price":75/);
+  const edited = await (await admin('zona/' + created.id, { name: 'Torreón centro', price: '80' })).json();
+  assert.equal(edited.ok, true);
+  assert.equal(edited.price, 80);
+  const dup = await (await admin('zona', { name: 'Torreón centro', price: '10' })).json();
+  assert.equal(dup.ok, false);
+  await admin('zona/' + created.id + '/eliminar', {});
+  const h2 = await (await http('/' + slug)).text();
+  assert.doesNotMatch(h2, /Torreón centro/);
+});
+
+t('zona de entrega: el pedido guarda el costo, el nombre y lo suma al total; sin zona no cobra nada', async () => {
+  const z = await (await admin('zona', { name: 'Sonora', price: '100' })).json();
+  const r = await http('/api/pedir', { method: 'POST', body: JSON.stringify({ items: [{ store: slug, id: prod.a, qty: 1, variant: '' }], nombre: 'ConZona', telefono: '8710000002', zone_id: String(z.id) }) });
+  assert.equal(r.status, 200);
+  const o = lastOrder();
+  assert.equal(o.shipping_cost, 100);
+  assert.equal(o.shipping_zone, 'Sonora');
+  assert.equal(o.total, 1100); // producto (1000) + zona (100), sin comisión porque es por WhatsApp/transferencia
+  assert.match(o.items, /Entrega: Sonora = \$100\.00/);
+
+  const r2 = await http('/api/pedir', { method: 'POST', body: JSON.stringify({ items: [{ store: slug, id: prod.a, qty: 1, variant: '' }], nombre: 'SinZona', telefono: '8710000003' }) });
+  assert.equal(r2.status, 200);
+  const o2 = lastOrder();
+  assert.equal(o2.shipping_cost, 0);
+  assert.equal(o2.shipping_zone, '');
+  assert.equal(o2.total, 1000);
+  await admin('zona/' + z.id + '/eliminar', {});
+});
+
 t('las páginas del panel responden', async () => {
   for (const p of ['panel', 'productos', 'config', 'reportes', 'clientes']) {
     const r = await http('/' + slug + '/admin/' + p, { method: 'GET' });

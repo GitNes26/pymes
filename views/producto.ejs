@@ -381,7 +381,7 @@
     document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeGal(); });
   </script>
 
-  <%- include('partials/cart-js', { biz, products: [product], currencySymbol: typeof currencySymbol !== 'undefined' ? currencySymbol : '$' }) %>
+  <%- include('partials/cart-js', { biz, products: [product], shippingZones: typeof shippingZones !== 'undefined' ? shippingZones : [], currencySymbol: typeof currencySymbol !== 'undefined' ? currencySymbol : '$' }) %>
 
   <script>
     (function () {

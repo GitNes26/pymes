@@ -150,6 +150,16 @@ CREATE TABLE IF NOT EXISTS category_groups (
   FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS shipping_zones (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  business_id INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  price REAL NOT NULL DEFAULT 0,
+  sort INTEGER DEFAULT 0,
+  active INTEGER DEFAULT 1,
+  FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS categories (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   business_id INTEGER NOT NULL,
@@ -313,6 +323,8 @@ addColumnIfMissing('orders', 'mp_payment_id', "TEXT DEFAULT ''");
 addColumnIfMissing('orders', 'mp_status', "TEXT DEFAULT ''");
 addColumnIfMissing('orders', 'stock_applied', 'INTEGER DEFAULT 0'); // 1 = ya se descontó el stock de este pedido
 addColumnIfMissing('orders', 'items_json', 'TEXT'); // [{id, qty, variant}] para descontar/devolver stock por id de producto
+addColumnIfMissing('orders', 'shipping_cost', 'REAL DEFAULT 0'); // costo de la zona de entrega elegida (ya incluido en el total)
+addColumnIfMissing('orders', 'shipping_zone', "TEXT DEFAULT ''"); // nombre de la zona ("Recoger en tienda" si no aplica)
 // Pedidos anteriores al control de stock (antes del 2026-09-21 14:26 hora de México): su stock ya lo manejó el dueño a mano
 db.exec("UPDATE orders SET stock_applied = 1 WHERE (stock_applied IS NULL OR stock_applied = 0) AND created_at < '2026-09-21 20:26:22'");
 
