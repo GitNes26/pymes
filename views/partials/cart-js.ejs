@@ -171,10 +171,13 @@
   const MP_PUBLIC_KEY = <%- safeJson((biz.mp_enabled && biz.mp_access_token && biz.mp_public_key) ? biz.mp_public_key : '') %>;
   const MP_CARD = !!MP_PUBLIC_KEY;
   // Dueño/empleado con sesión activa: puede registrar la venta como pago en efectivo
-  const IS_ADMIN = <%- (typeof isAdmin !== 'undefined' && isAdmin) ? 'true' : 'false' %>;
+  // Con Mercado Pago obligatorio (plan gratis) no hay efectivo en caja ni transferencia: sería una
+  // forma fácil de esquivar la comisión de la plataforma. Solo tarjeta dentro de la app.
+  const MP_FORCED = <%- biz.mp_forced_plan ? 'true' : 'false' %>;
+  const IS_ADMIN = <%- (typeof isAdmin !== 'undefined' && isAdmin) ? 'true' : 'false' %> && !MP_FORCED;
   // Transferencia bancaria: igual solo para el carrito de esta tienda.
   // Transferencia: solo con Mercado Pago APAGADO (son excluyentes). Tarjeta: solo con Mercado Pago activo y su Public Key.
-  const TRANSFER = <%- safeJson((!biz.mp_enabled && biz.transfer_enabled && (biz.transfer_bank || biz.transfer_account)) ? { bank: biz.transfer_bank || '', account: biz.transfer_account || '', holder: biz.transfer_holder || '' } : null) %>;
+  const TRANSFER = <%- safeJson((!biz.mp_forced_plan && !biz.mp_enabled && biz.transfer_enabled && (biz.transfer_bank || biz.transfer_account)) ? { bank: biz.transfer_bank || '', account: biz.transfer_account || '', holder: biz.transfer_holder || '' } : null) %>;
   // Zonas de entrega con costo (Configuración → Envíos): el cliente elige a dónde se lo llevas y ese costo se suma.
   // El precio real SIEMPRE se vuelve a leer en el servidor al cobrar — esto solo es para mostrarlo antes de pagar.
   const SHIPPING_ZONES = <%- safeJson(typeof shippingZones !== 'undefined' ? shippingZones : []) %>;

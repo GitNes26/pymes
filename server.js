@@ -1723,6 +1723,13 @@ function getBusiness(slug) {
   const b = db.prepare('SELECT * FROM businesses WHERE slug = ?').get(slug);
   // El pago en línea es obligatorio: está activo en cuanto la tienda tiene su cuenta de Mercado Pago conectada
   if (b) b.mp_enabled = (b.mp_enabled && b.mp_access_token) ? 1 : 0; // solo cobra en línea si está prendido Y tiene su cuenta
+  // Plan con Mercado Pago obligatorio (MP_FEE_PLANS, ej. el plan gratis): única forma de pago —
+  // sin transferencia y sin que el dueño registre ventas en efectivo (si no, sería fácil esquivar
+  // la comisión de la plataforma) — y sin poder apagar la comisión de Mercado Pago del precio.
+  // Solo aplica si MP_FEE_PERCENT > 0: con la comisión apagada (como hoy, por defecto) nadie pierde
+  // transferencia ni efectivo solo por estar en el plan 'free' — que es el plan de TODAS las tiendas
+  // hasta que se les asigne otro a propósito.
+  if (b) b.mp_forced_plan = MP_FEE_PERCENT > 0 && MP_FEE_PLANS.includes(b.plan || 'free');
   return b;
 }
 
@@ -3189,6 +3196,8 @@ app.post('/api/pedir', (req, res) => {
   const orders = Object.keys(byStore).map((slug) => {
     const list = byStore[slug];
     const b = getBusiness(slug);
+    // Con Mercado Pago obligatorio no hay pedido por transferencia/WhatsApp: se ignora, aunque manden la petición a mano
+    if (b.mp_forced_plan) return { slug, name: b.name, error: 'Esta tienda solo cobra con Mercado Pago.' };
     let total = 0;
     let hasInst = false;
     let instP = null;
@@ -3894,6 +3903,7 @@ app.post('/:slug/admin/producto', requireAuth, can('productos.crear'), (req, res
 // crea el pedido ya pagado para que entre a reportes, clientes y panel.
 app.post('/:slug/admin/venta-efectivo', requireAuth, can('pedidos.gestionar'), (req, res) => {
   const biz = req.biz;
+  if (biz.mp_forced_plan) return res.status(403).json({ ok: false, error: 'Tu plan solo permite cobrar con Mercado Pago, no se puede registrar como efectivo.' });
   const body = req.body || {};
   const items = Array.isArray(body.items) ? body.items.slice(0, 60) : [];
   const customerName = String(body.nombre || '').trim().slice(0, 80);
@@ -5100,7 +5110,8 @@ function applyConfig(biz, body) {
   // porque el dueño mandó otro de los formularios de Configuración.
   const mpFormPosted = Object.prototype.hasOwnProperty.call(body, 'mp_form');
   const mpAccessToken = mpFormPosted ? String(body.mp_access_token || '').trim().slice(0, 300) : biz.mp_access_token;
-  const payMode = ['mp', 'transfer'].includes(body.pay_mode) ? body.pay_mode : null; // interruptor: Mercado Pago O transferencia
+  // Con Mercado Pago obligatorio (plan gratis) no hay interruptor que valga: siempre "mp", pase lo que pase en el body
+  const payMode = biz.mp_forced_plan ? 'mp' : (['mp', 'transfer'].includes(body.pay_mode) ? body.pay_mode : null); // interruptor: Mercado Pago O transferencia
   const mpEnabled = mpFormPosted ? ((mpAccessToken && (payMode ? payMode === 'mp' : body.mp_enabled === '1')) ? 1 : 0) : (biz.mp_access_token ? biz.mp_enabled : 0);
   // Transferencia bancaria: mismo patrón (marcador transfer_form en su propio
   // <form>) — el dueño publica su cuenta y el cliente transfiere y manda el
@@ -5116,7 +5127,7 @@ function applyConfig(biz, body) {
     ? (transferAccountRaw === '' ? '' : (/^\d{10,20}$/.test(transferAccountRaw) ? transferAccountRaw : biz.transfer_account))
     : biz.transfer_account;
   const transferHolder = transferFormPosted ? String(body.transfer_holder || '').trim().slice(0, 120) : biz.transfer_holder;
-  const transferEnabled = (mpEnabled ? 0 : (transferFormPosted ? ((payMode ? payMode === 'transfer' : body.transfer_enabled === '1') ? 1 : 0) : biz.transfer_enabled)); // transferencia y Mercado Pago son excluyentes
+  const transferEnabled = biz.mp_forced_plan ? 0 : (mpEnabled ? 0 : (transferFormPosted ? ((payMode ? payMode === 'transfer' : body.transfer_enabled === '1') ? 1 : 0) : biz.transfer_enabled)); // transferencia y Mercado Pago son excluyentes; con plan de Mercado Pago obligatorio, nunca
   db.prepare(
     `UPDATE businesses SET name = ?, whatsapp = ?, description = ?, template = ?, color = ?, color_hex = ?, color_hex2 = ?, color_mode = ?, grid_cols = ?, logo = ?, banner = ?, giro = ?, giros = ?, estilo = ?, bg = ?, card = ?, text = ?, muted = ?, border = ?, radius = ?, font = ?, accent = ?, accent2 = ?, header = ?, header_text = ?, wa_message = ?, currency = ?, sections = ?, demo = ?, horario = ?, horario_msg = ?, blocks = ?, page_bg = ?, redes = ?, faq = ?, extras = ?, address = ?, catalog_design = ?, mp_access_token = ?, mp_enabled = ?, transfer_bank = ?, transfer_account = ?, transfer_holder = ?, transfer_enabled = ? WHERE id = ?`
   ).run(
@@ -5178,7 +5189,8 @@ function applyConfig(biz, body) {
   if (mpFormPosted) {
     const num = (v, def, max) => { const n = parseFloat(String(v || '').replace(',', '.')); return isFinite(n) && n >= 0 ? Math.min(n, max) : def; };
     db.prepare('UPDATE businesses SET mp_fee_on = ?, mp_fee_pct = ?, mp_fee_fixed = ?, mp_fee_iva = ? WHERE id = ?').run(
-      body.mp_fee_on === '1' ? 1 : 0, num(body.mp_fee_pct, 3.49, 30), num(body.mp_fee_fixed, 4, 100), num(body.mp_fee_iva, 16, 30), biz.id);
+      biz.mp_forced_plan ? 1 : (body.mp_fee_on === '1' ? 1 : 0), // en el plan con Mercado Pago obligatorio, la comisión incluida en el precio no se puede apagar
+      num(body.mp_fee_pct, 3.49, 30), num(body.mp_fee_fixed, 4, 100), num(body.mp_fee_iva, 16, 30), biz.id);
   }
   if (mpFormPosted) db.prepare('UPDATE businesses SET mp_public_key = ? WHERE id = ?').run(String(body.mp_public_key || '').trim().slice(0, 300), biz.id);
   return getBusiness(biz.slug);
@@ -5437,15 +5449,17 @@ app.post('/:slug/admin/compra/:id/eliminar', requireAuth, can('config'), (req, r
 
 // ================= CONFIGURACIÓN DE DISEÑO (panel maestro) =================
 app.get('/maestro/:id/config', maestroAuth, (req, res) => {
-  const biz = db.prepare('SELECT * FROM businesses WHERE id = ?').get(req.params.id);
-  if (!biz) return res.redirect('/maestro/panel');
+  const row = db.prepare('SELECT * FROM businesses WHERE id = ?').get(req.params.id);
+  if (!row) return res.redirect('/maestro/panel');
+  const biz = getBusiness(row.slug); // normaliza mp_enabled y mp_forced_plan igual que en el resto de la app
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
   res.render('config', configLocals(biz, { esMaestro: true }));
 });
 
 app.post('/maestro/:id/config', maestroAuth, (req, res) => {
-  const biz = db.prepare('SELECT * FROM businesses WHERE id = ?').get(req.params.id);
-  if (!biz) return res.redirect('/maestro/panel');
+  const row = db.prepare('SELECT * FROM businesses WHERE id = ?').get(req.params.id);
+  if (!row) return res.redirect('/maestro/panel');
+  const biz = getBusiness(row.slug);
   const updated = applyConfig(biz, req.body);
   res.render('config', configLocals(updated, { esMaestro: true, ok: 'Configuración guardada' }));
 });

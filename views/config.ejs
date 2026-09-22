@@ -815,6 +815,9 @@
       <!-- ============================================================
       SECCIÓN: FORMA DE PAGO — un interruptor: Mercado Pago (tarjeta) O transferencia. Nunca las dos.
       El efectivo no se configura aquí: solo lo cobra el dueño/empleado en caja.
+      Si biz.mp_forced_plan (ej. plan gratis), no hay interruptor: siempre Mercado Pago, sin
+      transferencia ni efectivo, y sin poder apagar su comisión — así se cobra la comisión de la
+      plataforma (MP_FEE_PERCENT), que también la absorbe el negocio.
       ============================================================ -->
       <% if (!esMaestro) { var _payMode = biz.mp_enabled ? 'mp' : (biz.transfer_enabled ? 'transfer' : 'mp'); %>
       <style>
@@ -841,10 +844,20 @@
           <input type="hidden" name="transfer_form" value="1">
           <input type="hidden" name="pay_mode" id="pay-mode" value="<%= _payMode %>">
 
+          <% if (biz.mp_forced_plan) { %>
+          <div class="rounded-xl border border-sky-200 dark:border-sky-900/50 bg-sky-50/60 dark:bg-sky-900/10 p-3 flex items-center gap-2.5">
+            <span style="font-size:20px;">💳</span>
+            <div>
+              <p class="text-sm font-bold text-slate-800 dark:text-slate-100">Tu plan cobra solo con Mercado Pago</p>
+              <p class="text-xs text-slate-500 dark:text-slate-400">No puedes usar transferencia ni cobrar en efectivo — así funciona tu plan actual.</p>
+            </div>
+          </div>
+          <% } else { %>
           <div class="pay-switch" role="radiogroup" aria-label="Forma de pago">
             <button type="button" class="pay-opt" role="radio" data-mode="mp" aria-checked="<%= _payMode === 'mp' ? 'true' : 'false' %>">💳 Mercado Pago</button>
             <button type="button" class="pay-opt" role="radio" data-mode="transfer" aria-checked="<%= _payMode === 'transfer' ? 'true' : 'false' %>">🏦 Transferencia</button>
           </div>
+          <% } %>
 
           <!-- ===== Mercado Pago ===== -->
           <div class="pay-panel" id="pay-panel-mp" <%= _payMode === 'mp' ? '' : 'hidden' %>>
@@ -874,12 +887,22 @@
             </div>
 
             <div class="rounded-xl border border-slate-200 dark:border-[#30363d] p-4 space-y-3">
+              <% if (biz.mp_forced_plan) { %>
+              <input type="hidden" name="mp_fee_on" value="1">
+              <label class="flex items-start gap-2.5" style="opacity:.75">
+                <input type="checkbox" checked disabled class="mt-0.5 accent-sky-500">
+                <span class="text-sm font-bold text-slate-700 dark:text-slate-200">Incluir la comisión en el precio de mis productos
+                  <span class="block text-xs font-normal text-slate-500 mt-0.5">Obligatorio en tu plan: no se puede apagar. El cliente ve un solo precio final y a ti te llega el precio que capturas.</span>
+                </span>
+              </label>
+              <% } else { %>
               <label class="flex items-start gap-2.5 cursor-pointer">
                 <input type="checkbox" name="mp_fee_on" value="1" <%= (biz.mp_fee_on === 0 || biz.mp_fee_on === '0') ? '' : 'checked' %> class="mt-0.5 accent-sky-500">
                 <span class="text-sm font-bold text-slate-700 dark:text-slate-200">Incluir la comisión en el precio de mis productos
                   <span class="block text-xs font-normal text-slate-500 mt-0.5">El cliente ve un solo precio final y a ti te llega el precio que capturas. Tú sigues poniendo el precio base.</span>
                 </span>
               </label>
+              <% } %>
               <div class="grid grid-cols-3 gap-3">
                 <div>
                   <label class="config-label">Comisión %</label>
@@ -898,7 +921,8 @@
             </div>
           </div>
 
-          <!-- ===== Transferencia ===== -->
+          <!-- ===== Transferencia (no existe con Mercado Pago obligatorio) ===== -->
+          <% if (!biz.mp_forced_plan) { %>
           <div class="pay-panel" id="pay-panel-transfer" <%= _payMode === 'transfer' ? '' : 'hidden' %>>
             <div class="grid md:grid-cols-2 gap-4">
               <div>
@@ -916,11 +940,17 @@
             </div>
             <p class="text-xs text-slate-500 dark:text-slate-400">Tus clientes verán estos datos en el carrito, sin comisión. Transfieren y te mandan el comprobante por WhatsApp; tú marcas el pedido como pagado.</p>
           </div>
+          <% } %>
 
+          <% if (biz.mp_forced_plan) { %>
+          <p class="text-xs text-slate-400 dark:text-slate-500">Tu plan tampoco permite registrar ventas en <b>efectivo</b> desde el panel — todo pasa por Mercado Pago.</p>
+          <% } else { %>
           <p class="text-xs text-slate-400 dark:text-slate-500">💵 El <b>efectivo</b> no se configura: lo cobras tú (o un empleado) en caja desde el carrito, con tu sesión iniciada.</p>
+          <% } %>
 
           <button class="m-btn m-btn-filled w-full !min-h-11 dark:bg-[#d4d4d4] dark:text-[#062e6f] dark:hover:bg-[#a0c4ff]">Guardar cambios</button>
         </form>
+        <% if (!biz.mp_forced_plan) { %>
         <script>
           (function () {
             var form = document.getElementById('form-pagos');
@@ -936,6 +966,7 @@
             opts.forEach(function (b) { b.addEventListener('click', function () { set(b.getAttribute('data-mode')); }); });
           })();
         </script>
+        <% } %>
       </section>
       <% } %>
 
