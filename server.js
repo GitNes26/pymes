@@ -30,7 +30,7 @@ const app = express();
 
 // Express 4 no captura rechazos de handlers async: cualquier error de BD en uno
 // de ellos se convierte en 500 (next(err)) en lugar de tumbar el proceso.
-const { priceMarkupFactor, markupAmount, applyMarkup, mpCardFee, parseCustomTags, customTagsJson, parseSpecs, orderLines } = require('./lib/pure');
+const { priceMarkupFactor, markupAmount, applyMarkup, mpCardFee, platformFee, parseCustomTags, customTagsJson, parseSpecs, orderLines } = require('./lib/pure');
 const ah = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
 // Red de seguridad: un error fuera de una ruta Express (un setInterval, una
@@ -2816,11 +2816,15 @@ async function mpFetch(token, path, options) {
 }
 
 // ===== Mercado Pago Marketplace (OAuth): cada negocio conecta SU cuenta con un botón y el dinero
-// le llega directo; la plataforma puede cobrar una comisión (MP_FEE_PERCENT, por defecto 0 %). =====
+// le llega directo; la plataforma cobra una comisión (MP_FEE_PERCENT, por defecto 0 %) SOLO al plan
+// gratis, y la absorbe el negocio: Mercado Pago la separa del pago antes de pagarle, el cliente nunca
+// ve un cargo distinto ni el precio cambia por esto (a diferencia de la comisión propia de Mercado
+// Pago, que si el dueño lo activa sí se refleja en el precio — son dos comisiones independientes). =====
 const MP_CLIENT_ID = String(process.env.MP_CLIENT_ID || '').trim();
 const MP_CLIENT_SECRET = String(process.env.MP_CLIENT_SECRET || '').trim();
 const MP_FEE_PERCENT = Math.max(0, Math.min(30, parseFloat(process.env.MP_FEE_PERCENT) || 0));
-function mpFee(total) { return MP_FEE_PERCENT > 0 ? Math.round(total * MP_FEE_PERCENT) / 100 : 0; }
+const MP_FEE_PLANS = String(process.env.MP_FEE_PLANS || 'free').split(',').map(s => s.trim()).filter(Boolean); // qué planes pagan la comisión de plataforma
+function mpFee(total, biz) { return platformFee(total, biz, MP_FEE_PERCENT, MP_FEE_PLANS); }
 function mpOauthReady() { return !!(MP_CLIENT_ID && MP_CLIENT_SECRET); }
 function mpRedirectUri(req) { return mpAbsUrl(req, '/mp/oauth'); }
 async function mpTokenRequest(params) {
@@ -2921,7 +2925,7 @@ app.get('/:slug/pagar-mp', async (req, res) => {
     notification_url: mpAbsUrl(req, '/webhooks/mercadopago?slug=' + encodeURIComponent(biz.slug))
   };
   if (!mpIsPublicUrl(pref.notification_url)) { delete pref.notification_url; delete pref.auto_return; }
-  if (biz.mp_connected && mpFee(total) > 0) pref.marketplace_fee = mpFee(total);
+  if (biz.mp_connected && mpFee(total, biz) > 0) pref.marketplace_fee = mpFee(total, biz);
   const { ok, data } = await mpFetch(biz.mp_access_token, '/checkout/preferences', { method: 'POST', body: JSON.stringify(pref) });
   if (!ok || !data.init_point) {
     console.error('Error creando preferencia de Mercado Pago:', data);
@@ -3068,7 +3072,7 @@ app.post('/:slug/pagar-tarjeta', rateLimit(12), async (req, res) => {
     transaction_amount: charge,
     token: String(fd.token),
     description: ('Pedido #' + orderId + ' · ' + biz.name).slice(0, 200),
-    ...((biz.mp_connected && mpFee(charge) > 0) ? { application_fee: mpFee(charge) } : {}),
+    ...((biz.mp_connected && mpFee(charge, biz) > 0) ? { application_fee: mpFee(charge, biz) } : {}),
     installments: Math.max(1, parseInt(fd.installments) || 1),
     payment_method_id: String(fd.payment_method_id),
     payer: { email: String((fd.payer && fd.payer.email) || '').trim().slice(0, 120) },

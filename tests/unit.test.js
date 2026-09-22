@@ -3,7 +3,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const {
-  priceMarkupFactor, markupAmount, applyMarkup, mpCardFee,
+  priceMarkupFactor, markupAmount, applyMarkup, mpCardFee, platformFee,
   parseCustomTags, customTagsJson, parseSpecs, orderLines
 } = require('../lib/pure');
 
@@ -61,6 +61,15 @@ test('mpCardFee: cargo exacto y cero cuando está apagado', () => {
   assert.equal(mpCardFee(biz(), 180), 12.43);
   assert.equal(mpCardFee(biz({ mp_fee_on: 0 }), 180), 0);
   assert.equal(mpCardFee(biz(), 0), 0);
+});
+
+test('comisión de la plataforma: solo al plan gratis, la absorbe el negocio (no cambia el precio)', () => {
+  assert.equal(platformFee(1000, { plan: 'free' }, 3, ['free']), 30);
+  assert.equal(platformFee(1000, { plan: 'pro' }, 3, ['free']), 0); // plan de paga: sin comisión por venta
+  assert.equal(platformFee(1000, null, 3, ['free']), 0); // sin tienda no se sabe el plan: no se cobra
+  assert.equal(platformFee(1000, { plan: 'free' }, 0, ['free']), 0); // MP_FEE_PERCENT en 0: apagado
+  assert.equal(platformFee(1000, { plan: 'free' }, 40, ['free']), 300); // se limita a 30% aunque pidan más
+  assert.equal(platformFee(1000, {}, 3), 30); // sin biz.plan se trata como 'free' (el default de la tienda)
 });
 
 test('etiquetas personalizadas: máximo 3, texto corto y color válido', () => {
