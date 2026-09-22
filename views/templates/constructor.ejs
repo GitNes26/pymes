@@ -150,7 +150,8 @@
   // Filtros independientes: categoría del producto y agrupador (marca/colección/tema).
   var _catCount = {};
   _realProds.forEach(function (p) { var k = String(p.category_id || 0); _catCount[k] = (_catCount[k] || 0) + 1; });
-  var _catsShown = (categories || []).filter(function (c) { return (_catCount[String(c.id)] || 0) > 0; });
+  var _catsShown = (categories || []).filter(function (c) { return (_catCount[String(c.id)] || 0) > 0; })
+    .sort(function (a, b) { return a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }); });
   var _groupMap = {};
   _realProds.forEach(function (p) {
     if (!p.group_id || !p.group_name) return;
@@ -159,7 +160,15 @@
     _groupMap[key].count++;
   });
   var _productGroups = Object.keys(_groupMap).map(function (key) { return _groupMap[key]; })
-    .sort(function (a, b) { return a.name.localeCompare(b.name, 'es'); });
+    .sort(function (a, b) { return a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }); });
+  // La vista general sigue el orden de los agrupadores y, dentro de cada uno, el del producto.
+  var _gridProds = _realProds.slice().sort(function (a, b) {
+    var aGroup = String(a.group_name || '').trim(), bGroup = String(b.group_name || '').trim();
+    if (!aGroup && bGroup) return 1;
+    if (aGroup && !bGroup) return -1;
+    var byGroup = aGroup.localeCompare(bGroup, 'es', { sensitivity: 'base' });
+    return byGroup || String(a.name || '').localeCompare(String(b.name || ''), 'es', { sensitivity: 'base' });
+  });
   function _prodAttrs(p) {
     var vm = null;
     try { vm = typeof p.variants === 'string' ? JSON.parse(p.variants || 'null') : p.variants; } catch (e) { vm = null; }
@@ -1345,7 +1354,7 @@
         <div class="filter-group">
           <label class="filter-label">Agrupador</label>
           <nav class="filter-cats" aria-label="Agrupadores">
-            <button class="filter-group-btn on" data-group="all" onclick="catalogFilterGroup('all',this)">Todos</button>
+            <button class="filter-group-btn on" data-group="all" onclick="catalogFilterGroup('all',this)">Todos <span><%= _realProds.length %></span></button>
             <% _productGroups.forEach(function(grp) { %>
             <button class="filter-group-btn" data-group="<%= grp.id %>" onclick="catalogFilterGroup('<%= grp.id %>',this)"><%= grp.name %> <span><%= grp.count %></span></button>
             <% }) %>
@@ -1387,7 +1396,7 @@
         <div class="sec-title"><i class="bi bi-grid-3x3-gap"></i> Productos <span style="font-weight:400;font-size:13px;color:var(--muted);margin-left:6px;">(<span id="prodCount"><%= _realProds.length %></span>)</span></div>
         <% if (_realProds.length) { %>
         <div class="prod-grid" id="prodGrid">
-          <% _realProds.forEach(function(p) { %>
+          <% _gridProds.forEach(function(p) { %>
           <%- include("../partials/prod-card", { p: p, biz: biz, _money: _money, _rawMoney: _rawMoney, _whatsapp: _whatsapp, _imgAttrs: _imgAttrs, _ph: _ph }) %>
           <% }) %>
         </div>
@@ -1749,7 +1758,7 @@
     // Paginación: 20 productos por página con botón "Ver más"
     var PAGE_SIZE = 20;
     var _shownCount = PAGE_SIZE;
-    function _matchesFilters(c) {
+    function _matchesFilters(c, omitFacet) {
       var q = (document.getElementById('filterSearch')||{}).value||'';
       var pMin = parseFloat((document.getElementById('filterPriceMin')||{}).value)||0;
       var pMax = parseFloat((document.getElementById('filterPriceMax')||{}).value)||Infinity;
@@ -1758,9 +1767,9 @@
       var cat = c.getAttribute('data-cat');
       var group = c.getAttribute('data-group');
       var activeCat = document.querySelector('.filter-cat.on');
-      var catOk = !activeCat || activeCat.getAttribute('data-cat')==='all' || activeCat.getAttribute('data-cat')===cat;
+      var catOk = omitFacet === 'cat' || !activeCat || activeCat.getAttribute('data-cat')==='all' || activeCat.getAttribute('data-cat')===cat;
       var activeGroup = document.querySelector('.filter-group-btn.on');
-      var groupOk = !activeGroup || activeGroup.getAttribute('data-group')==='all' || activeGroup.getAttribute('data-group')===group;
+      var groupOk = omitFacet === 'group' || !activeGroup || activeGroup.getAttribute('data-group')==='all' || activeGroup.getAttribute('data-group')===group;
       var nameOk = !q || name.indexOf(q.toLowerCase())>-1;
       var priceOk = price>=pMin && price<=pMax;
       // Atributos: dentro de uno se acepta cualquiera de los valores marcados; entre atributos deben cumplirse todos
@@ -1771,6 +1780,34 @@
         if (!want[n].some(function (v) { return have.indexOf('|' + n + '=' + v + '|') > -1; })) attrOk = false;
       });
       return catOk && groupOk && nameOk && priceOk && attrOk;
+    }
+    function _updateFacetCounts() {
+      var cards = Array.prototype.slice.call(document.querySelectorAll('#prodGrid .prod-card'));
+      var byCat = {}, byGroup = {}, allCats = 0, allGroups = 0;
+      cards.forEach(function (c) {
+        if (_matchesFilters(c, 'cat')) {
+          allCats++;
+          var cat = c.getAttribute('data-cat');
+          byCat[cat] = (byCat[cat] || 0) + 1;
+        }
+        if (_matchesFilters(c, 'group')) {
+          allGroups++;
+          var group = c.getAttribute('data-group');
+          byGroup[group] = (byGroup[group] || 0) + 1;
+        }
+      });
+      document.querySelectorAll('.filter-cat').forEach(function (btn) {
+        var count = btn.querySelector('span');
+        if (!count) return;
+        var cat = btn.getAttribute('data-cat');
+        count.textContent = cat === 'all' ? allCats : (byCat[cat] || 0);
+      });
+      document.querySelectorAll('.filter-group-btn').forEach(function (btn) {
+        var count = btn.querySelector('span');
+        if (!count) return;
+        var group = btn.getAttribute('data-group');
+        count.textContent = group === 'all' ? allGroups : (byGroup[group] || 0);
+      });
     }
     // Anima el contador con una transición numérica discreta (opacidad),
     // no un simple salto de texto.
@@ -1901,6 +1938,7 @@
       if (lbl) lbl.textContent = n === 1 ? 'resultado' : 'resultados';
     }
     function applyFilters() {
+      _updateFacetCounts();
       if (_isDrawer()) { _pendingCount(); return; }
       _shownCount = PAGE_SIZE; // cada cambio de filtro reinicia la paginación
       _renderProducts();
@@ -1908,6 +1946,7 @@
     }
     // Botón "Buscar" (celular) y Enter: aplica todos los filtros marcados, cierra el panel y va a Productos
     function commitFilters() {
+      _updateFacetCounts();
       _shownCount = PAGE_SIZE;
       _renderProducts();
       closeFilters();
@@ -1949,6 +1988,7 @@
       document.querySelectorAll('.filter-group-btn').forEach(function(b){b.classList.remove('on');});
       var allGroups = document.querySelector('.filter-group-btn[data-group="all"]');
       if (allGroups) allGroups.classList.add('on');
+      _updateFacetCounts();
       _shownCount = PAGE_SIZE;
       _renderProducts();
       _pendingCount();
@@ -1974,6 +2014,7 @@
     }
 
     // Estado inicial: solo la primera página visible
+    _updateFacetCounts();
     _renderProducts();
 
     // ===== FORMULARIO DE CONTACTO =====
