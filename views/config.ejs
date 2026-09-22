@@ -758,8 +758,8 @@
 
               <div class="rounded-xl border border-slate-200 dark:border-[#30363d] p-3 space-y-2">
                 <p class="text-xs font-black text-slate-500 dark:text-slate-400">Modelos <span class="font-normal">(fotos de personas usando tus productos, hasta 12)</span></p>
-                <input id="ex-mod-title" class="config-input" maxlength="80" placeholder="Título (opcional, por defecto “Así lo lucen”)" value="<%= (_ex.modelos && _ex.modelos.title) || '' %>">
-                <input id="ex-mod-text" class="config-input" maxlength="400" placeholder="Frase corta (opcional). Ej: Así luce nuestra colección puesta." value="<%= (_ex.modelos && _ex.modelos.text) || '' %>">
+                <input id="ex-mod-title" class="config-input" maxlength="300" placeholder="Título (opcional, por defecto “Así lo lucen”)" value="<%= (_ex.modelos && _ex.modelos.title) || '' %>">
+                <input id="ex-mod-text" class="config-input" maxlength="1000" placeholder="Frase corta (opcional). Ej: Así luce nuestra colección puesta." value="<%= (_ex.modelos && _ex.modelos.text) || '' %>">
                 <div id="modelos-rows" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
                 <button type="button" onclick="modeloAgregarFila()" class="m-btn m-btn-outline m-btn-sm !text-neutral-700 dark:!text-[#d4d4d4] dark:!border-[#d4d4d4]">
                   <svg class="config-ui-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Agregar foto de modelo
@@ -1449,7 +1449,7 @@
           '<input id="file-' + id + '" type="file" accept="image/*" class="hidden">' +
           '<input id="src-' + id + '" type="hidden" class="modelo-src">' +
         '</div>' +
-        '<div style="display:flex;gap:6px;align-items:center;"><input type="text" maxlength="60" class="config-input modelo-cap" placeholder="Pie de foto (opcional)"><button type="button" title="Quitar" class="modelo-del" style="flex:none;width:32px;height:32px;border-radius:8px;color:#dc2626;">✕</button></div>';
+        '<div style="display:flex;gap:6px;align-items:center;"><input type="text" maxlength="200" class="config-input modelo-cap" placeholder="Pie de foto (opcional)"><button type="button" title="Quitar" class="modelo-del" style="flex:none;width:32px;height:32px;border-radius:8px;color:#dc2626;">✕</button></div>';
       c.appendChild(wrap);
       var srcEl = wrap.querySelector('.modelo-src'), prev = wrap.querySelector('img'), file = wrap.querySelector('input[type=file]');
       srcEl.value = src || '';

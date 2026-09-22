@@ -283,10 +283,10 @@ function sanitizeExtras(raw) {
     })).filter(t => t.name && t.text),
     globalTags: parseCustomTags(x.globalTags),
     modelos: {
-      title: str(x.modelos && x.modelos.title, 80),
-      text: str(x.modelos && x.modelos.text, 400),
+      title: str(x.modelos && x.modelos.title, 300),
+      text: str(x.modelos && x.modelos.text, 1000),
       images: (Array.isArray(x.modelos && x.modelos.images) ? x.modelos.images : []).slice(0, 12)
-        .map(i => ({ src: safeImgUrl(i && i.src), cap: str(i && i.cap, 60) })).filter(i => i.src)
+        .map(i => ({ src: safeImgUrl(i && i.src), cap: str(i && i.cap, 200) })).filter(i => i.src)
     },
     showNew: !!x.showNew,
     showTop: !!x.showTop,
