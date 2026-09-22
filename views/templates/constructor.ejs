@@ -147,21 +147,19 @@
     own.concat(_gTags).forEach(function (t) { var k = String(t.t).toLowerCase(); if (!seen[k]) { seen[k] = 1; all.push(t); } });
     p.customTags = all.slice(0, 4);
   });
-  // Filtros: solo lo que tiene productos (una categoría o un valor de atributo en 0 no aporta nada)
+  // Filtros independientes: categoría del producto y agrupador (marca/colección/tema).
   var _catCount = {};
   _realProds.forEach(function (p) { var k = String(p.category_id || 0); _catCount[k] = (_catCount[k] || 0) + 1; });
   var _catsShown = (categories || []).filter(function (c) { return (_catCount[String(c.id)] || 0) > 0; });
-  // Agrupadores: juntan varias categorías bajo un mismo título en el filtro (p. ej. "Ropa" agrupa
-  // "Playeras" y "Pantalones"). Si nadie usó agrupadores, la lista queda igual que antes (sin títulos).
-  var _catGroups = []; var _catGroupMap = {}; var _catUngrouped = [];
-  _catsShown.forEach(function (c) {
-    if (c.group_id) {
-      var key = String(c.group_id);
-      if (!_catGroupMap[key]) { _catGroupMap[key] = { id: c.group_id, name: c.group_name || '', cats: [] }; _catGroups.push(_catGroupMap[key]); }
-      _catGroupMap[key].cats.push(c);
-    } else _catUngrouped.push(c);
+  var _groupMap = {};
+  _realProds.forEach(function (p) {
+    if (!p.group_id || !p.group_name) return;
+    var key = String(p.group_id);
+    if (!_groupMap[key]) _groupMap[key] = { id: p.group_id, name: p.group_name, count: 0 };
+    _groupMap[key].count++;
   });
-  var _catsHaveGroups = _catGroups.length > 0;
+  var _productGroups = Object.keys(_groupMap).map(function (key) { return _groupMap[key]; })
+    .sort(function (a, b) { return a.name.localeCompare(b.name, 'es'); });
   function _prodAttrs(p) {
     var vm = null;
     try { vm = typeof p.variants === 'string' ? JSON.parse(p.variants || 'null') : p.variants; } catch (e) { vm = null; }
@@ -224,7 +222,7 @@
   <noscript><link href="<%= _designFontHref %>" rel="stylesheet" /></noscript>
   <!-- Capa de movimiento consolidada (ver public/css/premium-catalog.css): usa
        solo los tokens --accent/--bg-card/etc. de abajo, nunca color fijo. -->
-  <link rel="stylesheet" href="/css/premium-catalog.css?v=20260915">
+  <link rel="stylesheet" href="/css/premium-catalog.css?v=20260922g">
   <style>
     /* ===== PALETA PREMIUM ===== */
     :root {
@@ -865,17 +863,17 @@
     .filter-input:focus { border-color:var(--accent-light); }
     .filter-dash { color:var(--text-secondary); font-size:13px; }
     .filter-cats { display:flex; flex-direction:column; gap:3px; }
-    .filter-cat { display:flex; align-items:center; justify-content:space-between; padding:8px 12px; border:1px solid transparent; border-radius:var(--radius); font-size:13px; font-weight:500; cursor:pointer; background:none; color:var(--text-secondary); text-align:left; }
-    .filter-cat:hover { background:rgba(26,60,94,.04); color:var(--text); }
-    .filter-cat.on { background:var(--accent); color:#fff; border-color:var(--accent); }
-    .filter-cat span { font-size:11px; font-weight:700; opacity:.5; }
+    .filter-cat, .filter-group-btn { display:flex; align-items:center; justify-content:space-between; padding:8px 12px; border:1px solid transparent; border-radius:var(--radius); font-size:13px; font-weight:500; cursor:pointer; background:none; color:var(--text-secondary); text-align:left; }
+    .filter-cat:hover, .filter-group-btn:hover { background:rgba(26,60,94,.04); color:var(--text); }
+    .filter-cat.on, .filter-group-btn.on { background:var(--accent); color:#fff; border-color:var(--accent); }
+    .filter-cat span, .filter-group-btn span { font-size:11px; font-weight:700; opacity:.5; }
     .filter-attrs { display:flex; flex-wrap:wrap; gap:6px; }
     .filter-attr { display:inline-flex; align-items:center; gap:6px; min-height:36px; padding:0 12px; border:1px solid var(--border); border-radius:min(999px, calc(var(--radius) * 2.4)); background:var(--bg-card); color:var(--text); font-size:13px; font-weight:600; cursor:pointer; transition:background .2s, border-color .2s, color .2s; }
     .filter-attr:hover { border-color:var(--accent); }
     .filter-attr span { font-size:11px; font-weight:700; opacity:.5; }
     .filter-attr.on { background:var(--accent); color:var(--soc-on-accent, #fff); border-color:var(--accent); }
     .filter-attr.on span { opacity:.75; }
-    .filter-cat.on span { opacity:.7; }
+    .filter-cat.on span, .filter-group-btn.on span { opacity:.7; }
     .filter-cat-glabel { display:block; margin:10px 0 1px; padding:0 12px; font-size:10.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--text-secondary); opacity:.7; }
     .filter-cat-glabel:empty { display:none; }
     .filter-cats.has-groups .filter-cat-glabel:first-of-type { margin-top:6px; }
@@ -1117,9 +1115,9 @@
       }
     }
   </style>
-  <link rel="stylesheet" href="/css/catalog-refine.css?v=20260917c">
+  <link rel="stylesheet" href="/css/catalog-refine.css?v=20260922g">
   <link rel="stylesheet" href="/css/catalog-motion.css?v=20260919a">
-  <link rel="stylesheet" href="/css/catalog-media.css?v=20260921b">
+  <link rel="stylesheet" href="/css/catalog-media.css?v=20260922g">
   <link rel="stylesheet" href="/css/catalog-hero.css?v=20260920a">
   <script src="/js/catalog-motion.js?v=20260920a" defer></script>
   <script src="/js/catalog-gallery.js?v=20260920a" defer></script>
@@ -1330,30 +1328,27 @@
           </div>
         </div>
 
-        <!-- Categorías (agrupadas, si el dueño creó agrupadores) -->
+        <!-- Categorías y agrupadores se pueden combinar como filtros separados. -->
         <% if (_catsShown.length > 1) { %>
         <div class="filter-group">
           <label class="filter-label">Categoría</label>
-          <nav class="filter-cats<%= _catsHaveGroups ? ' has-groups' : '' %>" aria-label="Categorías">
+          <nav class="filter-cats" aria-label="Categorías">
             <button class="filter-cat on" data-cat="all" onclick="catalogFilterCat('all',this)">Todos <span><%= _realProds.length %></span></button>
-            <% if (_catsHaveGroups) { %>
-              <% _catGroups.forEach(function (grp) { %>
-              <span class="filter-cat-glabel"><%= grp.name %></span>
-              <% grp.cats.forEach(function(cat) { %>
-              <button class="filter-cat" data-cat="<%= cat.id %>" onclick="catalogFilterCat('<%= cat.id %>',this)"><%= cat.name %> <span><%= _catCount[String(cat.id)] || 0 %></span></button>
-              <% }) %>
-              <% }) %>
-              <% if (_catUngrouped.length) { %>
-              <span class="filter-cat-glabel"><%= _catGroups.length ? 'Otras' : '' %></span>
-              <% _catUngrouped.forEach(function(cat) { %>
-              <button class="filter-cat" data-cat="<%= cat.id %>" onclick="catalogFilterCat('<%= cat.id %>',this)"><%= cat.name %> <span><%= _catCount[String(cat.id)] || 0 %></span></button>
-              <% }) %>
-              <% } %>
-            <% } else { %>
-              <% _catsShown.forEach(function(cat) { %>
-              <button class="filter-cat" data-cat="<%= cat.id %>" onclick="catalogFilterCat('<%= cat.id %>',this)"><%= cat.name %> <span><%= _catCount[String(cat.id)] || 0 %></span></button>
-              <% }) %>
-            <% } %>
+            <% _catsShown.forEach(function(cat) { %>
+            <button class="filter-cat" data-cat="<%= cat.id %>" onclick="catalogFilterCat('<%= cat.id %>',this)"><%= cat.name %> <span><%= _catCount[String(cat.id)] || 0 %></span></button>
+            <% }) %>
+          </nav>
+        </div>
+        <% } %>
+
+        <% if (_productGroups.length) { %>
+        <div class="filter-group">
+          <label class="filter-label">Agrupador</label>
+          <nav class="filter-cats" aria-label="Agrupadores">
+            <button class="filter-group-btn on" data-group="all" onclick="catalogFilterGroup('all',this)">Todos</button>
+            <% _productGroups.forEach(function(grp) { %>
+            <button class="filter-group-btn" data-group="<%= grp.id %>" onclick="catalogFilterGroup('<%= grp.id %>',this)"><%= grp.name %> <span><%= grp.count %></span></button>
+            <% }) %>
           </nav>
         </div>
         <% } %>
@@ -1761,8 +1756,11 @@
       var name = (c.getAttribute('data-name')||'').toLowerCase();
       var price = parseFloat(c.getAttribute('data-price'))||0;
       var cat = c.getAttribute('data-cat');
+      var group = c.getAttribute('data-group');
       var activeCat = document.querySelector('.filter-cat.on');
       var catOk = !activeCat || activeCat.getAttribute('data-cat')==='all' || activeCat.getAttribute('data-cat')===cat;
+      var activeGroup = document.querySelector('.filter-group-btn.on');
+      var groupOk = !activeGroup || activeGroup.getAttribute('data-group')==='all' || activeGroup.getAttribute('data-group')===group;
       var nameOk = !q || name.indexOf(q.toLowerCase())>-1;
       var priceOk = price>=pMin && price<=pMax;
       // Atributos: dentro de uno se acepta cualquiera de los valores marcados; entre atributos deben cumplirse todos
@@ -1772,7 +1770,7 @@
       Object.keys(want).forEach(function (n) {
         if (!want[n].some(function (v) { return have.indexOf('|' + n + '=' + v + '|') > -1; })) attrOk = false;
       });
-      return catOk && nameOk && priceOk && attrOk;
+      return catOk && groupOk && nameOk && priceOk && attrOk;
     }
     // Anima el contador con una transición numérica discreta (opacidad),
     // no un simple salto de texto.
@@ -1948,6 +1946,9 @@
       document.querySelectorAll('.filter-cat').forEach(function(b){b.classList.remove('on');});
       var allBtn = document.querySelector('.filter-cat[data-cat="all"]');
       if (allBtn) allBtn.classList.add('on');
+      document.querySelectorAll('.filter-group-btn').forEach(function(b){b.classList.remove('on');});
+      var allGroups = document.querySelector('.filter-group-btn[data-group="all"]');
+      if (allGroups) allGroups.classList.add('on');
       _shownCount = PAGE_SIZE;
       _renderProducts();
       _pendingCount();
@@ -1960,6 +1961,13 @@
     function catalogFilterCat(cat, el) {
       document.querySelectorAll('.filter-cat').forEach(function(b){b.classList.remove('on');});
       if (!el) { var btn = document.querySelector('.filter-cat[data-cat="'+cat+'"]'); if (btn) btn.classList.add('on'); }
+      else { el.classList.add('on'); }
+      applyFilters();
+      if (!_isDrawer()) { closeFilters(); goProducts(true); }
+    }
+    function catalogFilterGroup(group, el) {
+      document.querySelectorAll('.filter-group-btn').forEach(function(b){b.classList.remove('on');});
+      if (!el) { var btn = document.querySelector('.filter-group-btn[data-group="'+group+'"]'); if (btn) btn.classList.add('on'); }
       else { el.classList.add('on'); }
       applyFilters();
       if (!_isDrawer()) { closeFilters(); goProducts(true); }

@@ -31,6 +31,7 @@
         <button type="button" id="tabbtn-productos" class="prod-tab active" onclick="switchCrudTab('productos')"><i class="bi bi-box-seam" aria-hidden="true"></i> Productos <span class="cnt" id="tabcnt-productos"><%= allProducts.length %></span></button>
         <% if (puedeCategorias) { %>
         <button type="button" id="tabbtn-categorias" class="prod-tab" onclick="switchCrudTab('categorias')"><i class="bi bi-collection" aria-hidden="true"></i> Categorías <span class="cnt" id="tabcnt-categorias"><%= categories.length %></span></button>
+        <button type="button" id="tabbtn-agrupadores" class="prod-tab" onclick="switchCrudTab('agrupadores')"><i class="bi bi-tags" aria-hidden="true"></i> Agrupadores <span class="cnt" id="tabcnt-agrupadores"><%= (typeof categoryGroups !== 'undefined' ? categoryGroups.length : 0) %></span></button>
         <% } %>
         <% if (puedeAtributos) { %>
         <button type="button" id="tabbtn-atributos" class="prod-tab" onclick="switchCrudTab('atributos')"><i class="bi bi-sliders2" aria-hidden="true"></i> Atributos <span class="cnt" id="tabcnt-atributos">0</span></button>
@@ -139,9 +140,9 @@
           <div id="prod-grid" class="product-grid">
             <% allProducts.forEach((p, i) => { %>
               <article class="product-card m-ripple <%= i >= 12 ? 'hidden' : '' %>" data-active-layer
-                   data-search="<%= [p.name, p.tags, p.description].filter(Boolean).join(' ').toLowerCase() %>" data-state="<%= p.active ? 'active' : 'hidden' %>" data-stock="<%= p.displayStock === null ? '' : (p.displayStock > 5 ? 'ok' : (p.displayStock > 0 ? 'low' : 'out')) %>" data-promo="<%= p.old_price ? 1 : 0 %>"
+                   data-search="<%= [p.name, p.group_name, p.tags, p.description].filter(Boolean).join(' ').toLowerCase() %>" data-state="<%= p.active ? 'active' : 'hidden' %>" data-stock="<%= p.displayStock === null ? '' : (p.displayStock > 5 ? 'ok' : (p.displayStock > 0 ? 'low' : 'out')) %>" data-promo="<%= p.old_price ? 1 : 0 %>"
                    data-edit-id="<%= p.id %>" data-edit-name="<%= (p.name || '').replace(/"/g, '&quot;') %>" data-edit-price="<%= p.price %>" data-edit-old="<%= p.old_price || '' %>" data-edit-cost="<%= p.cost || '' %>"
-                   data-edit-cat="<%= p.category_id || '' %>" data-edit-desc="<%= (p.description || '').replace(/"/g, '&quot;') %>" data-edit-image="<%= (p.image || '').replace(/"/g, '&quot;') %>" data-edit-galeria="<%= (p.galeria || '').replace(/"/g, '&quot;') %>"
+                   data-edit-cat="<%= p.category_id || '' %>" data-edit-group="<%= p.group_id || '' %>" data-edit-desc="<%= (p.description || '').replace(/"/g, '&quot;') %>" data-edit-image="<%= (p.image || '').replace(/"/g, '&quot;') %>" data-edit-galeria="<%= (p.galeria || '').replace(/"/g, '&quot;') %>"
                    data-edit-stock="<%= p.stock === null ? '' : p.stock %>" data-edit-made-to-order="<%= p.made_to_order ? 1 : 0 %>" data-edit-show-stock="<%= (p.show_stock === 0 || p.show_stock === '0') ? 0 : 1 %>" data-edit-custom-tags="<%= p.custom_tags || '' %>" data-edit-variants="<%= encodeURIComponent(JSON.stringify(p.variants || [])) %>" data-edit-featured="<%= p.featured ? 1 : 0 %>" data-edit-promo="<%= p.promo_ends_at || '' %>"
                    data-edit-promo-type="<%= p.promo_type || '' %>" data-edit-promo-value="<%= p.promo_value || '' %>" data-edit-promo-gift="<%= (p.promo_gift || '').replace(/"/g, '&quot;') %>"
                    data-edit-sku="<%= (p.sku || '').replace(/"/g, '&quot;') %>" data-edit-tags="<%= (p.tags || '').replace(/"/g, '&quot;') %>" data-edit-video="<%= (p.video || '').replace(/"/g, '&quot;') %>" data-edit-specs="<%= (p.specs || '').replace(/"/g, '&quot;') %>" data-edit-barcode="<%= (p.barcode || '').replace(/"/g, '&quot;') %>"
@@ -165,6 +166,7 @@
                     <% } %>
                   </div>
                   <div class="pc-status">
+                    <% if (p.group_name) { %><span class="m-badge m-badge-neutral !h-5 !text-[10px]"><%= p.group_name %></span><% } %>
                     <span class="m-badge !h-5 !text-[10px] <%= p.active ? 'm-badge-success' : 'm-badge-neutral' %>"><%= p.active ? 'Visible' : 'Oculto' %></span>
                     <% if (p.made_to_order) { %><span class="m-badge m-badge-primary !h-5 !text-[10px]">Por pedido</span><% } else { %><span class="m-badge !h-5 !text-[10px] <%= (p.displayStock === null || p.displayStock <= 0) ? 'm-badge-error' : 'm-badge-primary' %>"><%= (p.displayStock === null || p.displayStock <= 0) ? 'Agotado' : p.displayStock + ' en stock' %></span><% } %>
                     <% if (p.variantCount > 0) { %>
@@ -268,15 +270,14 @@
               <input name="name" id="f-name" required placeholder="Ej: Taladro percutor 13mm">
             </div>
             <div class="m-field">
-              <label for="f-catgroup">¿Dónde se agrupa el producto?</label>
-              <select id="f-catgroup">
-                <option value="*">Ver todas las categorías</option>
+              <label for="f-catgroup">Agrupador del producto <span class="font-normal text-slate-400">(opcional)</span></label>
+              <select name="group_id" id="f-catgroup">
                 <option value="">Sin agrupador</option>
                 <% (typeof categoryGroups !== 'undefined' ? categoryGroups : []).forEach(g => { %>
                   <option value="<%= g.id %>"><%= g.name %></option>
                 <% }) %>
               </select>
-              <p id="f-catgroup-hint" class="text-[11px] text-slate-400 mt-1">Elige un agrupador y luego la categoría del producto.</p>
+              <p id="f-catgroup-hint" class="text-[11px] text-slate-400 mt-1">Sirve para buscar por marca o tema. No cambia la categoría del producto.<% if (puedeCategorias) { %> <button type="button" class="font-bold text-neutral-800 hover:underline" onclick="switchCrudTab('agrupadores')">Administrar agrupadores</button>.<% } %></p>
             </div>
             <div class="m-field">
               <label for="f-cat">Categoría</label>
@@ -504,19 +505,6 @@
 
       <% if (puedeCategorias) { %>
       <div id="tabpane-categorias" class="prod-tab-panel">
-      <section id="agrupadores" class="m-card p-4 mb-3">
-        <div class="flex items-center justify-between flex-wrap gap-2 mb-2">
-          <div>
-            <h3 class="font-bold text-sm text-slate-700">Agrupadores <span class="m-badge m-badge-neutral !ml-1.5"><span id="grp-count"><%= (typeof categoryGroups !== 'undefined' ? categoryGroups.length : 0) %></span></span></h3>
-            <p class="text-xs text-slate-400 mt-0.5">Juntan varias categorías bajo un mismo título en el catálogo. Ej: el agrupador "Ropa" reúne "Playeras", "Pantalones" y "Chamarras" — cada producto sigue en su categoría real, esto solo las organiza al mostrarlas.</p>
-          </div>
-          <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <input id="grp-name" placeholder="Nuevo agrupador" class="w-full sm:w-52 border border-slate-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-1000 focus:border-neutral-1000 transition" onkeydown="if(event.key==='Enter')agregarGrupo()">
-            <button type="button" onclick="agregarGrupo()" class="m-btn m-btn-tonal m-btn-sm shrink-0">Crear</button>
-          </div>
-        </div>
-        <div id="grp-list" class="flex flex-wrap gap-1.5"></div>
-      </section>
       <section id="categorias" class="m-card p-4 mb-3">
         <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
           <h3 class="font-bold text-sm text-slate-700">Categorías <span class="m-badge m-badge-neutral !ml-1.5"><span id="cat-count"><%= categories.length %></span></span></h3>
@@ -528,6 +516,21 @@
         <div id="cat-list" class="flex flex-col gap-1.5"></div>
       </section>
       </div><!-- /tabpane-categorias -->
+      <div id="tabpane-agrupadores" class="prod-tab-panel">
+      <section id="agrupadores" class="m-card p-4 mb-3">
+        <div class="flex items-center justify-between flex-wrap gap-2 mb-2">
+          <div>
+            <h3 class="font-bold text-sm text-slate-700">Agrupadores <span class="m-badge m-badge-neutral !ml-1.5"><span id="grp-count"><%= (typeof categoryGroups !== 'undefined' ? categoryGroups.length : 0) %></span></span></h3>
+            <p class="text-xs text-slate-400 mt-0.5">Agrupa productos para que tus clientes los encuentren por marca, colección o tema. Cada producto conserva su categoría por separado.</p>
+          </div>
+          <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <input id="grp-name" placeholder="Nuevo agrupador" class="w-full sm:w-52 border border-slate-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-1000 focus:border-neutral-1000 transition" onkeydown="if(event.key==='Enter')agregarGrupo()">
+            <button type="button" onclick="agregarGrupo()" class="m-btn m-btn-tonal m-btn-sm shrink-0">Crear</button>
+          </div>
+        </div>
+        <div id="grp-list" class="flex flex-wrap gap-1.5"></div>
+      </section>
+      </div><!-- /tabpane-agrupadores -->
       <% } %>
 
       <% if (puedeAtributos) { %>
@@ -1082,15 +1085,16 @@
       if (event && event.target === event.currentTarget) cerrarImagenProducto();
     }
 
-    // Tabs: Productos | Categorías | Atributos
+    // Tabs: Productos | Categorías | Agrupadores | Atributos
     function switchCrudTab(name) {
-      ['productos', 'categorias', 'atributos'].forEach(function (n) {
+      ['productos', 'categorias', 'agrupadores', 'atributos'].forEach(function (n) {
         var b = document.getElementById('tabbtn-' + n);
         if (b) b.classList.toggle('active', n === name);
         var p = document.getElementById('tabpane-' + n);
         if (p) p.classList.toggle('active', n === name);
       });
-      if (name === 'categorias') { renderGrpList(); renderCatList(); }
+      if (name === 'categorias') renderCatList();
+      if (name === 'agrupadores') renderGrpList();
       if (name === 'atributos') renderAttrCatalog();
     }
 
@@ -1972,6 +1976,8 @@
       var old = Number(document.getElementById('f-old').value.replace(/,/g, '')) || 0;
       var catSel = document.getElementById('f-cat');
       var catName = (catSel && catSel.options[catSel.selectedIndex]) ? catSel.options[catSel.selectedIndex].text : 'Sin categoría';
+      var groupSel = document.getElementById('f-catgroup');
+      var groupName = groupSel && groupSel.value && groupSel.options[groupSel.selectedIndex] ? groupSel.options[groupSel.selectedIndex].text : '';
       var desc = document.getElementById('f-desc').value || '';
       var stock = document.getElementById('f-stock').value;
       var madeToOrder = document.getElementById('f-made-to-order').checked;
@@ -2019,7 +2025,7 @@
         if (old > price) h += '<span class="text-xs text-slate-400 line-through">' + money(old) + '</span>';
       }
       h += '</div>';
-      h += '<div class="text-xs text-slate-500 mt-0.5">' + escHTML(catName) + (madeToOrder ? ' · Por pedido, sin límite de stock' : (!hasVariantes && stock !== '' ? ' · Stock: ' + stock : '')) + (promoEnds ? ' · Promo vence ' + promoEnds : '') + '</div>';
+      h += '<div class="text-xs text-slate-500 mt-0.5">' + escHTML(catName) + (groupName ? ' · Agrupador: ' + escHTML(groupName) : '') + (madeToOrder ? ' · Por pedido, sin límite de stock' : (!hasVariantes && stock !== '' ? ' · Stock: ' + stock : '')) + (promoEnds ? ' · Promo vence ' + promoEnds : '') + '</div>';
       if (featured) h += '<span class="inline-block mt-1 text-[11px] font-bold bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">⭐ Destacado</span>';
       h += '</div></div>';
 
@@ -2095,8 +2101,8 @@
 
     function prefilledFrom(card) {
       setVal('f-name', card.getAttribute('data-edit-name'));
-      renderProductCategoryOptions('*', card.getAttribute('data-edit-cat'));
-      syncCatGroupSelect();
+      setVal('f-cat', card.getAttribute('data-edit-cat'));
+      setVal('f-catgroup', card.getAttribute('data-edit-group'));
       setVal('f-price', card.getAttribute('data-edit-price'));
       setVal('f-old', card.getAttribute('data-edit-old'));
       setVal('f-promo', card.getAttribute('data-edit-promo'));
@@ -2179,7 +2185,7 @@
       ctLoad('');
       spLoad('');
       setVal('f-cat', '');
-      syncCatGroupSelect();
+      setVal('f-catgroup', '');
       form.action = '/<%= biz.slug %>/admin/producto';
       document.getElementById('pf-title').textContent = 'Agregar producto';
       document.getElementById('pf-cancel').classList.add('hidden');
@@ -2346,8 +2352,7 @@
       syncStockField();
       syncPriceField();
       renderTplPills('f');
-      bindProductGroupSelect();
-      syncCatGroupSelect();
+      refreshGroupSelect();
       restoreFormOnError();
     }
 
@@ -2357,7 +2362,7 @@
         if (!fd || typeof fd !== 'object') return;
         setVal('f-name', fd.name || '');
         setVal('f-cat', fd.category_id || '');
-        syncCatGroupSelect();
+        setVal('f-catgroup', fd.group_id || '');
         setVal('f-price', fd.price || '');
         setVal('f-old', fd.old_price || '');
         setVal('f-desc', fd.description || '');
@@ -2592,7 +2597,6 @@
       if (hdr) hdr.textContent = String(list.length);
       box.innerHTML = '';
       if (!list.length) { box.innerHTML = '<p class="text-xs text-slate-400">Sin categorías. Crea la primera arriba.</p>'; return; }
-      var groups = window.CAT_GROUPS || [];
       list.forEach(function (c) {
         var row = document.createElement('div');
         row.className = 'flex items-center gap-2 flex-wrap';
@@ -2616,36 +2620,11 @@
         inner.appendChild(info); inner.appendChild(editar); inner.appendChild(del);
         chip.appendChild(inner);
         row.appendChild(chip);
-        // A qué agrupador pertenece esta categoría (si la tienda ya tiene alguno creado)
-        if (groups.length) {
-          var sel = document.createElement('select');
-          sel.className = 'text-xs border border-slate-200 rounded-full px-2.5 py-1 bg-white text-slate-500 focus:outline-none focus:ring-2 focus:ring-neutral-1000';
-          sel.setAttribute('aria-label', 'Agrupador de ' + c.name);
-          var optNone = document.createElement('option'); optNone.value = ''; optNone.textContent = 'Sin agrupador'; sel.appendChild(optNone);
-          groups.forEach(function (g) {
-            var o = document.createElement('option'); o.value = g.id; o.textContent = g.name;
-            if (String(c.group_id || '') === String(g.id)) o.selected = true;
-            sel.appendChild(o);
-          });
-          sel.addEventListener('change', function () {
-            fetch('/<%= biz.slug %>/admin/categoria/' + c.id + '/grupo', {
-              method: 'POST',
-              body: new URLSearchParams({ group_id: sel.value }),
-              headers: { 'x-csrf-token': (window.__csrfValue && window.__csrfValue()) || '' }
-            }).then(function (r) { return r.json(); }).then(function (d) {
-              if (!d.ok) { mostrarToast(d.error || 'No se pudo cambiar', 'error'); return; }
-              c.group_id = d.group_id;
-              syncCatGroupSelect();
-              mostrarToast('Agrupador actualizado ✓', 'ok');
-            }).catch(function () { mostrarToast('Error de red', 'error'); });
-          });
-          row.appendChild(sel);
-        }
         box.appendChild(row);
       });
     }
 
-    // ====== Agrupadores de categorías ======
+    // ====== Agrupadores de productos ======
     function agregarGrupo() {
       var inp = document.getElementById('grp-name');
       var name = (inp.value || '').trim();
@@ -2658,13 +2637,13 @@
         if (d.ok) {
           window.CAT_GROUPS = (window.CAT_GROUPS || []).concat([d]);
           inp.value = '';
-          renderGrpList(); renderCatList(); syncCatGroupSelect();
+          renderGrpList(); refreshGroupSelect();
           mostrarToast('Agrupador creado ✓', 'ok');
         } else { mostrarToast(d.error || 'No se pudo crear', 'error'); }
       }).catch(function () { mostrarToast('Error de red', 'error'); });
     }
     function eliminarGrupo(id) {
-      pedirConfirmacion('¿Eliminar este agrupador? Sus categorías se quedan sin agrupador, no se borran.').then(function (ok) {
+      pedirConfirmacion('¿Eliminar este agrupador? Los productos conservarán su categoría y quedarán sin agrupador.').then(function (ok) {
         if (!ok) return;
         fetch('/<%= biz.slug %>/admin/categoria-grupo/' + id + '/eliminar', {
           method: 'POST',
@@ -2672,8 +2651,7 @@
         }).then(function (r) { return r.json(); }).then(function (d) {
           if (d.ok) {
             window.CAT_GROUPS = (window.CAT_GROUPS || []).filter(function (g) { return String(g.id) !== String(id); });
-            (window.ATTR_CATEGORIES || []).forEach(function (c) { if (String(c.group_id || '') === String(id)) c.group_id = null; });
-            renderGrpList(); renderCatList(); syncCatGroupSelect();
+            renderGrpList(); refreshGroupSelect();
             mostrarToast('Agrupador eliminado', 'ok');
           } else { mostrarToast('No se pudo eliminar', 'error'); }
         }).catch(function () { mostrarToast('Error de red', 'error'); });
@@ -2708,7 +2686,7 @@
           if (d.ok) {
             var g = (window.CAT_GROUPS || []).find(function (x) { return String(x.id) === String(id); });
             if (g) g.name = v;
-            renderGrpList(); renderCatList();
+            renderGrpList(); refreshGroupSelect();
             mostrarToast('Agrupador actualizado ✓', 'ok');
           } else { mostrarToast(d.error || 'No se pudo actualizar', 'error'); renderGrpList(); }
         }).catch(function () { mostrarToast('Error de red', 'error'); renderGrpList(); });
@@ -2720,8 +2698,10 @@
       if (!box) return;
       var cnt = document.getElementById('grp-count');
       if (cnt) cnt.textContent = String(list.length);
+      var tabCnt = document.getElementById('tabcnt-agrupadores');
+      if (tabCnt) tabCnt.textContent = String(list.length);
       box.innerHTML = '';
-      if (!list.length) { box.innerHTML = '<p class="text-xs text-slate-400">Sin agrupadores. Si tienes muchas categorías, crea uno para juntarlas, ej: "Ropa", "Calzado".</p>'; return; }
+      if (!list.length) { box.innerHTML = '<p class="text-xs text-slate-400">Sin agrupadores. Crea uno para reunir productos por marca, colección o tema.</p>'; return; }
       list.forEach(function (g) {
         var chip = document.createElement('span');
         chip.className = 'm-chip';
@@ -2750,66 +2730,26 @@
       var list = window.ATTR_CATEGORIES || [];
       var hint = document.getElementById('f-cat-hint');
       if (hint) hint.classList.toggle('hidden', list.length > 0);
-      syncCatGroupSelect();
-    }
-
-    // El agrupador acota las categorías disponibles; el producto se guarda en la categoría elegida.
-    function renderProductCategoryOptions(groupId, selectedId) {
-      var catSel = document.getElementById('f-cat');
-      var hint = document.getElementById('f-catgroup-hint');
-      if (!catSel) return;
-      var list = (window.ATTR_CATEGORIES || []).filter(function (c) {
-        return groupId === '*' || String(c.group_id || '') === String(groupId);
-      });
-      catSel.innerHTML = '';
-      var empty = document.createElement('option');
-      empty.value = '';
-      empty.textContent = groupId && groupId !== '*' ? 'Elige una categoría' : 'Sin categoría';
-      catSel.appendChild(empty);
+      var sel = document.getElementById('f-cat');
+      if (!sel) return;
+      var selected = sel.value;
+      sel.innerHTML = '<option value="">Sin categoría</option>';
       list.forEach(function (c) {
         var opt = document.createElement('option');
-        opt.value = c.id;
-        opt.textContent = c.name;
-        catSel.appendChild(opt);
+        opt.value = c.id; opt.textContent = c.name; sel.appendChild(opt);
       });
-      catSel.value = list.some(function (c) { return String(c.id) === String(selectedId); }) ? String(selectedId) : '';
-      if (hint) hint.textContent = !((window.CAT_GROUPS || []).length)
-        ? 'Aún no hay agrupadores. Puedes crearlos en la pestaña Categorías.'
-        : groupId && groupId !== '*' && !list.length
-          ? 'Este agrupador todavía no tiene categorías. Agrégale una en la pestaña Categorías.'
-          : 'Elige la categoría para guardar el producto dentro de ese agrupador.';
+      sel.value = list.some(function (c) { return String(c.id) === String(selected); }) ? selected : '';
     }
-    function syncCatGroupSelect() {
-      var catSel = document.getElementById('f-cat'), grpSel = document.getElementById('f-catgroup');
-      if (!catSel || !grpSel) return;
-      var groups = window.CAT_GROUPS || [];
-      var catId = catSel.value;
-      var cat = (window.ATTR_CATEGORIES || []).find(function (c) { return String(c.id) === String(catId); });
+
+    function refreshGroupSelect() {
+      var grpSel = document.getElementById('f-catgroup');
+      if (!grpSel) return;
+      var selected = grpSel.value;
       grpSel.innerHTML = '';
-      [{ id: '*', name: 'Ver todas las categorías' }, { id: '', name: 'Sin agrupador' }].concat(groups).forEach(function (g) {
+      [{ id: '', name: 'Sin agrupador' }].concat(window.CAT_GROUPS || []).forEach(function (g) {
         var opt = document.createElement('option'); opt.value = g.id; opt.textContent = g.name; grpSel.appendChild(opt);
       });
-      grpSel.value = cat ? String(cat.group_id || '') : '*';
-      renderProductCategoryOptions(grpSel.value, catId);
-    }
-    function bindProductGroupSelect() {
-      var catSel = document.getElementById('f-cat'), grpSel = document.getElementById('f-catgroup');
-      if (!catSel || !grpSel || grpSel.dataset.bound === '1') return;
-      grpSel.dataset.bound = '1';
-      catSel.addEventListener('change', function () { if (catSel.value) syncCatGroupSelect(); });
-      grpSel.addEventListener('change', function () {
-        renderProductCategoryOptions(grpSel.value, catSel ? catSel.value : '');
-      });
-      var form = document.getElementById('pf-form');
-      if (form) form.addEventListener('submit', function (e) {
-        if (grpSel && grpSel.value && grpSel.value !== '*' && catSel && !catSel.value) {
-          e.preventDefault();
-          e.stopImmediatePropagation();
-          goStep(1);
-          catSel.focus();
-          mostrarToast('Elige una categoría dentro del agrupador para guardar el producto.', 'error');
-        }
-      }, true);
+      grpSel.value = (window.CAT_GROUPS || []).some(function (g) { return String(g.id) === String(selected); }) ? selected : '';
     }
 
     function editarCategoria(id, nombre, chip) {

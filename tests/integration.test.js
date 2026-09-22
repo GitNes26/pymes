@@ -60,6 +60,8 @@ test.after(() => {
   try {
     db.prepare('DELETE FROM orders WHERE business_id = ?').run(biz.id);
     db.prepare('DELETE FROM products WHERE business_id = ?').run(biz.id);
+    db.prepare('DELETE FROM categories WHERE business_id = ?').run(biz.id);
+    db.prepare('DELETE FROM category_groups WHERE business_id = ?').run(biz.id);
     db.prepare('DELETE FROM customers WHERE business_id = ?').run(biz.id);
     db.prepare('DELETE FROM sessions WHERE token = ?').run(sid);
     db.prepare('DELETE FROM businesses WHERE id = ?').run(biz.id);
@@ -213,6 +215,29 @@ t('zona de entrega: el pedido guarda el costo, el nombre y lo suma al total; sin
   assert.equal(o2.shipping_zone, '');
   assert.equal(o2.total, 1000);
   await admin('zona/' + z.id + '/eliminar', {});
+});
+
+t('el agrupador se guarda en el producto sin cambiar su categoría y filtra el catálogo', async () => {
+  db.prepare("UPDATE businesses SET plan = 'pro' WHERE id = ?").run(biz.id);
+  const group = await (await admin('categoria-grupo', { name: 'Marca Prueba' })).json();
+  const category = await (await admin('categoria', { name: 'Categoría Prueba' })).json();
+  assert.equal(group.ok, true);
+  assert.equal(category.ok, true);
+  const body = { name: 'Producto con marca', price: '100', stock: '2', category_id: String(category.id), group_id: String(group.id) };
+  const saved = await admin('producto', body);
+  assert.equal(saved.status, 302);
+  const row = db.prepare('SELECT id, category_id, group_id FROM products WHERE business_id = ? AND name = ? ORDER BY id DESC LIMIT 1').get(biz.id, body.name);
+  assert.ok(row);
+  assert.equal(Number(row.category_id), Number(category.id));
+  assert.equal(Number(row.group_id), Number(group.id));
+  const cat = db.prepare('SELECT group_id FROM categories WHERE id = ?').get(category.id);
+  assert.equal(cat.group_id, null);
+  const html = await (await http('/' + slug)).text();
+  assert.match(html, new RegExp('class="filter-group-btn" data-group="' + group.id + '"'));
+  assert.match(html, new RegExp('data-group="' + group.id + '" data-price='));
+  const cleared = await admin('producto/' + row.id, { ...body, group_id: '' });
+  assert.equal(cleared.status, 302);
+  assert.equal(db.prepare('SELECT group_id FROM products WHERE id = ?').get(row.id).group_id, null);
 });
 
 t('las páginas del panel responden', async () => {

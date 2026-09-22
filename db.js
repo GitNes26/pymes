@@ -66,7 +66,7 @@ addColumnIfMissing('businesses', 'horario_msg', "TEXT DEFAULT ''"); // mensaje c
 addColumnIfMissing('businesses', 'mp_access_token', "TEXT DEFAULT ''");
 addColumnIfMissing('businesses', 'mp_enabled', 'INTEGER DEFAULT 0');
 addColumnIfMissing('businesses', 'mp_public_key', "TEXT DEFAULT ''"); // clave pública de Mercado Pago (formulario de tarjeta dentro de la app)
-addColumnIfMissing('categories', 'group_id', 'INTEGER NULL'); // agrupador de categorías (category_groups.id) — opcional
+addColumnIfMissing('categories', 'group_id', 'INTEGER NULL'); // columna histórica: se migra a products.group_id y queda sin uso
 addColumnIfMissing('businesses', 'cash_enabled', 'INTEGER DEFAULT 0'); // 1 = acepta pago en efectivo al recoger
 addColumnIfMissing('businesses', 'mp_fee_on', 'INTEGER DEFAULT 1'); // 1 = se suma al cliente la comisión de Mercado Pago (el negocio recibe el precio completo)
 addColumnIfMissing('businesses', 'mp_fee_pct', 'REAL DEFAULT 3.49');
@@ -212,6 +212,7 @@ addColumnIfMissing('products', 'old_price', 'REAL');
 addColumnIfMissing('products', 'featured', 'INTEGER DEFAULT 0');
 addColumnIfMissing('products', 'stock', 'INTEGER');  // NULL = sin control de stock
 addColumnIfMissing('products', 'made_to_order', 'INTEGER DEFAULT 0'); // se vende por pedido, sin límite de stock
+addColumnIfMissing('products', 'group_id', 'INTEGER NULL'); // agrupador opcional del producto, independiente de su categoría
 addColumnIfMissing('products', 'variants', "TEXT DEFAULT ''");  // JSON array, ej: ["Chica","Mediana","Grande"]
 addColumnIfMissing('products', 'promo_ends_at', "TEXT DEFAULT ''"); // vencimiento de la promoción (YYYY-MM-DD)
 addColumnIfMissing('products', 'galeria', "TEXT DEFAULT ''"); // fotos extra (JSON array de URLs)
@@ -227,6 +228,14 @@ addColumnIfMissing('products', 'allow_installments', 'INTEGER DEFAULT 0'); // 1 
 addColumnIfMissing('products', 'installment_count', 'INTEGER DEFAULT 6'); // número de abonos sugeridos
 addColumnIfMissing('products', 'installment_min_down', 'REAL DEFAULT 0'); // enganche mínimo (monto)
 addColumnIfMissing('products', 'installment_frequency', "TEXT DEFAULT 'semanal'"); // semanal | quincenal | mensual
+
+// Los agrupadores antes pertenecían a categorías. Conserva las asignaciones existentes
+// en cada producto una sola vez y libera las categorías de esa relación.
+const legacyGroupedCategories = db.prepare('SELECT id, business_id, group_id FROM categories WHERE group_id IS NOT NULL').all();
+legacyGroupedCategories.forEach(c => {
+  db.prepare('UPDATE products SET group_id = ? WHERE business_id = ? AND category_id = ? AND group_id IS NULL').run(c.group_id, c.business_id, c.id);
+});
+if (legacyGroupedCategories.length) db.prepare('UPDATE categories SET group_id = NULL WHERE group_id IS NOT NULL').run();
 
 // Proveedores y pedidos de compra
 db.exec(`

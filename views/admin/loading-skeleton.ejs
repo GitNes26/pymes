@@ -1,0 +1,35 @@
+<div id="admin-view-skeleton" role="status" aria-label="Cargando vista" aria-live="polite">
+  <span class="admin-sk-sr">Preparando la vista…</span>
+  <div class="admin-sk-slow-message">La vista está tardando en cargar. <button type="button" onclick="location.reload()">Reintentar</button></div>
+  <% if (typeof active === 'undefined' || active !== 'bienvenida') { %>
+  <div class="admin-sk-sidebar" aria-hidden="true">
+    <div class="admin-sk-profile"><span class="admin-sk-block admin-sk-avatar"></span><span class="admin-sk-block admin-sk-line admin-sk-line--brand"></span></div>
+    <div class="admin-sk-menu">
+      <span class="admin-sk-block admin-sk-line admin-sk-line--short"></span>
+      <span class="admin-sk-block admin-sk-nav"></span><span class="admin-sk-block admin-sk-nav"></span><span class="admin-sk-block admin-sk-nav"></span>
+      <span class="admin-sk-block admin-sk-line admin-sk-line--short"></span>
+      <span class="admin-sk-block admin-sk-nav"></span><span class="admin-sk-block admin-sk-nav"></span>
+    </div>
+  </div>
+  <% } %>
+  <div class="admin-sk-main" aria-hidden="true">
+    <% if (typeof active !== 'undefined' && active === 'bienvenida') { %>
+      <div class="admin-sk-welcome"><span class="admin-sk-block admin-sk-welcome-progress"></span><span class="admin-sk-block admin-sk-title"></span><span class="admin-sk-block admin-sk-subtitle"></span><div class="admin-sk-welcome-options"><span class="admin-sk-block"></span><span class="admin-sk-block"></span></div></div>
+    <% } else { %>
+    <% if (typeof active !== 'undefined' && active === 'productos') { %>
+      <div class="admin-sk-tabs"><span class="admin-sk-block admin-sk-tab"></span><span class="admin-sk-block admin-sk-tab"></span><span class="admin-sk-block admin-sk-tab"></span></div>
+    <% } %>
+    <div class="admin-sk-heading"><div><span class="admin-sk-block admin-sk-title"></span><span class="admin-sk-block admin-sk-subtitle"></span></div><span class="admin-sk-block admin-sk-action"></span></div>
+    <% if (typeof active !== 'undefined' && active === 'productos') { %>
+      <div class="admin-sk-toolbar"><span class="admin-sk-block admin-sk-search"></span><span class="admin-sk-block admin-sk-filter"></span><span class="admin-sk-block admin-sk-filter"></span></div>
+      <div class="admin-sk-product-layout">
+        <div class="admin-sk-products"><% for (let i = 0; i < 6; i++) { %><div class="admin-sk-card"><span class="admin-sk-block admin-sk-image"></span><span class="admin-sk-block admin-sk-card-line"></span><span class="admin-sk-block admin-sk-card-line admin-sk-card-line--small"></span></div><% } %></div>
+        <div class="admin-sk-editor"><span class="admin-sk-block admin-sk-editor-title"></span><span class="admin-sk-block admin-sk-field"></span><span class="admin-sk-block admin-sk-field"></span><span class="admin-sk-block admin-sk-field"></span><span class="admin-sk-block admin-sk-field"></span></div>
+      </div>
+    <% } else { %>
+      <div class="admin-sk-metrics"><% for (let i = 0; i < 4; i++) { %><div class="admin-sk-metric"><span class="admin-sk-block admin-sk-card-line"></span><span class="admin-sk-block admin-sk-metric-value"></span></div><% } %></div>
+      <div class="admin-sk-content"><div class="admin-sk-wide"><span class="admin-sk-block admin-sk-section-title"></span><span class="admin-sk-block admin-sk-row"></span><span class="admin-sk-block admin-sk-row"></span><span class="admin-sk-block admin-sk-row"></span></div><div class="admin-sk-narrow"><span class="admin-sk-block admin-sk-section-title"></span><span class="admin-sk-block admin-sk-row"></span><span class="admin-sk-block admin-sk-row"></span></div></div>
+    <% } %>
+    <% } %>
+  </div>
+</div>

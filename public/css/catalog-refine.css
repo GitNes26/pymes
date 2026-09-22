@@ -119,11 +119,11 @@
 .filter-input::placeholder { opacity: .8; }
 .filter-search:focus,
 .filter-input:focus { border-color: var(--accent); box-shadow: var(--catalog-focus); }
-.filter-cat { min-height: 42px; gap: 10px; border-radius: min(12px, var(--radius)); }
-.filter-cat.on,
+.filter-cat, .filter-group-btn { min-height: 42px; gap: 10px; border-radius: min(12px, var(--radius)); }
+.filter-cat.on, .filter-group-btn.on,
 .filter-range.active { background: var(--catalog-action); border-color: var(--catalog-action); }
-.filter-cat span { flex: none; opacity: .8; font-variant-numeric: tabular-nums; }
-.filter-cat.on span { opacity: 1; }
+.filter-cat span, .filter-group-btn span { flex: none; opacity: .8; font-variant-numeric: tabular-nums; }
+.filter-cat.on span, .filter-group-btn.on span { opacity: 1; }
 .filter-range { min-height: 40px; border-radius: min(12px, var(--radius)); }
 .filter-clear { min-height: 42px; border-radius: min(12px, var(--radius)); }
 

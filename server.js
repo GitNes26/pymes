@@ -1776,16 +1776,16 @@ function zoneLookup(businessId, zoneId) {
 
 function getCatalog(businessId) {
   const categories = db.prepare(
-    `SELECT c.*, g.name AS group_name FROM categories c LEFT JOIN category_groups g ON g.id = c.group_id
-     WHERE c.business_id = ? ORDER BY c.sort ASC`
+    'SELECT * FROM categories WHERE business_id = ? ORDER BY sort ASC'
   ).all(businessId);
   const catCounts = {};
   db.prepare('SELECT category_id, COUNT(*) AS c FROM products WHERE business_id = ? AND active = 1 GROUP BY category_id').all(businessId).forEach(r => { catCounts[r.category_id] = r.c; });
   categories.forEach(c => { c.count = catCounts[c.id] || 0; });
   const _mkF = priceMarkupFactor(db.prepare('SELECT mp_enabled, mp_access_token, mp_fee_on, mp_fee_pct, mp_fee_fixed, mp_fee_iva, transfer_enabled, transfer_bank, transfer_account, cash_enabled FROM businesses WHERE id = ?').get(businessId));
   const products = db.prepare(
-    `SELECT p.*, c.name AS category_name FROM products p
+    `SELECT p.*, c.name AS category_name, g.name AS group_name FROM products p
      LEFT JOIN categories c ON c.id = p.category_id
+     LEFT JOIN category_groups g ON g.id = p.group_id AND g.business_id = p.business_id
      WHERE p.business_id = ? AND p.active = 1
      ORDER BY p.featured DESC, p.sort ASC, p.created_at DESC`
   ).all(businessId).map(withPromo).map(p => {
@@ -3441,13 +3441,13 @@ function sendErrorPage(res, err) {
 // ================= PANEL =================
 function panelData(biz) {
   const categories = db.prepare(
-    `SELECT c.*, g.name AS group_name FROM categories c LEFT JOIN category_groups g ON g.id = c.group_id
-     WHERE c.business_id = ? ORDER BY c.sort ASC`
+    'SELECT * FROM categories WHERE business_id = ? ORDER BY sort ASC'
   ).all(biz.id);
   const categoryGroups = db.prepare('SELECT * FROM category_groups WHERE business_id = ? ORDER BY sort ASC, name COLLATE NOCASE ASC').all(biz.id);
   const allProducts = db.prepare(
-    `SELECT p.*, c.name AS category_name FROM products p
+    `SELECT p.*, c.name AS category_name, g.name AS group_name FROM products p
      LEFT JOIN categories c ON c.id = p.category_id
+     LEFT JOIN category_groups g ON g.id = p.group_id AND g.business_id = p.business_id
      WHERE p.business_id = ? ORDER BY p.active DESC, p.sort ASC, p.id DESC`
   ).all(biz.id).map(p => {
     p.stock = p.stock === null || p.stock === undefined ? null : p.stock;
@@ -3812,6 +3812,14 @@ function canAddProduct(biz) {
   };
 }
 
+function productGroupId(raw, businessId) {
+  const value = String(raw == null ? '' : raw).trim();
+  if (!value) return null;
+  if (!/^[1-9]\d*$/.test(value) || !Number.isSafeInteger(Number(value))) return undefined;
+  const group = db.prepare('SELECT id FROM category_groups WHERE id = ? AND business_id = ?').get(Number(value), businessId);
+  return group ? group.id : undefined;
+}
+
 app.post('/:slug/admin/producto', requireAuth, can('productos.crear'), (req, res) => {
   const biz = req.biz;
   const check = canAddProduct(biz);
@@ -3824,6 +3832,8 @@ app.post('/:slug/admin/producto', requireAuth, can('productos.crear'), (req, res
   const promo = parsePromo(req.body);
   const inst = parseInstallment(req.body);
   const renderError = (message) => res.status(400).render('productos', { biz, ...panelData(biz), error: message, planBlock: null, formdata: req.body });
+  const groupId = productGroupId(req.body.group_id, biz.id);
+  if (groupId === undefined) return renderError('El agrupador seleccionado no existe en esta tienda. Vuelve a elegirlo.');
   if (!name || !String(name).trim()) {
     return renderError('El nombre del producto es obligatorio.');
   }
@@ -3860,9 +3870,9 @@ app.post('/:slug/admin/producto', requireAuth, can('productos.crear'), (req, res
   }
   try {
     db.prepare(
-      `INSERT INTO products (business_id, category_id, name, price, old_price, description, image, galeria, stock, made_to_order, variants, promo_ends_at, featured, promo_type, promo_value, promo_gift, sku, tags, video, specs, barcode, allow_installments, installment_count, installment_min_down, installment_frequency, cost)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    ).run(biz.id, category_id || null, String(name).trim(), price, old_price, description || '', image || '', parseGaleria(req.body.galeria), stockNum, madeToOrder, variantsJson, parsePromoEnd(req.body.promo_ends_at), req.body.featured ? 1 : 0, promo.promo_type, promo.promo_value, promo.promo_gift, (req.body.sku || '').toString().trim().slice(0, 60), (req.body.tags || '').toString().trim().slice(0, 300), (req.body.video || '').toString().trim().slice(0, 300), (req.body.specs || '').toString().slice(0, 2000), (req.body.barcode || '').toString().trim().slice(0, 60), inst.allow_installments, inst.installment_count, inst.installment_min_down, inst.installment_frequency, parseCost(req.body.cost));
+      `INSERT INTO products (business_id, category_id, group_id, name, price, old_price, description, image, galeria, stock, made_to_order, variants, promo_ends_at, featured, promo_type, promo_value, promo_gift, sku, tags, video, specs, barcode, allow_installments, installment_count, installment_min_down, installment_frequency, cost)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).run(biz.id, category_id || null, groupId, String(name).trim(), price, old_price, description || '', image || '', parseGaleria(req.body.galeria), stockNum, madeToOrder, variantsJson, parsePromoEnd(req.body.promo_ends_at), req.body.featured ? 1 : 0, promo.promo_type, promo.promo_value, promo.promo_gift, (req.body.sku || '').toString().trim().slice(0, 60), (req.body.tags || '').toString().trim().slice(0, 300), (req.body.video || '').toString().trim().slice(0, 300), (req.body.specs || '').toString().slice(0, 2000), (req.body.barcode || '').toString().trim().slice(0, 60), inst.allow_installments, inst.installment_count, inst.installment_min_down, inst.installment_frequency, parseCost(req.body.cost));
     const created = db.prepare('SELECT * FROM products WHERE business_id = ? ORDER BY id DESC LIMIT 1').get(biz.id);
     if (created && req.body.show_stock_set) db.prepare('UPDATE products SET show_stock = ? WHERE id = ? AND business_id = ?').run(req.body.show_stock ? 1 : 0, created.id, biz.id);
     if (created && req.body.custom_tags !== undefined) db.prepare('UPDATE products SET custom_tags = ? WHERE id = ? AND business_id = ?').run(customTagsJson(req.body.custom_tags), created.id, biz.id);
@@ -4005,6 +4015,8 @@ app.post('/:slug/admin/producto/:id', requireAuth, can('productos.editar'), (req
   const promo = parsePromo(req.body);
   const inst = parseInstallment(req.body);
   const renderError = (message) => res.status(400).render('productos', { biz: req.biz, ...panelData(req.biz), error: message, planBlock: null, formdata: req.body });
+  const groupId = productGroupId(req.body.group_id, req.biz.id);
+  if (groupId === undefined) return renderError('El agrupador seleccionado no existe en esta tienda. Vuelve a elegirlo.');
   if (!name || !name.trim()) {
     return renderError('El nombre del producto es obligatorio.');
   }
@@ -4041,9 +4053,9 @@ app.post('/:slug/admin/producto/:id', requireAuth, can('productos.editar'), (req
   }
   try {
     db.prepare(
-      `UPDATE products SET name = ?, price = ?, old_price = ?, category_id = ?, description = ?, image = ?, galeria = ?, stock = ?, made_to_order = ?, variants = ?, promo_ends_at = ?, featured = ?, promo_type = ?, promo_value = ?, promo_gift = ?, sku = ?, tags = ?, video = ?, specs = ?, barcode = ?, allow_installments = ?, installment_count = ?, installment_min_down = ?, installment_frequency = ?, cost = ?
+      `UPDATE products SET name = ?, price = ?, old_price = ?, category_id = ?, group_id = ?, description = ?, image = ?, galeria = ?, stock = ?, made_to_order = ?, variants = ?, promo_ends_at = ?, featured = ?, promo_type = ?, promo_value = ?, promo_gift = ?, sku = ?, tags = ?, video = ?, specs = ?, barcode = ?, allow_installments = ?, installment_count = ?, installment_min_down = ?, installment_frequency = ?, cost = ?
        WHERE id = ? AND business_id = ?`
-    ).run(name.trim(), price, old_price, category_id || null, description || '', image || '', parseGaleria(req.body.galeria), stockNum, madeToOrder, variantsJson, parsePromoEnd(req.body.promo_ends_at), req.body.featured ? 1 : 0, promo.promo_type, promo.promo_value, promo.promo_gift, (req.body.sku || '').toString().trim().slice(0, 60), (req.body.tags || '').toString().trim().slice(0, 300), (req.body.video || '').toString().trim().slice(0, 300), (req.body.specs || '').toString().slice(0, 2000), (req.body.barcode || '').toString().trim().slice(0, 60), inst.allow_installments, inst.installment_count, inst.installment_min_down, inst.installment_frequency, parseCost(req.body.cost), req.params.id, req.biz.id);
+    ).run(name.trim(), price, old_price, category_id || null, groupId, description || '', image || '', parseGaleria(req.body.galeria), stockNum, madeToOrder, variantsJson, parsePromoEnd(req.body.promo_ends_at), req.body.featured ? 1 : 0, promo.promo_type, promo.promo_value, promo.promo_gift, (req.body.sku || '').toString().trim().slice(0, 60), (req.body.tags || '').toString().trim().slice(0, 300), (req.body.video || '').toString().trim().slice(0, 300), (req.body.specs || '').toString().slice(0, 2000), (req.body.barcode || '').toString().trim().slice(0, 60), inst.allow_installments, inst.installment_count, inst.installment_min_down, inst.installment_frequency, parseCost(req.body.cost), req.params.id, req.biz.id);
     if (req.body.show_stock_set) db.prepare('UPDATE products SET show_stock = ? WHERE id = ? AND business_id = ?').run(req.body.show_stock ? 1 : 0, req.params.id, req.biz.id);
     if (req.body.custom_tags !== undefined) db.prepare('UPDATE products SET custom_tags = ? WHERE id = ? AND business_id = ?').run(customTagsJson(req.body.custom_tags), req.params.id, req.biz.id);
     const updated = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
@@ -4058,10 +4070,10 @@ app.post('/:slug/admin/producto/:id/duplicar', requireAuth, can('productos.crear
   const p = db.prepare('SELECT * FROM products WHERE id = ? AND business_id = ?').get(req.params.id, req.biz.id);
   if (p) {
     db.prepare(
-      `INSERT INTO products (business_id, category_id, name, price, old_price, description, image, galeria, stock, made_to_order, variants, promo_ends_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO products (business_id, category_id, group_id, name, price, old_price, description, image, galeria, stock, made_to_order, variants, promo_ends_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).run(
-      p.business_id, p.category_id, (p.name || '') + ' (copia)', p.price, p.old_price,
+      p.business_id, p.category_id, p.group_id, (p.name || '') + ' (copia)', p.price, p.old_price,
       p.description || '', p.image || '', p.galeria || '', p.stock, p.made_to_order ? 1 : 0, p.variants || '', p.promo_ends_at || ''
     );
   }
@@ -4098,9 +4110,7 @@ app.post('/:slug/admin/categoria/:id', requireAuth, can('categorias.gestionar'),
   res.json({ ok: r.changes > 0, id, name });
 });
 
-// ===== Agrupadores de categorías: juntan varias categorías bajo un mismo título al mostrarlas
-// (por ejemplo "Ropa" agrupa a "Playeras", "Pantalones" y "Chamarras"). La categoría real de cada
-// producto no cambia; el agrupador solo organiza cómo se ven en el filtro del catálogo. =====
+// ===== Agrupadores de productos: filtros independientes de las categorías =====
 app.post('/:slug/admin/categoria-grupo', requireAuth, can('categorias.gestionar'), (req, res) => {
   const name = (req.body.name || '').trim().slice(0, 60);
   if (!name) return res.json({ ok: false, error: 'El nombre del agrupador es obligatorio.' });
@@ -4120,22 +4130,10 @@ app.post('/:slug/admin/categoria-grupo/:id', requireAuth, can('categorias.gestio
 });
 app.post('/:slug/admin/categoria-grupo/:id/eliminar', requireAuth, can('categorias.gestionar'), (req, res) => {
   const id = parseInt(req.params.id);
+  db.prepare('UPDATE products SET group_id = NULL WHERE group_id = ? AND business_id = ?').run(id, req.biz.id);
   db.prepare('UPDATE categories SET group_id = NULL WHERE group_id = ? AND business_id = ?').run(id, req.biz.id);
   db.prepare('DELETE FROM category_groups WHERE id = ? AND business_id = ?').run(id, req.biz.id);
   res.json({ ok: true });
-});
-// Mete o saca una categoría de un agrupador
-app.post('/:slug/admin/categoria/:id/grupo', requireAuth, can('categorias.gestionar'), (req, res) => {
-  const id = parseInt(req.params.id);
-  const raw = String(req.body.group_id || '').trim();
-  let groupId = null;
-  if (raw) {
-    const g = db.prepare('SELECT id FROM category_groups WHERE id = ? AND business_id = ?').get(parseInt(raw), req.biz.id);
-    if (!g) return res.json({ ok: false, error: 'Ese agrupador no existe.' });
-    groupId = g.id;
-  }
-  const r = db.prepare('UPDATE categories SET group_id = ? WHERE id = ? AND business_id = ?').run(groupId, id, req.biz.id);
-  res.json({ ok: r.changes > 0, id, group_id: groupId });
 });
 
 // ===== Zonas de entrega (Configuración → Envíos y formas de pago) =====

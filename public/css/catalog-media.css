@@ -233,7 +233,7 @@ h1.hero-name, h1.hdr-title { margin: 0; }
 html body .hdr .wa-pill, html body .hdr .admin-pill, html body .install-pill { min-height: 44px; display: inline-flex; align-items: center; }
 html body .prod-actions .prod-btn, html body .prod-actions .prod-view-btn, html body .oferta-actions .prod-btn, html body .oferta-actions .prod-view-btn { min-height: 44px; }
 html body .prod-actions .prod-share-btn, html body .oferta-actions .prod-share-btn { min-width: 44px; height: 44px; }
-html body .filter-cat, html body .filter-clear { min-height: 44px; }
+html body .filter-cat, html body .filter-group-btn, html body .filter-clear { min-height: 44px; }
 html body .filter-range, html body .filter-attr { min-height: 44px; }
 html body .ofertas-arrow { min-width: 44px; min-height: 44px; }
 

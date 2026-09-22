@@ -57,7 +57,7 @@ body:not(:has(.hero)) .hdr-logo { opacity: 1; transform: none; }
 /* ============================================================
    3) CATEGORÍAS / FILTROS — indicador que se mueve, no on/off
    ============================================================ */
-.filter-cat { position: relative; transition: background-color .22s var(--ease-premium), color .22s var(--ease-premium), border-color .22s var(--ease-premium); }
+.filter-cat, .filter-group-btn { position: relative; transition: background-color .22s var(--ease-premium), color .22s var(--ease-premium), border-color .22s var(--ease-premium); }
 .cat-pill { transition: background-color .22s var(--ease-premium), color .22s var(--ease-premium), border-color .22s var(--ease-premium), box-shadow .22s var(--ease-premium), transform .15s var(--ease-premium); }
 
 /* Contador de resultados: transición numérica discreta (solo opacidad/leve escala) */
@@ -156,7 +156,7 @@ body:not(:has(.hero)) .hdr-logo { opacity: 1; transform: none; }
    ============================================================ */
 .filter-fab, .cart-fab { padding-bottom: max(0px, env(safe-area-inset-bottom)); }
 @media (max-width: 900px) {
-  .prod-btn, .prod-view-btn, .ofertas-arrow, .cat-pill, .filter-cat { min-height: 40px; }
+  .prod-btn, .prod-view-btn, .ofertas-arrow, .cat-pill, .filter-cat, .filter-group-btn { min-height: 40px; }
 }
 
 /* ============================================================
