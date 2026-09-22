@@ -268,6 +268,17 @@
               <input name="name" id="f-name" required placeholder="Ej: Taladro percutor 13mm">
             </div>
             <div class="m-field">
+              <label for="f-catgroup">¿Dónde se agrupa el producto?</label>
+              <select id="f-catgroup">
+                <option value="*">Ver todas las categorías</option>
+                <option value="">Sin agrupador</option>
+                <% (typeof categoryGroups !== 'undefined' ? categoryGroups : []).forEach(g => { %>
+                  <option value="<%= g.id %>"><%= g.name %></option>
+                <% }) %>
+              </select>
+              <p id="f-catgroup-hint" class="text-[11px] text-slate-400 mt-1">Elige un agrupador y luego la categoría del producto.</p>
+            </div>
+            <div class="m-field">
               <label for="f-cat">Categoría</label>
               <select name="category_id" id="f-cat">
                 <option value="">Sin categoría</option>
@@ -2084,7 +2095,8 @@
 
     function prefilledFrom(card) {
       setVal('f-name', card.getAttribute('data-edit-name'));
-      setVal('f-cat', card.getAttribute('data-edit-cat'));
+      renderProductCategoryOptions('*', card.getAttribute('data-edit-cat'));
+      syncCatGroupSelect();
       setVal('f-price', card.getAttribute('data-edit-price'));
       setVal('f-old', card.getAttribute('data-edit-old'));
       setVal('f-promo', card.getAttribute('data-edit-promo'));
@@ -2167,6 +2179,7 @@
       ctLoad('');
       spLoad('');
       setVal('f-cat', '');
+      syncCatGroupSelect();
       form.action = '/<%= biz.slug %>/admin/producto';
       document.getElementById('pf-title').textContent = 'Agregar producto';
       document.getElementById('pf-cancel').classList.add('hidden');
@@ -2333,6 +2346,8 @@
       syncStockField();
       syncPriceField();
       renderTplPills('f');
+      bindProductGroupSelect();
+      syncCatGroupSelect();
       restoreFormOnError();
     }
 
@@ -2342,6 +2357,7 @@
         if (!fd || typeof fd !== 'object') return;
         setVal('f-name', fd.name || '');
         setVal('f-cat', fd.category_id || '');
+        syncCatGroupSelect();
         setVal('f-price', fd.price || '');
         setVal('f-old', fd.old_price || '');
         setVal('f-desc', fd.description || '');
@@ -2619,6 +2635,7 @@
             }).then(function (r) { return r.json(); }).then(function (d) {
               if (!d.ok) { mostrarToast(d.error || 'No se pudo cambiar', 'error'); return; }
               c.group_id = d.group_id;
+              syncCatGroupSelect();
               mostrarToast('Agrupador actualizado ✓', 'ok');
             }).catch(function () { mostrarToast('Error de red', 'error'); });
           });
@@ -2641,7 +2658,7 @@
         if (d.ok) {
           window.CAT_GROUPS = (window.CAT_GROUPS || []).concat([d]);
           inp.value = '';
-          renderGrpList(); renderCatList();
+          renderGrpList(); renderCatList(); syncCatGroupSelect();
           mostrarToast('Agrupador creado ✓', 'ok');
         } else { mostrarToast(d.error || 'No se pudo crear', 'error'); }
       }).catch(function () { mostrarToast('Error de red', 'error'); });
@@ -2656,7 +2673,7 @@
           if (d.ok) {
             window.CAT_GROUPS = (window.CAT_GROUPS || []).filter(function (g) { return String(g.id) !== String(id); });
             (window.ATTR_CATEGORIES || []).forEach(function (c) { if (String(c.group_id || '') === String(id)) c.group_id = null; });
-            renderGrpList(); renderCatList();
+            renderGrpList(); renderCatList(); syncCatGroupSelect();
             mostrarToast('Agrupador eliminado', 'ok');
           } else { mostrarToast('No se pudo eliminar', 'error'); }
         }).catch(function () { mostrarToast('Error de red', 'error'); });
@@ -2730,18 +2747,69 @@
     }
 
     function repopulateCatSelects() {
-      var opts = '<option value="">Sin categoría</option>';
       var list = window.ATTR_CATEGORIES || [];
-      list.forEach(function (c) { opts += '<option value="' + c.id + '">' + escHTML(c.name) + '</option>'; });
       var hint = document.getElementById('f-cat-hint');
       if (hint) hint.classList.toggle('hidden', list.length > 0);
-      ['f-cat'].forEach(function (id) {
-        var sel = document.getElementById(id);
-        if (!sel) return;
-        var val = sel.value;
-        sel.innerHTML = opts;
-        sel.value = val;
+      syncCatGroupSelect();
+    }
+
+    // El agrupador acota las categorías disponibles; el producto se guarda en la categoría elegida.
+    function renderProductCategoryOptions(groupId, selectedId) {
+      var catSel = document.getElementById('f-cat');
+      var hint = document.getElementById('f-catgroup-hint');
+      if (!catSel) return;
+      var list = (window.ATTR_CATEGORIES || []).filter(function (c) {
+        return groupId === '*' || String(c.group_id || '') === String(groupId);
       });
+      catSel.innerHTML = '';
+      var empty = document.createElement('option');
+      empty.value = '';
+      empty.textContent = groupId && groupId !== '*' ? 'Elige una categoría' : 'Sin categoría';
+      catSel.appendChild(empty);
+      list.forEach(function (c) {
+        var opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = c.name;
+        catSel.appendChild(opt);
+      });
+      catSel.value = list.some(function (c) { return String(c.id) === String(selectedId); }) ? String(selectedId) : '';
+      if (hint) hint.textContent = !((window.CAT_GROUPS || []).length)
+        ? 'Aún no hay agrupadores. Puedes crearlos en la pestaña Categorías.'
+        : groupId && groupId !== '*' && !list.length
+          ? 'Este agrupador todavía no tiene categorías. Agrégale una en la pestaña Categorías.'
+          : 'Elige la categoría para guardar el producto dentro de ese agrupador.';
+    }
+    function syncCatGroupSelect() {
+      var catSel = document.getElementById('f-cat'), grpSel = document.getElementById('f-catgroup');
+      if (!catSel || !grpSel) return;
+      var groups = window.CAT_GROUPS || [];
+      var catId = catSel.value;
+      var cat = (window.ATTR_CATEGORIES || []).find(function (c) { return String(c.id) === String(catId); });
+      grpSel.innerHTML = '';
+      [{ id: '*', name: 'Ver todas las categorías' }, { id: '', name: 'Sin agrupador' }].concat(groups).forEach(function (g) {
+        var opt = document.createElement('option'); opt.value = g.id; opt.textContent = g.name; grpSel.appendChild(opt);
+      });
+      grpSel.value = cat ? String(cat.group_id || '') : '*';
+      renderProductCategoryOptions(grpSel.value, catId);
+    }
+    function bindProductGroupSelect() {
+      var catSel = document.getElementById('f-cat'), grpSel = document.getElementById('f-catgroup');
+      if (!catSel || !grpSel || grpSel.dataset.bound === '1') return;
+      grpSel.dataset.bound = '1';
+      catSel.addEventListener('change', function () { if (catSel.value) syncCatGroupSelect(); });
+      grpSel.addEventListener('change', function () {
+        renderProductCategoryOptions(grpSel.value, catSel ? catSel.value : '');
+      });
+      var form = document.getElementById('pf-form');
+      if (form) form.addEventListener('submit', function (e) {
+        if (grpSel && grpSel.value && grpSel.value !== '*' && catSel && !catSel.value) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          goStep(1);
+          catSel.focus();
+          mostrarToast('Elige una categoría dentro del agrupador para guardar el producto.', 'error');
+        }
+      }, true);
     }
 
     function editarCategoria(id, nombre, chip) {
