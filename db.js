@@ -66,6 +66,7 @@ addColumnIfMissing('businesses', 'horario_msg', "TEXT DEFAULT ''"); // mensaje c
 addColumnIfMissing('businesses', 'mp_access_token', "TEXT DEFAULT ''");
 addColumnIfMissing('businesses', 'mp_enabled', 'INTEGER DEFAULT 0');
 addColumnIfMissing('businesses', 'mp_public_key', "TEXT DEFAULT ''"); // clave pública de Mercado Pago (formulario de tarjeta dentro de la app)
+addColumnIfMissing('categories', 'group_id', 'INTEGER NULL'); // agrupador de categorías (category_groups.id) — opcional
 addColumnIfMissing('businesses', 'cash_enabled', 'INTEGER DEFAULT 0'); // 1 = acepta pago en efectivo al recoger
 addColumnIfMissing('businesses', 'mp_fee_on', 'INTEGER DEFAULT 1'); // 1 = se suma al cliente la comisión de Mercado Pago (el negocio recibe el precio completo)
 addColumnIfMissing('businesses', 'mp_fee_pct', 'REAL DEFAULT 3.49');
@@ -141,6 +142,14 @@ rows.forEach(r => {
 });
 
 db.exec(`
+CREATE TABLE IF NOT EXISTS category_groups (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  business_id INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  sort INTEGER DEFAULT 0,
+  FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS categories (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   business_id INTEGER NOT NULL,

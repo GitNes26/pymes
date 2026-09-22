@@ -18,6 +18,7 @@
     <div class="px-4 md:px-8 py-4 md:py-6 pb-24 md:pb-6">
       <script type="application/json" id="attr-templates-json"><%- safeJson(attributeTemplates || []) %></script>
       <script type="application/json" id="cat-json"><%- safeJson(categories || []) %></script>
+      <script type="application/json" id="grp-json"><%- safeJson(typeof categoryGroups !== 'undefined' ? categoryGroups : []) %></script>
       <script type="application/json" id="formdata-json"><%- safeJson(typeof formdata !== 'undefined' ? formdata : null) %></script>
 
       <!-- CRUD separado por tabs: Productos · Categorías · Atributos (tabs según permiso) -->
@@ -492,15 +493,28 @@
 
       <% if (puedeCategorias) { %>
       <div id="tabpane-categorias" class="prod-tab-panel">
+      <section id="agrupadores" class="m-card p-4 mb-3">
+        <div class="flex items-center justify-between flex-wrap gap-2 mb-2">
+          <div>
+            <h3 class="font-bold text-sm text-slate-700">Agrupadores <span class="m-badge m-badge-neutral !ml-1.5"><span id="grp-count"><%= (typeof categoryGroups !== 'undefined' ? categoryGroups.length : 0) %></span></span></h3>
+            <p class="text-xs text-slate-400 mt-0.5">Juntan varias categorías bajo un mismo título en el catálogo. Ej: el agrupador "Ropa" reúne "Playeras", "Pantalones" y "Chamarras" — cada producto sigue en su categoría real, esto solo las organiza al mostrarlas.</p>
+          </div>
+          <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <input id="grp-name" placeholder="Nuevo agrupador" class="w-full sm:w-52 border border-slate-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-1000 focus:border-neutral-1000 transition" onkeydown="if(event.key==='Enter')agregarGrupo()">
+            <button type="button" onclick="agregarGrupo()" class="m-btn m-btn-tonal m-btn-sm shrink-0">Crear</button>
+          </div>
+        </div>
+        <div id="grp-list" class="flex flex-wrap gap-1.5"></div>
+      </section>
       <section id="categorias" class="m-card p-4 mb-3">
         <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
           <h3 class="font-bold text-sm text-slate-700">Categorías <span class="m-badge m-badge-neutral !ml-1.5"><span id="cat-count"><%= categories.length %></span></span></h3>
           <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <input id="cat-name" placeholder="Nueva categoría" class="w-full sm:w-52 border border-slate-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-1000 focus:border-neutral-1000 transition">
+            <input id="cat-name" placeholder="Nueva categoría" class="w-full sm:w-52 border border-slate-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-1000 focus:border-neutral-1000 transition" onkeydown="if(event.key==='Enter')agregarCategoria()">
             <button type="button" onclick="agregarCategoria()" class="m-btn m-btn-tonal m-btn-sm shrink-0">Crear</button>
           </div>
         </div>
-        <div id="cat-list" class="flex flex-wrap gap-1.5"></div>
+        <div id="cat-list" class="flex flex-col gap-1.5"></div>
       </section>
       </div><!-- /tabpane-categorias -->
       <% } %>
@@ -1065,7 +1079,7 @@
         var p = document.getElementById('tabpane-' + n);
         if (p) p.classList.toggle('active', n === name);
       });
-      if (name === 'categorias') renderCatList();
+      if (name === 'categorias') { renderGrpList(); renderCatList(); }
       if (name === 'atributos') renderAttrCatalog();
     }
 
@@ -2297,6 +2311,7 @@
     function initProductos() {
       loadPageData();
       initProdFilter();
+      renderGrpList();
       renderCatList();
       renderAttrCatalog();
       // El wizard de captura solo existe si hay permiso de crear o editar productos.
@@ -2373,6 +2388,7 @@
     function loadPageData() {
       try { window.ATTR_TEMPLATES = JSON.parse(document.getElementById('attr-templates-json').textContent) || []; } catch (e) { window.ATTR_TEMPLATES = []; }
       try { window.ATTR_CATEGORIES = JSON.parse(document.getElementById('cat-json').textContent) || []; } catch (e) { window.ATTR_CATEGORIES = []; }
+      try { window.CAT_GROUPS = JSON.parse(document.getElementById('grp-json').textContent) || []; } catch (e) { window.CAT_GROUPS = []; }
     }
     function escHTML(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
@@ -2560,7 +2576,10 @@
       if (hdr) hdr.textContent = String(list.length);
       box.innerHTML = '';
       if (!list.length) { box.innerHTML = '<p class="text-xs text-slate-400">Sin categorías. Crea la primera arriba.</p>'; return; }
+      var groups = window.CAT_GROUPS || [];
       list.forEach(function (c) {
+        var row = document.createElement('div');
+        row.className = 'flex items-center gap-2 flex-wrap';
         var chip = document.createElement('span');
         chip.className = 'm-chip';
         var inner = document.createElement('span');
@@ -2578,6 +2597,132 @@
         del.title = 'Eliminar categoría';
         del.textContent = '✕';
         del.onclick = function () { eliminarCategoria(c.id); };
+        inner.appendChild(info); inner.appendChild(editar); inner.appendChild(del);
+        chip.appendChild(inner);
+        row.appendChild(chip);
+        // A qué agrupador pertenece esta categoría (si la tienda ya tiene alguno creado)
+        if (groups.length) {
+          var sel = document.createElement('select');
+          sel.className = 'text-xs border border-slate-200 rounded-full px-2.5 py-1 bg-white text-slate-500 focus:outline-none focus:ring-2 focus:ring-neutral-1000';
+          sel.setAttribute('aria-label', 'Agrupador de ' + c.name);
+          var optNone = document.createElement('option'); optNone.value = ''; optNone.textContent = 'Sin agrupador'; sel.appendChild(optNone);
+          groups.forEach(function (g) {
+            var o = document.createElement('option'); o.value = g.id; o.textContent = g.name;
+            if (String(c.group_id || '') === String(g.id)) o.selected = true;
+            sel.appendChild(o);
+          });
+          sel.addEventListener('change', function () {
+            fetch('/<%= biz.slug %>/admin/categoria/' + c.id + '/grupo', {
+              method: 'POST',
+              body: new URLSearchParams({ group_id: sel.value }),
+              headers: { 'x-csrf-token': (window.__csrfValue && window.__csrfValue()) || '' }
+            }).then(function (r) { return r.json(); }).then(function (d) {
+              if (!d.ok) { mostrarToast(d.error || 'No se pudo cambiar', 'error'); return; }
+              c.group_id = d.group_id;
+              mostrarToast('Agrupador actualizado ✓', 'ok');
+            }).catch(function () { mostrarToast('Error de red', 'error'); });
+          });
+          row.appendChild(sel);
+        }
+        box.appendChild(row);
+      });
+    }
+
+    // ====== Agrupadores de categorías ======
+    function agregarGrupo() {
+      var inp = document.getElementById('grp-name');
+      var name = (inp.value || '').trim();
+      if (!name) { mostrarToast('Escribe el nombre del agrupador', 'error'); return; }
+      fetch('/<%= biz.slug %>/admin/categoria-grupo', {
+        method: 'POST',
+        body: new URLSearchParams({ name: name }),
+        headers: { 'x-csrf-token': (window.__csrfValue && window.__csrfValue()) || '' }
+      }).then(function (r) { return r.json(); }).then(function (d) {
+        if (d.ok) {
+          window.CAT_GROUPS = (window.CAT_GROUPS || []).concat([d]);
+          inp.value = '';
+          renderGrpList(); renderCatList();
+          mostrarToast('Agrupador creado ✓', 'ok');
+        } else { mostrarToast(d.error || 'No se pudo crear', 'error'); }
+      }).catch(function () { mostrarToast('Error de red', 'error'); });
+    }
+    function eliminarGrupo(id) {
+      pedirConfirmacion('¿Eliminar este agrupador? Sus categorías se quedan sin agrupador, no se borran.').then(function (ok) {
+        if (!ok) return;
+        fetch('/<%= biz.slug %>/admin/categoria-grupo/' + id + '/eliminar', {
+          method: 'POST',
+          headers: { 'x-csrf-token': (window.__csrfValue && window.__csrfValue()) || '' }
+        }).then(function (r) { return r.json(); }).then(function (d) {
+          if (d.ok) {
+            window.CAT_GROUPS = (window.CAT_GROUPS || []).filter(function (g) { return String(g.id) !== String(id); });
+            (window.ATTR_CATEGORIES || []).forEach(function (c) { if (String(c.group_id || '') === String(id)) c.group_id = null; });
+            renderGrpList(); renderCatList();
+            mostrarToast('Agrupador eliminado', 'ok');
+          } else { mostrarToast('No se pudo eliminar', 'error'); }
+        }).catch(function () { mostrarToast('Error de red', 'error'); });
+      });
+    }
+    function editarGrupo(id, nombre, chip) {
+      var inp = document.createElement('input');
+      inp.type = 'text';
+      inp.value = nombre;
+      inp.className = 'text-xs font-semibold border border-neutral-400 rounded-full px-2 py-1 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-neutral-1000 w-28';
+      var save = document.createElement('button');
+      save.type = 'button'; save.className = 'text-emerald-600 hover:bg-emerald-50 rounded-full px-1.5 py-0.5 font-bold'; save.textContent = '✓';
+      var cancel = document.createElement('button');
+      cancel.type = 'button'; cancel.className = 'text-slate-400 hover:bg-slate-100 rounded-full px-1.5 py-0.5 font-bold'; cancel.textContent = '✕';
+      var wrap = document.createElement('span');
+      wrap.className = 'flex items-center gap-1';
+      wrap.appendChild(inp); wrap.appendChild(save); wrap.appendChild(cancel);
+      chip.innerHTML = '';
+      chip.appendChild(wrap);
+      inp.focus();
+      function salir() { renderGrpList(); }
+      cancel.onclick = salir;
+      inp.onkeydown = function (e) { if (e.key === 'Enter') save.click(); else if (e.key === 'Escape') salir(); };
+      save.onclick = function () {
+        var v = inp.value.trim();
+        if (!v) { mostrarToast('Escribe un nombre', 'error'); return; }
+        fetch('/<%= biz.slug %>/admin/categoria-grupo/' + id, {
+          method: 'POST',
+          body: new URLSearchParams({ name: v }),
+          headers: { 'x-csrf-token': (window.__csrfValue && window.__csrfValue()) || '' }
+        }).then(function (r) { return r.json(); }).then(function (d) {
+          if (d.ok) {
+            var g = (window.CAT_GROUPS || []).find(function (x) { return String(x.id) === String(id); });
+            if (g) g.name = v;
+            renderGrpList(); renderCatList();
+            mostrarToast('Agrupador actualizado ✓', 'ok');
+          } else { mostrarToast(d.error || 'No se pudo actualizar', 'error'); renderGrpList(); }
+        }).catch(function () { mostrarToast('Error de red', 'error'); renderGrpList(); });
+      };
+    }
+    function renderGrpList() {
+      var list = window.CAT_GROUPS || [];
+      var box = document.getElementById('grp-list');
+      if (!box) return;
+      var cnt = document.getElementById('grp-count');
+      if (cnt) cnt.textContent = String(list.length);
+      box.innerHTML = '';
+      if (!list.length) { box.innerHTML = '<p class="text-xs text-slate-400">Sin agrupadores. Si tienes muchas categorías, crea uno para juntarlas, ej: "Ropa", "Calzado".</p>'; return; }
+      list.forEach(function (g) {
+        var chip = document.createElement('span');
+        chip.className = 'm-chip';
+        var inner = document.createElement('span');
+        inner.className = 'flex items-center gap-1.5';
+        var info = document.createElement('span'); info.textContent = g.name;
+        var editar = document.createElement('button');
+        editar.type = 'button';
+        editar.className = 'text-slate-400 hover:text-neutral-1000 font-bold leading-none';
+        editar.title = 'Editar nombre';
+        editar.textContent = '✎';
+        editar.onclick = function () { editarGrupo(g.id, g.name, chip); };
+        var del = document.createElement('button');
+        del.type = 'button';
+        del.className = 'text-slate-400 hover:text-red-500 font-bold leading-none';
+        del.title = 'Eliminar agrupador';
+        del.textContent = '✕';
+        del.onclick = function () { eliminarGrupo(g.id); };
         inner.appendChild(info); inner.appendChild(editar); inner.appendChild(del);
         chip.appendChild(inner);
         box.appendChild(chip);

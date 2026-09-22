@@ -1762,7 +1762,8 @@ function withPromo(p) {
 
 function getCatalog(businessId) {
   const categories = db.prepare(
-    'SELECT * FROM categories WHERE business_id = ? ORDER BY sort ASC'
+    `SELECT c.*, g.name AS group_name FROM categories c LEFT JOIN category_groups g ON g.id = c.group_id
+     WHERE c.business_id = ? ORDER BY c.sort ASC`
   ).all(businessId);
   const catCounts = {};
   db.prepare('SELECT category_id, COUNT(*) AS c FROM products WHERE business_id = ? AND active = 1 GROUP BY category_id').all(businessId).forEach(r => { catCounts[r.category_id] = r.c; });
@@ -3415,7 +3416,11 @@ function sendErrorPage(res, err) {
 
 // ================= PANEL =================
 function panelData(biz) {
-  const categories = db.prepare('SELECT * FROM categories WHERE business_id = ? ORDER BY sort ASC').all(biz.id);
+  const categories = db.prepare(
+    `SELECT c.*, g.name AS group_name FROM categories c LEFT JOIN category_groups g ON g.id = c.group_id
+     WHERE c.business_id = ? ORDER BY c.sort ASC`
+  ).all(biz.id);
+  const categoryGroups = db.prepare('SELECT * FROM category_groups WHERE business_id = ? ORDER BY sort ASC, name COLLATE NOCASE ASC').all(biz.id);
   const allProducts = db.prepare(
     `SELECT p.*, c.name AS category_name FROM products p
      LEFT JOIN categories c ON c.id = p.category_id
@@ -3445,7 +3450,7 @@ function panelData(biz) {
   const shareUrl = siteOrigin() ? siteOrigin() + '/' + biz.slug : '';
   const lowStock = allProducts.filter(p => !p.made_to_order && (p.displayStock === null || p.displayStock <= 5));
   const priceHistory = db.prepare('SELECT * FROM price_history WHERE business_id = ? ORDER BY id DESC LIMIT 30').all(biz.id);
-  return { categories, allProducts, orders, pending, stats, planMax, planInfo, storeUrl, shareUrl, attributeTemplates: getAttributeTemplates(biz.id), lowStock, priceHistory, canDesign: designAllowed(biz) };
+  return { categories, categoryGroups, allProducts, orders, pending, stats, planMax, planInfo, storeUrl, shareUrl, attributeTemplates: getAttributeTemplates(biz.id), lowStock, priceHistory, canDesign: designAllowed(biz) };
 }
 
 async function qrFor(biz) {
@@ -4067,6 +4072,46 @@ app.post('/:slug/admin/categoria/:id', requireAuth, can('categorias.gestionar'),
   if (dup) return res.json({ ok: false, error: 'Esa categoría ya existe.' });
   const r = db.prepare('UPDATE categories SET name = ? WHERE id = ? AND business_id = ?').run(name, id, req.biz.id);
   res.json({ ok: r.changes > 0, id, name });
+});
+
+// ===== Agrupadores de categorías: juntan varias categorías bajo un mismo título al mostrarlas
+// (por ejemplo "Ropa" agrupa a "Playeras", "Pantalones" y "Chamarras"). La categoría real de cada
+// producto no cambia; el agrupador solo organiza cómo se ven en el filtro del catálogo. =====
+app.post('/:slug/admin/categoria-grupo', requireAuth, can('categorias.gestionar'), (req, res) => {
+  const name = (req.body.name || '').trim().slice(0, 60);
+  if (!name) return res.json({ ok: false, error: 'El nombre del agrupador es obligatorio.' });
+  const dup = db.prepare('SELECT * FROM category_groups WHERE business_id = ? AND name = ? COLLATE NOCASE').get(req.biz.id, name);
+  if (dup) return res.json({ ok: false, error: 'Ese agrupador ya existe.' });
+  const r = db.prepare('INSERT INTO category_groups (business_id, name) VALUES (?, ?)').run(req.biz.id, name);
+  res.json({ ok: true, id: r.lastInsertRowid, name });
+});
+app.post('/:slug/admin/categoria-grupo/:id', requireAuth, can('categorias.gestionar'), (req, res) => {
+  const id = parseInt(req.params.id);
+  const name = (req.body.name || '').trim().slice(0, 60);
+  if (!name) return res.json({ ok: false, error: 'El nombre del agrupador es obligatorio.' });
+  const dup = db.prepare('SELECT * FROM category_groups WHERE business_id = ? AND name = ? COLLATE NOCASE AND id != ?').get(req.biz.id, name, id);
+  if (dup) return res.json({ ok: false, error: 'Ese agrupador ya existe.' });
+  const r = db.prepare('UPDATE category_groups SET name = ? WHERE id = ? AND business_id = ?').run(name, id, req.biz.id);
+  res.json({ ok: r.changes > 0, id, name });
+});
+app.post('/:slug/admin/categoria-grupo/:id/eliminar', requireAuth, can('categorias.gestionar'), (req, res) => {
+  const id = parseInt(req.params.id);
+  db.prepare('UPDATE categories SET group_id = NULL WHERE group_id = ? AND business_id = ?').run(id, req.biz.id);
+  db.prepare('DELETE FROM category_groups WHERE id = ? AND business_id = ?').run(id, req.biz.id);
+  res.json({ ok: true });
+});
+// Mete o saca una categoría de un agrupador
+app.post('/:slug/admin/categoria/:id/grupo', requireAuth, can('categorias.gestionar'), (req, res) => {
+  const id = parseInt(req.params.id);
+  const raw = String(req.body.group_id || '').trim();
+  let groupId = null;
+  if (raw) {
+    const g = db.prepare('SELECT id FROM category_groups WHERE id = ? AND business_id = ?').get(parseInt(raw), req.biz.id);
+    if (!g) return res.json({ ok: false, error: 'Ese agrupador no existe.' });
+    groupId = g.id;
+  }
+  const r = db.prepare('UPDATE categories SET group_id = ? WHERE id = ? AND business_id = ?').run(groupId, id, req.biz.id);
+  res.json({ ok: r.changes > 0, id, group_id: groupId });
 });
 
 // ================= CATÁLOGO DE ATRIBUTOS (JSON, no recarga el formulario) =================
