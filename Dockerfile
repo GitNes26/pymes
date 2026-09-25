@@ -21,11 +21,13 @@ RUN groupadd --system --gid 1001 nodejs \
 COPY --from=builder /app/node_modules ./node_modules
 COPY . .
 
-RUN mkdir -p public/uploads backups && chown -R nodejs:nodejs /app && chmod +x /app/docker-entrypoint.sh
+RUN mkdir -p public/uploads/catamanager backups && chown -R nodejs:nodejs /app && chmod +x /app/docker-entrypoint.sh
 
 EXPOSE 3000
 
-ENV NODE_ENV=production
+ENV NODE_ENV=production \
+    UPLOADS_ROOT=/app/public/uploads \
+    UPLOADS_PROJECT_NAME=catamanager
 
 # bookworm-slim no trae wget/curl por defecto (a diferencia de Alpine);
 # se usa el fetch nativo de Node para no tener que instalar nada extra.

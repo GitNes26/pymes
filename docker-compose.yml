@@ -48,6 +48,9 @@ services:
       # stack en localhost (sin TLS), y forzar https rompería esa prueba.
       # En Dokploy sí se define (ver dokploy.json / env.dokploy).
       BASE_URL: ${BASE_URL:-}
+      # Subcarpeta exclusiva dentro del volumen compartido de uploads.
+      UPLOADS_ROOT: /app/public/uploads
+      UPLOADS_PROJECT_NAME: ${UPLOADS_PROJECT_NAME:-catamanager}
     volumes:
       - uploads_data:/app/public/uploads
       - backups_data:/app/backups

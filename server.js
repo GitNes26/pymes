@@ -1,6 +1,7 @@
 const express = require('express');
 const http = require('http');
 const path = require('path');
+const fs = require('fs');
 
 // Carga variables de entorno desde .env ANTES de require('./db')
 try {
@@ -28,6 +29,28 @@ const ExcelJS = require('exceljs');
 const QRCode = require('qrcode');
 const { TPL_THEMES, TPL_META, TPL_CASOS } = require('./templates-data');
 const app = express();
+
+// Cada despliegue escribe dentro de su propia carpeta aunque varios proyectos
+// monten el mismo volumen en /app/public/uploads. Las URLs públicas continúan
+// siendo /uploads/archivo.ext para no guardar rutas de infraestructura en la BD.
+const UPLOADS_ROOT = path.resolve(process.env.UPLOADS_ROOT || path.join(__dirname, 'public', 'uploads'));
+const UPLOADS_PROJECT_NAME = String(process.env.UPLOADS_PROJECT_NAME || 'catamanager').trim();
+if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(UPLOADS_PROJECT_NAME)) {
+  throw new Error('UPLOADS_PROJECT_NAME inválido: usa de 1 a 64 letras, números, punto, guion o guion bajo.');
+}
+const UPLOADS_DIR = path.join(UPLOADS_ROOT, UPLOADS_PROJECT_NAME);
+fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+console.log(`[uploads] proyecto=${UPLOADS_PROJECT_NAME} directorio=${UPLOADS_DIR}`);
+
+function uploadedFilePath(filename) {
+  const file = String(filename || '');
+  if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(file)) return null;
+  const projectFile = path.join(UPLOADS_DIR, file);
+  if (fs.existsSync(projectFile)) return projectFile;
+  // Compatibilidad temporal: antes todos los proyectos escribían en la raíz.
+  const legacyFile = path.join(UPLOADS_ROOT, file);
+  return fs.existsSync(legacyFile) && fs.statSync(legacyFile).isFile() ? legacyFile : null;
+}
 
 // Conexiones en tiempo real del panel, separadas por negocio. Se usa el
 // protocolo WebSocket nativo para no agregar otra dependencia al servidor.
@@ -402,26 +425,35 @@ app.get('/sw.js', (req, res) => {
   res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'sw.js'));
 });
-// Imágenes de /uploads a la medida: /uploads/foto.jpg?w=480 devuelve una versión webp más ligera (se guarda en
-// public/uploads/_cache). Las tarjetas del catálogo piden 480/800 px con srcset en vez de bajar la foto original.
+// Archivos del proyecto actual. Para imágenes, ?w=480 devuelve una versión
+// WebP ligera guardada en la caché de la misma carpeta del proyecto.
 const _IMG_W = [240, 360, 480, 640, 800, 1200];
 app.get('/uploads/:file', (req, res, next) => {
   const w = parseInt(req.query.w, 10);
   const file = req.params.file;
-  if (!w || !/\.(jpe?g|png|webp)$/i.test(file) || file.startsWith('.')) return next();
+  const src = uploadedFilePath(file);
+  if (!src) return next();
+  const sendOriginal = () => {
+    if (res.headersSent) return;
+    res.set('Cache-Control', 'public, max-age=604800');
+    res.sendFile(src);
+  };
+  if (!w || !/\.(jpe?g|png|webp)$/i.test(file)) {
+    return sendOriginal();
+  }
   const width = _IMG_W.reduce((a, b) => (Math.abs(b - w) < Math.abs(a - w) ? b : a));
-  const root = path.join(__dirname, 'public', 'uploads');
-  const src = path.join(root, file);
-  if (!src.startsWith(root) || !fs.existsSync(src)) return next();
-  const cacheDir = path.join(root, '_cache');
+  const cacheDir = path.join(UPLOADS_DIR, '_cache');
   const out = path.join(cacheDir, file.replace(/\.[^.]+$/, '') + '-' + width + '.webp');
   const send = () => { res.set('Cache-Control', 'public, max-age=2592000, immutable').type('image/webp'); res.sendFile(out); };
   try {
     if (fs.existsSync(out) && fs.statSync(out).mtimeMs >= fs.statSync(src).mtimeMs) return send();
     fs.mkdirSync(cacheDir, { recursive: true });
-    sharp(src).rotate().resize({ width, withoutEnlargement: true }).webp({ quality: 80 }).toFile(out).then(send).catch(() => next());
-  } catch (e) { next(); }
+    sharp(src).rotate().resize({ width, withoutEnlargement: true }).webp({ quality: 80 }).toFile(out).then(send).catch(sendOriginal);
+  } catch (e) { sendOriginal(); }
 });
+// Impide que /uploads/otro-proyecto/archivo exponga carpetas vecinas a través
+// del express.static general. Solo se sirven nombres planos por la ruta anterior.
+app.use('/uploads', (req, res) => res.sendStatus(404));
 app.use(require('compression')());
 app.use(express.static(path.join(__dirname, 'public'), {
   maxAge: '7d',
@@ -454,8 +486,7 @@ setInterval(function() {
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const dir = path.join(__dirname, 'public', 'uploads');
-    require('fs').mkdir(dir, { recursive: true }, err => cb(err, dir));
+    fs.mkdir(UPLOADS_DIR, { recursive: true }, err => cb(err, UPLOADS_DIR));
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
@@ -561,7 +592,7 @@ const uploadExcel = multer({
 });
 
 const videoStorage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, 'public', 'uploads')),
+  destination: (req, file, cb) => cb(null, UPLOADS_DIR),
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
     const allowed = ['.mp4', '.webm', '.mov', '.m4v', '.ogg'];
@@ -618,7 +649,7 @@ async function compressUploadedVideo(filePath) {
 }
 
 const fileStorage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, 'public', 'uploads')),
+  destination: (req, file, cb) => cb(null, UPLOADS_DIR),
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
     const allowed = ['.mp3', '.wav', '.ogg', '.m4a', '.aac', '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.zip', '.txt', '.csv', '.json'];
@@ -686,7 +717,6 @@ function verifyBodyCsrf(req, res, next) {
 // contenedor — si el despliegue en Dokploy no monta ese directorio como volumen
 // persistente, los backups no sobreviven un redeploy; considera moverlos a un
 // bucket remoto (S3, etc.) o confirmar que Dokploy ya respalda la base por su cuenta.
-const fs = require('fs');
 const backupsDir = path.join(__dirname, 'backups');
 if (!fs.existsSync(backupsDir)) fs.mkdirSync(backupsDir, { recursive: true });
 async function hacerBackup() {
@@ -3578,8 +3608,9 @@ app.get('/:slug/admin/img-proxy', requireAuth, can('productos.ver'), ah(async (r
       res.send(buf);
     } else {
       // Ruta relativa (foto subida a /uploads): se sirve directo del disco
-      const file = path.resolve(__dirname, 'public', src.replace(/^\/+/, ''));
-      if (!file.startsWith(path.resolve(__dirname, 'public'))) return res.status(400).json({ ok: false, error: 'Ruta no permitida' });
+      const match = src.match(/^\/uploads\/([A-Za-z0-9][A-Za-z0-9._-]*)$/);
+      const file = match && uploadedFilePath(match[1]);
+      if (!file) return res.status(404).json({ ok: false, error: 'Imagen no encontrada' });
       res.sendFile(file);
     }
   } catch (e) {
