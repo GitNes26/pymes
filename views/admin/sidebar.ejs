@@ -144,7 +144,7 @@ SCRIPT: Toggle modo oscuro
 </script>
 
 <script>
-  // Pedidos en tiempo real: WebSocket principal y consulta periódica de respaldo.
+  // Notificación de pedidos nuevos (sin recargar): badge + sonido cuando llega un pedido.
   (function () {
     var badge = document.getElementById('new-orders-badge');
     var onPanel = <%= (active === 'panel') ? 'true' : 'false' %>;
@@ -153,21 +153,7 @@ SCRIPT: Toggle modo oscuro
     var slug = '<%= biz.slug %>';
     var key = 'lastOrder_' + slug;
     var lastSeen = 0, initialized = false, prevCount = 0;
-    var ws = null, retryTimer = null, fallbackTimer = null, reloadTimer = null;
-    var retryDelay = 1000;
     try { lastSeen = parseInt(localStorage.getItem(key) || '0', 10) || 0; } catch (e) {}
-    function saveLastSeen() {
-      try { localStorage.setItem(key, String(lastSeen)); } catch (e) {}
-    }
-    function showCount(count) {
-      if (!badge) return;
-      if (count > 0) {
-        badge.textContent = count > 99 ? '99+' : String(count);
-        badge.style.display = 'flex';
-      } else {
-        badge.style.display = 'none';
-      }
-    }
     function beep() {
       try {
         var AC = window.AudioContext || window.webkitAudioContext;
@@ -182,86 +168,35 @@ SCRIPT: Toggle modo oscuro
         o.start(); o.stop(ctx.currentTime + 0.42);
       } catch (e) {}
     }
-    function poll(silent) {
-      fetch('/' + slug + '/admin/api/new-orders?after=' + encodeURIComponent(lastSeen), { credentials: 'same-origin' })
+    function poll() {
+      fetch('/' + slug + '/admin/api/new-orders', { credentials: 'same-origin' })
         .then(function (r) { return r.json(); })
         .then(function (d) {
           if (!d || d.lastId === undefined) return;
           if (!initialized) {
-            if (!lastSeen) { lastSeen = Number(d.lastId) || 0; saveLastSeen(); }
+            if (!lastSeen) lastSeen = d.lastId;
             initialized = true;
           }
           if (onPanel) {
-            lastSeen = Math.max(lastSeen, Number(d.lastId) || 0);
-            showCount(0);
-            saveLastSeen();
+            lastSeen = d.lastId;
+            if (badge) badge.style.display = 'none';
+            try { localStorage.setItem(key, String(lastSeen)); } catch (e) {}
             prevCount = 0;
             return;
           }
-          var count = Number(d.count) || 0;
+          var count = d.lastId - lastSeen;
           if (count > 0) {
-            showCount(count);
-            if (!silent && count > prevCount) {
+            if (badge) { badge.textContent = count; badge.style.display = 'flex'; }
+            if (count > prevCount) {
               beep();
-              if (window.mostrarToast) window.mostrarToast(count + ' pedido(s) nuevo(s) 🛎️', 'ok');
+              if (window.mostrarToast) mostrarToast(count + ' pedido(s) nuevo(s) 🛎️', 'ok');
             }
-          } else showCount(0);
+          }
           prevCount = count;
         }).catch(function () {});
     }
-
-    function startFallback() {
-      if (!fallbackTimer) fallbackTimer = setInterval(function () { poll(false); }, 15000);
-    }
-    function stopFallback() {
-      if (fallbackTimer) clearInterval(fallbackTimer);
-      fallbackTimer = null;
-    }
-    function connect() {
-      if (!window.WebSocket) { startFallback(); return; }
-      var protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-      var opened = false;
-      var connectTimer;
-      try { ws = new WebSocket(protocol + '//' + location.host + '/ws/panel/' + encodeURIComponent(slug)); }
-      catch (e) { startFallback(); retryTimer = setTimeout(connect, retryDelay); return; }
-      connectTimer = setTimeout(function () { if (!opened && ws) ws.close(); }, 8000);
-      ws.onopen = function () {
-        opened = true;
-        clearTimeout(connectTimer);
-        retryDelay = 1000;
-        stopFallback();
-        poll(false);
-      };
-      ws.onmessage = function (event) {
-        var data;
-        try { data = JSON.parse(event.data); } catch (e) { return; }
-        if (!data || data.type !== 'order:new' || !data.order) return;
-        var orderId = Number(data.order.id) || 0;
-        if (onPanel) {
-          lastSeen = Math.max(lastSeen, orderId);
-          saveLastSeen();
-          showCount(0);
-          beep();
-          if (window.mostrarToast) window.mostrarToast('Nuevo pedido #' + orderId + ' 🛎️', 'ok');
-          if (!reloadTimer) reloadTimer = setTimeout(function () { location.reload(); }, 450);
-        } else {
-          // La consulta devuelve el conteo exacto aunque los IDs sean globales
-          // para todas las tiendas o algún pedido anterior se haya eliminado.
-          poll(false);
-        }
-      };
-      ws.onclose = function () {
-        clearTimeout(connectTimer);
-        ws = null;
-        startFallback();
-        clearTimeout(retryTimer);
-        retryTimer = setTimeout(connect, retryDelay);
-        retryDelay = Math.min(retryDelay * 2, 15000);
-      };
-      ws.onerror = function () { if (ws) ws.close(); };
-    }
     poll();
-    connect();
+    setInterval(poll, 15000);
   })();
 </script>
 
