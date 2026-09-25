@@ -1,0 +1,26 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+WrapStyle: 2
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Title,Arial,75,&H00F2E5C7,&H000000FF,&H00221B15,&H80000000,-1,0,0,0,100,100,2,0,1,5,2,8,65,65,130,1
+Style: Caption,Arial,49,&H00FFFFFF,&H000000FF,&H00221B15,&H90000000,-1,0,0,0,100,100,0,0,1,4,1,2,75,75,235,1
+Style: Wall,Arial,72,&H00E8D4A9,&H000000FF,&H00221B15,&H00000000,-1,0,0,0,100,100,2,0,1,4,1,8,95,95,380,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.30,0:00:04.10,Title,,0,0,0,,{\fad(250,300)}PLUMAS DE BARRIO
+Dialogue: 0,0:00:04.15,0:00:07.90,Title,,0,0,0,,{\fad(250,300)\c&H59C7A1&}EL HUEVO DEL CANAL
+Dialogue: 0,0:00:08.10,0:00:15.80,Caption,,0,0,0,,CINCO HUEVOS. CUATRO PERFECTOS.\NY UNO CHUECO.
+Dialogue: 0,0:00:16.00,0:00:23.90,Caption,,0,0,0,,{\c&H59C7A1&}“¡Y SE VA, SE VA, SE VA…\N¡GOOOOOOL!”
+Dialogue: 0,0:00:24.10,0:00:32.30,Caption,,0,0,0,,PIPO NACIÓ CON EL GOL.\NY CAYÓ DE CARA AL LODO.
+Dialogue: 0,0:00:32.50,0:00:40.60,Caption,,0,0,0,,LO PRIMERO QUE VIO\NFUE UNA PELOTA PONCHADA.
+Dialogue: 0,0:00:40.80,0:00:48.80,Caption,,0,0,0,,SU PRIMER “CUAC”.\NSU PRIMERA CAÍDA.
+Dialogue: 0,0:00:49.00,0:00:54.80,Caption,,0,0,0,,Y SU PRIMER BALÓN.
+Dialogue: 0,0:00:54.90,0:00:57.50,Wall,,0,0,0,,{\fad(200,100)}AQUÍ NO NACEN\NCAMPEONES
+Dialogue: 0,0:00:57.50,0:01:00.00,Wall,,0,0,0,,{\fad(100,300)\c&H59C7A1&}TODAVÍA.
+
