@@ -224,6 +224,15 @@
   <link rel="icon" href="/icons/icon-192.png">
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
   <% } %>
+  <script>
+    // Se resuelve antes del primer render para que el encabezado no cambie de
+    // ancho cuando pwa.js detecta que el catálogo ya está abierto como app.
+    try {
+      if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+        document.documentElement.classList.add('is-standalone');
+      }
+    } catch (e) {}
+  </script>
   <script src="/pwa.js?v=20260919" defer></script>
   <link rel="stylesheet" href="/vendor/bootstrap-icons/bootstrap-icons.min.css">
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -368,8 +377,9 @@
     }
     .admin-pill:active { transform:scale(0.97); }
     .install-pill {
-      display:none;
+      display:inline-flex;
       align-items:center;
+      justify-content:center;
       gap:8px;
       background:var(--accent);
       color:#fff;
@@ -379,10 +389,14 @@
       border-radius:12px;
       font-weight:700;
       font-size:13px;
-      font-family:inherit;
+      font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+      line-height:1;
+      min-height:40px;
+      white-space:nowrap;
       box-shadow:0 4px 14px rgba(26,60,94,.18);
-      transition:all .25s cubic-bezier(.22,1,.36,1);
+      transition:transform .2s cubic-bezier(.22,1,.36,1), box-shadow .2s cubic-bezier(.22,1,.36,1), background-color .2s ease;
     }
+    html.is-standalone #pwa-install-btn-public { display:none; }
     .install-pill:hover { transform:translateY(-2px) scale(1.02); }
     .install-pill:active { transform:scale(0.97); }
 
@@ -924,6 +938,14 @@
       .gal-grid { grid-template-columns:repeat(2,1fr); }
       .oferta-card { flex:0 0 180px; }
     }
+    @media(max-width:700px) {
+      .hdr-inner { padding:10px 14px; gap:10px; }
+      .hdr-left { min-width:0; }
+      .hdr-title { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+      .hdr-right { flex:none; gap:8px; }
+      .install-pill { width:40px; min-width:40px; padding:0; gap:0; font-size:0; }
+      .install-pill i { font-size:16px; }
+    }
     @media(max-width:480px) {
       .hero { min-height:200px; }
       .hero-name { font-size:1.3rem; }
@@ -1222,21 +1244,12 @@
         <% if (biz.banner || biz.logo) { %><span class="hdr-title"><%= biz.name %></span><% } else { %><h1 class="hdr-title"><%= biz.name %></h1><% } %>
       </div>
       <div class="hdr-right">
-        <% if (_ex.showHow) { %><a href="#como-comprar" class="install-pill how-pill" onclick="var s=document.getElementById('como-comprar'); if(s){ s.scrollIntoView({behavior:'smooth',block:'start'}); return false; }"><i class="bi bi-question-circle"></i> ¿Cómo comprar?</a><% } %>
-        <button type="button" id="pwa-install-btn-public" class="install-pill" onclick="window.installPWA && window.installPWA()"><i class="bi bi-download"></i> Instalar app</button>
+        <% if (_ex.showHow) { %><a href="#como-comprar" class="install-pill how-pill" aria-label="Cómo comprar" title="Cómo comprar" onclick="var s=document.getElementById('como-comprar'); if(s){ s.scrollIntoView({behavior:'smooth',block:'start'}); return false; }"><i class="bi bi-question-circle" aria-hidden="true"></i> ¿Cómo comprar?</a><% } %>
+        <button type="button" id="pwa-install-btn-public" class="install-pill" aria-label="Instalar app" title="Instalar app" onclick="window.installPWA && window.installPWA()"><i class="bi bi-download" aria-hidden="true"></i> Instalar app</button>
         <% if (adminLink) { %><a href="<%= adminLink %>" class="admin-pill"><i class="bi bi-speedometer2"></i> Panel</a><% } %>
       </div>
     </div>
   </header>
-  <script>
-    (function () {
-      var btn = document.getElementById('pwa-install-btn-public');
-      if (!btn) return;
-      function apply(can) { btn.style.display = can ? 'inline-flex' : 'none'; }
-      document.addEventListener('pwa-installable-change', function (e) { apply(e.detail.installable); });
-      if (document.documentElement.classList.contains('pwa-installable')) apply(true);
-    })();
-  </script>
   <% } %>
 
   <!-- ===== OFERTAS (full width) ===== -->

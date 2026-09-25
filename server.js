@@ -1,4 +1,5 @@
 const express = require('express');
+const http = require('http');
 const path = require('path');
 
 // Carga variables de entorno desde .env ANTES de require('./db')
@@ -27,6 +28,42 @@ const ExcelJS = require('exceljs');
 const QRCode = require('qrcode');
 const { TPL_THEMES, TPL_META, TPL_CASOS } = require('./templates-data');
 const app = express();
+
+// Conexiones en tiempo real del panel, separadas por negocio. Se usa el
+// protocolo WebSocket nativo para no agregar otra dependencia al servidor.
+const panelSockets = new Map();
+function websocketFrame(value, opcode = 0x1) {
+  const payload = Buffer.isBuffer(value) ? value : Buffer.from(String(value));
+  let header;
+  if (payload.length < 126) {
+    header = Buffer.from([0x80 | opcode, payload.length]);
+  } else if (payload.length < 65536) {
+    header = Buffer.alloc(4);
+    header[0] = 0x80 | opcode; header[1] = 126;
+    header.writeUInt16BE(payload.length, 2);
+  } else {
+    header = Buffer.alloc(10);
+    header[0] = 0x80 | opcode; header[1] = 127;
+    header.writeBigUInt64BE(BigInt(payload.length), 2);
+  }
+  return Buffer.concat([header, payload]);
+}
+function sendPanelEvent(businessId, payload) {
+  const clients = panelSockets.get(Number(businessId));
+  if (!clients || !clients.size) return;
+  const frame = websocketFrame(JSON.stringify(payload));
+  clients.forEach((socket) => {
+    if (socket.destroyed || !socket.writable) clients.delete(socket);
+    else {
+      try { socket.write(frame); } catch (e) { clients.delete(socket); socket.destroy(); }
+    }
+  });
+  if (!clients.size) panelSockets.delete(Number(businessId));
+}
+function publishOrderCreated(businessId, orderId) {
+  const order = db.prepare('SELECT id, total, customer_name, status, paid, created_at FROM orders WHERE id = ? AND business_id = ?').get(orderId, businessId);
+  if (order) sendPanelEvent(businessId, { type: 'order:new', order });
+}
 
 // Express 4 no captura rechazos de handlers async: cualquier error de BD en uno
 // de ellos se convierte en 500 (next(err)) en lugar de tumbar el proceso.
@@ -2711,6 +2748,7 @@ app.get('/:slug/pedir', (req, res) => {
   reserveOrder(_oidWa, stockItems);
   upsertCustomer(biz.id, customerName, customerPhone);
   track(biz.id, 'wa', 'pedido');
+  publishOrderCreated(biz.id, _oidWa);
 
   res.redirect(waLink(biz, message));
 });
@@ -2922,6 +2960,7 @@ app.get('/:slug/pagar-mp', async (req, res) => {
   ).run(biz.id, lines.join(' | '), baseTotalMp, customerData, customerPhone).lastInsertRowid;
   reserveOrder(orderId, stockItems);
   upsertCustomer(biz.id, customerName, customerPhone);
+  publishOrderCreated(biz.id, orderId);
 
   const storeUrl = mpAbsUrl(req, '/' + biz.slug);
   const pref = {
@@ -3118,9 +3157,11 @@ app.post('/:slug/pagar-tarjeta', rateLimit(12), async (req, res) => {
     db.prepare("UPDATE orders SET paid = 1, paid_at = datetime('now'), status = 'pagado' WHERE id = ?").run(orderId);
     moveOrderStock(orderId, -1);
     notifyOwnerPaid(biz, orderId);
+    publishOrderCreated(biz.id, orderId);
     return res.json({ ok: true, status: 'approved', orderId, total: charge });
   }
   if (pay.status === 'in_process' || pay.status === 'pending') {
+    publishOrderCreated(biz.id, orderId);
     return res.json({ ok: true, status: pay.status, orderId, total: charge }); // el webhook lo marca pagado cuando se apruebe
   }
   moveOrderStock(orderId, 1); db.prepare('DELETE FROM orders WHERE id = ?').run(orderId);
@@ -3220,6 +3261,7 @@ app.post('/api/pedir', (req, res) => {
       reserveOrder(_oidCart, list.map(x => ({ id: x.p.id, qty: x.qty, variant: x.variant })));
       upsertCustomer(b.id, nombre, telefono);
       track(b.id, 'wa', 'pedido');
+      publishOrderCreated(b.id, _oidCart);
     }
     const instInfo = hasInst ? { isInstallment: true, count: instP.installment_count || 6, frequency: instP.installment_frequency || 'semanal', minDown: instP.installment_min_down || 0 } : null;
     const message = buildOrderMessage(b.name, lines, total, b.wa_message, currencyInfo(b.currency).symbol, instInfo);
@@ -3933,6 +3975,7 @@ app.post('/:slug/admin/venta-efectivo', requireAuth, can('pedidos.gestionar'), (
   reserveOrder(orderId, cashItems);
   if (customerName || customerPhone) upsertCustomer(biz.id, customerName, customerPhone);
   track(biz.id, 'efectivo', 'pedido');
+  publishOrderCreated(biz.id, orderId);
   res.json({ ok: true, orderId, total });
 });
 // Etiquetas de toda la tienda (globales): se guardan en extras.globalTags y salen en todos los productos
@@ -4490,8 +4533,12 @@ app.post('/:slug/admin/cliente/:id/eliminar', requireAuth, can('clientes'), (req
 
 // Conteo de pedidos nuevos (para la notificación del panel)
 app.get('/:slug/admin/api/new-orders', requireAuth, (req, res) => {
+  const after = Math.max(0, parseInt(req.query.after, 10) || 0);
   const row = db.prepare('SELECT COALESCE(MAX(id), 0) AS lastId FROM orders WHERE business_id = ?').get(req.biz.id);
-  res.json({ lastId: row.lastId });
+  const count = after
+    ? db.prepare('SELECT COUNT(*) AS c FROM orders WHERE business_id = ? AND id > ?').get(req.biz.id, after).c
+    : 0;
+  res.json({ lastId: row.lastId, count });
 });
 
 // Conteo de productos con stock bajo/agotado (para el aviso del menú)
@@ -5516,7 +5563,89 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = Number(process.env.PORT) || 3000; // '0' u otro valor no numérico cae al 3000
-app.listen(PORT, () => {
+const server = http.createServer(app);
+
+function rejectWebSocket(socket, status, message) {
+  try { socket.end('HTTP/1.1 ' + status + ' ' + message + '\r\nConnection: close\r\n\r\n'); }
+  catch (e) { socket.destroy(); }
+}
+
+server.on('upgrade', (req, socket) => {
+  let url;
+  try { url = new URL(req.url, 'http://localhost'); }
+  catch (e) { return rejectWebSocket(socket, 400, 'Bad Request'); }
+  const match = url.pathname.match(/^\/ws\/panel\/([^/]+)$/);
+  if (!match || String(req.headers.upgrade || '').toLowerCase() !== 'websocket' || req.headers['sec-websocket-version'] !== '13') {
+    return rejectWebSocket(socket, 404, 'Not Found');
+  }
+
+  let slug;
+  try { slug = decodeURIComponent(match[1]); }
+  catch (e) { return rejectWebSocket(socket, 400, 'Bad Request'); }
+  const biz = getBusiness(slug);
+  const cookie = {};
+  String(req.headers.cookie || '').split(';').forEach((part) => {
+    const i = part.indexOf('=');
+    if (i > 0) {
+      try { cookie[part.slice(0, i).trim()] = decodeURIComponent(part.slice(i + 1).trim()); }
+      catch (e) { cookie[part.slice(0, i).trim()] = part.slice(i + 1).trim(); }
+    }
+  });
+  const sess = findSession(cookie.sid);
+  const allowedRole = sess && (sess.kind === 'owner' || sess.kind === 'employee');
+  const allowedPanel = allowedRole && (sess.kind === 'owner' || permsOf(sess).some(p => p === 'reportes' || p === 'pedidos.gestionar'));
+  if (!biz || storeBlock(biz).blocked || !allowedPanel || Number(sess.biz_id) !== Number(biz.id)) {
+    return rejectWebSocket(socket, 401, 'Unauthorized');
+  }
+
+  // Evita que otro sitio abra una conexión usando la sesión del panel.
+  const origin = String(req.headers.origin || '');
+  const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').split(',')[0].trim();
+  if (origin) {
+    try { if (new URL(origin).host !== host) return rejectWebSocket(socket, 403, 'Forbidden'); }
+    catch (e) { return rejectWebSocket(socket, 403, 'Forbidden'); }
+  }
+
+  const key = String(req.headers['sec-websocket-key'] || '');
+  if (!key) return rejectWebSocket(socket, 400, 'Bad Request');
+  const accept = crypto.createHash('sha1').update(key + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11').digest('base64');
+  socket.write(
+    'HTTP/1.1 101 Switching Protocols\r\n' +
+    'Upgrade: websocket\r\n' +
+    'Connection: Upgrade\r\n' +
+    'Sec-WebSocket-Accept: ' + accept + '\r\n\r\n'
+  );
+
+  const businessId = Number(biz.id);
+  const clients = panelSockets.get(businessId) || new Set();
+  clients.add(socket);
+  panelSockets.set(businessId, clients);
+  socket.write(websocketFrame(JSON.stringify({ type: 'ready' })));
+
+  const cleanup = () => {
+    clients.delete(socket);
+    if (!clients.size) panelSockets.delete(businessId);
+  };
+  // Los mensajes del navegador (pong/cierre) solo necesitan consumirse; todos
+  // los datos de negocio viajan del servidor hacia el panel.
+  socket.on('data', (chunk) => {
+    if (chunk.length > 1 && (chunk[0] & 0x0f) === 0x8) socket.end(websocketFrame('', 0x8));
+  });
+  socket.on('close', cleanup);
+  socket.on('end', cleanup);
+  socket.on('error', cleanup);
+});
+
+const panelHeartbeat = setInterval(() => {
+  panelSockets.forEach((clients) => clients.forEach((socket) => {
+    if (!socket.destroyed && socket.writable) {
+      try { socket.write(websocketFrame('', 0x9)); } catch (e) { socket.destroy(); }
+    }
+  }));
+}, 25000);
+panelHeartbeat.unref();
+
+server.listen(PORT, () => {
   db.prepare("DELETE FROM sessions WHERE expires_at IS NOT NULL AND expires_at < datetime('now')").run();
   setInterval(() => {
     db.prepare("DELETE FROM sessions WHERE expires_at IS NOT NULL AND expires_at < datetime('now')").run();
