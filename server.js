@@ -2396,6 +2396,14 @@ app.post('/maestro/cerrar', (req, res) => {
 });
 
 // ================= CATÁLOGO PÚBLICO =================
+// TEMPORAL (prueba): productos del catálogo en JSON para verlos en Network. QUITAR.
+app.get('/:slug/api/productos', (req, res) => {
+  const biz = getBusiness(req.params.slug);
+  if (!biz || !biz.active) return res.status(404).json({ error: 'Tienda no encontrada' });
+  const { categories, products } = getCatalog(biz.id);
+  res.json({ tienda: biz.slug, total: products.length, categories, products });
+});
+
 app.get('/:slug', (req, res, next) => {
   const biz = getBusiness(req.params.slug);
   if (!biz || !biz.active) return res.status(404).render('404', { message: 'Tienda no encontrada o desactivada' });
