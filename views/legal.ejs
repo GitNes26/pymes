@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= doc === 'privacidad' ? 'Aviso de Privacidad' : 'Términos y Condiciones' %> | Catálogo Fácil</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    body{margin:0;font-family:Inter,system-ui,sans-serif;color:#17191d;background:#f7f7f8;line-height:1.7}
+    nav{display:flex;align-items:center;justify-content:space-between;height:64px;padding:0 24px;background:#fff;border-bottom:1px solid #e2e3e5}
+    nav a{text-decoration:none;color:#17191d;font-weight:800}nav .alt{font-weight:600;color:#62666d;font-size:14px}
+    main{max-width:760px;margin:32px auto;padding:32px 24px;background:#fff;border-radius:16px}
+    h1{font-size:32px;line-height:1.1;margin:0 0 6px}h2{font-size:18px;margin:28px 0 6px}
+    p,li{font-size:15px;color:#33363b}.ver{color:#62666d;font-size:13px}
+  </style>
+</head>
+<body>
+<nav><a href="/">Catálogo Fácil</a><a class="alt" href="<%= doc === 'privacidad' ? '/terminos' : '/aviso-de-privacidad' %>"><%= doc === 'privacidad' ? 'Términos y Condiciones' : 'Aviso de Privacidad' %></a></nav>
+<main>
+<% if (doc === 'privacidad') { %>
+  <h1>Aviso de Privacidad</h1>
+  <p class="ver">Versión <%= LEGAL_VERSION %></p>
+  <p>En cumplimiento de la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP), <strong>Nessik</strong>, con domicilio en <strong>Torreón, Coahuila, México</strong>, es responsable del tratamiento de tus datos personales.</p>
+  <h2>Datos que recabamos</h2>
+  <ul><li>Nombre del negocio y descripción.</li><li>Número de WhatsApp de ventas.</li><li>PIN de acceso (se guarda cifrado; nadie puede leerlo).</li><li>Datos técnicos: dirección IP, fecha y hora de registro.</li><li>Información de productos y pedidos que captures en tu tienda.</li></ul>
+  <p>No recabamos datos personales sensibles.</p>
+  <h2>Finalidades principales</h2>
+  <ul><li>Crear y administrar tu tienda en línea.</li><li>Conectar los pedidos de tus clientes con tu WhatsApp.</li><li>Brindarte soporte y avisos sobre tu cuenta.</li><li>Seguridad y prevención de fraudes.</li></ul>
+  <h2>Finalidades secundarias</h2>
+  <p>Enviarte novedades y promociones, solo si lo aceptaste al registrarte. Puedes negarte en cualquier momento escribiendo a <strong>[CORREO DE CONTACTO]</strong>.</p>
+  <h2>Transferencias</h2>
+  <p>No vendemos ni compartimos tus datos con terceros, salvo proveedores que nos dan servicio (hospedaje, mensajería) y autoridades cuando la ley lo exija.</p>
+  <h2>Derechos ARCO</h2>
+  <p>Puedes solicitar el Acceso, Rectificación, Cancelación u Oposición de tus datos, así como revocar tu consentimiento, enviando un correo a <strong>[CORREO DE CONTACTO]</strong> con tu nombre, el enlace de tu tienda y tu petición. Responderemos en un máximo de 20 días hábiles.</p>
+  <h2>Cookies</h2>
+  <p>Usamos una cookie de sesión necesaria para mantenerte conectado a tu panel. No usamos cookies de publicidad de terceros.</p>
+  <h2>Cambios</h2>
+  <p>Cualquier cambio a este aviso se publicará en esta misma página.</p>
+<% } else { %>
+  <h1>Términos y Condiciones</h1>
+  <p class="ver">Versión <%= LEGAL_VERSION %></p>
+  <h2>1. Aceptación</h2>
+  <p>Al crear una tienda en Catálogo Fácil aceptas estos términos. Si no estás de acuerdo, no uses el servicio.</p>
+  <h2>2. Tu cuenta</h2>
+  <p>Debes ser mayor de edad y tener autorización para registrar el negocio. Eres responsable de guardar tu PIN y de toda actividad en tu cuenta.</p>
+  <h2>3. Tu contenido</h2>
+  <p>Eres responsable de los productos, precios, imágenes y textos que publiques. Está prohibido vender productos ilegales, falsificados o que infrinjan derechos de terceros. Podemos suspender tiendas que incumplan.</p>
+  <h2>4. Ventas</h2>
+  <p>Catálogo Fácil solo muestra tu catálogo y conecta pedidos con tu WhatsApp. La venta, entrega, cobro, garantías y facturación son responsabilidad tuya frente a tus clientes.</p>
+  <h2>5. Planes y pagos</h2>
+  <p>El plan gratuito puede incluir anuncios y límites. Los planes de pago se rigen por lo publicado en la página de planes.</p>
+  <h2>6. Disponibilidad</h2>
+  <p>Hacemos lo posible por mantener el servicio disponible, pero no garantizamos que esté libre de interrupciones o errores.</p>
+  <h2>7. Cancelación</h2>
+  <p>Puedes pedir la baja de tu tienda en cualquier momento escribiendo a <strong>[CORREO DE CONTACTO]</strong>.</p>
+  <h2>8. Legislación</h2>
+  <p>Estos términos se rigen por las leyes de México. Cualquier controversia se resolverá ante los tribunales de <strong>Torreón, Coahuila</strong>.</p>
+<% } %>
+</main>
+</body>
+</html>

@@ -452,6 +452,11 @@ CREATE TABLE IF NOT EXISTS posts (
 addColumnIfMissing('businesses', 'giro_preset', "TEXT DEFAULT ''");
 // Si el dueño ya pasó por el asistente del Modo fácil al menos una vez
 addColumnIfMissing('businesses', 'onboarding_done', 'INTEGER DEFAULT 0');
+// Consentimiento legal del dueño al registrarse (LFPDPPP): fecha, versión, IP y opt-in de promociones
+addColumnIfMissing('businesses', 'terms_accepted_at', "TEXT DEFAULT ''");
+addColumnIfMissing('businesses', 'terms_version', "TEXT DEFAULT ''");
+addColumnIfMissing('businesses', 'terms_ip', "TEXT DEFAULT ''");
+addColumnIfMissing('businesses', 'marketing_optin', 'INTEGER DEFAULT 0');
 // Bloques de contenido del catálogo (banner, texto, destacados…) ordenables con drag&drop
 addColumnIfMissing('businesses', 'blocks', "TEXT DEFAULT '[]'");
 addColumnIfMissing('businesses', 'page_bg', "TEXT DEFAULT ''");

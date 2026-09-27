@@ -2132,13 +2132,19 @@ app.get('/', (req, res) => {
   res.render('landing', { stores, TEMPLATES, COLORS });
 });
 
+// ================= DOCUMENTOS LEGALES =================
+// Cambia LEGAL_VERSION cuando modifiques el texto: queda guardada con cada registro.
+const LEGAL_VERSION = '2026-09-26';
+app.get('/aviso-de-privacidad', (req, res) => res.render('legal', { doc: 'privacidad', LEGAL_VERSION }));
+app.get('/terminos', (req, res) => res.render('legal', { doc: 'terminos', LEGAL_VERSION }));
+
 // ================= REGISTRO DE TIENDA =================
 app.get('/registrar', (req, res) => {
   res.render('register', { TEMPLATES, COLORS, GIROS: getGiros(), ESTILOS, error: null, ok: null, form: null });
 });
 
 app.post('/registrar', rateLimit(10), (req, res) => {
-  const { name, slug, whatsapp, description, pin, template, color, giro, estilo } = req.body;
+  const { name, slug, whatsapp, description, pin, template, color, giro, estilo, acepto_terminos, mayor_edad, marketing } = req.body;
   const cleanSlug = (slug || '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '-');
   // Conserva lo que ya escribió el usuario para no borrar el formulario al fallar
   const form = {
@@ -2162,6 +2168,9 @@ app.post('/registrar', rateLimit(10), (req, res) => {
   if (cleanPin.length < 6 || !/^\d+$/.test(cleanPin)) {
     return res.render('register', { TEMPLATES, COLORS, GIROS: getGiros(), ESTILOS, error: 'El PIN debe tener al menos 6 dígitos numéricos.', ok: null, form });
   }
+  if (!acepto_terminos || !mayor_edad) {
+    return res.render('register', { TEMPLATES, COLORS, GIROS: getGiros(), ESTILOS, error: 'Debes aceptar los Términos y el Aviso de Privacidad y confirmar que eres mayor de edad.', ok: null, form });
+  }
   const hashedPin = hashPin(cleanPin);
   const colorObj = getColor(color);
   // El giro se escribe libre: si no está en el catálogo, se guarda para que otros lo usen después
@@ -2173,8 +2182,9 @@ app.post('/registrar', rateLimit(10), (req, res) => {
   const tpl = 'constructor';
   const estSel = ESTILOS.some(e => e.id === estilo) ? estilo : (GIRO_STYLE[giroOk] || 'moderno');
   const r = db.prepare(
-    `INSERT INTO businesses (slug, name, whatsapp, description, pin, template, color, color_hex, color_hex2, giro, estilo, color_mode, plan, ads_enabled)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'estilo', 'demo', 1)`
+    `INSERT INTO businesses (slug, name, whatsapp, description, pin, template, color, color_hex, color_hex2, giro, estilo, color_mode, plan, ads_enabled,
+       terms_accepted_at, terms_version, terms_ip, marketing_optin)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'estilo', 'demo', 1, ?, ?, ?, ?)`
   ).run(
     cleanSlug,
     name.trim(),
@@ -2186,7 +2196,11 @@ app.post('/registrar', rateLimit(10), (req, res) => {
     colorObj.c1,
     colorObj.c2,
     giroOk,
-    estSel
+    estSel,
+    new Date().toISOString(),
+    LEGAL_VERSION,
+    String(req.ip || '').slice(0, 64),
+    marketing ? 1 : 0
   );
   // Sesión abierta de inmediato: acaba de escribir su propio PIN, no tiene sentido
   // pedírselo otra vez en la siguiente pantalla. Directo al cuestionario de bienvenida.
