@@ -357,6 +357,22 @@
     .wz-design-preview-card { flex: 1; min-width: 0; display: flex; align-items: center; padding: 5px; }
     .wz-design-preview-thumb { display: block; width: 18px; height: 18px; flex: none; }
     .wz-design-preview-btn { width: 16px; height: 16px; flex: none; }
+    .wz-vibe-card[data-world="editorial"] .wz-design-preview { align-items:flex-end; }
+    .wz-vibe-card[data-world="editorial"] .wz-design-preview-card { flex:.62; height:42px; align-items:flex-end; border-radius:0 !important; }
+    .wz-vibe-card[data-world="editorial"] .wz-design-preview-thumb { width:20px; height:31px; border-radius:0 !important; }
+    .wz-vibe-card[data-world="luxury"] .wz-design-preview { justify-content:center; padding-block:11px; }
+    .wz-vibe-card[data-world="luxury"] .wz-design-preview-card { flex:none; width:58%; height:42px; flex-direction:column; justify-content:center; }
+    .wz-vibe-card[data-world="luxury"] .wz-design-preview-thumb { width:28px; height:24px; }
+    .wz-vibe-card[data-world="industrial"] .wz-design-preview-card { border-width:2px !important; border-radius:2px !important; box-shadow:3px 3px 0 currentColor; }
+    .wz-vibe-card[data-world="industrial"] .wz-design-preview-btn { border-radius:2px !important; }
+    .wz-vibe-card[data-world="tech"] .wz-design-preview-card { height:38px; border-radius:5px !important; }
+    .wz-vibe-card[data-world="tech"] .wz-design-preview-thumb { width:32px; height:12px; }
+    .wz-vibe-card[data-world="soft"] .wz-design-preview-card { min-height:40px; border-radius:14px !important; }
+    .wz-vibe-card[data-world="soft"] .wz-design-preview-thumb { width:24px; height:24px; border-radius:9px !important; }
+    .wz-vibe-card[data-world="organic"] .wz-design-preview-thumb,
+    .wz-vibe-card[data-world="artisan"] .wz-design-preview-thumb { width:32px; height:20px; }
+    .wz-vibe-card[data-world="vibrant"] .wz-design-preview-card { transform:rotate(-2deg); min-height:40px; }
+    .wz-vibe-card[data-world="vibrant"] .wz-design-preview-btn { width:22px; height:22px; transform:rotate(5deg); }
 
     /* Filtro de búsqueda: stagger corto para las tarjetas que permanecen visibles */
     .wz-card-filtered-in { animation: wzCardFilterIn .16s cubic-bezier(0.16, 1, 0.3, 1) both; }

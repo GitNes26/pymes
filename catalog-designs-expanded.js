@@ -66,7 +66,7 @@ function recommendCatalogDesigns(designs, presets, styleToDesign, worldByStyle, 
   const preset = presets.find(p => p.id === giro) || presets.find(p => p.id === 'otros') || {};
   const preferredWorld = worldByStyle[preset.estilo] || 'classic';
   const primaryId = styleToDesign[preset.estilo] || 'catalogo';
-  return designs.map((design, index) => {
+  const ranked = designs.map((design, index) => {
     let score = 0;
     if ((design.for || []).includes(giro)) score += 100;
     if (design.id === primaryId) score += 55;
@@ -74,9 +74,23 @@ function recommendCatalogDesigns(designs, presets, styleToDesign, worldByStyle, 
     if (design.id === 'catalogo') score += 8;
     if (['minimalista', 'elegante', 'vibrante'].includes(design.id)) score += 3;
     return { design, score, index };
-  }).sort((a, b) => b.score - a.score || a.index - b.index)
-    .slice(0, Math.max(1, Number(limit) || 8))
-    .map(x => x.design.id);
+  }).sort((a, b) => b.score - a.score || a.index - b.index);
+  const wanted = Math.max(1, Number(limit) || 8);
+  const chosen = [];
+  const worldCount = {};
+  // Evita recomendar ocho variantes casi idénticas: máximo dos por familia
+  // durante la primera pasada, conservando la puntuación dentro de cada una.
+  ranked.forEach(row => {
+    const world = row.design.world || 'classic';
+    if (chosen.length >= wanted || (worldCount[world] || 0) >= 2) return;
+    chosen.push(row);
+    worldCount[world] = (worldCount[world] || 0) + 1;
+  });
+  ranked.forEach(row => {
+    if (chosen.length >= wanted || chosen.includes(row)) return;
+    chosen.push(row);
+  });
+  return chosen.slice(0, wanted).map(x => x.design.id);
 }
 
 module.exports = { buildExpandedCatalogDesigns, recommendCatalogDesigns };

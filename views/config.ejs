@@ -1013,7 +1013,7 @@
               <% CAT_DESIGNS.forEach(function(d) { %>
               <% var t = d.tokens; %>
               <% var _isRecommendedDesign = catalogDesignRecommendations.indexOf(d.id) !== -1; %>
-              <label class="cat-design-card relative block cursor-pointer rounded-2xl border-2 transition overflow-hidden <%= catDesign.id === d.id ? 'border-neutral-800' : 'border-slate-200 dark:border-[#30363d] hover:border-slate-300 dark:hover:border-[#3d444d]' %>" data-design-id="<%= d.id %>" data-recommended="<%= _isRecommendedDesign ? '1' : '0' %>" data-search="<%= (d.name + ' ' + d.desc + ' ' + d.world + ' ' + d.for.join(' ')).toLowerCase() %>" <%= (!_isRecommendedDesign && catDesign.id !== d.id) ? 'hidden' : '' %>>
+              <label class="cat-design-card relative block cursor-pointer rounded-2xl border-2 transition overflow-hidden <%= catDesign.id === d.id ? 'border-neutral-800' : 'border-slate-200 dark:border-[#30363d] hover:border-slate-300 dark:hover:border-[#3d444d]' %>" data-design-id="<%= d.id %>" data-world="<%= d.world %>" data-recommended="<%= _isRecommendedDesign ? '1' : '0' %>" data-search="<%= (d.name + ' ' + d.desc + ' ' + d.world + ' ' + d.for.join(' ')).toLowerCase() %>" <%= (!_isRecommendedDesign && catDesign.id !== d.id) ? 'hidden' : '' %>>
                 <input type="radio" name="catalog_design" value="<%= d.id %>" class="sr-only" <%= catDesign.id === d.id ? 'checked' : '' %>>
                 <% if (_isRecommendedDesign) { %><span class="cat-design-recommended">Para tu giro</span><% } %>
 
@@ -1052,6 +1052,20 @@
             .cdp-body { font-size:11px; margin-top:2px; }
             .cdp-btn { width:26px; height:26px; flex-shrink:0; }
             .cat-design-card.border-neutral-800 { box-shadow:0 0 0 3px rgba(44,44,46,.15); }
+            .cat-design-card[data-world="editorial"] .cdp-card { border-radius:0 !important; align-items:flex-end; }
+            .cat-design-card[data-world="editorial"] .cdp-thumb { width:26px; height:42px; border-radius:0 !important; }
+            .cat-design-card[data-world="luxury"] .cat-design-preview { justify-content:center; }
+            .cat-design-card[data-world="luxury"] .cdp-card { flex:0 1 74%; flex-direction:column; text-align:center; }
+            .cat-design-card[data-world="luxury"] .cdp-thumb { width:38px; height:28px; }
+            .cat-design-card[data-world="industrial"] .cdp-card { border-width:2px !important; border-radius:3px !important; box-shadow:4px 4px 0 rgba(20,24,28,.2) !important; }
+            .cat-design-card[data-world="industrial"] .cdp-btn { border-radius:3px !important; }
+            .cat-design-card[data-world="tech"] .cdp-thumb { width:48px; height:18px; }
+            .cat-design-card[data-world="soft"] .cdp-card { border-radius:14px !important; padding:10px; }
+            .cat-design-card[data-world="soft"] .cdp-thumb { width:34px; height:34px; border-radius:12px !important; }
+            .cat-design-card[data-world="organic"] .cdp-thumb,
+            .cat-design-card[data-world="artisan"] .cdp-thumb { width:46px; height:28px; }
+            .cat-design-card[data-world="vibrant"] .cdp-card { transform:rotate(-1deg); }
+            .cat-design-card[data-world="vibrant"] .cdp-btn { transform:rotate(6deg); }
           </style>
           <script>
             (function () {
