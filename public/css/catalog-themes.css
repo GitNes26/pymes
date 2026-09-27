@@ -1,0 +1,424 @@
+/*
+ * Dirección visual de las 25 apariencias del catálogo público.
+ * Cada tema conserva la misma plantilla y funcionalidad, pero cambia la
+ * composición, proporción de fotografía, densidad y carácter de controles.
+ */
+
+html[data-style] {
+  --theme-media-ratio: 1 / 1;
+  --theme-image-fit: contain;
+  --theme-grid-gap: 18px;
+  --theme-card-shadow: 0 4px 18px color-mix(in srgb, var(--text) 8%, transparent);
+  --theme-card-hover: 0 18px 38px color-mix(in srgb, var(--text) 13%, transparent);
+  --theme-card-border: 1px solid var(--border);
+  --theme-card-radius: var(--radius);
+  --theme-image-bg: color-mix(in srgb, var(--bg) 72%, var(--bg-card));
+  --theme-title-track: -.015em;
+  --theme-label-track: .08em;
+}
+
+html[data-style] body {
+  accent-color: var(--accent);
+  scrollbar-color: var(--accent) var(--bg);
+}
+
+html[data-style] ::selection {
+  background: var(--accent);
+  color: var(--soc-on-accent, #fff);
+}
+
+html[data-style] :where(a, button, input, select, textarea):focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent) 38%, transparent);
+  outline-offset: 3px;
+}
+
+html[data-style] body .prod-grid { gap: var(--theme-grid-gap); }
+
+html[data-style] body :is(.prod-card, .oferta-card) {
+  border: var(--theme-card-border);
+  border-radius: var(--theme-card-radius);
+  box-shadow: var(--theme-card-shadow);
+  overflow: hidden;
+}
+
+html[data-style] body :is(.prod-card, .oferta-card):hover {
+  box-shadow: var(--theme-card-hover);
+}
+
+html[data-style] body .prod-img-wrap {
+  aspect-ratio: var(--theme-media-ratio);
+  background: var(--theme-image-bg);
+}
+
+html[data-style] body .prod-img-wrap > img {
+  width: 100%;
+  height: 100%;
+  object-fit: var(--theme-image-fit);
+}
+
+html[data-style] body .prod-name,
+html[data-style] body .oferta-name {
+  letter-spacing: var(--theme-title-track);
+}
+
+html[data-style] body :is(.filter-label, .prod-badge-promo, .prod-badge-new, .prod-badge-rank) {
+  letter-spacing: var(--theme-label-track);
+}
+
+/* Clásico — vitrina comercial equilibrada */
+html[data-style="catalogo"] {
+  --theme-media-ratio: 4 / 3;
+  --theme-grid-gap: 20px;
+}
+
+html[data-style="catalogo"] body .hdr { border-bottom: 1px solid var(--border); }
+html[data-style="catalogo"] body .sec-title { font-family: var(--font-heading); font-weight: 600; }
+html[data-style="catalogo"] body .prod-body { padding: 18px; }
+html[data-style="catalogo"] body .prod-price { font-family: var(--font-heading); }
+
+/* Editorial — moda y composición de revista */
+html[data-style="ropa"],
+html[data-style="minimalista"] {
+  --theme-media-ratio: 4 / 5;
+  --theme-image-fit: cover;
+  --theme-card-shadow: none;
+  --theme-card-hover: none;
+  --theme-card-radius: 0;
+}
+
+html[data-style="ropa"] { --theme-grid-gap: clamp(18px, 2.8vw, 34px); }
+html[data-style="ropa"] body .hdr-inner { min-height: 78px; }
+html[data-style="ropa"] body .hdr-title { text-transform: uppercase; letter-spacing: .12em; font-size: .86rem; }
+html[data-style="ropa"] body .hero.has-banner .hero-overlay { align-items: flex-start; text-align: left; padding-inline: clamp(24px, 7vw, 104px); }
+html[data-style="ropa"] body .hero .hero-name { max-width: 11ch; font-size: clamp(2.8rem, 8vw, 6rem); font-weight: 500; letter-spacing: -.035em; }
+html[data-style="ropa"] body .brand-hero { align-items: flex-start; text-align: left; padding-inline: clamp(24px, 7vw, 104px); }
+html[data-style="ropa"] body .ofertas-title,
+html[data-style="ropa"] body .sec-title { text-transform: uppercase; letter-spacing: .1em; font-size: clamp(1rem, 1.7vw, 1.35rem); }
+html[data-style="ropa"] body .prod-card { border-width: 0 0 1px; }
+html[data-style="ropa"] body .prod-body { padding: 14px 0 20px; }
+html[data-style="ropa"] body .prod-name { font-family: var(--font-heading); font-size: 1.08rem; font-weight: 500; }
+html[data-style="ropa"] body .prod-actions :is(.prod-btn, .prod-view-btn, .prod-share-btn) { border-radius: 0; }
+
+html[data-style="minimalista"] { --theme-grid-gap: clamp(14px, 2vw, 26px); }
+html[data-style="minimalista"] body .brand-hero { background: var(--bg); padding-block: clamp(48px, 9vw, 100px); }
+html[data-style="minimalista"] body .brand-hero-logo { border: 0; box-shadow: none; }
+html[data-style="minimalista"] body .hdr { border-bottom: 1px solid #18181b; }
+html[data-style="minimalista"] body .prod-card { border: 0; }
+html[data-style="minimalista"] body .prod-body { padding-inline: 0; }
+html[data-style="minimalista"] body .sec-title { font-size: 1rem; text-transform: uppercase; letter-spacing: .14em; }
+html[data-style="minimalista"] body :is(.filter-sidebar, .filter-search, .filter-input, .prod-btn, .prod-view-btn, .prod-share-btn) { border-radius: 0; box-shadow: none; }
+
+/* Monocromo — neobrutalismo deliberado */
+html[data-style="monocromo"] {
+  --theme-media-ratio: 1 / 1;
+  --theme-card-shadow: 6px 6px 0 #0a0a0a;
+  --theme-card-hover: 3px 3px 0 #0a0a0a;
+  --theme-card-border: 2px solid #0a0a0a;
+  --theme-card-radius: 0;
+  --theme-grid-gap: 24px;
+}
+
+html[data-style="monocromo"] body .hdr { border-bottom: 0; box-shadow: inset 0 -3px 0 #0a0a0a; }
+html[data-style="monocromo"] body .hdr-title,
+html[data-style="monocromo"] body .sec-title { text-transform: uppercase; letter-spacing: -.025em; }
+html[data-style="monocromo"] body .filter-sidebar { border: 2px solid #0a0a0a; border-radius: 0; box-shadow: 6px 6px 0 #0a0a0a; }
+html[data-style="monocromo"] body :is(.prod-btn, .prod-view-btn, .prod-share-btn, .filter-cat, .filter-group-btn, .filter-search, .filter-input) { border: 2px solid #0a0a0a; border-radius: 0; }
+html[data-style="monocromo"] body .prod-price { font-size: 1.5rem; }
+
+/* Lujo — joyería, gala y elegancia blanca */
+html[data-style="joyeria"],
+html[data-style="eventos"],
+html[data-style="elegante"] {
+  --theme-media-ratio: 4 / 5;
+  --theme-image-fit: cover;
+  --theme-grid-gap: clamp(20px, 2.5vw, 32px);
+}
+
+html[data-style="joyeria"] {
+  --theme-image-bg: #0d0b0a;
+  --theme-card-shadow: 0 18px 48px rgba(0,0,0,.32);
+  --theme-card-hover: 0 28px 62px rgba(0,0,0,.46);
+}
+
+html[data-style="joyeria"] body .hdr { background: color-mix(in srgb, var(--bg) 94%, transparent); border-bottom: 1px solid var(--border); }
+html[data-style="joyeria"] body .hero .hero-name { font-weight: 400; letter-spacing: .015em; }
+html[data-style="joyeria"] body .brand-hero { min-height: 440px; justify-content: center; background: #12100e; }
+html[data-style="joyeria"] body .brand-hero-logo { background: transparent; border-color: var(--accent); border-radius: 0; box-shadow: none; }
+html[data-style="joyeria"] body :is(.ofertas-title, .sec-title) { font-family: var(--font-heading); font-weight: 400; letter-spacing: .04em; }
+html[data-style="joyeria"] body .prod-card { border-color: color-mix(in srgb, var(--accent) 28%, transparent); }
+html[data-style="joyeria"] body .prod-body { padding: 20px; text-align: center; }
+html[data-style="joyeria"] body .prod-prices { justify-content: center; }
+
+html[data-style="eventos"] {
+  --theme-media-ratio: 3 / 2;
+  --theme-card-radius: 0;
+  --theme-card-shadow: 0 16px 42px rgba(0,0,0,.34);
+  --theme-card-hover: 0 26px 62px rgba(0,0,0,.48);
+}
+
+html[data-style="eventos"] body .hero.has-banner .hero-overlay,
+html[data-style="eventos"] body .brand-hero { min-height: 520px; justify-content: center; }
+html[data-style="eventos"] body .hero .hero-name { font-weight: 400; font-size: clamp(3rem, 8vw, 5.5rem); }
+html[data-style="eventos"] body .sec-title { justify-content: center; font-family: var(--font-heading); font-weight: 400; }
+html[data-style="eventos"] body .prod-name { font-family: var(--font-heading); font-size: 1.12rem; font-weight: 400; }
+html[data-style="eventos"] body :is(.prod-btn, .prod-view-btn, .prod-share-btn) { border-radius: 0; }
+
+html[data-style="elegante"] {
+  --theme-card-shadow: none;
+  --theme-card-hover: 0 18px 40px rgba(36,34,32,.08);
+  --theme-card-border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+html[data-style="elegante"] body .brand-hero { padding-block: clamp(56px, 10vw, 112px); background: var(--bg); }
+html[data-style="elegante"] body .brand-hero-logo { border: 0; box-shadow: none; }
+html[data-style="elegante"] body .hdr { border-block: 1px solid var(--border); }
+html[data-style="elegante"] body .sec-title { font-family: var(--font-heading); font-weight: 400; }
+html[data-style="elegante"] body .prod-body { padding: 20px; }
+html[data-style="elegante"] body .prod-price { font-family: var(--font-heading); font-weight: 500; }
+
+/* Industrial, urbano y tecnología */
+html[data-style="ferreteria"],
+html[data-style="urbano"],
+html[data-style="futurista"] {
+  --theme-media-ratio: 4 / 3;
+  --theme-grid-gap: 14px;
+  --theme-title-track: -.025em;
+}
+
+html[data-style="ferreteria"] {
+  --theme-card-shadow: 4px 4px 0 rgba(27,31,35,.16);
+  --theme-card-hover: 7px 7px 0 rgba(27,31,35,.22);
+  --theme-card-border: 2px solid #1b1f23;
+  --theme-card-radius: 4px;
+}
+
+html[data-style="ferreteria"] body .hdr { border-bottom: 4px solid var(--accent-glow); }
+html[data-style="ferreteria"] body .brand-hero { background: var(--bg); border-bottom: 1px solid var(--text); }
+html[data-style="ferreteria"] body :is(.sec-title, .ofertas-title, .prod-name) { text-transform: uppercase; }
+html[data-style="ferreteria"] body .sec-title i { color: var(--accent-glow); }
+html[data-style="ferreteria"] body .prod-body { padding: 13px; }
+html[data-style="ferreteria"] body :is(.prod-btn, .filter-cat.on, .filter-group-btn.on) { color: #fff; }
+html[data-style="ferreteria"] body :is(.prod-btn, .prod-view-btn, .prod-share-btn, .filter-search, .filter-input) { border-radius: 3px; }
+
+html[data-style="urbano"] {
+  --theme-media-ratio: 1 / 1;
+  --theme-image-fit: cover;
+  --theme-card-shadow: 4px 4px 0 #16181a;
+  --theme-card-hover: 7px 7px 0 var(--accent-glow);
+  --theme-card-border: 2px solid #16181a;
+  --theme-card-radius: 0;
+}
+
+html[data-style="urbano"] body .hdr { border-bottom: 3px solid #16181a; }
+html[data-style="urbano"] body .hero .hero-name { text-transform: uppercase; font-weight: 900; letter-spacing: -.035em; }
+html[data-style="urbano"] body :is(.sec-title, .ofertas-title, .prod-name) { text-transform: uppercase; }
+html[data-style="urbano"] body .prod-badge-promo { background: var(--accent-glow); color: #16181a; }
+html[data-style="urbano"] body :is(.prod-btn, .prod-view-btn, .prod-share-btn, .filter-sidebar, .filter-search, .filter-input) { border-radius: 0; }
+
+html[data-style="futurista"] {
+  --theme-media-ratio: 16 / 10;
+  --theme-card-shadow: 0 14px 38px rgba(0,0,0,.28);
+  --theme-card-hover: 0 20px 48px rgba(34,211,238,.2);
+  --theme-card-border: 1px solid rgba(34,211,238,.28);
+  --theme-image-bg: #0b1220;
+}
+
+html[data-style="futurista"] body .hdr { border-bottom: 1px solid rgba(34,211,238,.34); background: rgba(11,15,26,.96); }
+html[data-style="futurista"] body .brand-hero { background: #0b0f1a; border-bottom: 1px solid rgba(34,211,238,.3); }
+html[data-style="futurista"] body .hero-name { letter-spacing: -.03em; }
+html[data-style="futurista"] body :is(.sec-title, .ofertas-title) { letter-spacing: .04em; }
+html[data-style="futurista"] body .prod-card { position: relative; }
+html[data-style="futurista"] body .prod-card::after { content: ""; position: absolute; inset: 0; border: 1px solid transparent; pointer-events: none; transition: border-color .25s ease; }
+html[data-style="futurista"] body .prod-card:hover::after { border-color: rgba(34,211,238,.48); }
+html[data-style="futurista"] body :is(.prod-btn, .filter-cat.on, .filter-group-btn.on) { color: #061015; }
+
+/* Suaves — repostería, belleza y color ligero */
+html[data-style="postres"],
+html[data-style="cosmeticos"],
+html[data-style="belleza"],
+html[data-style="pastel"],
+html[data-style="acuarela"] {
+  --theme-card-shadow: 0 8px 24px color-mix(in srgb, var(--accent) 10%, transparent);
+  --theme-card-hover: 0 18px 42px color-mix(in srgb, var(--accent) 17%, transparent);
+}
+
+html[data-style="postres"] { --theme-media-ratio: 1 / 1; --theme-image-fit: cover; --theme-grid-gap: 20px; }
+html[data-style="postres"] body .brand-hero { padding-block: clamp(42px, 8vw, 82px); }
+html[data-style="postres"] body .hero-name { font-weight: 600; }
+html[data-style="postres"] body .sec-title { font-family: var(--font-heading); font-style: italic; font-weight: 600; }
+html[data-style="postres"] body .prod-name { font-family: var(--font-heading); font-size: 1.04rem; }
+html[data-style="postres"] body .prod-body { padding: 18px; }
+
+html[data-style="cosmeticos"] { --theme-media-ratio: 1 / 1; --theme-grid-gap: clamp(18px, 2.6vw, 30px); }
+html[data-style="cosmeticos"] body .brand-hero { padding-block: clamp(64px, 11vw, 122px); }
+html[data-style="cosmeticos"] body .brand-hero-logo { border: 0; box-shadow: none; }
+html[data-style="cosmeticos"] body .prod-card { border: 0; }
+html[data-style="cosmeticos"] body .prod-img-wrap { padding: clamp(12px, 2vw, 28px); }
+html[data-style="cosmeticos"] body .prod-body { padding: 18px 8px 24px; text-align: center; }
+html[data-style="cosmeticos"] body .prod-prices { justify-content: center; }
+html[data-style="cosmeticos"] body .sec-title { font-weight: 400; }
+
+html[data-style="belleza"] { --theme-media-ratio: 4 / 5; --theme-image-fit: cover; }
+html[data-style="belleza"] body .hero .hero-name { font-style: italic; font-weight: 500; }
+html[data-style="belleza"] body .brand-hero { min-height: 400px; justify-content: center; }
+html[data-style="belleza"] body :is(.sec-title, .ofertas-title, .prod-name) { font-family: var(--font-heading); }
+html[data-style="belleza"] body .prod-body { padding: 19px; }
+html[data-style="belleza"] body .prod-card:nth-child(even) { margin-top: 22px; }
+
+html[data-style="pastel"] { --theme-media-ratio: 1 / 1; --theme-grid-gap: 16px; }
+html[data-style="pastel"] body .brand-hero { padding-block: clamp(42px, 8vw, 80px); }
+html[data-style="pastel"] body .prod-card:nth-child(3n+2) { transform: translateY(12px); }
+html[data-style="pastel"] body .prod-card:nth-child(3n+2):hover { transform: translateY(7px); }
+html[data-style="pastel"] body .prod-name { font-weight: 800; }
+html[data-style="pastel"] body :is(.prod-btn, .prod-view-btn, .prod-share-btn) { border-radius: 14px; }
+
+html[data-style="acuarela"] { --theme-media-ratio: 5 / 4; --theme-image-fit: cover; --theme-grid-gap: 22px; }
+html[data-style="acuarela"] body .brand-hero { padding-block: clamp(52px, 9vw, 100px); }
+html[data-style="acuarela"] body .brand-hero-logo { border-color: color-mix(in srgb, var(--accent-glow) 44%, transparent); box-shadow: 0 18px 45px rgba(91,127,189,.12); }
+html[data-style="acuarela"] body .prod-card:nth-child(4n+1) { border-radius: 28px 12px 22px 14px; }
+html[data-style="acuarela"] body .prod-card:nth-child(4n+2) { border-radius: 12px 26px 14px 22px; }
+html[data-style="acuarela"] body .sec-title { font-family: var(--font-heading); font-weight: 500; }
+
+/* Naturales — composición abierta y fotografía amplia */
+html[data-style="floreria"],
+html[data-style="vivero"],
+html[data-style="oceanico"],
+html[data-style="nordico"],
+html[data-style="tropical"] {
+  --theme-image-fit: cover;
+}
+
+html[data-style="floreria"] { --theme-media-ratio: 4 / 5; --theme-grid-gap: clamp(16px, 2.3vw, 28px); }
+html[data-style="floreria"] body .brand-hero { min-height: 410px; justify-content: center; }
+html[data-style="floreria"] body .hero .hero-name { font-style: italic; font-weight: 500; }
+html[data-style="floreria"] body :is(.sec-title, .ofertas-title, .prod-name) { font-family: var(--font-heading); font-weight: 500; }
+html[data-style="floreria"] body .prod-card { border-color: color-mix(in srgb, var(--accent) 22%, transparent); }
+html[data-style="floreria"] body .prod-body { padding: 18px; }
+
+html[data-style="vivero"] { --theme-media-ratio: 4 / 3; --theme-grid-gap: 16px; }
+html[data-style="vivero"] body .hero .hero-name { font-weight: 800; }
+html[data-style="vivero"] body .prod-card:nth-child(4n+1) { border-radius: 28px 12px 20px 12px; }
+html[data-style="vivero"] body .prod-card:nth-child(4n+3) { border-radius: 12px 28px 12px 20px; }
+html[data-style="vivero"] body .prod-name { font-weight: 800; }
+html[data-style="vivero"] body .prod-badge-promo { background: var(--accent-glow); }
+
+html[data-style="oceanico"] { --theme-media-ratio: 16 / 10; --theme-grid-gap: 22px; }
+html[data-style="oceanico"] body .brand-hero { padding-block: clamp(60px, 10vw, 116px); }
+html[data-style="oceanico"] body .hero-name,
+html[data-style="oceanico"] body .sec-title { font-family: var(--font-heading); font-weight: 500; }
+html[data-style="oceanico"] body .prod-card { border-width: 0 0 1px; box-shadow: none; border-radius: 0; }
+html[data-style="oceanico"] body .prod-card:hover { box-shadow: none; }
+html[data-style="oceanico"] body .prod-body { padding-inline: 0; }
+
+html[data-style="nordico"] { --theme-media-ratio: 4 / 3; --theme-grid-gap: clamp(18px, 2.5vw, 30px); --theme-card-shadow: none; --theme-card-hover: 0 16px 36px rgba(46,51,44,.08); }
+html[data-style="nordico"] body .brand-hero { background: var(--bg); padding-block: clamp(52px, 9vw, 96px); }
+html[data-style="nordico"] body .brand-hero-logo { box-shadow: none; }
+html[data-style="nordico"] body .prod-body { padding: 18px; }
+html[data-style="nordico"] body .prod-name { font-weight: 600; }
+
+html[data-style="tropical"] { --theme-media-ratio: 3 / 2; --theme-grid-gap: 18px; }
+html[data-style="tropical"] body .hero .hero-name { font-weight: 900; }
+html[data-style="tropical"] body .prod-card:nth-child(odd) { border-radius: 26px 14px 26px 14px; }
+html[data-style="tropical"] body .prod-card:nth-child(even) { border-radius: 14px 26px 14px 26px; }
+html[data-style="tropical"] body .prod-name { font-size: 1.02rem; font-weight: 800; }
+html[data-style="tropical"] body .prod-badge-promo { background: var(--accent-glow); }
+
+/* Artesanales — objetos, materia y ritmos cálidos */
+html[data-style="muebles"],
+html[data-style="bohemio"],
+html[data-style="rustico"],
+html[data-style="retro"] {
+  --theme-media-ratio: 3 / 2;
+  --theme-image-fit: cover;
+}
+
+html[data-style="muebles"] { --theme-grid-gap: clamp(20px, 3vw, 38px); --theme-card-shadow: none; --theme-card-hover: 0 20px 44px rgba(90,60,30,.12); }
+html[data-style="muebles"] body .brand-hero { min-height: 420px; justify-content: center; }
+html[data-style="muebles"] body .prod-card { border-width: 0 0 1px; border-radius: 0; }
+html[data-style="muebles"] body .prod-body { padding: 18px 0 24px; }
+html[data-style="muebles"] body :is(.sec-title, .prod-name) { font-family: var(--font-heading); }
+html[data-style="muebles"] body .prod-name { font-size: 1.08rem; }
+
+html[data-style="bohemio"] { --theme-media-ratio: 4 / 5; --theme-grid-gap: 22px; }
+html[data-style="bohemio"] body .hero .hero-name { font-weight: 600; }
+html[data-style="bohemio"] body .prod-card:nth-child(3n+2) { margin-top: 20px; }
+html[data-style="bohemio"] body :is(.sec-title, .prod-name) { font-family: var(--font-heading); }
+html[data-style="bohemio"] body .prod-body { padding: 18px; }
+
+html[data-style="rustico"] { --theme-grid-gap: 16px; --theme-card-radius: 6px; }
+html[data-style="rustico"] body .hdr { border-bottom: 2px solid color-mix(in srgb, var(--accent) 38%, transparent); }
+html[data-style="rustico"] body .brand-hero { border-bottom: 1px solid var(--border); }
+html[data-style="rustico"] body :is(.sec-title, .prod-name) { font-family: var(--font-heading); }
+html[data-style="rustico"] body .prod-body { padding: 15px; }
+html[data-style="rustico"] body :is(.prod-btn, .prod-view-btn, .prod-share-btn, .filter-search, .filter-input) { border-radius: 5px; }
+
+html[data-style="retro"] {
+  --theme-media-ratio: 4 / 3;
+  --theme-card-shadow: 5px 5px 0 rgba(58,42,26,.2);
+  --theme-card-hover: 8px 8px 0 rgba(47,107,94,.42);
+  --theme-card-border: 2px solid #3a2a1a;
+  --theme-card-radius: 7px;
+  --theme-grid-gap: 22px;
+}
+
+html[data-style="retro"] body .hdr { border-bottom: 3px double #3a2a1a; }
+html[data-style="retro"] body .hero .hero-name { font-weight: 400; }
+html[data-style="retro"] body :is(.sec-title, .ofertas-title, .prod-name) { font-family: var(--font-heading); }
+html[data-style="retro"] body :is(.prod-btn, .prod-view-btn, .prod-share-btn, .filter-sidebar, .filter-search, .filter-input) { border: 2px solid #3a2a1a; border-radius: 6px; }
+
+/* Vibrante — bloques gráficos y escala expresiva */
+html[data-style="vibrante"] {
+  --theme-media-ratio: 1 / 1;
+  --theme-image-fit: cover;
+  --theme-grid-gap: 18px;
+  --theme-card-shadow: 0 10px 0 color-mix(in srgb, var(--accent-glow) 24%, transparent);
+  --theme-card-hover: 0 15px 0 color-mix(in srgb, var(--accent-glow) 42%, transparent);
+}
+
+html[data-style="vibrante"] body .hero .hero-name { font-size: clamp(3rem, 9vw, 6rem); font-weight: 900; letter-spacing: -.04em; }
+html[data-style="vibrante"] body .brand-hero { padding-block: clamp(52px, 10vw, 112px); }
+html[data-style="vibrante"] body :is(.sec-title, .ofertas-title) { font-weight: 900; font-size: clamp(1.45rem, 3vw, 2.2rem); }
+html[data-style="vibrante"] body .prod-name { font-size: 1.05rem; font-weight: 900; }
+html[data-style="vibrante"] body .prod-badge-promo { background: var(--accent-glow); }
+html[data-style="vibrante"] body :is(.prod-btn, .prod-view-btn, .prod-share-btn) { border-radius: 14px; }
+
+/* En pantallas pequeñas conservamos el carácter sin sacrificar lectura. */
+@media (max-width: 700px) {
+  html[data-style] { --theme-grid-gap: 12px; }
+  html[data-style="ropa"] body .hero.has-banner .hero-overlay { align-items: center; text-align: center; padding-inline: 20px; }
+  html[data-style="ropa"] body .brand-hero { align-items: center; text-align: center; padding-inline: 20px; }
+  html[data-style="belleza"] body .prod-card:nth-child(even),
+  html[data-style="pastel"] body .prod-card:nth-child(3n+2),
+  html[data-style="bohemio"] body .prod-card:nth-child(3n+2) { margin-top: 0; transform: none; }
+  html[data-style="eventos"] body .hero.has-banner .hero-overlay,
+  html[data-style="eventos"] body .brand-hero { min-height: 380px; }
+  html[data-style="joyeria"] body .prod-body,
+  html[data-style="cosmeticos"] body .prod-body { text-align: left; }
+  html[data-style="joyeria"] body .prod-prices,
+  html[data-style="cosmeticos"] body .prod-prices { justify-content: flex-start; }
+}
+
+@media (max-width: 480px) {
+  html[data-style] body .prod-body { padding: 12px; }
+  html[data-style="ropa"] body .prod-body,
+  html[data-style="minimalista"] body .prod-body,
+  html[data-style="muebles"] body .prod-body,
+  html[data-style="oceanico"] body .prod-body { padding-inline: 0; }
+  html[data-style="joyeria"] body .prod-img-wrap,
+  html[data-style="ropa"] body .prod-img-wrap,
+  html[data-style="floreria"] body .prod-img-wrap,
+  html[data-style="belleza"] body .prod-img-wrap,
+  html[data-style="bohemio"] body .prod-img-wrap { aspect-ratio: 3 / 4; }
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  html[data-style] body :is(.prod-card, .oferta-card) { transition: transform .28s cubic-bezier(.16,1,.3,1), box-shadow .28s cubic-bezier(.16,1,.3,1); }
+  html[data-style] body :is(.prod-card, .oferta-card):hover { transform: translateY(-4px); }
+  html[data-style="minimalista"] body :is(.prod-card, .oferta-card):hover,
+  html[data-style="oceanico"] body :is(.prod-card, .oferta-card):hover { transform: none; }
+  html[data-style="pastel"] body .prod-card:nth-child(3n+2):hover { transform: translateY(7px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-style] body :is(.prod-card, .oferta-card) { transition: none !important; transform: none !important; }
+}

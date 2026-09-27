@@ -104,6 +104,8 @@ Nessik tiene dos temperaturas coordinadas. La vitrina pública conserva el merca
 
 La unidad no depende de hacer todas las pantallas iguales. Ambas familias comparten superficies blancas, esquinas amables, controles compactos, foco visible y movimiento breve con desaceleración suave. En Productos, la imagen abre cada tarjeta, el estado se lee en capas pequeñas y el inspector acompaña la edición sin sacar al dueño del catálogo.
 
+Las apariencias del catálogo público comparten datos y comportamiento, pero no una composición genérica. Cada `data-style` define proporción de fotografía, densidad de cuadrícula, jerarquía tipográfica, forma de tarjeta y profundidad coherentes con su mundo: editorial, lujo, industrial, suave, natural, artesanal o expresivo.
+
 **Key Characteristics:**
 - Vitrina pública cálida y comercial; administración neutra, minimalista y operativa
 - Grafito neutro como único acento para acciones, selección, foco y navegación del panel — deliberadamente sin azul
@@ -170,6 +172,8 @@ La paleta comparte tinta profunda y superficies blancas, pero cambia de temperat
 
 El catálogo público mantiene una cuadrícula mobile-first que crece hasta cuatro columnas y deja respirar el contenido comercial dentro de contenedores centrados. El detalle público utiliza dos columnas con galería sticky y colapsa a una columna bajo 900px.
 
+Las apariencias se implementan desde una sola plantilla y una capa temática final. La estructura funcional permanece estable; la capa temática puede cambiar proporciones de imagen entre cuadrada, horizontal y retrato, espaciamiento, alineación y tratamiento de tarjetas. En móvil, las composiciones escalonadas vuelven a una cuadrícula regular para conservar lectura y objetivos táctiles.
+
 Productos utiliza un workspace asimétrico. Hasta 1179px, catálogo e inspector fluyen verticalmente. Desde 1180px, el contenido se divide en catálogo flexible e inspector fijo de 350px, con 18px entre ambos; el inspector queda sticky a 16px del viewport, limita su altura a `calc(100vh - 32px)` y desplaza internamente su contenido. La rejilla administrativa comienza en dos columnas, pasa a tres desde 1360px y usa 12px de separación.
 
 Por debajo de 768px, las tabs permanecen en una sola fila con scroll horizontal, la rejilla se vuelve una lista de una columna y cada producto adopta una tarjeta horizontal: imagen de 104px a la izquierda, información a la derecha y acciones en una franja inferior. El inspector vuelve al flujo, con 18px de separación, y el FAB reaparece como atajo a creación.
@@ -182,6 +186,8 @@ Los selects buscables respetan el ancho resuelto del control y de su contenedor:
 **The Horizontal Mobile Card Rule.** En móvil, la tarjeta administrativa cambia de composición en lugar de encoger la tarjeta vertical: imagen de 104px, texto flexible y acciones separadas.
 
 **The Control Owns Its Dropdown Rule.** Un select buscable limita su panel al ancho del control y del contenedor; el contenido largo se ajusta dentro, nunca expande la página.
+
+**The Theme Changes Composition Rule.** Una apariencia pública debe cambiar al menos proporción de imagen, densidad y jerarquía además del color; todas conservan una sola plantilla funcional y una cuadrícula móvil estable.
 
 ## Elevation & Depth
 
@@ -226,6 +232,7 @@ La forma es amable y compacta. La vitrina pública usa tarjetas de 18px; Product
 
 ### Cards / Containers
 - **Tarjeta pública:** imagen y comercio dentro de 18px, sombra cálida baja y elevación de 4px al hover; los badges de oferta pueden usar el corte de etiqueta de mercado.
+- **Variantes públicas:** editorial y minimalista usan bordes rectos y aire; lujo usa marcos finos y retrato; industrial usa densidad y geometría firme; natural prioriza fotografía amplia; artesanal usa ritmos cálidos; vibrante amplía escala y contraste. Solo monocromo, retro e industrial pueden usar sombra dura porque pertenece a su lenguaje.
 - **Tarjeta administrativa:** imagen first de 142px, radio de 14px, título Inter de 13px, estados compactos y fila de acciones al borde inferior. El hover escala la imagen a 1.025 y sube la tarjeta 3px.
 - **Menú contextual:** se posiciona fuera del borde inferior derecho; al abrirlo, su tarjeta propietaria toma `z-index: 30` para superar a las tarjetas siguientes.
 - **Inspector:** gradiente translúcido de cian a blanco violeta, radio de 15px, sin franja decorativa superior y con campos blancos translúcidos.
@@ -263,6 +270,7 @@ El inspector es la firma operativa de Productos. A partir de 1180px acompaña la
 - **Do** respetar `prefers-reduced-motion` y sostener foco visible en toda acción.
 - **Do** limitar cada dropdown buscable al ancho de su control y reutilizar tokens Material en su búsqueda interna y dark mode.
 - **Do** elevar a `z-index: 30` la tarjeta con foco o menú contextual abierto.
+- **Do** diferenciar cada apariencia pública mediante composición, proporción fotográfica y densidad, además de sus tokens de color y tipografía.
 
 ### Don't:
 - **Don't** aplicar el suelo cálido del catálogo público al panel administrativo, ni viceversa.
@@ -274,3 +282,4 @@ El inspector es la firma operativa de Productos. A partir de 1180px acompaña la
 - **Don't** convertir emojis o glifos de una fuente de iconos presentes en código legado en una regla del sistema; los nuevos patrones durables usan SVG accesible.
 - **Don't** permitir que un panel de opciones o una etiqueta larga ensanche el viewport.
 - **Don't** recortar ni apilar el menú contextual detrás de tarjetas posteriores de la cuadrícula.
+- **Don't** reducir las apariencias del catálogo a cambios de paleta sobre tarjetas idénticas.
