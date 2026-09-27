@@ -174,6 +174,8 @@ El catálogo público mantiene una cuadrícula mobile-first que crece hasta cuat
 
 Las apariencias se implementan desde una sola plantilla y una capa temática final. La estructura funcional permanece estable; la capa temática puede cambiar proporciones de imagen entre cuadrada, horizontal y retrato, espaciamiento, alineación y tratamiento de tarjetas. En móvil, las composiciones escalonadas vuelven a una cuadrícula regular para conservar lectura y objetivos táctiles.
 
+La biblioteca puede ser amplia porque la decisión permanece corta: cada giro muestra primero ocho recomendaciones ordenadas y deja el resto detrás de búsqueda y “Ver todos”. Los temas sectoriales declaran sus giros afines y una familia compositiva; la recomendación pondera afinidad directa, estilo del preset y compatibilidad de familia.
+
 Productos utiliza un workspace asimétrico. Hasta 1179px, catálogo e inspector fluyen verticalmente. Desde 1180px, el contenido se divide en catálogo flexible e inspector fijo de 350px, con 18px entre ambos; el inspector queda sticky a 16px del viewport, limita su altura a `calc(100vh - 32px)` y desplaza internamente su contenido. La rejilla administrativa comienza en dos columnas, pasa a tres desde 1360px y usa 12px de separación.
 
 Por debajo de 768px, las tabs permanecen en una sola fila con scroll horizontal, la rejilla se vuelve una lista de una columna y cada producto adopta una tarjeta horizontal: imagen de 104px a la izquierda, información a la derecha y acciones en una franja inferior. El inspector vuelve al flujo, con 18px de separación, y el FAB reaparece como atajo a creación.

@@ -6,6 +6,7 @@ const {
   priceMarkupFactor, markupAmount, applyMarkup, mpCardFee, platformFee,
   parseCustomTags, customTagsJson, parseSpecs, orderLines
 } = require('../lib/pure');
+const { recommendCatalogDesigns } = require('../catalog-designs-expanded');
 
 const biz = (extra) => Object.assign({ mp_enabled: 1, mp_access_token: 'APP_USR-x', mp_fee_on: 1, mp_fee_pct: 3.49, mp_fee_fixed: 4, mp_fee_iva: 16 }, extra || {});
 const cobro = (f, base) => base * f.m + f.b; // lo que paga el cliente sin redondear
@@ -95,4 +96,26 @@ test('líneas de pedido: cantidad y nombre, ignora textos que no son producto', 
   assert.equal(l[0].qty, 2);
   assert.equal(l[0].name, 'Reloj Dama Champagne');
   assert.equal(l[1].name, 'Argollas (par)');
+});
+
+test('apariencias: prioriza el giro y limita la decisión a ocho opciones', () => {
+  const designs = [
+    { id: 'catalogo', world: 'classic', for: [] },
+    { id: 'minimalista', world: 'editorial', for: [] },
+    { id: 'industrial-base', world: 'industrial', for: [] },
+    { id: 'tacos', world: 'industrial', for: ['taqueria'] },
+    { id: 'tacos-2', world: 'vibrant', for: ['taqueria'] },
+    { id: 'otro', world: 'soft', for: [] }
+  ];
+  const rec = recommendCatalogDesigns(
+    designs,
+    [{ id: 'taqueria', estilo: 'tech' }, { id: 'otros', estilo: 'moderno' }],
+    { tech: 'industrial-base', moderno: 'minimalista' },
+    { tech: 'industrial', moderno: 'editorial' },
+    'taqueria',
+    4
+  );
+  assert.deepEqual(rec.slice(0, 2), ['tacos', 'tacos-2']);
+  assert.equal(rec.length, 4);
+  assert.ok(rec.includes('industrial-base'));
 });

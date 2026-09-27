@@ -5,6 +5,7 @@
   var _showFooter = _sec.showFooter !== false;
   // Estilo visual elegido por el dueño: paleta + tipografía (ver CAT_DESIGNS en server.js)
   var _design = (typeof catDesign !== 'undefined' && catDesign) ? catDesign : 'catalogo';
+  var _designWorld = (typeof catDesignTokens !== 'undefined' && catDesignTokens && catDesignTokens.world) ? catDesignTokens.world : 'classic';
   var _designFontHref = (typeof catDesignTokens !== 'undefined' && catDesignTokens && catDesignTokens.font && catDesignTokens.font.href)
     ? catDesignTokens.font.href
     : 'https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap';
@@ -197,7 +198,7 @@
   var _bestIds = (typeof bestIds !== 'undefined' && bestIds) ? bestIds : [];
   var _best = _ex.showTop ? _bestIds.map(function(id){ return _realProds.filter(function(p){ return p.id === id; })[0]; }).filter(Boolean) : [];
 %><!DOCTYPE html>
-<html lang="es" data-style="<%= _design %>">
+<html lang="es" data-style="<%= _design %>" data-world="<%= _designWorld %>">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />

@@ -420,6 +420,7 @@
       border-width: 1px !important; border-color: rgba(44,44,46,.14) !important; border-radius: 13px !important;
       background: #fff; box-shadow: 0 8px 22px -22px rgba(44,44,46,.8); transition: border-color .18s, box-shadow .18s, transform .18s;
     }
+    .config-admin-page #config-design .cat-design-card[hidden] { display:none !important; }
     .config-admin-page #config-design .cat-design-card:hover { transform: translateY(-1px); border-color: rgba(44,44,46,.34) !important; box-shadow: 0 14px 28px -23px rgba(44,44,46,.7); }
     .config-admin-page #config-design .cat-design-card.border-neutral-800 { border-color: var(--cfg-petrol-2) !important; box-shadow: 0 0 0 3px rgba(44,44,46,.11) !important; }
     .config-admin-page #config-design .cat-design-preview { min-height: 64px; padding: 9px; }
@@ -428,6 +429,11 @@
     .catalog-design-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 18px 0 12px; }
     .catalog-design-count { display: inline-flex; align-items: center; gap: 7px; color: #52616c; font-size: 12px; font-weight: 700; }
     .catalog-design-count strong { display: grid; place-items: center; min-width: 27px; height: 27px; padding-inline: 7px; border-radius: 9px; background: #f0f0f1; color: var(--cfg-petrol); font-size: 12px; }
+    .catalog-design-tools { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+    .catalog-design-search { flex:1; min-width:0; min-height:42px; padding:9px 13px; border:1px solid var(--cfg-line); border-radius:11px; background:#fff; color:var(--cfg-petrol); font:600 13px Inter,system-ui,sans-serif; outline:none; }
+    .catalog-design-search:focus { border-color:var(--cfg-petrol-2); box-shadow:0 0 0 3px rgba(44,44,46,.1); }
+    .catalog-design-toggle { flex:none; min-height:42px; padding:9px 13px; border:1px solid var(--cfg-line); border-radius:11px; background:#fff; color:var(--cfg-petrol); font-size:12px; font-weight:800; cursor:pointer; }
+    .cat-design-recommended { position:absolute; top:8px; left:8px; z-index:2; padding:3px 7px; border-radius:7px; background:#fff; color:#2c2c2e; font-size:9px; font-weight:900; letter-spacing:.04em; text-transform:uppercase; box-shadow:0 2px 8px rgba(15,23,42,.12); }
 
     .config-upload-row { display: grid !important; grid-template-columns: minmax(0,1fr) 160px; gap: 16px !important; align-items: center; padding: 14px; border: 1px dashed rgba(44,44,46,.22); border-radius: 13px; background: #f8fafb; }
     .config-upload-row img { justify-self: end; }
@@ -464,6 +470,7 @@
     body.dark .config-nav-link:hover { background: #1b2a36; color: #d8e9f3; }
     body.dark.config-admin-page .config-input, body.dark.config-admin-page input[type="date"], body.dark.config-admin-page input[type="time"], body.dark.config-admin-page input[type="password"] { background: #101820; border-color: #34414b; color: #e7eef3; }
     body.dark.config-admin-page #config-design .cat-design-card { background: #121a21; border-color: #303c46 !important; }
+    body.dark .catalog-design-search, body.dark .catalog-design-toggle { background:#101820; border-color:#34414b; color:#e7eef3; }
     body.dark .config-upload-row { background: #101820; border-color: #34414b; }
     body.dark.config-admin-page #config-security .security-reset { background: #251819; border-color: #513033; }
     .config-master-bar { background: #fff !important; color: var(--cfg-petrol) !important; border-color: var(--cfg-line) !important; }
@@ -996,13 +1003,19 @@
           <form data-noajax method="POST" action="<%= cfgAction %>#config-design" id="cat-design-form">
             <div class="catalog-design-toolbar">
               <p class="catalog-design-count"><strong><%= CAT_DESIGNS.length %></strong> diseños disponibles</p>
-              <p class="text-xs text-slate-400 dark:text-slate-500">Selecciona uno y guarda el cambio</p>
+              <p class="text-xs text-slate-400 dark:text-slate-500"><%= catalogDesignRecommendations.length %> recomendados para tu giro</p>
             </div>
-            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div class="catalog-design-tools">
+              <input type="search" id="catalog-design-search" class="catalog-design-search" placeholder="Buscar diseño, giro o estilo..." aria-label="Buscar diseño">
+              <button type="button" id="catalog-design-toggle" class="catalog-design-toggle" aria-expanded="false">Ver todos</button>
+            </div>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3" id="catalog-design-grid">
               <% CAT_DESIGNS.forEach(function(d) { %>
               <% var t = d.tokens; %>
-              <label class="cat-design-card relative block cursor-pointer rounded-2xl border-2 transition overflow-hidden <%= catDesign.id === d.id ? 'border-neutral-800' : 'border-slate-200 dark:border-[#30363d] hover:border-slate-300 dark:hover:border-[#3d444d]' %>">
+              <% var _isRecommendedDesign = catalogDesignRecommendations.indexOf(d.id) !== -1; %>
+              <label class="cat-design-card relative block cursor-pointer rounded-2xl border-2 transition overflow-hidden <%= catDesign.id === d.id ? 'border-neutral-800' : 'border-slate-200 dark:border-[#30363d] hover:border-slate-300 dark:hover:border-[#3d444d]' %>" data-design-id="<%= d.id %>" data-recommended="<%= _isRecommendedDesign ? '1' : '0' %>" data-search="<%= (d.name + ' ' + d.desc + ' ' + d.world + ' ' + d.for.join(' ')).toLowerCase() %>" <%= (!_isRecommendedDesign && catDesign.id !== d.id) ? 'hidden' : '' %>>
                 <input type="radio" name="catalog_design" value="<%= d.id %>" class="sr-only" <%= catDesign.id === d.id ? 'checked' : '' %>>
+                <% if (_isRecommendedDesign) { %><span class="cat-design-recommended">Para tu giro</span><% } %>
 
                 <!-- Preview: mini tarjeta de producto renderizada con la paleta y tipografía reales del estilo -->
                 <div class="cat-design-preview" style="background:<%= t.bg %>;">
@@ -1044,6 +1057,26 @@
             (function () {
               var form = document.getElementById('cat-design-form');
               if (!form) return;
+              var grid = document.getElementById('catalog-design-grid');
+              var search = document.getElementById('catalog-design-search');
+              var toggle = document.getElementById('catalog-design-toggle');
+              var showAll = false;
+              function filterDesigns() {
+                var q = search ? search.value.trim().toLowerCase() : '';
+                var cards = grid ? grid.querySelectorAll('.cat-design-card') : [];
+                Array.prototype.forEach.call(cards, function (card) {
+                  var selected = !!card.querySelector('input:checked');
+                  var recommended = card.getAttribute('data-recommended') === '1';
+                  var matches = !q || (card.getAttribute('data-search') || '').indexOf(q) !== -1;
+                  card.hidden = !(matches && (q || showAll || recommended || selected));
+                });
+                if (toggle) {
+                  toggle.textContent = showAll ? 'Ver recomendados' : 'Ver todos';
+                  toggle.setAttribute('aria-expanded', showAll ? 'true' : 'false');
+                }
+              }
+              if (search) search.addEventListener('input', filterDesigns);
+              if (toggle) toggle.addEventListener('click', function () { showAll = !showAll; filterDesigns(); });
               // Al cambiar de radio, marca la tarjeta activa y envía solo este formulario
               var radios = form.querySelectorAll('input[name="catalog_design"]');
               radios.forEach(function (r) {
@@ -1056,8 +1089,10 @@
                     c.classList.toggle('border-slate-200', !on);
                     c.classList.toggle('dark:border-[#30363d]', !on);
                   });
+                  filterDesigns();
                 });
               });
+              filterDesigns();
             })();
           </script>
         </section>

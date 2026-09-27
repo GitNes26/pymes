@@ -33,7 +33,7 @@
       <input type="hidden" name="giro_preset" id="wz-giro-preset" value="">
       <input type="hidden" name="estilo" id="wz-estilo" value="">
       <input type="hidden" name="color" id="wz-color" value="">
-      <!-- El diseño real del catálogo — los mismos 25 estilos de Configuración
+      <!-- El diseño real del catálogo — la misma biblioteca de Configuración
            → Diseño del catálogo. Este es el campo que constructor.ejs usa de
            verdad para pintar colores/tipografía (catalog_design → catDesignTokens). -->
       <input type="hidden" name="catalog_design" id="wz-catalog-design" value="">
@@ -115,13 +115,20 @@
           </div>
 
           <div class="wz-vibe-designs-col lg:flex-1 lg:min-w-0">
+            <div class="wz-design-intro">
+              <div>
+                <strong id="wz-design-heading">Recomendados para tu negocio</strong>
+                <span id="wz-design-subheading">Te mostramos primero las opciones que mejor encajan.</span>
+              </div>
+              <button type="button" id="wz-design-toggle" aria-expanded="false">Ver los <%= CAT_DESIGNS.length %> diseños</button>
+            </div>
             <div class="relative max-w-sm mx-auto mb-5 lg:mx-0">
-              <input type="text" id="wz-design-search" placeholder="Busca un estilo (ej: elegante, industrial, pastel...)" class="w-full text-sm rounded-full px-4 py-2.5 outline-none" style="border:1px solid var(--ap-border);background:var(--ap-card);color:var(--ap-text)">
+              <input type="text" id="wz-design-search" placeholder="Buscar entre todos los diseños..." class="w-full text-sm rounded-full px-4 py-2.5 outline-none" style="border:1px solid var(--ap-border);background:var(--ap-card);color:var(--ap-text)">
             </div>
 
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 lg:gap-4" id="wz-vibe-grid" role="radiogroup" aria-label="Elige el diseño de tu catálogo">
               <% CAT_DESIGNS.forEach(d => { var t = d.tokens; %>
-                <button type="button" class="wz-card wz-vibe-card" role="radio" aria-checked="false" data-design="<%= d.id %>" data-search="<%= (d.name + ' ' + d.desc).toLowerCase() %>">
+                <button type="button" class="wz-card wz-vibe-card" role="radio" aria-checked="false" data-design="<%= d.id %>" data-world="<%= d.world %>" data-search="<%= (d.name + ' ' + d.desc + ' ' + d.world + ' ' + d.for.join(' ')).toLowerCase() %>">
                   <span class="wz-card-check" aria-hidden="true"><svg class="wz-check-icon" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></span>
                   <span class="wz-design-preview" aria-hidden="true" style="background:<%= t.bg %>">
                     <span class="wz-design-preview-card" style="background:<%= t.card %>;border-radius:<%= Math.min(t.radius,12) %>px;border:1px solid <%= t.border %>">
@@ -303,6 +310,12 @@
     .wz-card:hover { border-color: rgba(44,44,46,.3); }
     .wz-card.wz-card-selected { border-color: var(--ap-accent); box-shadow: 0 0 0 1px var(--ap-accent); }
     .wz-card[data-recommended="1"]:not(.wz-card-selected) { box-shadow: 0 0 0 1px rgba(37,99,235,.22); }
+    .wz-design-intro { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:14px; }
+    .wz-design-intro strong, .wz-design-intro span { display:block; }
+    .wz-design-intro strong { color:var(--ap-text); font-size:14px; }
+    .wz-design-intro span { margin-top:2px; color:var(--ap-text-sec); font-size:11px; }
+    #wz-design-toggle { flex:none; min-height:38px; padding:8px 13px; border:1px solid var(--ap-border); border-radius:10px; background:var(--ap-card); color:var(--ap-text); font-size:12px; font-weight:800; cursor:pointer; }
+    #wz-design-toggle:hover { border-color:var(--ap-primary); color:var(--ap-primary); }
     /* Al haber una selección, las demás tarjetas bajan de énfasis sin desaparecer */
     #wz-giro-grid.has-selection .wz-card:not(.wz-card-selected),
     #wz-vibe-grid.has-selection .wz-card:not(.wz-card-selected) { opacity: .62; }
@@ -516,6 +529,7 @@
     var VIBE_OPTIONS = <%- safeJson(VIBE_OPTIONS) %>;
     var CAT_DESIGNS = <%- safeJson(CAT_DESIGNS) %>;
     var GIRO_ESTILO_TO_DESIGN = <%- safeJson(GIRO_ESTILO_TO_DESIGN) %>;
+    var CAT_DESIGN_RECOMMENDATIONS = <%- safeJson(CAT_DESIGN_RECOMMENDATIONS) %>;
     var GIRO_CATEGORIAS = <%- safeJson(GIRO_CATEGORIAS) %>;
 
     function designOf(id) { return CAT_DESIGNS.find(function (d) { return d.id === id; }) || CAT_DESIGNS[0]; }
@@ -756,13 +770,17 @@
     document.getElementById('wz-next-1').addEventListener('click', function () {
       if (!state.giro) return;
       var preset = GIRO_PRESETS.find(function (p) { return p.id === state.giro; });
-      // Preselecciona el diseño real recomendado para este giro.
-      var recId = GIRO_ESTILO_TO_DESIGN[preset.estilo] || CAT_DESIGNS[0].id;
+      var recommendations = CAT_DESIGN_RECOMMENDATIONS[state.giro] || CAT_DESIGN_RECOMMENDATIONS.otros || [CAT_DESIGNS[0].id];
+      var recId = recommendations[0];
       document.querySelectorAll('#wz-vibe-grid .wz-card').forEach(function (c) {
-        var isRec = c.getAttribute('data-design') === recId;
+        var isRec = recommendations.indexOf(c.getAttribute('data-design')) !== -1;
         c.querySelector('[data-recommended-badge]').hidden = !isRec;
         if (isRec) c.setAttribute('data-recommended', '1'); else c.removeAttribute('data-recommended');
       });
+      var heading = document.getElementById('wz-design-heading');
+      if (heading) heading.textContent = 'Recomendados para ' + preset.nombre;
+      window.wzDesignShowAll = false;
+      applyDesignVisibility();
       selectDesign(recId);
       goStep(2, 'fwd');
     });
@@ -784,35 +802,36 @@
         selectDesign(card.getAttribute('data-design'));
       });
     });
-    // Buscador del paso 2: filtra los 25 diseños por nombre/descripción, con
-    // el mismo stagger corto que el paso 1.
-    (function () {
+    window.wzDesignShowAll = false;
+    function applyDesignVisibility() {
       var search = document.getElementById('wz-design-search');
-      var empty = document.getElementById('wz-design-empty');
-      if (!search) return;
-      search.addEventListener('input', function () {
-        var q = search.value.trim().toLowerCase();
-        var cards = Array.prototype.slice.call(document.querySelectorAll('#wz-vibe-grid .wz-card'));
-        var visible = [];
-        cards.forEach(function (card) {
-          var match = !q || (card.getAttribute('data-search') || '').indexOf(q) !== -1;
-          card.style.display = match ? '' : 'none';
-          if (match) visible.push(card);
-        });
-        if (empty) empty.classList.toggle('hidden', visible.length !== 0);
-        if (!reducedMotion && visible.length) {
-          var n = visible.length;
-          var step = n > 1 ? Math.min(14, 110 / (n - 1)) : 0;
-          visible.forEach(function (card) { card.classList.remove('wz-card-filtered-in'); card.style.animationDelay = ''; });
-          requestAnimationFrame(function () {
-            visible.forEach(function (card, i) {
-              card.style.animationDelay = Math.round(i * step) + 'ms';
-              card.classList.add('wz-card-filtered-in');
-            });
-          });
-        }
+      var q = search ? search.value.trim().toLowerCase() : '';
+      var recommendations = CAT_DESIGN_RECOMMENDATIONS[state.giro] || CAT_DESIGN_RECOMMENDATIONS.otros || [];
+      var cards = Array.prototype.slice.call(document.querySelectorAll('#wz-vibe-grid .wz-card'));
+      var visible = [];
+      cards.forEach(function (card) {
+        var id = card.getAttribute('data-design');
+        var matchesSearch = !q || (card.getAttribute('data-search') || '').indexOf(q) !== -1;
+        var allowed = q || window.wzDesignShowAll || recommendations.indexOf(id) !== -1 || id === state.design;
+        var show = matchesSearch && allowed;
+        card.style.display = show ? '' : 'none';
+        if (show) visible.push(card);
       });
-    })();
+      var empty = document.getElementById('wz-design-empty');
+      if (empty) empty.classList.toggle('hidden', visible.length !== 0);
+      var toggle = document.getElementById('wz-design-toggle');
+      if (toggle) {
+        toggle.textContent = window.wzDesignShowAll ? 'Ver recomendados' : 'Ver los ' + CAT_DESIGNS.length + ' diseños';
+        toggle.setAttribute('aria-expanded', window.wzDesignShowAll ? 'true' : 'false');
+      }
+    }
+    var designSearch = document.getElementById('wz-design-search');
+    if (designSearch) designSearch.addEventListener('input', applyDesignVisibility);
+    var designToggle = document.getElementById('wz-design-toggle');
+    if (designToggle) designToggle.addEventListener('click', function () {
+      window.wzDesignShowAll = !window.wzDesignShowAll;
+      applyDesignVisibility();
+    });
     document.getElementById('wz-back-2').addEventListener('click', function () { goStep(1, 'back'); });
     document.getElementById('wz-next-2').addEventListener('click', function () {
       var preset = GIRO_PRESETS.find(function (p) { return p.id === state.giro; });

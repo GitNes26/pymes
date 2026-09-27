@@ -317,6 +317,22 @@ const CAT_DESIGNS = [
   { id: 'acuarela', name: 'Acuarela', desc: 'Azul suave y lavanda, como pintado a mano', emoji: '🎨',
     tokens: { bg: '#f5f7fb', card: '#ffffff', text: '#2a3040', textSec: '#818ba0', accent: '#5b7fbd', accentLight: '#8aa6d4', accentGlow: '#c9a4d4', border: 'rgba(91,127,189,.12)', radius: 18, shadow: '0 10px 30px rgba(91,127,189,.10)', font: CAT_FONTS.contemporanea } }
 ];
+const CAT_DESIGN_BASE_WORLDS = {
+  catalogo: 'classic', joyeria: 'luxury', postres: 'soft', ropa: 'editorial',
+  floreria: 'organic', ferreteria: 'industrial', muebles: 'artisan', cosmeticos: 'soft',
+  vivero: 'organic', belleza: 'soft', eventos: 'luxury', minimalista: 'editorial',
+  pastel: 'soft', monocromo: 'brutalist', bohemio: 'artisan', oceanico: 'organic',
+  nordico: 'organic', vibrante: 'vibrant', retro: 'artisan', futurista: 'tech',
+  rustico: 'artisan', elegante: 'luxury', urbano: 'industrial', tropical: 'organic',
+  acuarela: 'soft'
+};
+const { buildExpandedCatalogDesigns, recommendCatalogDesigns } = require('./catalog-designs-expanded');
+CAT_DESIGNS.push(...buildExpandedCatalogDesigns(CAT_FONTS));
+CAT_DESIGNS.forEach(d => {
+  d.world = d.world || CAT_DESIGN_BASE_WORLDS[d.id] || 'classic';
+  d.for = Array.isArray(d.for) ? d.for : [];
+  d.tokens.world = d.world;
+});
 // Secciones extra del catálogo (columna businesses.extras, JSON). Se sanea todo
 // lo que llega del formulario: largos acotados, solo métodos de pago conocidos
 // y estrellas 1–5. Devuelve '' si no quedó nada, para no guardar un "{}" vacío.
@@ -1638,7 +1654,7 @@ const VIBE_OPTIONS = [
   { estilo: 'fresco', color: 'esmeralda', nombre: 'Fresco y natural' },
   { estilo: 'tech', color: 'neon', nombre: 'Tech y audaz' }
 ];
-// Recomienda un diseño real de CAT_DESIGNS (el mismo catálogo de 25 estilos
+// Recomienda un diseño real de CAT_DESIGNS (la misma biblioteca sectorial
 // que se elige en Configuración) según el "estilo" del giro elegido en el
 // asistente de bienvenida — para que la vibra sugerida ya sea uno de los
 // diseños que de verdad existen, no una paleta aparte que nunca se aplicaba.
@@ -1647,6 +1663,27 @@ const GIRO_ESTILO_TO_DESIGN = {
   elegancia: 'elegante', boho: 'bohemio', lujo: 'joyeria', vintage: 'retro',
   retro: 'rustico', tech: 'futurista', nocturno: 'eventos', viaje: 'tropical'
 };
+
+const DESIGN_WORLD_BY_ESTILO = {
+  cafe: 'artisan', fresco: 'organic', dulce: 'soft', moderno: 'editorial',
+  elegancia: 'luxury', boho: 'artisan', lujo: 'luxury', vintage: 'artisan',
+  retro: 'artisan', tech: 'tech', nocturno: 'luxury', viaje: 'organic'
+};
+
+// Devuelve pocas opciones relevantes aunque la biblioteca sea grande. Los
+// estilos que nombran el giro van primero; después entran mundos compatibles y
+// finalmente opciones generales. El orden es estable para que la recomendación
+// no cambie entre visitas.
+function catalogDesignRecommendations(giroId, limit = 8) {
+  return recommendCatalogDesigns(
+    CAT_DESIGNS, GIRO_PRESETS, GIRO_ESTILO_TO_DESIGN,
+    DESIGN_WORLD_BY_ESTILO, giroId, limit
+  );
+}
+
+const CAT_DESIGN_RECOMMENDATIONS = Object.fromEntries(
+  GIRO_PRESETS.map(p => [p.id, catalogDesignRecommendations(p.id, 8)])
+);
 
 // ================= DIVISAS (ISO 4217) =================
 const CURRENCIES = [
@@ -2217,7 +2254,7 @@ app.get('/:slug/admin/bienvenida', requireAuth, (req, res) => {
   if (req.role !== 'owner') return res.redirect('/' + req.params.slug + '/admin/panel');
   if (req.biz.onboarding_done) return res.redirect('/' + req.params.slug + '/admin/panel');
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
-  res.render('bienvenida', { biz: req.biz, GIRO_PRESETS, VIBE_OPTIONS, COLORS, GIRO_CATEGORIAS, CAT_DESIGNS, GIRO_ESTILO_TO_DESIGN, error: null });
+  res.render('bienvenida', { biz: req.biz, GIRO_PRESETS, VIBE_OPTIONS, COLORS, GIRO_CATEGORIAS, CAT_DESIGNS, GIRO_ESTILO_TO_DESIGN, CAT_DESIGN_RECOMMENDATIONS, error: null });
 });
 
 app.post('/:slug/admin/bienvenida', requireAuth, (req, res) => {
@@ -4969,6 +5006,7 @@ function configLocals(biz, opts) {
     TEMPLATES, COLORS, GIROS: getGiros(), ESTILOS, FONTS, CURRENCIES, GIRO_PRESETS,
     diseno,
     CAT_DESIGNS,
+    catalogDesignRecommendations: catalogDesignRecommendations(biz.giro_preset || biz.giro || 'otros', 8),
     catDesign: catDesignOf(biz),
     TPL_META,
     TPL_CASOS,
