@@ -348,18 +348,22 @@
     .config-admin-page main { width: 100%; min-width: 0; max-width: 100%; }
     .config-shell { width: 100%; max-width: 1440px; box-sizing: border-box; margin: 0 auto; padding: 24px clamp(16px, 2.4vw, 34px) 48px; }
     .config-hero {
-      display: flex; align-items: flex-end; justify-content: space-between; gap: 18px;
+      display: flex; align-items: center; justify-content: space-between; gap: 22px;
       margin-bottom: 18px; padding: 22px 24px; border: 1px solid var(--cfg-line);
-      border-radius: 18px; background: rgba(255,255,255,.78);
+      border-radius: 18px; background: rgba(255,255,255,.9);
       width: 100%; max-width: 100%; box-sizing: border-box;
     }
     .config-hero > div { min-width: 0; }
     .config-title { margin-top: 4px; color: var(--cfg-ink); font-size: clamp(1.55rem, 2vw, 2rem); font-weight: 850; letter-spacing: -.035em; line-height: 1.05; }
     .config-lede { margin-top: 8px; max-width: 670px; color: var(--cfg-muted); font-size: 13px; line-height: 1.55; overflow-wrap: anywhere; }
+    .config-hero-actions { display:flex; align-items:center; justify-content:flex-end; gap:10px; flex-wrap:wrap; }
+    .config-save-state { display:inline-flex; align-items:center; gap:7px; color:#64717b; font-size:11px; font-weight:800; }
+    .config-save-state::before { content:""; width:7px; height:7px; border-radius:99px; background:#39a875; box-shadow:0 0 0 4px rgba(57,168,117,.1); }
     .config-catalog-link { flex: 0 0 auto; border-color: rgba(44,44,46,.2) !important; background: #f0f0f1 !important; color: var(--cfg-petrol) !important; }
     .config-catalog-link:hover { background: #e2edf2 !important; }
+    .config-save-button { min-height:38px; padding-inline:16px !important; }
 
-    .config-workspace { display: grid; grid-template-columns: 216px minmax(0, 1fr); gap: 18px; align-items: start; }
+    .config-workspace { display: grid; grid-template-columns: 216px minmax(0, 1fr) 238px; gap: 18px; align-items: start; }
     .config-rail {
       position: sticky; top: 18px; padding: 10px; border: 1px solid var(--cfg-line);
       border-radius: 16px; background: #fff;
@@ -376,6 +380,32 @@
     .config-nav-icon svg { width: 15px; height: 15px; }
     .config-content { min-width: 0; max-width: 100%; display: grid; gap: 18px; }
     .config-content > *, .config-section form, .config-section .grid { min-width: 0; max-width: 100%; }
+    .config-section[hidden] { display:none !important; }
+    body:not(.config-tabs-ready) .config-section:not(#config-business) { display:none !important; }
+
+    .config-profile {
+      position:sticky; top:18px; padding:18px; border:1px solid var(--cfg-line); border-radius:16px; background:#fff;
+    }
+    .config-profile-kicker { color:#75828b; font-size:10px; font-weight:850; letter-spacing:.09em; text-transform:uppercase; }
+    .config-profile-score { display:flex; align-items:flex-end; justify-content:space-between; gap:10px; margin-top:8px; }
+    .config-profile-score strong { color:var(--cfg-ink); font-size:28px; line-height:1; letter-spacing:-.04em; }
+    .config-profile-score span { color:#75828b; font-size:11px; font-weight:700; }
+    .config-progress { height:7px; margin:14px 0 16px; overflow:hidden; border-radius:99px; background:#eceff0; }
+    .config-progress > span { display:block; height:100%; border-radius:inherit; background:linear-gradient(90deg,#2c2c2e,#727276); }
+    .config-checklist { display:grid; gap:10px; }
+    .config-check { display:flex; align-items:center; gap:9px; color:#596873; font-size:12px; font-weight:700; }
+    .config-check i { display:grid; place-items:center; width:20px; height:20px; border-radius:99px; background:#edf0f1; color:#8a969e; font-size:11px; font-style:normal; }
+    .config-check.is-done { color:#27343d; }
+    .config-check.is-done i { background:#dcf5e8; color:#238354; }
+    .config-profile-link { display:flex; align-items:center; justify-content:center; gap:7px; width:100%; min-height:38px; margin-top:18px; border:1px solid var(--cfg-line); border-radius:10px; color:var(--cfg-petrol); background:#f8f9f9; font-size:12px; font-weight:850; }
+    .config-profile-link:hover { background:#f0f1f2; }
+
+    .config-sticky-save {
+      position:sticky; bottom:12px; z-index:32; display:flex; align-items:center; justify-content:space-between; gap:14px;
+      margin-top:18px; padding:11px 12px 11px 16px; border:1px solid rgba(44,44,46,.14); border-radius:14px;
+      background:rgba(255,255,255,.94); box-shadow:0 14px 38px -22px rgba(20,28,34,.5); backdrop-filter:blur(14px);
+    }
+    .config-sticky-save p { color:#66747e; font-size:11px; line-height:1.35; }
 
     .config-admin-page .config-section {
       scroll-margin-top: 20px; padding: clamp(18px, 2vw, 26px) !important;
@@ -442,6 +472,10 @@
     @media (min-width: 1180px) {
       .config-admin-page #config-design form > .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
     }
+    @media (max-width: 1180px) {
+      .config-workspace { grid-template-columns:200px minmax(0,1fr); }
+      .config-profile { position:static; grid-column:2; }
+    }
     @media (max-width: 860px) {
       .config-shell { padding-top: 16px; }
       .config-hero { align-items: flex-start; }
@@ -451,19 +485,25 @@
       .config-nav-link { flex: 0 0 auto; min-height: 38px; padding: 6px 10px; }
       .config-nav-link + .config-nav-link { margin-top: 0; }
       .config-nav-icon { width: 26px; height: 26px; }
+      .config-profile { margin-top:14px; }
     }
     @media (max-width: 560px) {
       .config-shell { padding-inline: 12px; }
       .config-hero { display: block; padding: 18px; }
-      .config-catalog-link { width: 100%; margin-top: 14px; justify-content: center; }
+      .config-hero-actions { display:grid; grid-template-columns:1fr 1fr; margin-top:16px; }
+      .config-save-state { grid-column:1 / -1; }
+      .config-catalog-link, .config-save-button { width:100%; justify-content:center; }
       .config-admin-page .config-section { padding: 17px !important; }
       .config-upload-row { grid-template-columns: 1fr; }
       .config-upload-row img { justify-self: start; }
       .config-admin-page #config-design form > .grid { grid-template-columns: 1fr 1fr; gap: 9px; }
       .config-admin-page #config-design .cat-design-card p.text-xs { display: none; min-height: 0; }
+      .config-sticky-save { bottom:8px; }
+      .config-sticky-save p { display:none; }
+      .config-sticky-save .m-btn { width:100%; justify-content:center; }
     }
     body.dark.config-admin-page { background: #0d1117; }
-    body.dark .config-hero, body.dark .config-rail, body.dark.config-admin-page .config-section { background: rgba(22,27,34,.92) !important; border-color: #28333d !important; }
+    body.dark .config-hero, body.dark .config-rail, body.dark .config-profile, body.dark .config-sticky-save, body.dark.config-admin-page .config-section { background: rgba(22,27,34,.92) !important; border-color: #28333d !important; }
     body.dark .config-title, body.dark.config-admin-page .config-section h2 { color: #edf4f8 !important; }
     body.dark .config-lede { color: #9aa7b4; }
     body.dark .config-nav-link { color: #a8b4bd; }
@@ -494,6 +534,7 @@
   -->
   <% if (!esMaestro) { %>
     <%- include('admin/sidebar', { biz, active: 'config', canDesign }) %>
+    <link rel="stylesheet" href="/css/config-2026.css?v=20260928a">
   <% } else { %>
     <nav class="config-master-bar sticky top-0 z-50 border-b">
       <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -518,15 +559,40 @@
             <%= esMaestro ? 'Controlas el diseño, las imágenes, los datos y el acceso de esta tienda.' : (canDesign ? 'Personaliza el diseño, los datos y el acceso de tu tienda.' : 'Cambia los datos y el acceso de tu tienda.') %>
           </p>
         </div>
-        <a href="/<%= biz.slug %>" target="_blank" class="config-catalog-link m-btn m-btn-tonal m-btn-sm dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/></svg>
-          Ver catálogo
-        </a>
+        <div class="config-hero-actions">
+          <span class="cfg-save-state" data-cfg-state role="status">
+            <span class="cfg-save-dot" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+            <span data-cfg-state-text>Cambios guardados</span>
+          </span>
+          <a href="/<%= biz.slug %>" target="_blank" rel="noopener" class="cfg-btn cfg-btn-ghost">
+            Ver catálogo
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>
+          </a>
+          <button type="button" class="cfg-btn cfg-btn-primary" data-cfg-save>Guardar cambios</button>
+        </div>
       </div>
 
       <%
         const cfgAction = esMaestro ? '/maestro/' + biz.id + '/config' : '/' + biz.slug + '/admin/config';
         const prevSrc = esMaestro ? '/maestro/' + biz.id + '/preview' : '/' + biz.slug + '/admin/preview';
+        // Perfil del negocio: qué tan completa está la tienda (solo lectura de datos que ya existen)
+        const _cfgAddr = String((typeof address !== 'undefined' && address) || '').trim();
+        let _cfgHor = false;
+        try { _cfgHor = Object.keys(horario || {}).some(function (k) { return horario[k] && horario[k].o; }); } catch (e) {}
+        const _cfgChecks = [
+          { label: 'Logo agregado', todo: 'Falta el logo', done: !!biz.logo, href: '#config-images' },
+          { label: 'WhatsApp conectado', todo: 'Falta el WhatsApp', done: !!String(biz.whatsapp || '').trim(), href: '#config-business' },
+          { label: 'Descripción lista', todo: 'Falta la descripción', done: !!String(biz.description || '').trim(), href: '#config-business' },
+          { label: 'Horario configurado', todo: 'Falta el horario', done: _cfgHor, href: '#config-business' },
+          { label: 'Dirección agregada', todo: 'Falta la dirección', done: !!_cfgAddr, href: '#config-business' }
+        ];
+        const _cfgPct = Math.round(_cfgChecks.filter(function (c) { return c.done; }).length / _cfgChecks.length * 100);
+        const _cfgState = {
+          business: !!(String(biz.name || '').trim() && String(biz.whatsapp || '').trim() && String(biz.description || '').trim() && _cfgAddr),
+          images: !!biz.logo,
+          pagos: !!(biz.mp_enabled || biz.transfer_enabled || biz.cash_enabled)
+        };
+        const _cfgTag = function (ok) { return '<span class="cfg-tag ' + (ok ? 'is-ok' : 'is-pend') + '">' + (ok ? 'Listo' : 'Pendiente') + '</span>'; };
       %>
 
       <!-- MENSAJES (se muestran como toast de SweetAlert2) -->
@@ -537,22 +603,22 @@
       <div class="config-workspace">
         <nav class="config-rail" aria-label="Secciones de configuración">
           <a class="config-nav-link is-active" href="#config-business" data-config-nav>
-            <span class="config-nav-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg></span>Negocio
+            <span class="config-nav-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg></span><span class="cfg-nav-text">Negocio</span><%- _cfgTag(_cfgState.business) %>
           </a>
           <% if (canDesign) { %>
           <a class="config-nav-link" href="#config-design" data-config-nav>
-            <span class="config-nav-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 3a9 9 0 100 18h1.5a1.5 1.5 0 000-3H12a1.5 1.5 0 010-3h2a7 7 0 000-12h-2z"/><path d="M7.5 10h.01M9 6.8h.01M14.5 6.5h.01"/></svg></span>Apariencia
+            <span class="config-nav-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 3a9 9 0 100 18h1.5a1.5 1.5 0 000-3H12a1.5 1.5 0 010-3h2a7 7 0 000-12h-2z"/><path d="M7.5 10h.01M9 6.8h.01M14.5 6.5h.01"/></svg></span><span class="cfg-nav-text">Apariencia</span><%- _cfgTag(true) %>
           </a>
           <a class="config-nav-link" href="#config-images" data-config-nav>
-            <span class="config-nav-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M4 19l5-5 3 3 2-2 6 4M5 5h14v14H5z"/><path d="M9 10a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/></svg></span>Imágenes
+            <span class="config-nav-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M4 19l5-5 3 3 2-2 6 4M5 5h14v14H5z"/><path d="M9 10a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/></svg></span><span class="cfg-nav-text">Imágenes</span><%- _cfgTag(_cfgState.images) %>
           </a>
           <% } %>
           <% if (!esMaestro) { %>
           <a class="config-nav-link" href="#config-pagos" data-config-nav>
-            <span class="config-nav-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M2 8h20M2 8v10a2 2 0 002 2h16a2 2 0 002-2V8M2 8l1.5-3.5A2 2 0 015.3 3h13.4a2 2 0 011.8 1.5L22 8M6 15h4"/></svg></span>Pagos
+            <span class="config-nav-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M2 8h20M2 8v10a2 2 0 002 2h16a2 2 0 002-2V8M2 8l1.5-3.5A2 2 0 015.3 3h13.4a2 2 0 011.8 1.5L22 8M6 15h4"/></svg></span><span class="cfg-nav-text">Pagos</span><%- _cfgTag(_cfgState.pagos) %>
           </a>
           <a class="config-nav-link" href="#config-security" data-config-nav>
-            <span class="config-nav-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M7 11V8a5 5 0 0110 0v3M5 11h14v10H5z"/><path d="M12 15v2"/></svg></span>Seguridad
+            <span class="config-nav-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M7 11V8a5 5 0 0110 0v3M5 11h14v10H5z"/><path d="M12 15v2"/></svg></span><span class="cfg-nav-text">Seguridad</span><%- _cfgTag(true) %>
           </a>
           <% } %>
         </nav>
@@ -567,14 +633,15 @@
             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
           </div>
           <div>
-            <h2 class="font-extrabold text-slate-900 dark:text-white">Datos del negocio</h2>
-            <p class="text-xs text-slate-400 dark:text-slate-500">Nombre, contacto y giro</p>
+            <h2 class="font-extrabold text-slate-900 dark:text-white">Información del negocio</h2>
+            <p class="text-xs text-slate-400 dark:text-slate-500">Los clientes verán estos datos en tu catálogo y mensajes.</p>
           </div>
         </div>
 
         <form data-noajax method="POST" action="<%= cfgAction %>#config-business" class="space-y-4" id="form-datos">
           <input type="hidden" name="sections-current" value="<%= biz.sections || '{}' %>">
           <input type="hidden" name="sections" id="sections-json" value="">
+          <h3 class="cfg-h3">Identidad y contacto</h3>
           <div class="grid md:grid-cols-2 gap-4">
             <div>
               <label class="config-label">Nombre del negocio *</label>
@@ -1181,7 +1248,7 @@
       SECCIÓN 4: SEGURIDAD (solo visible para el dueño)
       ============================================================ -->
       <% if (!esMaestro) { %>
-      <section id="config-security" class="m-card config-section p-5 md:p-6 dark:bg-[#161b22] dark:border-[#21262d]">
+      <section id="config-security" data-cfg-nosave class="m-card config-section p-5 md:p-6 dark:bg-[#161b22] dark:border-[#21262d]">
         <div class="config-section-head flex items-center gap-3 mb-5">
           <div class="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400 flex items-center justify-center shrink-0">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
@@ -1216,8 +1283,43 @@
       <% } %>
 
         </div>
+
+        <aside class="config-profile" aria-label="Perfil del negocio">
+          <h2 class="cfg-profile-title">Perfil del negocio</h2>
+          <div class="cfg-ring-row">
+            <svg class="cfg-ring" viewBox="0 0 80 80" role="img" aria-label="<%= _cfgPct %> por ciento completo">
+              <circle cx="40" cy="40" r="33" fill="none" stroke-width="7" class="cfg-ring-bg"/>
+              <circle cx="40" cy="40" r="33" fill="none" stroke-width="7" class="cfg-ring-fg" stroke-dasharray="<%= (207.3 * _cfgPct / 100).toFixed(1) %> 207.3" transform="rotate(-90 40 40)"/>
+              <text x="40" y="46" text-anchor="middle"><%= _cfgPct %>%</text>
+            </svg>
+            <div>
+              <strong><%= _cfgPct %>% completo</strong>
+              <p>Completa la información para generar más confianza en tus clientes.</p>
+            </div>
+          </div>
+          <ul class="cfg-checks">
+            <% _cfgChecks.forEach(function (c) { %>
+              <li class="<%= c.done ? 'is-done' : 'is-todo' %>">
+                <span class="cfg-check-dot" aria-hidden="true"><% if (c.done) { %><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><% } else { %>!<% } %></span>
+                <% if (c.done) { %><span><%= c.label %></span><% } else { %><a href="<%= c.href %>" data-config-nav-jump><%= c.todo %></a><% } %>
+              </li>
+            <% }) %>
+          </ul>
+          <div class="cfg-profile-sep"></div>
+          <strong class="cfg-profile-sub">Vista previa</strong>
+          <p class="cfg-profile-note">Así te verán tus clientes en el catálogo de WhatsApp.</p>
+          <a href="/<%= biz.slug %>" target="_blank" rel="noopener" class="cfg-profile-link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>
+            Ver mi catálogo público
+          </a>
+        </aside>
       </div>
 
+    </div>
+    <div class="cfg-savebar" role="region" aria-label="Guardar cambios">
+      <span class="cfg-savebar-text" data-cfg-bar-text>Cada sección se guarda por separado.</span>
+      <button type="button" class="cfg-btn cfg-btn-ghost" data-cfg-discard>Descartar</button>
+      <button type="button" class="cfg-btn cfg-btn-primary" data-cfg-save>Guardar cambios</button>
     </div>
   </main>
 
@@ -1814,32 +1916,73 @@
       });
     });
 
-    // Navegación local: mantiene visible la sección actual mientras se recorre la página.
+    // Configuración por secciones: se muestra una a la vez (como pestañas).
+    // Los botones Guardar/Descartar actúan sobre el formulario de la sección visible.
     (function () {
       var links = Array.prototype.slice.call(document.querySelectorAll('[data-config-nav]'));
       if (!links.length) return;
-      var sections = links.map(function (link) { return document.querySelector(link.getAttribute('href')); }).filter(Boolean);
-      function activate(id) {
-        links.forEach(function (link) {
-          var on = link.getAttribute('href') === '#' + id;
-          link.classList.toggle('is-active', on);
-          if (on) link.setAttribute('aria-current', 'location');
-          else link.removeAttribute('aria-current');
+      var sections = links.map(function (l) { return document.querySelector(l.getAttribute('href')); }).filter(Boolean);
+      var current = null, dirty = false;
+      var stateText = document.querySelector('[data-cfg-state-text]');
+      var stateBox = document.querySelector('[data-cfg-state]');
+      var barText = document.querySelector('[data-cfg-bar-text]');
+      function setDirty(v) {
+        dirty = v;
+        if (stateText) stateText.textContent = v ? 'Cambios sin guardar' : 'Cambios guardados';
+        if (stateBox) stateBox.classList.toggle('is-dirty', v);
+        if (barText) barText.textContent = v ? 'Tienes cambios sin guardar en esta sección.' : 'Cada sección se guarda por separado.';
+      }
+      function show(id, focus) {
+        var target = document.getElementById(id);
+        if (!target || sections.indexOf(target) === -1) target = sections[0];
+        sections.forEach(function (sec) { sec.hidden = sec !== target; });
+        links.forEach(function (l) {
+          var on = l.getAttribute('href') === '#' + target.id;
+          l.classList.toggle('is-active', on);
+          if (on) l.setAttribute('aria-current', 'page'); else l.removeAttribute('aria-current');
         });
+        current = target;
+        var nosave = target.hasAttribute('data-cfg-nosave');
+        document.querySelectorAll('[data-cfg-save], [data-cfg-discard]').forEach(function (b) { b.hidden = nosave; });
+        setDirty(false);
+        if (barText && nosave) barText.textContent = 'Cada acción de esta sección se guarda con su propio botón.';
+        if (focus) window.scrollTo({ top: 0, behavior: 'smooth' });
       }
-      if ('IntersectionObserver' in window) {
-        var observer = new IntersectionObserver(function (entries) {
-          var visible = entries.filter(function (entry) { return entry.isIntersecting; })
-            .sort(function (a, b) { return b.intersectionRatio - a.intersectionRatio; });
-          if (visible[0]) activate(visible[0].target.id);
-        }, { rootMargin: '-18% 0px -58% 0px', threshold: [0, .15, .4] });
-        sections.forEach(function (section) { observer.observe(section); });
-      }
-      links.forEach(function (link) {
-        link.addEventListener('click', function () {
-          activate((this.getAttribute('href') || '').slice(1));
+      function activeForm() { return current ? current.querySelector('form') : null; }
+      links.forEach(function (l) {
+        l.addEventListener('click', function (e) {
+          e.preventDefault();
+          var id = (l.getAttribute('href') || '').slice(1);
+          if (dirty && !confirm('Tienes cambios sin guardar en esta sección. ¿Salir sin guardar?')) return;
+          history.replaceState(null, '', '#' + id);
+          show(id, true);
         });
       });
+      document.querySelectorAll('[data-config-nav-jump]').forEach(function (a) {
+        a.addEventListener('click', function (e) { e.preventDefault(); show(a.getAttribute('href').slice(1), true); });
+      });
+      sections.forEach(function (sec) {
+        sec.addEventListener('input', function () { setDirty(true); });
+        sec.addEventListener('change', function () { setDirty(true); });
+        sec.addEventListener('submit', function () { dirty = false; });
+      });
+      document.querySelectorAll('[data-cfg-save]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var f = activeForm();
+          if (!f) return;
+          if (f.requestSubmit) f.requestSubmit(); else f.submit();
+        });
+      });
+      document.querySelectorAll('[data-cfg-discard]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          if (!dirty) return;
+          if (!confirm('¿Descartar los cambios de esta sección?')) return;
+          location.reload();
+        });
+      });
+      window.addEventListener('beforeunload', function (e) { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+      show((location.hash || '').slice(1));
+      document.body.classList.add('config-tabs-ready');
     })();
   </script>
 </body>

@@ -1,0 +1,171 @@
+/* Configuración · diseño 2026
+   Tres columnas (secciones · formulario · perfil), campos limpios y barra de
+   guardado fija. Se carga después de los estilos propios de config.ejs. */
+.config-admin-page {
+  --cfg-ink: #16181B;
+  --cfg-muted: #5B6166;
+  --cfg-line: #E3E6E6;
+  --cfg-field: #DCE0E0;
+  --cfg-petrol: #1D5C5A;
+  --cfg-petrol-2: #134341;
+  --cfg-soft: #E3F1EC;
+  --cfg-ok: #1E7A4C;
+  --cfg-warn: #9A5A00;
+  background: #F6F7F7 !important;
+}
+.config-admin-page .config-shell { max-width: 1480px; padding: 24px 32px 0; }
+
+/* Encabezado */
+.config-admin-page .config-hero {
+  padding: 0 0 22px !important; margin-bottom: 0 !important; border: 0 !important;
+  background: transparent !important; border-radius: 0 !important; box-shadow: none !important;
+}
+.config-admin-page .config-title { font-size: 30px; font-weight: 700; letter-spacing: -.02em; color: var(--cfg-ink); margin-top: 0; }
+.config-admin-page .config-lede { font-size: 14px; color: var(--cfg-muted); margin-top: 4px; }
+.config-admin-page .config-hero-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+.cfg-save-state { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: var(--cfg-ok); }
+.cfg-save-dot { width: 16px; height: 16px; border-radius: 50%; background: #2A9D5C; color: #fff; display: grid; place-items: center; }
+.cfg-save-dot svg { width: 10px; height: 10px; }
+.cfg-save-state.is-dirty { color: var(--cfg-warn); }
+.cfg-save-state.is-dirty .cfg-save-dot { background: #D9892B; }
+.cfg-save-state.is-dirty .cfg-save-dot svg { display: none; }
+
+.cfg-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 40px; padding: 0 18px; border-radius: 6px; font: inherit; font-size: 14px; font-weight: 600;
+  cursor: pointer; text-decoration: none; white-space: nowrap; transition: background .15s, border-color .15s, transform .1s;
+}
+.cfg-btn svg { width: 15px; height: 15px; }
+.cfg-btn:active { transform: scale(.98); }
+.cfg-btn[hidden] { display: none; }
+.cfg-btn-primary { background: var(--cfg-petrol); color: #fff; border: 0; }
+.cfg-btn-primary:hover { background: var(--cfg-petrol-2); color: #fff; }
+.cfg-btn-ghost { background: #fff; color: var(--cfg-ink); border: 1px solid var(--cfg-field); font-weight: 500; }
+.cfg-btn-ghost:hover { background: #F6F7F7; color: var(--cfg-ink); }
+.cfg-btn:focus-visible { outline: 2px solid var(--cfg-petrol); outline-offset: 2px; }
+
+/* Distribución */
+.config-admin-page .config-workspace { display: grid; grid-template-columns: 248px minmax(0, 1fr) 262px; gap: 14px; align-items: start; }
+
+/* Menú de secciones */
+.config-admin-page .config-rail {
+  position: sticky; top: 16px; padding: 14px 6px; border: 1px solid var(--cfg-line); border-radius: 8px; background: #fff;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.config-admin-page .config-nav-link {
+  display: flex; align-items: center; gap: 14px; min-height: 44px; padding: 0 12px; border-radius: 4px;
+  font-size: 14px; font-weight: 500; color: #2A2F33; background: transparent; box-shadow: none;
+}
+.config-admin-page .config-nav-link + .config-nav-link { margin-top: 0; }
+.config-admin-page .config-nav-link:hover { background: #F4F6F6; color: var(--cfg-ink); }
+.config-admin-page .config-nav-link.is-active { background: var(--cfg-soft); color: var(--cfg-petrol-2); box-shadow: inset 3px 0 0 var(--cfg-petrol); }
+.config-admin-page .config-nav-icon { width: 22px; height: 22px; background: transparent !important; color: inherit !important; border-radius: 0; box-shadow: none !important; }
+.config-admin-page .config-nav-icon svg { width: 20px; height: 20px; }
+.cfg-nav-text { flex: 1 1 auto; min-width: 0; }
+.cfg-tag { flex-shrink: 0; font-size: 12px; font-weight: 500; padding: 3px 8px; border-radius: 4px; }
+.cfg-tag.is-ok { background: #E3F3E9; color: var(--cfg-ok); }
+.cfg-tag.is-pend { background: #FDF0DC; color: var(--cfg-warn); }
+
+/* Tarjeta de sección */
+.config-admin-page .config-section {
+  border: 1px solid var(--cfg-line) !important; border-radius: 8px !important; background: #fff !important;
+  box-shadow: none !important; padding: 22px 24px 26px !important; margin-bottom: 96px;
+}
+.config-admin-page .config-section-head { margin-bottom: 18px !important; }
+.config-admin-page .config-section-head > div:first-child:not(:only-child) { display: none; } /* icono decorativo */
+.config-admin-page .config-section h2 { font-size: 21px !important; font-weight: 700 !important; letter-spacing: -.015em; color: var(--cfg-ink) !important; }
+.config-admin-page .config-section-head p { font-size: 14px !important; color: var(--cfg-muted) !important; margin-top: 2px; }
+.cfg-h3 { margin: 6px 0 14px !important; padding-bottom: 8px; border-bottom: 1px solid var(--cfg-line); font-size: 16px; font-weight: 600; color: var(--cfg-ink); }
+
+/* Campos */
+.config-admin-page .config-label { display: block; margin-bottom: 6px; font-size: 14px !important; font-weight: 500 !important; color: var(--cfg-ink) !important; text-transform: none !important; letter-spacing: 0 !important; }
+.config-admin-page .config-input,
+.config-admin-page .config-section input[type="text"],
+.config-admin-page .config-section input[type="tel"],
+.config-admin-page .config-section input[type="url"],
+.config-admin-page .config-section input[type="email"],
+.config-admin-page .config-section input[type="number"],
+.config-admin-page .config-section input[type="password"],
+.config-admin-page .config-section input[type="date"],
+.config-admin-page .config-section input[type="time"],
+.config-admin-page .config-section input:not([type]),
+.config-admin-page .config-section select,
+.config-admin-page .config-section textarea {
+  border: 1px solid var(--cfg-field) !important; border-radius: 3px !important; background-color: #fff !important;
+  font-size: 14px !important; color: var(--cfg-ink) !important; box-shadow: none !important;
+}
+.config-admin-page .config-input:not(textarea),
+.config-admin-page .config-section select { min-height: 38px; padding: 0 12px !important; }
+.config-admin-page .config-section textarea { padding: 9px 12px !important; line-height: 1.4; }
+.config-admin-page .config-section input:focus,
+.config-admin-page .config-section select:focus,
+.config-admin-page .config-section textarea:focus { border-color: var(--cfg-petrol) !important; outline: 0; box-shadow: 0 0 0 3px rgba(29,92,90,.14) !important; }
+.config-admin-page .config-section p.text-xs,
+.config-admin-page .config-section .text-xs.text-slate-400 { font-size: 12px !important; color: var(--cfg-muted) !important; }
+.config-admin-page .config-section .border-t { border-color: var(--cfg-line) !important; }
+
+/* Perfil del negocio */
+.config-admin-page .config-profile {
+  position: sticky; top: 16px; padding: 20px; border: 1px solid var(--cfg-line); border-radius: 8px; background: #fff;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.cfg-profile-title { margin: 0; font-size: 15px; font-weight: 600; color: var(--cfg-ink); }
+.cfg-ring-row { display: flex; align-items: center; gap: 12px; }
+.cfg-ring { width: 80px; height: 80px; flex-shrink: 0; }
+.cfg-ring-bg { stroke: var(--cfg-line); }
+.cfg-ring-fg { stroke: var(--cfg-ok); stroke-linecap: round; transition: stroke-dasharray .6s ease; }
+.cfg-ring text { font-size: 17px; font-weight: 700; fill: var(--cfg-petrol); font-family: inherit; }
+.cfg-ring-row strong { display: block; font-size: 14px; font-weight: 600; color: var(--cfg-ink); }
+.cfg-ring-row p { margin: 4px 0 0; font-size: 12px; line-height: 1.4; color: var(--cfg-muted); }
+.cfg-checks { list-style: none; margin: 0; padding: 4px 0 0; display: grid; gap: 12px; }
+.cfg-checks li { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--cfg-ink); }
+.cfg-check-dot { width: 20px; height: 20px; flex-shrink: 0; border-radius: 50%; display: grid; place-items: center; color: #fff; font-size: 12px; font-weight: 800; }
+.cfg-check-dot svg { width: 11px; height: 11px; }
+.cfg-checks .is-done .cfg-check-dot { background: var(--cfg-ok); }
+.cfg-checks .is-todo .cfg-check-dot { background: #D9892B; }
+.cfg-checks .is-todo a { color: #B26700; font-weight: 500; }
+.cfg-checks .is-todo a:hover { text-decoration: underline; }
+.cfg-profile-sep { height: 1px; background: var(--cfg-line); margin: 4px 0; }
+.cfg-profile-sub { font-size: 14px; font-weight: 600; color: var(--cfg-ink); }
+.cfg-profile-note { margin: -10px 0 0; font-size: 12px; line-height: 1.4; color: var(--cfg-muted); }
+.cfg-profile-link { display: inline-flex; align-items: center; gap: 10px; font-size: 14px; color: var(--cfg-petrol); }
+.cfg-profile-link svg { width: 16px; height: 16px; }
+
+/* Barra de guardado fija */
+.cfg-savebar {
+  position: sticky; bottom: 0; z-index: 30; display: flex; align-items: center; gap: 12px;
+  min-height: 72px; padding: 0 24px 0 32px; box-sizing: border-box;
+  border-top: 1px solid var(--cfg-line); background: rgba(255,255,255,.97); backdrop-filter: blur(8px);
+}
+.cfg-savebar-text { flex: 1 1 auto; font-size: 13px; color: var(--cfg-muted); }
+.config-admin-page .config-sticky-save { display: none !important; }
+
+/* Responsive */
+@media (max-width: 1180px) {
+  .config-admin-page .config-workspace { grid-template-columns: 220px minmax(0, 1fr); }
+  .config-admin-page .config-profile { position: static; grid-column: 2; }
+}
+@media (max-width: 860px) {
+  .config-admin-page .config-shell { padding: 16px 14px 0; }
+  .config-admin-page .config-workspace { grid-template-columns: 1fr; }
+  .config-admin-page .config-rail { position: static; flex-direction: row; overflow-x: auto; padding: 6px; scrollbar-width: none; }
+  .config-admin-page .config-nav-link { flex: 0 0 auto; min-height: 40px; }
+  .config-admin-page .config-profile { grid-column: auto; }
+  .config-admin-page .config-section { padding: 18px !important; margin-bottom: 20px; }
+}
+@media (max-width: 560px) {
+  .config-admin-page .config-hero-actions { display: grid; grid-template-columns: 1fr 1fr; width: 100%; margin-top: 14px; }
+  .cfg-save-state { grid-column: 1 / -1; }
+  .cfg-savebar { padding: 10px 14px; }
+  .cfg-savebar-text { display: none; }
+  .cfg-savebar .cfg-btn { flex: 1; }
+}
+@media (prefers-reduced-motion: reduce) { .cfg-btn, .cfg-ring-fg { transition: none; } }
+
+/* Modo oscuro */
+body.dark.config-admin-page { --cfg-ink: #E8EDEF; --cfg-muted: #A3AEB4; --cfg-line: #2A3338; --cfg-field: #36424A; --cfg-soft: #173331; background: #0F1417 !important; }
+body.dark .config-rail, body.dark .config-profile, body.dark.config-admin-page .config-section, body.dark .cfg-savebar, body.dark .cfg-btn-ghost { background: #161C20 !important; }
+body.dark.config-admin-page .config-section input, body.dark.config-admin-page .config-section select, body.dark.config-admin-page .config-section textarea { background-color: #11171A !important; }
+body.dark .config-nav-link { color: #C9D2D6; }
+body.dark .config-nav-link.is-active { color: #CFEDE4; }
