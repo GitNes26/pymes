@@ -118,7 +118,7 @@
     body.dark .error-note{background:#2a1416;border-color:#543033;color:#e39a9a;}
   </style>
 </head>
-<body class="m-material suppliers-admin-page bg-slate-100 min-h-screen">
+<body class="m-material suppliers-admin-page config-admin-page sup-2026 bg-slate-100 min-h-screen">
   <!--
     THESIS: Proveedores es una mesa de abastecimiento: directorio a mano, pedido al centro e historial como cierre.
     OWN-WORLD: Administración perla, tinta azul-negra y petróleo para acción y foco.
@@ -128,20 +128,31 @@
     FINISH: Autocomplete contenido, tabla desplazable y composición móvil sin desbordamiento de página.
   -->
   <%- include('admin/sidebar', { biz, active: 'proveedores', canDesign }) %>
+  <link rel="stylesheet" href="/css/config-2026.css?v=20260928a">
+  <link rel="stylesheet" href="/css/proveedores-2026.css?v=20260928a">
 
   <main class="transition-all duration-300">
     <div class="suppliers-shell">
-      <header class="suppliers-header">
+      <%
+        const _pend = pos.filter(function (po) { return !po.received; });
+        const _pendTotal = _pend.reduce(function (t, po) { return t + (Number(po.total) || 0); }, 0);
+        const _recib = pos.filter(function (po) { return po.received; });
+        const _supTab = old && old.name ? 'sup-directorio' : (pos.length ? 'sup-pedidos' : (suppliers.length ? 'sup-nuevo' : 'sup-directorio'));
+      %>
+      <header class="suppliers-header sup-head">
         <div>
-          <h1 class="suppliers-title">Proveedores y compras</h1>
-          <p class="suppliers-subtitle">Organiza tus contactos, prepara órdenes de compra y actualiza el inventario cuando recibas mercancía.</p>
+          <h1 class="suppliers-title">Proveedores</h1>
+          <p class="suppliers-subtitle">Tus contactos de compra, pedidos a proveedores y recepción de mercancía.</p>
         </div>
-        <div class="supplier-flow" aria-label="Flujo de abastecimiento">
-          <span><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM19 8v6m-3-3h6"/></svg>Proveedor</span>
-          <span class="flow-arrow">→</span>
-          <span><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M6 2h9l3 3v17H6zM14 2v5h5M9 12h6M9 16h6"/></svg>Pedido</span>
-          <span class="flow-arrow">→</span>
-          <span><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M4 5h16v14H4zM4 9h16M9 13h6"/></svg>Recepción</span>
+        <div class="sup-head-actions">
+          <a href="#sup-directorio" class="cfg-btn cfg-btn-ghost" data-sup-go>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM19 8v6M16 11h6"/></svg>
+            Nuevo proveedor
+          </a>
+          <a href="#sup-nuevo" class="cfg-btn cfg-btn-primary" data-sup-go>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            Nuevo pedido
+          </a>
         </div>
       </header>
 
@@ -152,8 +163,26 @@
         <div class="error-note m-pop"><%= error %></div>
       <% } %>
 
+      <div class="config-workspace sup-workspace">
+        <nav class="config-rail" aria-label="Secciones de proveedores">
+          <a class="config-nav-link" href="#sup-pedidos" data-sup-nav>
+            <span class="config-nav-icon"><svg fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v14H4zM4 9h16M8 13h8M8 16h5"/></svg></span>
+            <span class="cfg-nav-text">Pedidos de compra</span>
+            <% if (_pend.length) { %><span class="cfg-tag is-pend"><%= _pend.length %> por recibir</span><% } else { %><span class="cfg-tag is-ok"><%= pos.length %></span><% } %>
+          </a>
+          <a class="config-nav-link" href="#sup-nuevo" data-sup-nav>
+            <span class="config-nav-icon"><svg fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l3 3v17H6zM14 2v5h5M12 11v6M9 14h6"/></svg></span>
+            <span class="cfg-nav-text">Nuevo pedido</span>
+          </a>
+          <a class="config-nav-link" href="#sup-directorio" data-sup-nav>
+            <span class="config-nav-icon"><svg fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM19 8v6M16 11h6"/></svg></span>
+            <span class="cfg-nav-text">Directorio</span>
+            <span class="cfg-tag <%= suppliers.length ? 'is-ok' : 'is-pend' %>"><%= suppliers.length || 'Vacío' %></span>
+          </a>
+        </nav>
+        <div class="config-content">
       <div class="suppliers-workspace">
-      <section class="supplier-panel supplier-panel-pad supplier-directory">
+      <section id="sup-directorio" class="supplier-panel supplier-panel-pad supplier-directory sup-pane">
         <div class="panel-heading">
           <div class="panel-title-wrap"><span class="panel-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM19 8v6m-3-3h6"/></svg></span><div><h2 class="panel-title">Directorio</h2><p class="panel-copy">Contactos para tus compras</p></div></div>
           <span class="supplier-count"><%= suppliers.length %></span>
@@ -181,7 +210,7 @@
         </div>
       </section>
 
-      <section class="supplier-panel supplier-panel-pad purchase-card">
+      <section id="sup-nuevo" class="supplier-panel supplier-panel-pad purchase-card sup-pane">
         <div class="purchase-top"><div class="panel-title-wrap"><span class="panel-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M6 2h9l3 3v17H6zM14 2v5h5M9 12h6M9 16h6"/></svg></span><div><h2 class="panel-title">Nuevo pedido de compra</h2><p class="panel-copy">Captura productos, costos y precio de venta</p></div></div><p class="purchase-help"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M4 5h16v14H4zM8 9h.01M12 9h.01M16 9h.01M8 13h8M8 16h5"/></svg>Enter avanza · Ctrl+V pega desde Excel</p></div>
         <form method="POST" action="/<%= biz.slug %>/admin/compra" id="po-form">
           <div class="m-field mb-3">
@@ -231,7 +260,7 @@
       </section>
       </div>
 
-      <section class="supplier-panel supplier-panel-pad purchase-history">
+      <section id="sup-pedidos" class="supplier-panel supplier-panel-pad purchase-history sup-pane">
         <div class="panel-heading"><div class="panel-title-wrap"><span class="panel-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M4 5h16v14H4zM4 9h16M8 13h8M8 16h5"/></svg></span><div><h2 class="panel-title">Pedidos de compra</h2><p class="panel-copy">Seguimiento y recepción de inventario</p></div></div><span class="supplier-count"><%= pos.length %></span></div>
         <% if (pos.length === 0) { %>
           <div class="supplier-empty"><svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path d="M6 2h9l3 3v17H6zM14 2v5h5M9 12h6M9 16h6"/></svg>Los pedidos que registres aparecerán aquí para darles seguimiento.</div>
@@ -274,6 +303,28 @@
           </div>
         <% } %>
       </section>
+        </div>
+
+        <aside class="config-profile sup-summary" aria-label="Resumen de compras">
+          <h2 class="cfg-profile-title">Resumen de compras</h2>
+          <div class="sup-stat">
+            <span>Por recibir</span>
+            <strong><%= money(_pendTotal) %></strong>
+            <small><%= _pend.length %> <%= _pend.length === 1 ? 'pedido pendiente' : 'pedidos pendientes' %></small>
+          </div>
+          <div class="sup-stat-row">
+            <div><strong><%= suppliers.length %></strong><span>Proveedores</span></div>
+            <div><strong><%= _recib.length %></strong><span>Recibidos</span></div>
+          </div>
+          <div class="cfg-profile-sep"></div>
+          <strong class="cfg-profile-sub">Cómo funciona</strong>
+          <ol class="sup-steps">
+            <li><span>1</span>Agrega a tu proveedor en el directorio.</li>
+            <li><span>2</span>Arma el pedido con productos, costo y precio de venta.</li>
+            <li><span>3</span>Envíalo por WhatsApp y, al llegar la mercancía, márcalo como recibido: el stock se suma solo.</li>
+          </ol>
+        </aside>
+      </div>
 
     </div>
   </main>
@@ -771,6 +822,37 @@
 
     // La fila inicial queda lista sin robar foco ni abrir el autocomplete al cargar.
     poAddRow();
+  </script>
+  <script>
+    // Proveedores por secciones (como Configuración): una a la vez.
+    (function () {
+      var links = Array.prototype.slice.call(document.querySelectorAll('[data-sup-nav]'));
+      var panes = links.map(function (l) { return document.querySelector(l.getAttribute('href')); }).filter(Boolean);
+      if (!panes.length) return;
+      function show(id, scroll) {
+        var t = document.getElementById(id);
+        if (!t || panes.indexOf(t) === -1) t = document.getElementById(<%- JSON.stringify(_supTab) %>) || panes[0];
+        panes.forEach(function (p) { p.hidden = p !== t; });
+        links.forEach(function (l) {
+          var on = l.getAttribute('href') === '#' + t.id;
+          l.classList.toggle('is-active', on);
+          if (on) l.setAttribute('aria-current', 'page'); else l.removeAttribute('aria-current');
+        });
+        if (scroll) window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (t.id === 'sup-nuevo' && typeof poAddRow === 'function' && !document.querySelector('#po-items tr')) poAddRow({});
+      }
+      document.querySelectorAll('[data-sup-nav], [data-sup-go]').forEach(function (l) {
+        l.addEventListener('click', function (e) {
+          e.preventDefault();
+          var id = l.getAttribute('href').slice(1);
+          history.replaceState(null, '', location.pathname + location.search.replace(/[?&](ok|error|msg)=[^&]*/g, '').replace(/^&/, '?') + '#' + id);
+          show(id, true);
+          if (id === 'sup-directorio') { var n = document.querySelector('#sup-directorio input[name="name"]'); if (n && l.hasAttribute('data-sup-go')) n.focus(); }
+        });
+      });
+      show((location.hash || '').slice(1));
+      document.body.classList.add('sup-tabs-ready');
+    })();
   </script>
 </body>
 </html>

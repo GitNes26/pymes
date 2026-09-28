@@ -5563,22 +5563,22 @@ app.post('/:slug/admin/proveedor', requireAuth, can('config'), (req, res) => {
   const phone = String(req.body.phone || '').trim();
   const email = String(req.body.email || '').trim();
   const notes = String(req.body.notes || '').trim();
-  const back = (code) => res.redirect('/' + req.params.slug + '/admin/proveedores?' + new URLSearchParams({ error: code, n: name, p: phone, e: email, no: notes }).toString());
+  const back = (code) => res.redirect('/' + req.params.slug + '/admin/proveedores?' + new URLSearchParams({ error: code, n: name, p: phone, e: email, no: notes }).toString() + '#sup-directorio');
   if (!name) return back('nombre');
   // Mismo nombre en la misma tienda = doble registro; avisamos en vez de duplicar
   const dup = db.prepare('SELECT id FROM suppliers WHERE business_id = ? AND LOWER(TRIM(name)) = LOWER(?)').get(req.biz.id, name);
   if (dup) return back('duplicado');
   db.prepare('INSERT INTO suppliers (business_id, name, phone, email, notes) VALUES (?, ?, ?, ?, ?)').run(req.biz.id, name, phone, email, notes);
-  res.redirect('/' + req.params.slug + '/admin/proveedores?ok=1');
+  res.redirect('/' + req.params.slug + '/admin/proveedores?ok=1#sup-directorio');
 });
 
 app.post('/:slug/admin/proveedor/:id/eliminar', requireAuth, can('config'), (req, res) => {
   db.prepare('DELETE FROM suppliers WHERE id = ? AND business_id = ?').run(req.params.id, req.biz.id);
-  res.redirect('/' + req.params.slug + '/admin/proveedores');
+  res.redirect('/' + req.params.slug + '/admin/proveedores#sup-directorio');
 });
 
 app.post('/:slug/admin/compra', requireAuth, can('config'), (req, res) => {
-  const back = (code) => res.redirect('/' + req.params.slug + '/admin/proveedores?error=' + code);
+  const back = (code) => res.redirect('/' + req.params.slug + '/admin/proveedores?error=' + code + '#sup-nuevo');
   const supplier_id = parseInt(req.body.supplier_id) || null;
   if (!supplier_id) return back('proveedor');
   const items = parsePoItems(req.body.items);
@@ -5586,7 +5586,7 @@ app.post('/:slug/admin/compra', requireAuth, can('config'), (req, res) => {
   if (!items.length || items.some(it => !it.name || !(it.qty > 0))) return back('tabla');
   const total = items.reduce((s, it) => s + (it.cost * it.qty), 0);
   db.prepare('INSERT INTO purchase_orders (business_id, supplier_id, items, total) VALUES (?, ?, ?, ?)').run(req.biz.id, supplier_id, JSON.stringify(items), total);
-  res.redirect('/' + req.params.slug + '/admin/proveedores?ok=1');
+  res.redirect('/' + req.params.slug + '/admin/proveedores?ok=1#sup-pedidos');
 });
 
 // Marcar recibido: suma stock a los productos referenciados y crea automáticamente los libres (nuevos).
@@ -5632,12 +5632,12 @@ app.post('/:slug/admin/compra/:id/recibido', requireAuth, can('config'), (req, r
   const detalle = [];
   if (actualizados) detalle.push(actualizados + ' producto(s) con stock sumado');
   if (creados) detalle.push(creados + ' producto(s) nuevo(s) creado(s)');
-  res.redirect('/' + req.params.slug + '/admin/proveedores?ok=1&msg=' + encodeURIComponent(detalle.join(' · ')));
+  res.redirect('/' + req.params.slug + '/admin/proveedores?ok=1&msg=' + encodeURIComponent(detalle.join(' · ')) + '#sup-pedidos');
 });
 
 app.post('/:slug/admin/compra/:id/eliminar', requireAuth, can('config'), (req, res) => {
   db.prepare('DELETE FROM purchase_orders WHERE id = ? AND business_id = ?').run(req.params.id, req.biz.id);
-  res.redirect('/' + req.params.slug + '/admin/proveedores');
+  res.redirect('/' + req.params.slug + '/admin/proveedores#sup-pedidos');
 });
 
 // ================= CONFIGURACIÓN DE DISEÑO (panel maestro) =================
