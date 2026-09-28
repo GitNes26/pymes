@@ -27,6 +27,29 @@
       <% const puedeEliminarP = perms.includes('productos.eliminar'); %>
       <% const puedeCategorias = perms.includes('categorias.gestionar'); %>
       <% const puedeAtributos = perms.includes('atributos.gestionar'); %>
+      <header class="product-page-head">
+        <div>
+          <p class="product-page-kicker">Catálogo e inventario</p>
+          <h1>Productos</h1>
+          <p>Organiza, publica y controla tu catálogo desde un solo lugar.</p>
+        </div>
+        <div class="product-page-actions">
+          <a href="/<%= biz.slug %>" target="_blank" class="pn-btn"><i class="bi bi-eye"></i> Vista previa del catálogo</a>
+          <a href="/<%= biz.slug %>/admin/exportar.xlsx" class="pn-btn"><i class="bi bi-upload"></i> Exportar</a>
+          <% if (puedeCrear) { %><a href="#nuevo-producto" class="pn-btn pn-btn-solid" onclick="return irNuevoProducto(event)"><i class="bi bi-plus-lg"></i> Nuevo producto</a><% } %>
+        </div>
+      </header>
+
+      <% const productVisibleCount = allProducts.filter(function(p){ return p.active; }).length; %>
+      <% const productLowCount = allProducts.filter(function(p){ return !p.made_to_order && p.displayStock !== null && p.displayStock > 0 && p.displayStock <= 5; }).length; %>
+      <% const productMadeCount = allProducts.filter(function(p){ return p.made_to_order; }).length; %>
+      <section class="product-metrics" aria-label="Resumen de inventario">
+        <div><span class="product-metric-icon"><i class="bi bi-box-seam"></i></span><p>Total de productos<strong><%= allProducts.length %></strong></p></div>
+        <div><span class="product-metric-icon is-success"><i class="bi bi-check-circle"></i></span><p>Publicados<strong><%= productVisibleCount %></strong></p></div>
+        <div><span class="product-metric-icon is-warn"><i class="bi bi-exclamation-triangle"></i></span><p>Stock bajo<strong><%= productLowCount %></strong></p></div>
+        <div><span class="product-metric-icon"><i class="bi bi-box"></i></span><p>Por pedido<strong><%= productMadeCount %></strong></p></div>
+      </section>
+
       <div class="prod-tabs" role="tablist" aria-label="Secciones del catálogo">
         <button type="button" id="tabbtn-productos" class="prod-tab active" onclick="switchCrudTab('productos')"><i class="bi bi-box-seam" aria-hidden="true"></i> Productos <span class="cnt" id="tabcnt-productos"><%= allProducts.length %></span></button>
         <% if (puedeCategorias) { %>
@@ -38,39 +61,6 @@
         <% } %>
       </div>
       <div id="tabpane-productos" class="prod-tab-panel active">
-
-      <!-- Encabezado -->
-      <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
-        <div>
-          <h1 class="text-lg md:text-xl font-black tracking-tight text-slate-900">Mis productos</h1>
-          <p class="text-xs text-slate-500 mt-0.5">
-            <%= allProducts.length %> productos
-            <% if (planMax !== Infinity) { %> · <%= allProducts.length %>/<%= planMax %> de tu plan <% } %>
-          </p>
-        </div>
-        <div class="flex items-center gap-2 flex-wrap justify-end">
-          <a href="/<%= biz.slug %>/admin/exportar.xlsx" class="m-btn m-btn-outlined m-btn-sm" title="Descargar catálogo en Excel">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 10v6m0 0l-3-3m3 3l3-3M4 4h16v4H4zM4 12h16v8H4z"/></svg>
-            Excel
-          </a>
-          <a href="/<%= biz.slug %>/admin/catalogo-print" target="_blank" class="m-btn m-btn-outlined m-btn-sm" title="Vista para imprimir / guardar PDF">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6z"/></svg>
-            Imprimir
-          </a>
-
-          <% if (perms.includes('productos.editar') && allProducts.length) { %>
-          <button type="button" class="m-btn m-btn-outlined m-btn-sm" onclick="bulkTagOpen()" title="Poner, editar o borrar etiquetas de todos los productos">
-            <i class="bi bi-tags" aria-hidden="true"></i> Etiquetas
-          </button>
-          <% } %>
-          <% if (perms.includes('productos.crear')) { %>
-          <a href="#nuevo-producto" class="m-btn m-btn-filled m-btn-sm" onclick="return irNuevoProducto(event)">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-            Nuevo
-          </a>
-          <% } %>
-        </div>
-      </div>
 
       <% const prodLimiteAlcanzado = planMax !== Infinity && allProducts.length >= planMax; %>
       <% if (error && planBlock) { %>
@@ -107,15 +97,34 @@
             <p class="text-xs font-bold text-slate-500">Cargando…</p>
           </div>
         </div>
-        <div class="flex items-center justify-between flex-wrap gap-2 mb-2">
-          <h2 class="font-extrabold text-slate-900 text-sm">Catálogo <span class="m-badge m-badge-neutral !ml-1.5"><%= allProducts.length %></span></h2>
-          <div class="relative">
-            <input id="prod-search" type="search" placeholder="Buscar producto…" aria-label="Buscar productos por nombre, etiqueta o descripción" autocomplete="off" class="w-36 sm:w-56 border border-slate-200 rounded-full pl-9 pr-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-neutral-1000 focus:border-neutral-1000 transition">
-            <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
-          </div>
-        </div>
+        <div class="product-list-shell">
+          <aside class="product-filter-rail" aria-label="Filtros de productos">
+            <div class="product-filter-title"><h2>Filtros</h2><button type="button" id="prod-clear-rail">Limpiar</button></div>
+            <fieldset><legend>Estado</legend>
+              <label><input type="radio" name="prod-state" value="all" checked><span>Todos</span><b data-filter-count="all"><%= allProducts.length %></b></label>
+              <label><input type="radio" name="prod-state" value="active"><span>Publicados</span><b data-filter-count="active"><%= productVisibleCount %></b></label>
+              <label><input type="radio" name="prod-state" value="hidden"><span>Ocultos</span><b data-filter-count="hidden"><%= allProducts.length - productVisibleCount %></b></label>
+              <label><input type="radio" name="prod-state" value="low"><span>Stock bajo</span><b data-filter-count="low"><%= productLowCount %></b></label>
+              <label><input type="radio" name="prod-state" value="made"><span>Por pedido</span><b data-filter-count="made"><%= productMadeCount %></b></label>
+            </fieldset>
+            <fieldset><legend>Categoría</legend>
+              <label><input type="checkbox" name="prod-category" value=""><span>Todas</span><b data-category-count=""><%= allProducts.length %></b></label>
+              <% categories.forEach(function(c){ %><label><input type="checkbox" name="prod-category" value="<%= c.id %>"><span><%= c.name %></span><b data-category-count="<%= c.id %>"><%= allProducts.filter(function(p){ return String(p.category_id || '') === String(c.id); }).length %></b></label><% }); %>
+            </fieldset>
+            <fieldset><legend>Agrupador</legend>
+              <label><input type="checkbox" name="prod-group" value=""><span>Sin agrupador</span><b data-group-count=""><%= allProducts.filter(function(p){ return !p.group_id; }).length %></b></label>
+              <% (typeof categoryGroups !== 'undefined' ? categoryGroups : []).forEach(function(g){ %><label><input type="checkbox" name="prod-group" value="<%= g.id %>"><span><%= g.name %></span><b data-group-count="<%= g.id %>"><%= allProducts.filter(function(p){ return String(p.group_id || '') === String(g.id); }).length %></b></label><% }); %>
+            </fieldset>
+          </aside>
+          <div class="product-results-panel">
+            <div class="product-toolbar">
+              <div class="product-search-field"><i class="bi bi-search"></i><input id="prod-search" type="search" placeholder="Buscar productos…" aria-label="Buscar productos por nombre, etiqueta o descripción" autocomplete="off"></div>
+              <select id="prod-category-select" aria-label="Filtrar por categoría"><option value="">Todas las categorías</option><% categories.forEach(function(c){ %><option value="<%= c.id %>"><%= c.name %></option><% }); %></select>
+              <select id="prod-group-select" aria-label="Filtrar por agrupador"><option value="*">Todos los agrupadores</option><option value="">Sin agrupador</option><% (typeof categoryGroups !== 'undefined' ? categoryGroups : []).forEach(function(g){ %><option value="<%= g.id %>"><%= g.name %></option><% }); %></select>
+              <select id="prod-sort" aria-label="Ordenar productos"><option value="az">Ordenar: A–Z</option><option value="za">Ordenar: Z–A</option><option value="price-desc">Mayor precio</option><option value="price-asc">Menor precio</option></select>
+            </div>
 
-        <div class="flex flex-wrap items-center gap-1.5 mb-3" id="prod-filters">
+        <div class="flex flex-wrap items-center gap-1.5 mb-3" id="prod-filters" aria-hidden="true">
           <button type="button" data-f="all" aria-pressed="true" class="m-chip m-chip-selected !h-8">Todos <span class="m-badge m-badge-neutral !h-5 !text-[10px]"><%= allProducts.length %></span></button>
           <% const visibles = allProducts.filter(p => p.active).length; %>
           <button type="button" data-f="active" aria-pressed="false" class="m-chip !h-8">Visibles <span class="m-badge m-badge-success !h-5 !text-[10px]"><%= visibles %></span></button>
@@ -140,7 +149,7 @@
           <div id="prod-grid" class="product-grid">
             <% allProducts.forEach((p, i) => { %>
               <article class="product-card m-ripple <%= i >= 12 ? 'hidden' : '' %>" data-active-layer
-                   data-search="<%= [p.name, p.group_name, p.tags, p.description].filter(Boolean).join(' ').toLowerCase() %>" data-state="<%= p.active ? 'active' : 'hidden' %>" data-stock="<%= p.displayStock === null ? '' : (p.displayStock > 5 ? 'ok' : (p.displayStock > 0 ? 'low' : 'out')) %>" data-promo="<%= p.old_price ? 1 : 0 %>"
+                   data-search="<%= [p.name, p.category_name, p.group_name, p.tags, p.description].filter(Boolean).join(' ').toLowerCase() %>" data-name="<%= (p.name || '').toLowerCase().replace(/"/g, '&quot;') %>" data-price="<%= p.price || 0 %>" data-category="<%= p.category_id || '' %>" data-group="<%= p.group_id || '' %>" data-made="<%= p.made_to_order ? 1 : 0 %>" data-state="<%= p.active ? 'active' : 'hidden' %>" data-stock="<%= p.displayStock === null ? '' : (p.displayStock > 5 ? 'ok' : (p.displayStock > 0 ? 'low' : 'out')) %>" data-promo="<%= p.old_price ? 1 : 0 %>"
                    data-edit-id="<%= p.id %>" data-edit-name="<%= (p.name || '').replace(/"/g, '&quot;') %>" data-edit-price="<%= p.price %>" data-edit-old="<%= p.old_price || '' %>" data-edit-cost="<%= p.cost || '' %>"
                    data-edit-cat="<%= p.category_id || '' %>" data-edit-group="<%= p.group_id || '' %>" data-edit-desc="<%= (p.description || '').replace(/"/g, '&quot;') %>" data-edit-image="<%= (p.image || '').replace(/"/g, '&quot;') %>" data-edit-galeria="<%= (p.galeria || '').replace(/"/g, '&quot;') %>"
                    data-edit-stock="<%= p.stock === null ? '' : p.stock %>" data-edit-made-to-order="<%= p.made_to_order ? 1 : 0 %>" data-edit-show-stock="<%= (p.show_stock === 0 || p.show_stock === '0') ? 0 : 1 %>" data-edit-custom-tags="<%= p.custom_tags || '' %>" data-edit-variants="<%= encodeURIComponent(JSON.stringify(p.variants || [])) %>" data-edit-featured="<%= p.featured ? 1 : 0 %>" data-edit-promo="<%= p.promo_ends_at || '' %>"
@@ -156,6 +165,7 @@
                   <p class="font-semibold text-sm text-slate-800 truncate">
                     <% if (p.featured) { %><i class="bi bi-star-fill text-amber-400 align-[-2px]" title="Destacado"></i><% } %> <%= p.name %>
                   </p>
+                  <div class="pc-taxonomy"><span><%= p.category_name || 'Sin categoría' %></span><span><%= p.group_name || 'Sin agrupador' %></span></div>
                   <div class="pc-price">
                     <span class="pc-price__now"><%= money(p.price) %></span>
                     <% if (p.old_price) { %>
@@ -233,6 +243,8 @@
           </div>
           <nav id="prod-pager" class="product-pager" aria-label="Paginación de productos"></nav>
         <% } %>
+          </div>
+        </div>
       </section>
 
       <% if (perms.includes('productos.crear') || perms.includes('productos.editar')) { %>
@@ -1614,16 +1626,23 @@
     }
 
     // ====== Filtro en vivo + paginación de productos ======
-    var PROD_PAGE_SIZE = 6;
+    var PROD_PAGE_SIZE = 8;
     function initProdFilter() {
       var input = document.getElementById('prod-search');
       var chips = document.querySelectorAll('#prod-filters button');
       if (!input || input.getAttribute('data-catalog-ready') === 'true') return;
       input.setAttribute('data-catalog-ready', 'true');
-      var state = 'all', q = '', page = 1, current = [];
+      var state = 'all', q = '', page = 1, current = [], categories = [], groups = [];
       var summary = document.getElementById('prod-result-summary');
       var empty = document.getElementById('prod-empty-filter');
       var clear = document.getElementById('prod-clear-filters');
+      var clearRail = document.getElementById('prod-clear-rail');
+      var categorySelect = document.getElementById('prod-category-select');
+      var groupSelect = document.getElementById('prod-group-select');
+      var sortSelect = document.getElementById('prod-sort');
+      var stateInputs = Array.prototype.slice.call(document.querySelectorAll('[name="prod-state"]'));
+      var categoryInputs = Array.prototype.slice.call(document.querySelectorAll('[name="prod-category"]'));
+      var groupInputs = Array.prototype.slice.call(document.querySelectorAll('[name="prod-group"]'));
       function normalize(value) {
         var text = String(value || '').toLowerCase();
         return typeof text.normalize === 'function' ? text.normalize('NFD').replace(/[\u0300-\u036f]/g, '') : text;
@@ -1631,20 +1650,45 @@
       function cardsAll() {
         return Array.prototype.slice.call(document.querySelectorAll('#prod-grid [data-search]'));
       }
-      function compute() {
-        return cardsAll().filter(function (card) {
+      function basicMatch(card, skipDimension) {
           var ok = true;
           if (state === 'active' && card.getAttribute('data-state') !== 'active') ok = false;
           if (state === 'hidden' && card.getAttribute('data-state') !== 'hidden') ok = false;
           if (state === 'out' && card.getAttribute('data-stock') !== 'out') ok = false;
           if (state === 'low' && card.getAttribute('data-stock') !== 'low') ok = false;
           if (state === 'promo' && card.getAttribute('data-promo') !== '1') ok = false;
+          if (state === 'made' && card.getAttribute('data-made') !== '1') ok = false;
           if (q && normalize(card.getAttribute('data-search')).indexOf(q) === -1) ok = false;
+          if (skipDimension !== 'category' && categories.length && categories.indexOf(card.getAttribute('data-category')) === -1) ok = false;
+          if (skipDimension !== 'group' && groups.length && groups.indexOf(card.getAttribute('data-group')) === -1) ok = false;
           return ok;
+      }
+      function compute() {
+        var result = cardsAll().filter(function(card){ return basicMatch(card, ''); });
+        var mode = sortSelect ? sortSelect.value : 'az';
+        result.sort(function(a,b){
+          if (mode === 'price-desc') return Number(b.getAttribute('data-price')) - Number(a.getAttribute('data-price'));
+          if (mode === 'price-asc') return Number(a.getAttribute('data-price')) - Number(b.getAttribute('data-price'));
+          var cmp = String(a.getAttribute('data-name')).localeCompare(String(b.getAttribute('data-name')), 'es', { sensitivity:'base' });
+          return mode === 'za' ? -cmp : cmp;
+        });
+        return result;
+      }
+      function updateFacetCounts() {
+        var cards = cardsAll();
+        document.querySelectorAll('[data-category-count]').forEach(function(el){
+          var value = el.getAttribute('data-category-count');
+          el.textContent = cards.filter(function(card){ return basicMatch(card, 'category') && (!value || card.getAttribute('data-category') === value); }).length;
+        });
+        document.querySelectorAll('[data-group-count]').forEach(function(el){
+          var value = el.getAttribute('data-group-count');
+          el.textContent = cards.filter(function(card){ return basicMatch(card, 'group') && card.getAttribute('data-group') === value; }).length;
         });
       }
       function show() {
         current = compute();
+        current.forEach(function(card){ card.parentNode.appendChild(card); });
+        updateFacetCounts();
         var pages = Math.max(1, Math.ceil(current.length / PROD_PAGE_SIZE));
         if (page > pages) page = pages;
         var start = (page - 1) * PROD_PAGE_SIZE;
@@ -1680,11 +1724,24 @@
         };
       });
       input.oninput = function () { q = normalize(input.value.trim()); page = 1; show(); };
-      if (clear) clear.onclick = function () {
-        input.value = ''; q = ''; page = 1; state = 'all';
+      stateInputs.forEach(function(control){ control.onchange = function(){ state = control.value; page = 1; show(); }; });
+      categoryInputs.forEach(function(control){ control.onchange = function(){ categories = categoryInputs.filter(function(x){ return x.checked && x.value; }).map(function(x){ return x.value; }); if(categorySelect) categorySelect.value = categories.length === 1 ? categories[0] : ''; page = 1; show(); }; });
+      groupInputs.forEach(function(control){ control.onchange = function(){ groups = groupInputs.filter(function(x){ return x.checked; }).map(function(x){ return x.value; }); if(groupSelect) groupSelect.value = groups.length === 1 ? groups[0] : '*'; page = 1; show(); }; });
+      if(categorySelect) categorySelect.onchange = function(){ categories = categorySelect.value ? [categorySelect.value] : []; categoryInputs.forEach(function(x){ x.checked = categories.indexOf(x.value) !== -1; }); page = 1; show(); };
+      if(groupSelect) groupSelect.onchange = function(){ groups = groupSelect.value === '*' ? [] : [groupSelect.value]; groupInputs.forEach(function(x){ x.checked = groups.indexOf(x.value) !== -1; }); page = 1; show(); };
+      if(sortSelect) sortSelect.onchange = function(){ page = 1; show(); };
+      function resetFilters() {
+        input.value = ''; q = ''; page = 1; state = 'all'; categories = []; groups = [];
+        stateInputs.forEach(function(x){ x.checked = x.value === 'all'; });
+        categoryInputs.concat(groupInputs).forEach(function(x){ x.checked = false; });
+        if(categorySelect) categorySelect.value = '';
+        if(groupSelect) groupSelect.value = '*';
+        if(sortSelect) sortSelect.value = 'az';
         chips.forEach(function (c) { var selected = c.getAttribute('data-f') === 'all'; c.classList.toggle('m-chip-selected', selected); c.setAttribute('aria-pressed', selected ? 'true' : 'false'); });
-        show(); input.focus();
-      };
+        show();
+      }
+      if (clear) clear.onclick = function () { resetFilters(); input.focus(); };
+      if (clearRail) clearRail.onclick = function () { resetFilters(); };
       show();
     }
 
