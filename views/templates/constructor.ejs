@@ -12,15 +12,15 @@
     : 'https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap';
   var _cats = categories || [];
   var _prods = products || [];
-  // Fotos a la medida: las subidas al servidor se piden en varios anchos (ver /uploads/:file?w= en server.js)
+  // Fotos a la medida: las subidas al servidor se piden en varios anchos (ver /uploads/:file?w= en server.js o /i/…?w= del microservicio de imágenes)
   var _srcset = function (src) {
-    if (!/^\/uploads\/[^\/?]+\.(jpe?g|png|webp)$/i.test(src || '')) return '';
+    if (!/^(\/uploads\/[^\/?]+|https?:\/\/[^?#]+\/i\/[a-z0-9_-]+\/[^\/?#]+)\.(jpe?g|png|webp)$/i.test(src || '')) return '';
     return src + '?w=480 480w, ' + src + '?w=800 800w, ' + src + '?w=1200 1200w';
   };
   // Fondo desenfocado de la propia foto (la foto se muestra completa, sin recortar; lo que sobra se rellena con su tono)
   var _ph = function (src) {
     if (!src || /sin-imagen/.test(src)) return '';
-    var u = /^\/uploads\/[^\/?]+\.(jpe?g|png|webp)$/i.test(src) ? src + '?w=240' : src;
+    var u = /^(\/uploads\/[^\/?]+|https?:\/\/[^?#]+\/i\/[a-z0-9_-]+\/[^\/?#]+)\.(jpe?g|png|webp)$/i.test(src) ? src + '?w=240' : src;
     return ' style="--ph:url(' + encodeURI(u).replace(/[()']/g, function (c) { return '%' + c.charCodeAt(0).toString(16); }) + ')"';
   };
   var _imgAttrs = function (src, sizes) { var ss = _srcset(src); return ss ? ' srcset="' + ss + '" sizes="' + sizes + '"' : ''; };

@@ -25,7 +25,10 @@
           "MASTER_KEY": "${MASTER_KEY}",
           "BASE_URL": "${BASE_URL:-https://cadi.nessik.net}",
           "UPLOADS_ROOT": "/app/public/uploads",
-          "UPLOADS_PROJECT_NAME": "${UPLOADS_PROJECT_NAME:-}"
+          "UPLOADS_PROJECT_NAME": "${UPLOADS_PROJECT_NAME:-}",
+          "IMAGES_API_URL": "${IMAGES_API_URL:-}",
+          "IMAGES_API_KEY": "${IMAGES_API_KEY:-}",
+          "IMAGES_API_PROJECT": "${IMAGES_API_PROJECT:-catamanager}"
         },
         "labels": [
           "traefik.enable=true",

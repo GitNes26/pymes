@@ -332,6 +332,22 @@ const CAT_DESIGN_BASE_WORLDS = {
 const { buildExpandedCatalogDesigns, recommendCatalogDesigns } = require('./catalog-designs-expanded');
 const { CATALOG_VISUAL_PROFILES } = require('./catalog-visual-profiles');
 const { readableTokens } = require('./lib/catalog-quality');
+const imagesApi = require('./lib/images-api');
+// Publica una foto recién subida: si el microservicio de imágenes está
+// configurado, la manda allá y regresa su URL completa; si falla o no está
+// configurado, se queda en /uploads como antes (y lo deja en el log).
+async function publishImage(file) {
+  const local = '/uploads/' + file.filename;
+  if (!imagesApi.enabled()) return local;
+  try {
+    const data = await imagesApi.upload(file.path, file.filename);
+    fs.promises.unlink(file.path).catch(() => {});
+    return data.url;
+  } catch (e) {
+    console.error('[images-api] no se pudo subir ' + file.filename + ', se queda en disco local:', e.status || '', e.code || '', e.message);
+    return local;
+  }
+}
 CAT_DESIGNS.push(...buildExpandedCatalogDesigns(CAT_FONTS));
 CAT_DESIGNS.forEach(d => {
   d.tokens = readableTokens(d.tokens);
@@ -819,7 +835,7 @@ function loginRateLimit(req, res, next) {
 app.post('/:slug/admin/upload', requireAuth, receiveImageUpload, verifyBodyCsrf, async (req, res) => {
   if (!req.file) return res.status(415).json({ error: 'Formato de imagen no compatible. Usa JPG, PNG, GIF o WebP.' });
   await compressUploadedImage(req.file.path, { trim: req.query.trim === '1' });
-  res.json({ url: '/uploads/' + req.file.filename });
+  res.json({ url: await publishImage(req.file) });
 });
 
 // Subida de video desde el constructor (owner)
@@ -840,7 +856,7 @@ app.post('/maestro/:id/uploadvideo', maestroAuth, uploadVideo.single('video'), v
 app.post('/maestro/:id/upload', maestroAuth, receiveImageUpload, verifyBodyCsrf, async (req, res) => {
   if (!req.file) return res.status(415).json({ error: 'Formato de imagen no compatible. Usa JPG, PNG, GIF o WebP.' });
   await compressUploadedImage(req.file.path, { trim: req.query.trim === '1' });
-  res.json({ url: '/uploads/' + req.file.filename });
+  res.json({ url: await publishImage(req.file) });
 });
 
 // Subida de audio/archivos desde el constructor (owner)

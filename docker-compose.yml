@@ -51,6 +51,10 @@ services:
       # Subcarpeta exclusiva dentro del volumen compartido de uploads.
       UPLOADS_ROOT: /app/public/uploads
       UPLOADS_PROJECT_NAME: ${UPLOADS_PROJECT_NAME:-}
+      # Microservicio de imágenes (vacío = guardar en /uploads)
+      IMAGES_API_URL: ${IMAGES_API_URL:-}
+      IMAGES_API_KEY: ${IMAGES_API_KEY:-}
+      IMAGES_API_PROJECT: ${IMAGES_API_PROJECT:-catamanager}
     volumes:
       - uploads_data:/app/public/uploads
       - backups_data:/app/backups
