@@ -3,605 +3,310 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Catálogo Fácil · Tu tienda en línea con WhatsApp</title>
+  <title>Catálogo Fácil · Tu tienda en línea que vende por WhatsApp</title>
+  <meta name="description" content="Crea el catálogo de tu negocio en minutos. Tus clientes eligen, arman su pedido y te lo mandan por WhatsApp. Gratis para empezar.">
   <!-- ===== PWA: permite instalar el sitio de Catálogo Fácil ===== -->
   <link rel="manifest" href="/manifest.webmanifest">
-  <meta name="theme-color" content="#11100e">
+  <meta name="theme-color" content="#0E1211">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Catálogo Fácil">
+  <meta property="og:title" content="Catálogo Fácil · Tu tienda en línea que vende por WhatsApp">
+  <meta property="og:description" content="Crea el catálogo de tu negocio en minutos y recibe pedidos por WhatsApp.">
+  <meta property="og:image" content="/icons/icon-512.png">
   <link rel="icon" href="/icons/icon-192.png">
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
   <script src="/pwa.js?v=20260919" defer></script>
-  <script src="/vendor/tailwind.js"></script>
-  <script>
-    tailwind.config = {
-      // Modo claro fijo: las clases dark: no siguen al dispositivo
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif']
-          }
-        }
-      }
-    }
-  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800;14..32,900&display=swap" rel="stylesheet">
-  <style>
-    /* ============================================================
-       SISTEMA PROPIO (sin Material Design pesado)
-       ============================================================ */
-
-    /* Reset y base */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Inter', system-ui, sans-serif;
-      background: #f7f6f2;
-      color: #141210;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      text-rendering: optimizeLegibility;
-    }
-
-    /* Selección de texto */
-    ::selection { background: rgba(79,70,229,0.1); color: #141210; }
-
-    /* Focus visible */
-    :focus-visible {
-      outline: 2px solid #4f46e5;
-      outline-offset: 2px;
-      border-radius: 4px;
-    }
-
-    /* Scrollbar */
-    ::-webkit-scrollbar { width: 5px; height: 5px; }
-    ::-webkit-scrollbar-track { background: #f7f6f2; }
-    ::-webkit-scrollbar-thumb { background: #d1cdc6; border-radius: 10px; }
-    ::-webkit-scrollbar-thumb:hover { background: #b0aaa2; }
-
-    /* Tarjetas minimalistas */
-    .card-modern {
-      background: #ffffff;
-      border: 1px solid #ecebe6;
-      border-radius: 16px;
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.01);
-    }
-    .card-modern:hover {
-      border-color: #cdc9c0;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.02);
-      transform: translateY(-3px);
-    }
-
-    /* Botones sólidos y contundentes */
-    .btn-solid {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      padding: 0.7rem 1.8rem;
-      background: #11100e;
-      color: #fff;
-      border-radius: 12px;
-      font-weight: 700;
-      font-size: 0.9rem;
-      border: 1px solid #11100e;
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-      cursor: pointer;
-      text-decoration: none;
-    }
-    .btn-solid:hover {
-      background: #000000;
-      border-color: #000000;
-      transform: scale(1.02) translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    }
-    .btn-solid:active { transform: scale(0.97); }
-
-    .btn-outline {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      padding: 0.7rem 1.8rem;
-      background: transparent;
-      color: #141210;
-      border-radius: 12px;
-      font-weight: 700;
-      font-size: 0.9rem;
-      border: 1px solid #d6d2ca;
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-      cursor: pointer;
-      text-decoration: none;
-    }
-    .btn-outline:hover {
-      border-color: #141210;
-      background: rgba(0,0,0,0.02);
-      transform: scale(1.02) translateY(-1px);
-    }
-    .btn-outline:active { transform: scale(0.97); }
-
-    /* Badge de etiqueta */
-    .tag-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      padding: 0.2rem 0.8rem;
-      border-radius: 60px;
-      font-size: 0.65rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      border: 1px solid transparent;
-    }
-
-    /* Contenedor de gradiente sutil para el hero */
-    .hero-glow {
-      position: relative;
-      overflow: hidden;
-      background: #f7f6f2;
-    }
-    .hero-glow::before {
-      content: '';
-      position: absolute;
-      top: -30%;
-      right: -20%;
-      width: 600px;
-      height: 600px;
-      background: radial-gradient(circle, rgba(79, 70, 229, 0.04) 0%, transparent 60%);
-      pointer-events: none;
-    }
-    .hero-glow::after {
-      content: '';
-      position: absolute;
-      bottom: -30%;
-      left: -20%;
-      width: 600px;
-      height: 600px;
-      background: radial-gradient(circle, rgba(16, 185, 129, 0.04) 0%, transparent 60%);
-      pointer-events: none;
-    }
-
-    /* Estilo para el mockup flotante */
-    .mockup-float {
-      background: #ffffff;
-      border-radius: 24px;
-      border: 1px solid #ecebe6;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.03), 0 8px 24px rgba(0,0,0,0.02);
-      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .mockup-float:hover {
-      transform: rotate(0deg) scale(1.01);
-    }
-
-    /* Inputs minimalistas (por si se usan) */
-    .input-minimal {
-      width: 100%;
-      padding: 0.6rem 0.8rem;
-      border: 1px solid #d1cdc6;
-      border-radius: 8px;
-      background: #fafaf8;
-      font-size: 0.9rem;
-      font-family: inherit;
-      color: #1a1a1a;
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
-      outline: none;
-    }
-    .input-minimal:focus {
-      border-color: #4f46e5;
-      background: #ffffff;
-      box-shadow: 0 0 0 3px rgba(79,70,229,0.08);
-    }
-    .input-minimal::placeholder {
-      color: #b0aaa2;
-    }
-
-    .label-minimal {
-      display: block;
-      font-size: 0.7rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      color: #6b6560;
-      margin-bottom: 0.3rem;
-    }
-
-    /* Ajuste de espaciado compacto */
-    .section-compact {
-      padding-top: 3rem;
-      padding-bottom: 3rem;
-    }
-    @media (min-width: 768px) {
-      .section-compact {
-        padding-top: 4rem;
-        padding-bottom: 4rem;
-      }
-    }
-
-    /* Escaparate de tiendas */
-    .store-showcase { position: relative; isolation: isolate; }
-    .store-showcase::before { content: ''; position: absolute; inset: 0 0 auto; z-index: -1; height: 1px; background: #e5e1d6; }
-    .store-showcase__head { display: flex; align-items: end; justify-content: space-between; gap: 2rem; margin-bottom: 1.5rem; }
-    .store-showcase__head h2 { max-width: 15ch; color: #1a2420; font-size: clamp(1.75rem, 3vw, 2.5rem); line-height: 1.05; letter-spacing: -0.035em; }
-    .store-showcase__head p { max-width: 36rem; color: #5c6b64; font-size: 0.9rem; line-height: 1.6; }
-    .store-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.85rem; }
-    .store-card { position: relative; display: grid; grid-template-columns: 3.25rem minmax(0, 1fr) auto; align-items: center; gap: 0.9rem; min-height: 7.25rem; padding: 1rem; overflow: hidden; border: 1px solid #e5e1d6; border-radius: 14px; background: #fff; color: #1a2420; box-shadow: 0 2px 5px rgba(26,36,32,.05); text-decoration: none; transition: transform .24s cubic-bezier(.2,.8,.2,1), box-shadow .24s cubic-bezier(.2,.8,.2,1), border-color .24s ease; }
-    .store-card:hover { transform: translateY(-3px); border-color: #c89b3c; box-shadow: 0 14px 30px rgba(26,36,32,.08), 0 4px 12px rgba(26,36,32,.05); }
-    .store-card__rank { position: absolute; top: 0.7rem; right: 0.8rem; color: #5c6b64; font-size: 0.62rem; font-weight: 800; letter-spacing: 0.06em; }
-    .store-card__mark { display: grid; width: 3.25rem; height: 3.25rem; place-items: center; border-radius: 14px; background: #0d3a31; color: #fff; font-size: 1rem; font-weight: 900; text-transform: uppercase; box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); }
-    .store-card__body { min-width: 0; padding-right: 0.75rem; }
-    .store-card__body strong, .store-card__body small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .store-card__body strong { font-size: 0.93rem; line-height: 1.3; }
-    .store-card__body small { margin-top: 0.18rem; color: #5c6b64; font-size: 0.7rem; }
-    .store-card__body span { display: inline-block; margin-top: 0.55rem; color: #146356; font-size: 0.68rem; font-weight: 800; }
-    .store-card__arrow { display: grid; width: 2rem; height: 2rem; place-items: center; border-radius: 8px; background: #faf9f6; color: #146356; transition: transform .24s cubic-bezier(.2,.8,.2,1), background-color .24s ease; }
-    .store-card:hover .store-card__arrow { transform: translateX(3px); background: #e5e1d6; }
-    .store-showcase__empty { grid-column: 1 / -1; padding: 2rem; border: 1px dashed #e5e1d6; border-radius: 14px; color: #5c6b64; text-align: center; }
-    @media (max-width: 900px) { .store-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    @media (max-width: 640px) {
-      .store-showcase__head { align-items: flex-start; flex-direction: column; gap: 0.75rem; }
-      .store-showcase__head h2 { max-width: none; }
-      .store-grid { grid-template-columns: 1fr; }
-      .store-card { min-height: 6.75rem; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .store-card, .store-card__arrow { transition: none; }
-      .store-card:hover { transform: none; }
-    }
-
-    /* Scroll suave */
-    html { scroll-behavior: smooth; }
-
-    /* Modo oscuro (soporte básico) */
-    @media (prefers-color-scheme: dark) {
-      body.dark-mode {
-        background: #121212;
-        color: #e6e6e6;
-      }
-      body.dark-mode .card-modern {
-        background: #1e1e1e;
-        border-color: #2c2c2c;
-      }
-      body.dark-mode .card-modern:hover {
-        border-color: #3a3a3a;
-      }
-      body.dark-mode .mockup-float {
-        background: #1e1e1e;
-        border-color: #2c2c2c;
-      }
-      body.dark-mode .btn-outline {
-        color: #e6e6e6;
-        border-color: #3a3a3a;
-      }
-      body.dark-mode .btn-outline:hover {
-        border-color: #7a7a7a;
-        background: rgba(255,255,255,0.03);
-      }
-    }
-  </style>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/landing-2026.css?v=20260928a">
 </head>
-<body>
+<body class="lp">
 
-  <!-- ============================================================
-  NAVBAR (compacta y con blur)
-  ============================================================ -->
-  <nav class="sticky top-0 z-50 bg-white/70 backdrop-blur-lg border-b border-white/40">
-    <div class="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between">
-      <a href="/" class="flex items-center gap-2.5 group">
-        <img src="/icons/icon-192.png" alt="Catálogo Fácil" class="w-8 h-8 rounded-lg transition group-hover:scale-105">
-        <span class="font-extrabold text-lg tracking-tight text-[#141210]">Catálogo Fácil<span class="text-blue-600"></span></span>
+  <a class="lp-skip" href="#contenido">Saltar al contenido</a>
+
+  <!-- ===================== NAV ===================== -->
+  <header class="lp-nav" data-nav>
+    <div class="lp-wrap lp-nav-in">
+      <a href="/" class="lp-brand" aria-label="Catálogo Fácil, inicio">
+        <img src="/icons/icon-192.png" alt="" width="30" height="30">
+        <span>Catálogo Fácil</span>
       </a>
-      <div class="flex items-center gap-4">
-        <a href="#como-funciona" class="hidden md:block text-sm font-medium text-slate-500 hover:text-slate-900 transition">Cómo funciona</a>
-        <a href="#tiendas" class="hidden md:block text-sm font-medium text-slate-500 hover:text-slate-900 transition">Tiendas</a>
-        <button type="button" id="pwa-install-btn-landing" onclick="window.installPWA && window.installPWA()" class="hidden md:inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-900 transition border border-slate-200 rounded-lg px-3 py-1.5">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14"/></svg>
-          Descargar app móvil
-        </button>
-        <button type="button" onclick="abrirLoginTienda()" class="btn-outline text-sm py-1.5 px-4">Iniciar sesión</button>
-        <a href="/registrar" class="btn-solid text-sm py-1.5 px-4">Registrar tienda</a>
+      <nav class="lp-links" aria-label="Secciones">
+        <a href="#como">Cómo funciona</a>
+        <a href="#todo">Qué incluye</a>
+        <a href="#tiendas">Tiendas</a>
+      </nav>
+      <div class="lp-nav-cta">
+        <a href="/registrar" class="lp-btn lp-btn-light">Crear mi tienda</a>
       </div>
     </div>
-  </nav>
+  </header>
 
-  <!-- Modal: ir al login de tu tienda (no hay login global — cada tienda tiene el suyo en /:slug/admin) -->
-  <div id="login-tienda-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4" style="background:rgba(20,18,16,.55)" onclick="if(event.target===this) cerrarLoginTienda()">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
-      <h3 class="font-extrabold text-lg text-[#141210]">Entrar a tu tienda</h3>
-      <p class="text-sm text-slate-500 mt-1 mb-4">Escribe el enlace de tu tienda para ir a su panel de acceso.</p>
-      <form onsubmit="return irALoginTienda(event)">
-        <label for="login-tienda-slug" class="sr-only">Enlace de tu tienda</label>
-        <div class="flex items-center border border-slate-200 rounded-xl overflow-hidden focus-within:border-[#141210] transition">
-          <span class="pl-3 text-sm text-slate-400 select-none">cadi.nessik.net/</span>
-          <input id="login-tienda-slug" type="text" required autofocus autocomplete="off" spellcheck="false" placeholder="tu-tienda" class="flex-1 min-w-0 py-2.5 pr-3 text-sm outline-none">
-        </div>
-        <div class="flex gap-2 mt-4">
-          <button type="button" onclick="cerrarLoginTienda()" class="btn-outline text-sm py-2 px-4 flex-1">Cancelar</button>
-          <button type="submit" class="btn-solid text-sm py-2 px-4 flex-1">Continuar</button>
-        </div>
-      </form>
-    </div>
-  </div>
-  <script>
-    function abrirLoginTienda() {
-      document.getElementById('login-tienda-modal').classList.remove('hidden');
-      setTimeout(function () { document.getElementById('login-tienda-slug').focus(); }, 30);
-    }
-    function cerrarLoginTienda() {
-      document.getElementById('login-tienda-modal').classList.add('hidden');
-    }
-    function irALoginTienda(e) {
-      e.preventDefault();
-      var slug = document.getElementById('login-tienda-slug').value.trim().toLowerCase().replace(/^\/+|\/+$/g, '');
-      if (!slug) return false;
-      window.location.href = '/' + encodeURIComponent(slug) + '/admin';
-      return false;
-    }
-  </script>
-
-  <!-- ============================================================
-  HERO (más compacto y con glow)
-  ============================================================ -->
-  <section class="hero-glow section-compact">
-    <div class="relative max-w-6xl mx-auto px-4 grid md:grid-cols-2 gap-10 items-center">
-      <!-- Columna texto -->
-      <div>
-        <span class="tag-pill bg-emerald-50 text-emerald-700 border-emerald-200/50 mb-5">
-          <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-          Hecho por nessik.net
-        </span>
-        <h1 class="text-4xl md:text-5xl font-extrabold leading-[1.1] tracking-tight text-[#141210]">
-          Tu catálogo en línea,<br>
-          <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-500">las ventas en WhatsApp.</span>
-        </h1>
-        <p class="mt-4 text-base text-slate-500 leading-relaxed max-w-md">
-          Dale a tu negocio un catálogo profesional con filtros, buscador, pedidos ordenados y reporte de ventas. Todo llega directo a tu WhatsApp.
-        </p>
-        <div class="mt-6 flex flex-wrap gap-3">
-          <a href="/registrar" class="btn-solid">Registra tu tienda gratis</a>
-          <a href="#como-funciona" class="btn-outline">Ver cómo funciona</a>
-        </div>
-        <button type="button" id="pwa-install-btn-hero" onclick="window.installPWA && window.installPWA()" class="mt-3 inline-flex items-center gap-1.5 text-sm font-bold text-[#141210] hover:text-blue-600 transition">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 19h14M12 3v12m0 0 4-4m-4 4-4-4"/></svg>
-          Descargar app móvil
-        </button>
-        <p class="mt-4 text-xs text-slate-400 font-medium">Sin tarjeta · Sin carrito · Sin módulos extra</p>
-      </div>
-
-      <!-- Columna mockup -->
-      <div class="relative flex justify-center">
-        <div class="mockup-float p-5 max-w-sm w-full -rotate-1 hover:rotate-0 transition duration-300">
-          <!-- Header mockup -->
-          <div class="flex items-center gap-3 pb-3 border-b border-slate-100">
-            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-white font-black">F</div>
-            <div>
-              <p class="font-bold text-sm text-[#141210]">Ferretería El Toro</p>
-              <p class="text-xs text-slate-400">Torreón, Coah.</p>
-            </div>
+  <main id="contenido">
+    <!-- ===================== HERO ===================== -->
+    <section class="lp-hero">
+      <div class="lp-hero-glow" aria-hidden="true"></div>
+      <div class="lp-wrap lp-hero-in">
+        <div class="lp-hero-copy">
+          <p class="lp-eyebrow" data-rise><span class="lp-dot" aria-hidden="true"></span>Tu tienda abierta las 24 horas</p>
+          <h1 data-rise>Tu negocio,<br>en el celular de<br><em>todos tus clientes.</em></h1>
+          <p class="lp-lede" data-rise>Crea tu catálogo en minutos. Tus clientes ven tus productos, arman su pedido y te lo mandan <strong>directo a tu WhatsApp</strong>, listo para cobrar.</p>
+          <div class="lp-hero-cta" data-rise>
+            <a href="/registrar" class="lp-btn lp-btn-primary lp-btn-lg">
+              Crear mi tienda gratis
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </a>
+            <a href="#tiendas" class="lp-btn lp-btn-ghost lp-btn-lg">Ver tiendas reales</a>
           </div>
-          <!-- Contenido mockup -->
-          <div class="py-3">
-            <div class="flex items-center justify-between">
-              <span class="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Herramientas</span>
-              <span class="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">Disponible</span>
-            </div>
-            <div class="flex items-center gap-3 mt-2">
-              <div class="w-14 h-14 rounded-xl bg-slate-100 border border-slate-200/50"></div>
-              <div>
-                <p class="font-semibold text-sm">Martillo de uña 16oz</p>
-                <p class="font-extrabold text-lg text-[#141210]">$189.00</p>
-              </div>
-            </div>
-            <!-- Botón de acción dentro del mockup -->
-            <div class="mt-3 bg-emerald-500 text-white text-xs font-bold rounded-xl py-2 text-center flex items-center justify-center gap-2 hover:bg-emerald-600 transition cursor-pointer">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.52.149-.174.198-.298.297-.497.1-.198.05-.371-.025-.52-.074-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-              Pedir por WhatsApp
-            </div>
-          </div>
-        </div>
-        <!-- Badge flotante -->
-        <div class="absolute -left-3 -bottom-4 bg-white border border-slate-200/80 rounded-2xl px-3 py-2 shadow-sm rotate-[-4deg]">
-          <p class="text-[10px] text-slate-400 font-medium">Pedido registrado</p>
-          <p class="font-extrabold text-emerald-600 text-sm">✓ $378.00 confirmado</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============================================================
-  TRUST BAR (compacta)
-  ============================================================ -->
-  <section class="border-y border-slate-200/60 bg-white/40 py-4">
-    <div class="max-w-6xl mx-auto px-4 text-center">
-      <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Más que una página de redes</p>
-      <div class="flex flex-wrap justify-center gap-x-6 gap-y-1.5 text-slate-500 font-semibold text-xs">
-        <span>✓ Filtros por categoría</span>
-        <span>✓ Buscador</span>
-        <span>✓ Pedidos por WhatsApp</span>
-        <span>✓ Reporte Excel</span>
-        <span>✓ Dominio propio</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============================================================
-  PANEL DEL DUEÑO (más compacto y oscuro)
-  ============================================================ -->
-  <section class="section-compact max-w-6xl mx-auto px-4">
-    <div class="bg-[#141210] text-white rounded-2xl overflow-hidden border border-white/5 shadow-2xl">
-      <div class="grid md:grid-cols-2">
-        <div class="p-8 md:p-10 flex flex-col justify-center">
-          <span class="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">Conoce tu negocio</span>
-          <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight leading-tight mt-2">¿Cuántas personas te vieron hoy?</h2>
-          <p class="mt-3 text-slate-400 text-sm leading-relaxed">Sabes cuánta gente entra, qué producto llama más la atención y cuántos terminan pidiendo por WhatsApp.</p>
-          <ul class="mt-5 space-y-2">
-            <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px] font-black shrink-0">✓</span><p class="text-sm text-slate-300">Sabes si tus redes <b class="text-white">te traen clientes</b></p></li>
-            <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px] font-black shrink-0">✓</span><p class="text-sm text-slate-300">Detectas <b class="text-white">tu producto estrella</b></p></li>
-            <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px] font-black shrink-0">✓</span><p class="text-sm text-slate-300">Dejas de adivinar: <b class="text-white">ves tus números</b></p></li>
+          <ul class="lp-hero-proof" data-rise>
+            <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Gratis para empezar</li>
+            <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Sin saber programar</li>
+            <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Listo en 5 minutos</li>
           </ul>
         </div>
-        <div class="bg-[#1c1c1c] p-8 md:p-10 flex items-center">
-          <div class="w-full bg-[#141210] border border-white/5 rounded-xl p-5 shadow-2xl">
-            <div class="flex items-center justify-between mb-4"><p class="text-sm font-bold text-white">Panel del dueño</p><span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">EN VIVO</span></div>
-            <div class="grid grid-cols-3 gap-2 mb-4">
-              <div class="bg-[#1c1c1c] rounded-xl p-2.5"><p class="text-lg font-black text-blue-400">127</p><p class="text-[10px] text-slate-500">visitas</p></div>
-              <div class="bg-[#1c1c1c] rounded-xl p-2.5"><p class="text-lg font-black text-emerald-400">34</p><p class="text-[10px] text-slate-500">pidieron</p></div>
-              <div class="bg-[#1c1c1c] rounded-xl p-2.5"><p class="text-lg font-black text-amber-400">27%</p><p class="text-[10px] text-slate-500">convierten</p></div>
+
+        <!-- Teléfono animado: catálogo → carrito → WhatsApp -->
+        <div class="lp-stage" aria-hidden="true">
+          <div class="lp-orbit lp-orbit-1"></div>
+          <div class="lp-orbit lp-orbit-2"></div>
+          <div class="lp-phone">
+            <div class="lp-phone-notch"></div>
+            <div class="lp-screen">
+              <div class="lp-sc-head">
+                <span class="lp-sc-logo">EB</span>
+                <div><b>El Buen Pan</b><small><i></i>Abierto ahora</small></div>
+              </div>
+              <div class="lp-sc-chips"><span class="on">Todo</span><span>Pan dulce</span><span>Pasteles</span></div>
+              <div class="lp-sc-grid">
+                <div class="lp-sc-card lp-sc-c1"><div class="lp-sc-img"></div><b>Concha de vainilla</b><span>$14</span><em class="lp-sc-add">+</em></div>
+                <div class="lp-sc-card lp-sc-c2"><div class="lp-sc-img"></div><b>Pastel tres leches</b><span>$320</span><em class="lp-sc-add">+</em></div>
+                <div class="lp-sc-card lp-sc-c3"><div class="lp-sc-img"></div><b>Cuernito</b><span>$16</span><em class="lp-sc-add">+</em></div>
+                <div class="lp-sc-card lp-sc-c4"><div class="lp-sc-img"></div><b>Galletas avena</b><span>$45</span><em class="lp-sc-add">+</em></div>
+              </div>
+              <div class="lp-sc-cart"><span class="lp-sc-count">3</span>Enviar pedido por WhatsApp</div>
             </div>
-            <div class="bg-[#1c1c1c] rounded-xl p-3">
-              <p class="text-[10px] font-bold text-slate-500 uppercase mb-1.5">Productos más pedidos</p>
-              <div class="space-y-1.5"><div class="flex items-center justify-between text-xs"><span class="text-slate-300">Martillo 16oz</span><span class="font-bold text-blue-400">18 pedidos</span></div><div class="flex items-center justify-between text-xs"><span class="text-slate-300">Pintura vinílica</span><span class="font-bold text-blue-400">12 pedidos</span></div><div class="flex items-center justify-between text-xs"><span class="text-slate-300">Cinta métrica</span><span class="font-bold text-blue-400">9 pedidos</span></div></div>
-            </div>
-            <div class="mt-3 flex items-center justify-between text-xs"><span class="text-slate-500">Ventas esta semana</span><span class="font-black text-white">$8,540</span></div>
           </div>
+          <div class="lp-bubble">
+            <div class="lp-bubble-head"><span class="lp-wa"><svg viewBox="0 0 24 24"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.4-4A8 8 0 1 1 20 11.5z"/></svg></span>Nuevo pedido</div>
+            <p>¡Hola! Quiero:<br>2 × Concha de vainilla<br>1 × Pastel tres leches<br><b>Total: $348</b></p>
+            <small>Ahora · WhatsApp</small>
+          </div>
+          <div class="lp-toast"><span>✓</span> Pedido recibido</div>
         </div>
       </div>
-    </div>
-  </section>
 
-  <!-- ============================================================
-  DIFERENCIADORES (grid más compacta y con bordes)
-  ============================================================ -->
-  <section id="como-funciona" class="section-compact max-w-6xl mx-auto px-4">
-    <div class="text-center max-w-2xl mx-auto mb-10">
-      <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight">¿Por qué tu negocio lo necesita?</h2>
-      <p class="mt-2 text-base text-slate-500">Instagram y Facebook sirven para que te encuentren. Tu catálogo existe para que <span class="font-bold text-[#141210]">compren sin que tú pierdas ventas.</span></p>
-    </div>
+      <div class="lp-marquee" aria-hidden="true">
+        <div class="lp-marquee-track">
+          <% const giros = ['Panaderías','Ferreterías','Boutiques','Florerías','Taquerías','Joyerías','Farmacias','Papelerías','Cosméticos','Refaccionarias','Mueblerías','Veterinarias','Heladerías','Tiendas de regalos']; %>
+          <% for (let r = 0; r < 2; r++) { giros.forEach(function (g) { %><span><%= g %></span><% }) } %>
+        </div>
+      </div>
+    </section>
 
-    <div class="grid md:grid-cols-3 gap-3">
-      <!-- Tarjeta 1 -->
-      <div class="card-modern p-5">
-        <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3">
-          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+    <!-- ===================== PROBLEMA → SOLUCIÓN ===================== -->
+    <section class="lp-section lp-contrast">
+      <div class="lp-wrap lp-contrast-in">
+        <div class="lp-before" data-reveal>
+          <span class="lp-tag lp-tag-muted">Hoy</span>
+          <h2>Mandas fotos una por una, contestas “¿precio?” todo el día y los pedidos se pierden en el chat.</h2>
         </div>
-        <h3 class="font-extrabold text-base mb-1.5">Tu foto se pierde en el muro. Tu catálogo no.</h3>
-        <p class="text-slate-500 text-sm leading-relaxed">En Facebook tu publicación dura horas. En tu catálogo, tus productos están ordenados por categoría, con buscador, siempre visibles.</p>
-      </div>
-      <!-- Tarjeta 2 -->
-      <div class="card-modern p-5">
-        <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3">
-          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+        <div class="lp-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+        <div class="lp-after" data-reveal>
+          <span class="lp-tag">Con Catálogo Fácil</span>
+          <h2>Compartes <em>un solo enlace</em>. Tus clientes ven todo, eligen y te llega el pedido completo, con total.</h2>
         </div>
-        <h3 class="font-extrabold text-base mb-1.5">Adiós mensajes perdidos</h3>
-        <p class="text-slate-500 text-sm leading-relaxed">Cada pedido se registra automáticamente: qué pidieron, cuánto pagaron y cuándo. Nunca más ventas olvidadas.</p>
       </div>
-      <!-- Tarjeta 3 -->
-      <div class="card-modern p-5">
-        <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-3">
-          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10h18M7 15h2m4 0h6M6 4h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
-        </div>
-        <h3 class="font-extrabold text-base mb-1.5">Sabes cuánto vendes</h3>
-        <p class="text-slate-500 text-sm leading-relaxed">Descarga tu reporte de ventas en Excel con un clic. Sabes qué producto vende más y cuánto te deben.</p>
-      </div>
-      <!-- Tarjeta 4 -->
-      <div class="card-modern p-5">
-        <div class="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center mb-3">
-          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21a9 9 0 110-18 9 9 0 010 18zm0-18v18m-7.794-6h15.588M4.206 9h15.588"/></svg>
-        </div>
-        <h3 class="font-extrabold text-base mb-1.5">Cambia precios en segundos</h3>
-        <p class="text-slate-500 text-sm leading-relaxed">¿Subió el precio del acero? Entra a tu panel, cambia el precio y listo. Actualizado al instante para todos.</p>
-      </div>
-      <!-- Tarjeta 6 (destacada oscura) -->
-      <div class="card-modern p-5 bg-[#141210] border-[#2a2a2a] text-white hover:border-[#3a3a3a]">
-        <div class="w-10 h-10 rounded-xl bg-white/5 text-emerald-400 flex items-center justify-center mb-3">
-          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-        </div>
-        <h3 class="font-extrabold text-base mb-1.5">Hecho para vender por WhatsApp</h3>
-        <p class="text-slate-400 text-sm leading-relaxed">El cliente arma su pedido, toca un botón y todo llega a tu WhatsApp con el total calculado.</p>
-        <a href="/registrar" class="inline-block mt-3 btn-solid !bg-white !text-[#141210] !border-white text-xs py-1.5 px-4 hover:!bg-slate-100">Empezar ahora →</a>
-      </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- ============================================================
-  CÓMO FUNCIONA (pasos compactos)
-  ============================================================ -->
-  <section class="border-y border-slate-200/60 bg-white/40 py-10">
-    <div class="max-w-6xl mx-auto px-4">
-      <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight text-center mb-8">Así de simple funciona</h2>
-      <div class="grid md:grid-cols-4 gap-6">
-        <div class="text-center">
-          <div class="w-11 h-11 mx-auto rounded-xl bg-[#141210] text-white font-black flex items-center justify-center text-base mb-3">1</div>
-          <p class="font-bold text-sm">Registra tu tienda</p>
-          <p class="text-xs text-slate-500 mt-0.5">Te damos tu enlace y tu panel en minutos.</p>
+    <!-- ===================== CÓMO FUNCIONA ===================== -->
+    <section id="como" class="lp-section">
+      <div class="lp-wrap">
+        <div class="lp-head" data-reveal>
+          <span class="lp-kicker">Cómo funciona</span>
+          <h2>De cero a vender, <em>en tres pasos.</em></h2>
         </div>
-        <div class="text-center">
-          <div class="w-11 h-11 mx-auto rounded-xl bg-[#141210] text-white font-black flex items-center justify-center text-base mb-3">2</div>
-          <p class="font-bold text-sm">Carga tus productos</p>
-          <p class="text-xs text-slate-500 mt-0.5">Fotos, precios y categorías.</p>
-        </div>
-        <div class="text-center">
-          <div class="w-11 h-11 mx-auto rounded-xl bg-[#141210] text-white font-black flex items-center justify-center text-base mb-3">3</div>
-          <p class="font-bold text-sm">Comparte tu enlace</p>
-          <p class="text-xs text-slate-500 mt-0.5">En WhatsApp, en redes, en tu negocio.</p>
-        </div>
-        <div class="text-center">
-          <div class="w-11 h-11 mx-auto rounded-xl bg-emerald-500 text-white font-black flex items-center justify-center text-base mb-3">4</div>
-          <p class="font-bold text-sm">Vende por WhatsApp</p>
-          <p class="text-xs text-slate-500 mt-0.5">Los pedidos te llegan ordenados.</p>
-        </div>
+        <ol class="lp-steps">
+          <li data-reveal>
+            <span class="lp-step-n">01</span>
+            <h3>Crea tu tienda</h3>
+            <p>Escribe el nombre de tu negocio y tu WhatsApp. Elige un diseño hecho para tu giro.</p>
+            <div class="lp-step-vis lp-vis-1"><span>cadi.nessik.net/<b>tu-tienda</b></span></div>
+          </li>
+          <li data-reveal>
+            <span class="lp-step-n">02</span>
+            <h3>Sube tus productos</h3>
+            <p>Foto, precio y listo. O súbelos todos de golpe desde Excel. Variantes, tallas y colores incluidos.</p>
+            <div class="lp-step-vis lp-vis-2"><i></i><i></i><i></i></div>
+          </li>
+          <li data-reveal>
+            <span class="lp-step-n">03</span>
+            <h3>Recibe pedidos</h3>
+            <p>Comparte tu enlace en estados, Facebook o Instagram. Los pedidos llegan a tu WhatsApp, ordenados.</p>
+            <div class="lp-step-vis lp-vis-3"><span class="lp-wa"><svg viewBox="0 0 24 24"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.4-4A8 8 0 1 1 20 11.5z"/></svg></span><b>Pedido #128</b><small>3 productos · $348</small></div>
+          </li>
+        </ol>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- ============================================================
-  TIENDAS
-  ============================================================ -->
-  <section id="tiendas" class="store-showcase section-compact max-w-6xl mx-auto px-4">
-    <div class="store-showcase__head">
-      <div>
-        <h2>Las tiendas más vistas en Catálogo Fácil</h2>
+    <!-- ===================== TODO LO QUE INCLUYE (bento) ===================== -->
+    <section id="todo" class="lp-section lp-dark">
+      <div class="lp-wrap">
+        <div class="lp-head" data-reveal>
+          <span class="lp-kicker">Qué incluye</span>
+          <h2>Todo lo de una tienda en línea.<br><em>Sin lo complicado.</em></h2>
+        </div>
+        <div class="lp-bento">
+          <article class="lp-tile lp-tile-wide" data-reveal>
+            <div>
+              <h3>Diseños que se ven de marca</h3>
+              <p>Decenas de estilos pensados para cada giro: panadería, joyería, ferretería, boutique… Tu catálogo se ve profesional desde el primer día.</p>
+            </div>
+            <div class="lp-swatches" aria-hidden="true">
+              <span style="--a:#1D5C5A;--b:#E3F1EC"></span><span style="--a:#141414;--b:#C9A45C"></span><span style="--a:#D9476B;--b:#FFF6EE"></span><span style="--a:#FFC400;--b:#15171A"></span><span style="--a:#0B3A57;--b:#1FB5B0"></span><span style="--a:#6B7B3A;--b:#F1E9DA"></span>
+            </div>
+          </article>
+          <article class="lp-tile" data-reveal>
+            <span class="lp-ico"><svg viewBox="0 0 24 24"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.4-4A8 8 0 1 1 20 11.5z"/></svg></span>
+            <h3>Pedidos por WhatsApp</h3>
+            <p>Con productos, cantidades y total. Sin errores, sin volver a preguntar.</p>
+          </article>
+          <article class="lp-tile" data-reveal>
+            <span class="lp-ico"><svg viewBox="0 0 24 24"><path d="M3 6h18v12H3zM3 10h18M7 15h3"/></svg></span>
+            <h3>Cobra como quieras</h3>
+            <p>Transferencia, efectivo o pago con tarjeta en línea.</p>
+          </article>
+          <article class="lp-tile" data-reveal>
+            <span class="lp-ico"><svg viewBox="0 0 24 24"><path d="M21 8 12 3 3 8v8l9 5 9-5zM3 8l9 5 9-5M12 13v8"/></svg></span>
+            <h3>Inventario al día</h3>
+            <p>Stock por variante, aviso de pocas piezas y productos por pedido.</p>
+          </article>
+          <article class="lp-tile" data-reveal>
+            <span class="lp-ico"><svg viewBox="0 0 24 24"><path d="M4 20V12M9 20V6M14 20V10M19 20V4M3 20h18"/></svg></span>
+            <h3>Reportes claros</h3>
+            <p>Visitas, clics a WhatsApp, pedidos y cobros por día.</p>
+          </article>
+          <article class="lp-tile lp-tile-wide lp-tile-accent" data-reveal>
+            <div>
+              <h3>Tu panel, desde el celular</h3>
+              <p>Instálalo como app. Cambia precios, marca pedidos como entregados y agrega empleados con su propio PIN y permisos.</p>
+            </div>
+            <div class="lp-mini-panel" aria-hidden="true">
+              <div><small>Ventas de hoy</small><b>$4,280</b></div>
+              <div><small>Pedidos</small><b>11</b></div>
+              <div class="lp-mini-bars"><i style="--h:40%"></i><i style="--h:62%"></i><i style="--h:48%"></i><i style="--h:80%"></i><i style="--h:70%"></i><i style="--h:95%"></i></div>
+            </div>
+          </article>
+        </div>
       </div>
-      <p>Explora los seis catálogos que más están llamando la atención de la comunidad.</p>
-    </div>
-    <div class="store-grid">
-      <% stores.forEach((s, index) => { %>
-        <a href="/<%= s.slug %>" class="store-card" aria-label="Ver catálogo de <%= s.name %>">
-          <span class="store-card__rank">#<%= index + 1 %></span>
-          <span class="store-card__mark" aria-hidden="true"><%= s.name.charAt(0) %></span>
-          <span class="store-card__body">
-            <strong><%= s.name %></strong>
-            <small>/<%= s.slug %></small>
-            <span>Explorar catálogo</span>
-          </span>
-          <span class="store-card__arrow" aria-hidden="true">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-          </span>
+    </section>
+
+    <!-- ===================== TIENDAS REALES ===================== -->
+    <section id="tiendas" class="lp-section">
+      <div class="lp-wrap">
+        <div class="lp-head lp-head-row" data-reveal>
+          <div>
+            <span class="lp-kicker">Tiendas reales</span>
+            <h2>Negocios que ya <em>venden así.</em></h2>
+          </div>
+          <p>Los catálogos que más visitas están recibiendo. Entra y compra como lo haría un cliente.</p>
+        </div>
+        <% if (stores.length === 0) { %>
+          <div class="lp-empty" data-reveal>
+            <p>Aún no hay tiendas publicadas.</p>
+            <a href="/registrar" class="lp-btn lp-btn-primary">Sé la primera</a>
+          </div>
+        <% } else { %>
+          <div class="lp-stores">
+            <% stores.forEach(function (s, index) { const tint = s.color_hex || '#1D5C5A'; %>
+              <a href="/<%= s.slug %>" class="lp-store" data-reveal style="--tint: <%= tint %>" aria-label="Ver catálogo de <%= s.name %>">
+                <div class="lp-store-cover">
+                  <% if (s.cover_image) { %><img src="<%= s.cover_image %>" alt="" loading="lazy" decoding="async"><% } else { %><span class="lp-store-mono"><%= s.name.charAt(0) %></span><% } %>
+                  <span class="lp-store-rank">#<%= index + 1 %></span>
+                </div>
+                <div class="lp-store-body">
+                  <span class="lp-store-logo"><% if (s.logo) { %><img src="<%= s.logo %>" alt="" loading="lazy"><% } else { %><%= s.name.charAt(0) %><% } %></span>
+                  <div>
+                    <b><%= s.name %></b>
+                    <small><%= s.featured_product ? s.featured_product : '/' + s.slug %></small>
+                  </div>
+                  <svg class="lp-store-go" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </div>
+              </a>
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
+    </section>
+
+    <!-- ===================== PREGUNTAS ===================== -->
+    <section class="lp-section lp-faq-sec">
+      <div class="lp-wrap lp-faq-in">
+        <div class="lp-head" data-reveal>
+          <span class="lp-kicker">Preguntas frecuentes</span>
+          <h2>Lo que todos <em>preguntan.</em></h2>
+        </div>
+        <div class="lp-faq" data-reveal>
+          <details open><summary>¿Cuánto cuesta?</summary><p>Puedes empezar gratis y publicar tu catálogo hoy mismo. Cuando tu negocio crezca, eliges un plan con más productos y funciones.</p></details>
+          <details><summary>¿Necesito página web o saber programar?</summary><p>No. Tu catálogo ya es tu página: tiene su propio enlace para compartir y se ve perfecto en celular y computadora.</p></details>
+          <details><summary>¿Cómo me llegan los pedidos?</summary><p>El cliente arma su carrito y, al terminar, se abre WhatsApp con el pedido completo: productos, cantidades, total y sus datos de entrega.</p></details>
+          <details><summary>¿Puedo cobrar en línea?</summary><p>Sí. Puedes aceptar transferencia, efectivo al entregar o pago con tarjeta en línea, según lo que actives en tu configuración.</p></details>
+          <details><summary>¿Mis empleados pueden usarlo?</summary><p>Sí. Cada empleado entra con su propio PIN y tú decides qué puede ver y hacer: productos, pedidos, reportes y más.</p></details>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== CTA FINAL ===================== -->
+    <section class="lp-final">
+      <div class="lp-final-glow" aria-hidden="true"></div>
+      <div class="lp-wrap lp-final-in" data-reveal>
+        <h2>Tu próximo cliente<br><em>ya está en su celular.</em></h2>
+        <p>Abre tu tienda hoy. En cinco minutos puedes compartir tu enlace.</p>
+        <a href="/registrar" class="lp-btn lp-btn-primary lp-btn-lg">
+          Crear mi tienda gratis
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </a>
-      <% }) %>
-      <% if (stores.length === 0) { %>
-        <p class="store-showcase__empty">Aún no hay tiendas registradas. ¡Registra la primera!</p>
-      <% } %>
-    </div>
-  </section>
-
-  <!-- ============================================================
-  CTA FINAL
-  ============================================================ -->
-  <section class="bg-[#141210] text-white py-12">
-    <div class="max-w-4xl mx-auto px-4 text-center">
-      <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight">Tu negocio merece verse profesional</h2>
-      <p class="mt-2 text-slate-400 text-base">Regístrate hoy y en minutos tienes tu catálogo en línea conectado a WhatsApp.</p>
-      <a href="/registrar" class="btn-solid !bg-white !text-[#141210] !border-white mt-5 hover:!bg-slate-100">Registrar mi tienda gratis</a>
-    </div>
-  </section>
-
-  <!-- ============================================================
-  FOOTER
-  ============================================================ -->
-  <footer class="border-t border-slate-200/60 bg-white/40 py-6">
-    <div class="max-w-6xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-3 text-sm text-slate-500">
-      <p class="font-bold text-[#141210]">Catálogo Fácil<span class="text-blue-600"></span></p>
-      <p class="text-xs">Hecho por nessik.net</p>
-      <div class="flex items-center gap-4">
-        <a href="/registrar" class="font-bold hover:text-[#141210] transition">Registrar tienda</a>
-        <a href="/maestro" class="font-semibold text-slate-400 hover:text-slate-600 transition">🔐 Equipo</a>
       </div>
+    </section>
+  </main>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer class="lp-footer">
+    <div class="lp-wrap lp-footer-in">
+      <a href="/" class="lp-brand"><img src="/icons/icon-192.png" alt="" width="26" height="26"><span>Catálogo Fácil</span></a>
+      <nav aria-label="Enlaces legales y de cuenta">
+        <a href="/registrar">Crear tienda</a>
+        <a href="/terminos">Términos</a>
+        <a href="/aviso-de-privacidad">Aviso de privacidad</a>
+        <a href="/maestro">Equipo</a>
+      </nav>
+      <small>Hecho por Nessik · Torreón, Coahuila</small>
     </div>
   </footer>
 
+  <script>
+    (function () {
+      // Barra superior: se vuelve sólida al bajar
+      var nav = document.querySelector('[data-nav]');
+      var onScroll = function () { nav.classList.toggle('is-solid', window.scrollY > 24); };
+      window.addEventListener('scroll', onScroll, { passive: true }); onScroll();
+
+      // Aparición al hacer scroll (una sola vez)
+      var els = document.querySelectorAll('[data-reveal]');
+      if (!('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        els.forEach(function (e) { e.classList.add('is-in'); });
+      } else {
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (en) {
+            if (en.isIntersecting) { en.target.classList.add('is-in'); io.unobserve(en.target); }
+          });
+        }, { rootMargin: '0px 0px -8% 0px', threshold: .12 });
+        els.forEach(function (e, i) { e.style.setProperty('--d', (i % 4) * 70 + 'ms'); io.observe(e); });
+      }
+      document.body.classList.add('lp-ready');
+    })();
+  </script>
 </body>
 </html>
