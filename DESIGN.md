@@ -191,7 +191,7 @@ Los selects buscables respetan el ancho resuelto del control y de su contenedor:
 
 **The Theme Changes Composition Rule.** Una apariencia pública debe cambiar al menos proporción de imagen, densidad y jerarquía además del color; todas conservan una sola plantilla funcional y una cuadrícula móvil estable.
 
-**The Filters Beside Products Rule.** En laptop y escritorio, los filtros permanecen visibles en una columna sticky a la izquierda y la cuadrícula de productos ocupa el espacio restante a la derecha.
+**The Filters Beside Products Rule.** En laptop y escritorio, filtros y productos son hijos de la misma cuadrícula de dos columnas: el sidebar sticky ocupa la columna izquierda y los productos el espacio restante a la derecha.
 
 ## Elevation & Depth
 

@@ -83,9 +83,9 @@ html[data-style] body :is(button,a,input,select,textarea):focus-visible { outlin
 html[data-style] body .prod-card:focus-within { outline:2px solid var(--accent); outline-offset:4px; }
 html[data-style] body :is(button:disabled,[aria-disabled="true"]) { opacity:.55; cursor:not-allowed; }
 @media(min-width:901px) {
-  html[data-style] body .main-inner { display:flex; align-items:flex-start; gap:clamp(20px,2.4vw,32px); }
-  html[data-style] body .filter-sidebar { flex:0 0 clamp(236px,20vw,280px); width:auto; position:sticky; top:76px; display:block; max-height:calc(100vh - 96px); margin:0; overflow-y:auto; }
-  html[data-style] body .main-content { flex:1; min-width:0; }
+  html[data-style] body .main-inner { display:grid; grid-template-columns:minmax(236px,280px) minmax(0,1fr); align-items:start; gap:clamp(20px,2.4vw,32px); }
+  html[data-style] body .filter-sidebar { width:100%; min-width:0; position:sticky; top:76px; display:block; max-height:calc(100vh - 96px); margin:0; overflow-y:auto; }
+  html[data-style] body .main-content { min-width:0; grid-column:2; }
   html[data-style] body .prod-grid { gap:var(--craft-space); }
 }
 @media(min-width:901px) and (max-width:1180px) {
