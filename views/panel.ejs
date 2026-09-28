@@ -3,11 +3,21 @@
 <head>
   <%- include('admin/head', { title: 'Panel', biz }) %>
 </head>
-<body class="m-material min-h-screen" style="background:var(--ap-bg);color:var(--ap-text)">
+<body class="m-material panel-admin-page min-h-screen" style="background:var(--ap-bg);color:var(--ap-text)">
   <%- include('admin/sidebar', { biz, active: 'panel', canDesign }) %>
 
   <main class="transition-all duration-300">
     <div class="px-4 md:px-8 py-4 md:py-6 pb-24 md:pb-6">
+
+      <div class="pn-appbar" aria-label="Herramientas del panel">
+        <label class="pn-global-search"><i class="bi bi-search"></i><input id="panel-global-search" type="search" placeholder="Buscar pedidos, clientes, productos…" aria-label="Buscar en pedidos recientes"></label>
+        <div class="pn-appbar-meta">
+          <span class="pn-date-range"><i class="bi bi-calendar3"></i> Últimos 7 días</span>
+          <span class="pn-notification" aria-label="Notificaciones"><i class="bi bi-bell"></i><b></b></span>
+          <span class="pn-user-avatar"><%= biz.name.slice(0, 2).toUpperCase() %></span>
+          <span class="pn-user-name"><b><%= biz.name %></b><small>Mi negocio</small></span>
+        </div>
+      </div>
 
       <!-- Encabezado -->
       <header class="pn-head">
@@ -125,6 +135,19 @@
         </article>
 
         <aside class="pn-command-side">
+          <article class="pn-command-card pn-recent-orders">
+            <div class="pn-section-head">
+              <div><span class="pn-eyebrow">Actividad</span><h2>Pedidos recientes</h2></div>
+              <a href="#sec-pedidos">Ver todos</a>
+            </div>
+            <% if (orders.length) { %>
+              <div class="pn-recent-table">
+                <% orders.slice(0, 5).forEach(function(o){ var recentLabel = o.status === 'entregado' ? 'Entregado' : (o.status === 'nuevo' ? 'Nuevo' : (o.paid ? 'Pagado' : 'Por cobrar')); %>
+                  <a href="#sec-pedidos"><span>#<%= o.id %></span><b><%= o.customer_name || 'Cliente de WhatsApp' %></b><small><%= (o.items || 'Pedido').split(' | ')[0] %></small><em class="is-<%= o.status === 'nuevo' ? 'new' : (o.paid ? 'paid' : 'pending') %>"><%= recentLabel %></em><strong><%= money(o.total) %></strong></a>
+                <% }); %>
+              </div>
+            <% } else { %><div class="pn-command-empty"><p>Todavía no hay pedidos.</p></div><% } %>
+          </article>
           <article class="pn-command-card pn-alerts">
             <div class="pn-section-head">
               <div><span class="pn-eyebrow">Inventario</span><h2>Stock bajo</h2></div>
@@ -547,6 +570,21 @@
           target.style.boxShadow = '0 0 0 3px var(--ap-accent-light)';
           setTimeout(function () { target.style.boxShadow = ''; }, 1200);
         });
+      });
+    })();
+
+    (function () {
+      var globalSearch = document.getElementById('panel-global-search');
+      if (!globalSearch) return;
+      globalSearch.addEventListener('keydown', function (event) {
+        if (event.key !== 'Enter') return;
+        event.preventDefault();
+        var orderSearch = document.getElementById('order-search');
+        if (orderSearch) {
+          orderSearch.value = globalSearch.value;
+          orderSearch.dispatchEvent(new Event('input', { bubbles:true }));
+          document.getElementById('sec-pedidos').scrollIntoView({ behavior:'smooth', block:'start' });
+        }
       });
     })();
 

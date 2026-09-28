@@ -249,10 +249,11 @@
 
       <% if (perms.includes('productos.crear') || perms.includes('productos.editar')) { %>
       <!-- Agregar / editar producto (stepper) -->
-      <section id="nuevo-producto" class="m-card p-4 mb-3" data-stepper>
+      <section id="nuevo-producto" class="product-editor-modal <%= error && !planBlock ? 'is-open' : '' %>" data-stepper role="dialog" aria-modal="true" aria-labelledby="pf-title" onclick="cerrarProductModalDesdeFondo(event)">
+        <div class="product-editor-dialog">
         <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
           <h2 id="pf-title" class="font-extrabold text-slate-900 text-sm">Agregar producto</h2>
-          <button type="button" id="pf-cancel" onclick="cancelarEdicion()" class="hidden text-xs font-bold text-red-500 hover:bg-red-50 px-3 py-1.5 rounded-full transition">✕ Cancelar edición</button>
+          <button type="button" id="pf-cancel" onclick="cancelarEdicion()" class="product-editor-close" aria-label="Cerrar formulario"><i class="bi bi-x-lg"></i></button>
         </div>
 
         <div id="pf-steps" class="flex items-center gap-1 mb-4 overflow-x-auto scrollbar-thin"></div>
@@ -510,6 +511,7 @@
             <button type="submit" id="pf-save" class="m-btn m-btn-filled flex-1 hidden">Guardar producto</button>
           </div>
         </form>
+        </div>
       </section>
       <% } %>
       </div><!-- /products-workspace -->
@@ -1113,13 +1115,31 @@
     function irNuevoProducto(e) {
       if (e && e.preventDefault) e.preventDefault();
       switchCrudTab('productos');
+      cancelarEdicion(true);
+      abrirProductModal();
       var w = document.getElementById('nuevo-producto');
       if (w) setTimeout(function () {
-        w.scrollIntoView({ behavior: 'smooth', block: 'start' });
         var nameEl = document.getElementById('f-name');
         if (nameEl) setTimeout(function () { nameEl.focus(); }, 220);
       }, 60);
       return false;
+    }
+
+    function abrirProductModal() {
+      var modal = document.getElementById('nuevo-producto');
+      if (!modal) return;
+      modal.classList.add('is-open');
+      document.body.classList.add('product-modal-open');
+      var dialog = modal.querySelector('.product-editor-dialog');
+      if (dialog) dialog.scrollTop = 0;
+    }
+    function cerrarProductModal() {
+      var modal = document.getElementById('nuevo-producto');
+      if (modal) modal.classList.remove('is-open');
+      document.body.classList.remove('product-modal-open');
+    }
+    function cerrarProductModalDesdeFondo(event) {
+      if (event && event.target === event.currentTarget) cancelarEdicion();
     }
 
     // ====== Componente de variantes (atributos + combinaciones con foto) ======
@@ -1885,7 +1905,8 @@
       });
       renderSteps();
       if (n === PF_STEPS.length) renderResumen();
-      document.getElementById('nuevo-producto').scrollIntoView({ behavior: 'auto', block: 'start' });
+      var editorDialog = document.querySelector('#nuevo-producto .product-editor-dialog');
+      if (editorDialog) editorDialog.scrollTop = 0;
     }
 
     // Campos "avanzados" — colapsados por defecto para no abrumar con 10+
@@ -2199,8 +2220,8 @@
       var form = document.getElementById('pf-form');
       form.action = '/<%= biz.slug %>/admin/producto/' + card.getAttribute('data-edit-id');
       document.getElementById('pf-title').textContent = 'Editar producto';
-      document.getElementById('pf-cancel').classList.remove('hidden');
       document.getElementById('pf-save').textContent = 'Guardar cambios';
+      abrirProductModal();
       goStep(1);
     }
 
@@ -2227,12 +2248,12 @@
       var form = document.getElementById('pf-form');
       form.action = '/<%= biz.slug %>/admin/producto';
       document.getElementById('pf-title').textContent = 'Duplicar producto';
-      document.getElementById('pf-cancel').classList.remove('hidden');
       document.getElementById('pf-save').textContent = 'Guardar copia';
+      abrirProductModal();
       goStep(1);
     }
 
-    function cancelarEdicion() {
+    function cancelarEdicion(keepOpen) {
       ignorarFotosFallidas();
       pfMode = 'crear';
       var form = document.getElementById('pf-form');
@@ -2245,7 +2266,6 @@
       setVal('f-catgroup', '');
       form.action = '/<%= biz.slug %>/admin/producto';
       document.getElementById('pf-title').textContent = 'Agregar producto';
-      document.getElementById('pf-cancel').classList.add('hidden');
       document.getElementById('pf-save').textContent = 'Guardar producto';
       document.getElementById('f-fotos').innerHTML = '';
       setVal('f-image', ''); setVal('f-galeria', '');
@@ -2257,6 +2277,7 @@
       var det = document.getElementById('pf-advanced');
       if (det) det.open = false;
       goStep(1);
+      if (!keepOpen) cerrarProductModal();
     }
 
     function onPromoTypeChange() {
@@ -2455,12 +2476,17 @@
         setVal('f-image', fd.image || '');
         setVal('f-galeria', fd.galeria || '');
         initFotos('f', fd.image || '', fd.galeria || '');
+        abrirProductModal();
         goStep(1);
       } catch (e) {}
     }
     window.onPanelSwap = initProductos;
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initProductos);
     else initProductos();
+    document.addEventListener('keydown', function (event) {
+      var modal = document.getElementById('nuevo-producto');
+      if (event.key === 'Escape' && modal && modal.classList.contains('is-open')) cancelarEdicion();
+    });
 
     // ====== Catálogo de atributos y categorías (sin recargar el formulario) ======
     function loadPageData() {
