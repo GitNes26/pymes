@@ -25,6 +25,7 @@ test('las 61 apariencias tienen una composición visual explícita y distinta', 
     offers: ['rail', 'poster', 'compact']
   };
   entries.forEach(([id, profile]) => {
+    assert.equal(profile.filter, 'top', `${id}.filter debe colocar los filtros arriba`);
     Object.entries(valid).forEach(([key, allowed]) => {
       assert.ok(allowed.includes(profile[key]), `${id}.${key} debe ser válido`);
     });
