@@ -169,3 +169,11 @@ body.dark .config-rail, body.dark .config-profile, body.dark.config-admin-page .
 body.dark.config-admin-page .config-section input, body.dark.config-admin-page .config-section select, body.dark.config-admin-page .config-section textarea { background-color: #11171A !important; }
 body.dark .config-nav-link { color: #C9D2D6; }
 body.dark .config-nav-link.is-active { color: #CFEDE4; }
+
+/* El botón flotante de Ayuda sube para no tapar la barra de guardado */
+body:has(.cfg-savebar:not([hidden])) .help-fab { bottom: 92px; }
+body:has(.cfg-savebar:not([hidden])) .help-panel { bottom: 156px; max-height: calc(100vh - 190px); }
+@media (max-width: 767px) {
+  body:has(.cfg-savebar:not([hidden])) .help-fab { bottom: calc(144px + env(safe-area-inset-bottom, 0px)); }
+  body:has(.cfg-savebar:not([hidden])) .help-panel { bottom: calc(204px + env(safe-area-inset-bottom, 0px)); }
+}

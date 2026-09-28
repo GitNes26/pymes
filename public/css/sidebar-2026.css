@@ -1,0 +1,58 @@
+/* Menú lateral del panel · diseño 2026 (mismo sistema que Configuración) */
+body.m-material > .admin-navigation.sb26 {
+  --sb-ink: #16181B; --sb-muted: #5B6166; --sb-line: #E3E6E6;
+  --sb-petrol: #1D5C5A; --sb-petrol-2: #134341; --sb-soft: #E3F1EC;
+  background: #FFFFFF !important; border-right: 1px solid var(--sb-line) !important;
+}
+.sb26 .sb26-plan {
+  display: inline-block; margin-top: 3px; font-size: 11px; font-weight: 500; color: var(--sb-muted);
+}
+
+/* Grupos y enlaces */
+body.m-material .sb26 .m-sidebar { padding: 16px 10px !important; }
+body.m-material .sb26 .m-sidebar-group + .m-sidebar-group { margin-top: 18px; }
+body.m-material .sb26 .m-sidebar-group-label {
+  margin: 0 12px 6px !important; font-size: 11px !important; font-weight: 600 !important;
+  letter-spacing: .08em !important; text-transform: uppercase; color: #8A9196 !important;
+}
+body.m-material .sb26 .m-sidebar a {
+  position: relative; min-height: 40px; margin-bottom: 2px; padding: 0 12px !important; gap: 12px !important;
+  border-radius: 6px !important; font-size: 14px !important; font-weight: 500 !important;
+  color: #2A2F33 !important; box-shadow: none !important; transition: background .15s, color .15s;
+}
+body.m-material .sb26 .m-sidebar a:hover { background: #F4F6F6 !important; color: var(--sb-ink) !important; }
+body.m-material .sb26 .m-sidebar a.m-active-nav {
+  background: var(--sb-soft) !important; color: var(--sb-petrol-2) !important; font-weight: 600 !important;
+  box-shadow: inset 3px 0 0 var(--sb-petrol) !important;
+}
+body.m-material .sb26 .m-sidebar a svg { width: 19px !important; height: 19px !important; opacity: .9; }
+body.m-material .sb26 .m-sidebar a.m-active-nav svg { opacity: 1; color: var(--sb-petrol) !important; }
+
+/* Contadores: pedidos nuevos (petróleo) y stock bajo (ámbar) */
+.sb26 #new-orders-badge { background: var(--sb-petrol) !important; border-radius: 6px !important; font-weight: 600 !important; font-size: 11px !important; }
+.sb26 #low-stock-badge { background: #FDF0DC !important; color: #9A5A00 !important; border-radius: 6px !important; font-weight: 600 !important; font-size: 11px !important; }
+
+/* Pie */
+.sb26 .sb26-card {
+  display: flex; align-items: center; gap: 10px; margin: 2px 0 8px; padding: 10px 12px;
+  border: 1px solid var(--sb-line); border-radius: 8px; background: #FAFBFB; color: var(--sb-ink); text-decoration: none;
+  transition: border-color .15s, background .15s;
+}
+.sb26 .sb26-card:hover { border-color: #C9D5D3; background: #F4F8F7; }
+.sb26 .sb26-card-icon { width: 32px; height: 32px; flex-shrink: 0; border-radius: 7px; background: var(--sb-petrol); color: #fff; display: grid; place-items: center; }
+.sb26 .sb26-card-icon svg { width: 17px; height: 17px; }
+.sb26 .sb26-card-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.sb26 .sb26-card-text strong { font-size: 13px; font-weight: 600; }
+.sb26 .sb26-card-text small { font-size: 11px; color: var(--sb-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sb26 .sb26-card-go { width: 15px; height: 15px; color: var(--sb-muted); flex-shrink: 0; }
+.sb26 .sb26-foot > button, .sb26 .sb26-foot > div, .sb26 .sb26-foot > a:not(.sb26-card) { font-size: 13px !important; }
+
+/* Menú colapsado: se ocultan textos del pie */
+body.sidebar-closed .sb26 .sb26-card-text, body.sidebar-closed .sb26 .sb26-card-go, body.sidebar-closed .sb26 .sb26-plan { display: none; }
+
+/* Modo oscuro */
+body.dark.m-material > .admin-navigation.sb26 { --sb-ink: #E8EDEF; --sb-muted: #A3AEB4; --sb-line: #2A3338; --sb-soft: #173331; background: #12181B !important; }
+body.dark.m-material .sb26 .m-sidebar a { color: #C9D2D6 !important; }
+body.dark.m-material .sb26 .m-sidebar a:hover { background: rgba(255,255,255,.05) !important; }
+body.dark.m-material .sb26 .m-sidebar a.m-active-nav { color: #CFEDE4 !important; }
+body.dark .sb26 .sb26-card { background: #161C20; }

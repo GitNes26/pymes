@@ -13,6 +13,19 @@
     { id: 'proveedores', label: 'Proveedores', group: 'Negocio', show: () => has('config'), href: '/' + biz.slug + '/admin/proveedores', icon: 'M3 3v18h18M8 14h4m-4-4h4M7 7h10m-7 12h10' },
     { id: 'config', label: 'Configuración', group: 'Cuenta', show: () => has('config'), href: '/' + biz.slug + '/admin/config', icon: 'M4 6h16M4 12h16M4 18h10M14 18h6' },
   ].filter(it => it.show());
+  // Iconos del diseño 2026 (trazo fino, cuadrícula de 24 px)
+  const icons26 = {
+    panel: 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z',
+    pedidos: 'M3 4h2l2.4 11h11L21 7H6M9 20h.01M18 20h.01',
+    reportes: 'M4 20V12M9 20V6M14 20V10M19 20V4M3 20h18',
+    productos: 'M21 8 12 3 3 8v8l9 5 9-5zM3 8l9 5 9-5M12 13v8',
+    importar: 'M12 4v12m0 0-4-4m4 4 4-4M4 20h16',
+    empleados: 'M16 20v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1M9.5 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM21 20v-1a4 4 0 0 0-3-3.8M16 4.2a3.5 3.5 0 0 1 0 6.6',
+    clientes: 'M18 20v-1a5 5 0 0 0-5-5h-2a5 5 0 0 0-5 5v1M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
+    proveedores: 'M3 6h11v10H3zM14 10h4l3 3v3h-7M7 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM17 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4z',
+    config: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 3.1 14H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 10 3.1V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.7 1.7 0 0 0 20.9 10H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z'
+  };
+  items.forEach(it => { if (icons26[it.id]) it.icon26 = icons26[it.id]; });
   // Agrupa manteniendo el orden ya definido arriba (no alfabético) — un
   // pequeño rótulo por grupo es lo que separa un sidebar "lista de links"
   // de uno que se siente organizado como el de un panel profesional.
@@ -29,6 +42,7 @@
 %>
 
 <%- include('loading-skeleton', { active }) %>
+<link rel="stylesheet" href="/css/sidebar-2026.css?v=20260928a">
 
 <!-- ============================================================
 SIDEBAR NUEVO (diseño totalmente distinto)
@@ -47,7 +61,7 @@ SIDEBAR NUEVO (diseño totalmente distinto)
 <!-- Overlay móvil -->
 <div class="sidebar-overlay" onclick="closeSidebarMobile()"></div>
 
-<aside class="admin-navigation fixed inset-y-0 left-0 w-60 hidden md:flex flex-col z-40 transition-all duration-300" aria-label="Menú administrativo" style="background:var(--ap-card);border-right:1px solid var(--ap-border);color:var(--ap-text)">
+<aside class="admin-navigation sb26 fixed inset-y-0 left-0 w-60 hidden md:flex flex-col z-40 transition-all duration-300" aria-label="Menú administrativo" style="background:var(--ap-card);border-right:1px solid var(--ap-border);color:var(--ap-text)">
 
   <!-- Perfil: logo + nombre + plan (padding-right reserva el espacio del botón de colapsar,
        que es position:fixed y no empuja el layout por sí solo) -->
@@ -56,6 +70,7 @@ SIDEBAR NUEVO (diseño totalmente distinto)
       <img src="<%= avatar %>" class="w-9 h-9 rounded-lg object-cover shrink-0" style="box-shadow:0 0 0 2px var(--ap-card), 0 0 0 3.5px color-mix(in srgb, var(--ap-accent) 35%, transparent)">
       <div class="min-w-0 flex-1">
         <p class="font-semibold text-[13.5px] truncate leading-tight" style="color:var(--ap-text)"><%= esEmpleado ? (typeof empName !== 'undefined' ? empName : 'Empleado') : biz.name %></p>
+        <% if (!esEmpleado) { %><span class="sb26-plan"><%= isPro ? 'Plan Pro' : (biz.plan === 'demo' ? 'Demo' : 'Plan gratis') %></span><% } %>
         <% if (esEmpleado) { %><span class="inline-flex items-center mt-1.5 px-2 py-[3px] rounded-full text-[9.5px] font-bold uppercase tracking-[0.08em]"
               style="<%= isPro ? 'background:color-mix(in srgb, var(--ap-accent) 16%, transparent);color:var(--ap-accent-text)' : 'background:var(--ap-bg);color:var(--ap-text-sec)' %>">
           <%= esEmpleado ? 'Empleado' : (isPro ? 'Plan Pro' : (biz.plan === 'demo' ? 'Demo' : 'Plan gratis')) %>
@@ -74,7 +89,7 @@ SIDEBAR NUEVO (diseño totalmente distinto)
           <a href="<%= it.href %>" <%- act ? 'aria-current="page"' : '' %>
              class="m-ripple group flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13.5px] font-medium transition-colors duration-150
                     <%= act ? 'm-active-nav' : '' %>" style="<%= act ? '' : 'color:var(--ap-text-sec)' %>">
-            <svg class="w-[17px] h-[17px] shrink-0" fill="none" stroke="currentColor" stroke-width="1.75"><path d="<%= it.icon %>"/></svg>
+            <% if (it.icon26) { %><svg class="w-[17px] h-[17px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="<%= it.icon26 %>"/></svg><% } else { %><svg class="w-[17px] h-[17px] shrink-0" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="<%= it.icon %>"/></svg><% } %>
             <span class="flex-1"><%= it.label %></span>
             <% if (it.id === 'pedidos') { %><span id="new-orders-badge" style="display:none" class="min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-black items-center justify-center">0</span><% } %>
             <% if (it.id === 'productos') { %><span id="low-stock-badge" style="display:<%= (typeof lowStockCount !== 'undefined' && lowStockCount > 0) ? 'flex' : 'none' %>" class="min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-black items-center justify-center" title="Productos con stock bajo o agotado"><%= (typeof lowStockCount !== 'undefined') ? lowStockCount : 0 %></span><% } %>
@@ -85,7 +100,12 @@ SIDEBAR NUEVO (diseño totalmente distinto)
   </nav>
 
   <!-- Pie: opciones secundarias (instalar app, modo oscuro, salir) -->
-  <div class="px-3 pb-5 space-y-1 pt-3" style="border-top:1px solid var(--ap-border)">
+  <div class="px-3 pb-5 space-y-1 pt-3 sb26-foot" style="border-top:1px solid var(--ap-border)">
+    <a href="/<%= biz.slug %>" target="_blank" rel="noopener" class="sb26-card">
+      <span class="sb26-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h16M6 10v10h12V10M5 4h14l1 6H4zM10 20v-5h4v5"/></svg></span>
+      <span class="sb26-card-text"><strong>Ver mi catálogo</strong><small>/<%= biz.slug %></small></span>
+      <svg class="sb26-card-go" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>
+    </a>
     <button type="button" id="pwa-install-btn" onclick="window.installPWA && window.installPWA()"
        class="m-ripple w-full items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-colors" style="display:none;color:var(--ap-accent-text)">
       <svg class="w-[17px] h-[17px] shrink-0" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 3v13m0 0l-4.5-4.5M12 16l4.5-4.5M4 20h16"/></svg>
