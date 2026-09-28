@@ -172,7 +172,7 @@ La paleta comparte tinta profunda y superficies blancas, pero cambia de temperat
 
 El catálogo público mantiene una cuadrícula mobile-first que crece hasta cuatro columnas y deja respirar el contenido comercial dentro de contenedores centrados. El detalle público utiliza dos columnas con galería sticky y colapsa a una columna bajo 900px.
 
-Las apariencias se implementan desde una sola plantilla y una capa temática final. Cada una de las 61 declara un perfil compositivo explícito y único: proporción de fotografía, columnas, alineación del hero, tipo de tarjeta, densidad, alineación de contenido, ajuste de imagen, movimiento y tratamiento de ofertas. En escritorio, todas conservan el orden operativo de filtros arriba y productos abajo; nunca comparten una cuadrícula lateral. Los selectores y la vista previa del teléfono representan esas decisiones antes de guardar. En móvil, los filtros se abren como drawer y las composiciones escalonadas vuelven a una cuadrícula regular para conservar lectura y objetivos táctiles.
+Las apariencias se implementan desde una sola plantilla y una capa temática final. Cada una de las 61 declara un perfil compositivo explícito y único: proporción de fotografía, columnas, alineación del hero, tipo de tarjeta, densidad, alineación de contenido, ajuste de imagen, movimiento y tratamiento de ofertas. En laptop y escritorio, todas colocan los filtros en una columna sticky a la izquierda y los productos a la derecha. Los selectores y la vista previa del teléfono representan esas decisiones antes de guardar. En móvil, los filtros se abren como drawer y las composiciones escalonadas vuelven a una cuadrícula regular para conservar lectura y objetivos táctiles.
 
 La biblioteca puede ser amplia porque la decisión permanece corta: cada giro muestra primero ocho recomendaciones ordenadas y deja el resto detrás de búsqueda y “Ver todos”. Los temas sectoriales declaran sus giros afines y una familia compositiva; la recomendación pondera afinidad directa, estilo del preset y compatibilidad de familia.
 
@@ -191,7 +191,7 @@ Los selects buscables respetan el ancho resuelto del control y de su contenedor:
 
 **The Theme Changes Composition Rule.** Una apariencia pública debe cambiar al menos proporción de imagen, densidad y jerarquía además del color; todas conservan una sola plantilla funcional y una cuadrícula móvil estable.
 
-**The Filters Before Products Rule.** En escritorio, el panel de filtros ocupa una fila superior y la cuadrícula de productos comienza debajo; ninguna apariencia coloca ambos bloques lado a lado.
+**The Filters Beside Products Rule.** En laptop y escritorio, los filtros permanecen visibles en una columna sticky a la izquierda y la cuadrícula de productos ocupa el espacio restante a la derecha.
 
 ## Elevation & Depth
 

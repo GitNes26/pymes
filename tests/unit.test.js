@@ -8,6 +8,7 @@ const {
 } = require('../lib/pure');
 const { recommendCatalogDesigns } = require('../catalog-designs-expanded');
 const { CATALOG_VISUAL_PROFILES } = require('../catalog-visual-profiles');
+const { contrast, readableTokens } = require('../lib/catalog-quality');
 
 const biz = (extra) => Object.assign({ mp_enabled: 1, mp_access_token: 'APP_USR-x', mp_fee_on: 1, mp_fee_pct: 3.49, mp_fee_fixed: 4, mp_fee_iva: 16 }, extra || {});
 const cobro = (f, base) => base * f.m + f.b; // lo que paga el cliente sin redondear
@@ -25,10 +26,20 @@ test('las 61 apariencias tienen una composición visual explícita y distinta', 
     offers: ['rail', 'poster', 'compact']
   };
   entries.forEach(([id, profile]) => {
-    assert.equal(profile.filter, 'top', `${id}.filter debe colocar los filtros arriba`);
+    assert.equal(profile.filter, 'side', `${id}.filter debe colocar los filtros a la izquierda en escritorio`);
     Object.entries(valid).forEach(([key, allowed]) => {
       assert.ok(allowed.includes(profile[key]), `${id}.${key} debe ser válido`);
     });
+  });
+});
+
+test('la capa visual mantiene legibles los textos secundarios y el acento', () => {
+  const dark = readableTokens({ bg:'#12100e', card:'#1c1916', text:'#f3ede1', textSec:'#77736a', accent:'#d8b876' });
+  const light = readableTokens({ bg:'#ffffff', card:'#fafafa', text:'#18181b', textSec:'#a1a1aa', accent:'#f0b429' });
+  [dark, light].forEach(tokens => {
+    assert.ok(contrast(tokens.textSec, tokens.bg) >= 4.5);
+    assert.ok(contrast(tokens.textSec, tokens.card) >= 4.5);
+    assert.ok(contrast(tokens.onAccent, tokens.accent) >= 4.5);
   });
 });
 

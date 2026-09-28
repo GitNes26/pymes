@@ -1,0 +1,208 @@
+/* Art direction: one authored treatment per appearance, shared commerce contract. */
+html[data-style] { --craft-rule:1px; --craft-space:24px; --craft-title:1.05rem; --craft-price:1.2rem; --craft-radius:var(--radius); --craft-image-inset:0px; }
+html[data-style="catalogo"] { --craft-space:22px; --craft-price:1.35rem; }
+html[data-style="joyeria"] { --craft-space:36px; --craft-title:1.2rem; --craft-radius:0px; --craft-image-inset:12px; }
+html[data-style="postres"] { --craft-space:22px; --craft-title:1.15rem; --craft-radius:16px; }
+html[data-style="ropa"] { --craft-space:32px; --craft-title:1.25rem; --craft-radius:0px; }
+html[data-style="floreria"] { --craft-space:30px; --craft-title:1.18rem; --craft-radius:16px 16px 0 0; }
+html[data-style="ferreteria"] { --craft-space:16px; --craft-title:1rem; --craft-price:1.45rem; --craft-radius:3px; --craft-rule:2px; }
+html[data-style="muebles"] { --craft-space:34px; --craft-title:1.2rem; --craft-radius:2px; }
+html[data-style="cosmeticos"] { --craft-space:28px; --craft-title:1.1rem; --craft-image-inset:16px; --craft-radius:16px; }
+html[data-style="vivero"] { --craft-space:24px; --craft-radius:16px 4px 16px 4px; }
+html[data-style="belleza"] { --craft-space:32px; --craft-title:1.2rem; --craft-radius:12px; }
+html[data-style="eventos"] { --craft-space:36px; --craft-title:1.3rem; --craft-radius:0px; }
+html[data-style="minimalista"] { --craft-space:36px; --craft-title:1rem; --craft-radius:0px; }
+html[data-style="pastel"] { --craft-space:26px; --craft-title:1.15rem; --craft-radius:16px; }
+html[data-style="monocromo"] { --craft-space:18px; --craft-title:1.2rem; --craft-price:1.5rem; --craft-rule:2px; --craft-radius:0px; }
+html[data-style="bohemio"] { --craft-space:30px; --craft-title:1.2rem; --craft-radius:16px 16px 4px 4px; }
+html[data-style="oceanico"] { --craft-space:34px; --craft-title:1.15rem; --craft-radius:0px; }
+html[data-style="nordico"] { --craft-space:32px; --craft-image-inset:10px; --craft-radius:4px; }
+html[data-style="vibrante"] { --craft-space:20px; --craft-title:1.25rem; --craft-price:1.5rem; --craft-radius:8px; --craft-rule:2px; }
+html[data-style="retro"] { --craft-space:24px; --craft-title:1.2rem; --craft-radius:12px; --craft-rule:2px; }
+html[data-style="futurista"] { --craft-space:20px; --craft-title:1rem; --craft-image-inset:12px; --craft-radius:2px; }
+html[data-style="rustico"] { --craft-space:26px; --craft-title:1.15rem; --craft-image-inset:8px; --craft-radius:3px; }
+html[data-style="elegante"] { --craft-space:40px; --craft-title:1.25rem; --craft-radius:0px; }
+html[data-style="urbano"] { --craft-space:18px; --craft-title:1.2rem; --craft-price:1.4rem; --craft-radius:0px; --craft-rule:2px; }
+html[data-style="tropical"] { --craft-space:24px; --craft-title:1.15rem; --craft-radius:16px 4px 16px 4px; }
+html[data-style="acuarela"] { --craft-space:30px; --craft-title:1.2rem; --craft-image-inset:8px; --craft-radius:12px; }
+html[data-style="taqueria-nocturna"] { --craft-space:18px; --craft-title:1.25rem; --craft-price:1.65rem; --craft-radius:2px; --craft-rule:2px; }
+html[data-style="parrilla"] { --craft-space:30px; --craft-title:1.3rem; --craft-price:1.4rem; --craft-radius:4px; }
+html[data-style="cafe-editorial"] { --craft-space:30px; --craft-title:1.3rem; --craft-radius:0px; }
+html[data-style="pan-artesanal"] { --craft-space:28px; --craft-title:1.25rem; --craft-radius:12px 12px 2px 2px; }
+html[data-style="marisqueria"] { --craft-space:28px; --craft-title:1.2rem; --craft-radius:8px; }
+html[data-style="heladeria-pop"] { --craft-space:24px; --craft-title:1.2rem; --craft-radius:16px; --craft-image-inset:8px; }
+html[data-style="cocina-casera"] { --craft-space:20px; --craft-title:1.15rem; --craft-price:1.4rem; --craft-radius:12px; }
+html[data-style="gourmet"] { --craft-space:44px; --craft-title:1.3rem; --craft-radius:0px; }
+html[data-style="mercado-barrio"] { --craft-space:16px; --craft-price:1.55rem; --craft-radius:8px; --craft-rule:2px; }
+html[data-style="moda-lujo"] { --craft-space:40px; --craft-title:1.35rem; --craft-radius:0px; }
+html[data-style="streetwear"] { --craft-space:16px; --craft-title:1.25rem; --craft-price:1.4rem; --craft-radius:0px; --craft-rule:2px; }
+html[data-style="infantil"] { --craft-space:24px; --craft-title:1.1rem; --craft-radius:16px; --craft-image-inset:12px; }
+html[data-style="sneakers"] { --craft-space:24px; --craft-title:1.2rem; --craft-price:1.5rem; --craft-image-inset:18px; --craft-radius:4px; }
+html[data-style="perfumeria"] { --craft-space:36px; --craft-title:1.2rem; --craft-image-inset:24px; --craft-radius:16px; }
+html[data-style="optica"] { --craft-space:28px; --craft-title:1.1rem; --craft-image-inset:18px; --craft-radius:4px; }
+html[data-style="clinica"] { --craft-space:32px; --craft-title:1.15rem; --craft-radius:12px; }
+html[data-style="dental-claro"] { --craft-space:30px; --craft-title:1.1rem; --craft-radius:8px; }
+html[data-style="bienestar"] { --craft-space:40px; --craft-title:1.25rem; --craft-radius:16px 16px 4px 4px; }
+html[data-style="veterinaria"] { --craft-space:24px; --craft-title:1.1rem; --craft-radius:16px; --craft-image-inset:12px; }
+html[data-style="barberia"] { --craft-space:28px; --craft-title:1.3rem; --craft-radius:2px; --craft-rule:2px; }
+html[data-style="tinta"] { --craft-space:24px; --craft-title:1.2rem; --craft-radius:0px; --craft-rule:2px; }
+html[data-style="fitness"] { --craft-space:18px; --craft-title:1.25rem; --craft-price:1.5rem; --craft-radius:4px; --craft-rule:2px; }
+html[data-style="construccion"] { --craft-space:16px; --craft-title:1.05rem; --craft-price:1.4rem; --craft-radius:2px; --craft-rule:2px; }
+html[data-style="arquitectura"] { --craft-space:40px; --craft-title:1.15rem; --craft-radius:0px; }
+html[data-style="hogar-escandinavo"] { --craft-space:34px; --craft-title:1.1rem; --craft-radius:4px; --craft-image-inset:8px; }
+html[data-style="automotriz"] { --craft-space:18px; --craft-title:1.25rem; --craft-price:1.5rem; --craft-radius:2px; --craft-rule:2px; }
+html[data-style="refacciones"] { --craft-space:16px; --craft-title:1rem; --craft-image-inset:12px; --craft-radius:3px; }
+html[data-style="tecnologia"] { --craft-space:22px; --craft-title:1.1rem; --craft-image-inset:20px; --craft-radius:8px; }
+html[data-style="corporativo"] { --craft-space:30px; --craft-title:1.15rem; --craft-radius:2px; }
+html[data-style="legal"] { --craft-space:36px; --craft-title:1.3rem; --craft-radius:0px; }
+html[data-style="inmobiliario"] { --craft-space:32px; --craft-title:1.25rem; --craft-radius:8px; }
+html[data-style="fotografia"] { --craft-space:40px; --craft-title:1.15rem; --craft-radius:0px; }
+html[data-style="musica"] { --craft-space:22px; --craft-title:1.3rem; --craft-price:1.45rem; --craft-radius:4px; --craft-rule:2px; }
+html[data-style="viajes"] { --craft-space:30px; --craft-title:1.25rem; --craft-radius:12px; }
+html[data-style="educacion"] { --craft-space:28px; --craft-title:1.1rem; --craft-radius:12px; }
+html[data-style="fiesta"] { --craft-space:24px; --craft-title:1.25rem; --craft-radius:16px; --craft-rule:2px; }
+
+/* Stable, legible commerce. The signature lives around it. */
+html[data-style] body .prod-card { border-radius:var(--craft-radius); margin-top:0; transform:none; }
+html[data-style] body .prod-card .prod-name { font-size:var(--craft-title); line-height:1.35; overflow-wrap:anywhere; }
+html[data-style] body .prod-card .prod-price { font-size:var(--craft-price); font-variant-numeric:tabular-nums; color:var(--text); }
+html[data-style] body .prod-img-wrap { padding:var(--craft-image-inset); isolation:isolate; }
+html[data-style] body .prod-img-wrap > img { padding:var(--craft-image-inset); }
+html[data-style] body .prod-img-wrap > img:not(.prod-img-alt) { padding:0; }
+html[data-style] body .prod-card .prod-body { display:flex; flex-direction:column; }
+html[data-style] body .prod-actions { margin-top:auto; padding-top:12px; }
+html[data-style] body :is(.prod-btn,.prod-view-btn,.prod-share-btn) { min-height:44px; }
+html[data-style] body .prod-desc { color:var(--text-secondary); line-height:1.65; }
+html[data-style] body .sec-title { padding-bottom:16px; margin-bottom:24px; border-bottom:var(--craft-rule) solid var(--border); }
+html[data-style] body .brand-hero { padding-block:clamp(48px,7vw,100px); }
+html[data-style] body .brand-hero .hero-name { font-size:clamp(2.4rem,5vw,5rem); line-height:1.07; letter-spacing:-.025em; }
+html[data-style] body :is(input,textarea) { caret-color:var(--accent); }
+html[data-style] body :is(.filter-cat.on,.filter-group-btn.on,.filter-range.active) { color:var(--soc-on-accent,var(--on-accent,#fff)); }
+html[data-style] body :is(.filter-search,.filter-input)::placeholder { color:var(--text-secondary); opacity:1; }
+html[data-style] body :is(button,a,input,select,textarea):focus-visible { outline:2px solid var(--text); outline-offset:4px; }
+html[data-style] body .prod-card:focus-within { outline:2px solid var(--accent); outline-offset:4px; }
+html[data-style] body :is(button:disabled,[aria-disabled="true"]) { opacity:.55; cursor:not-allowed; }
+@media(min-width:901px) {
+  html[data-style] body .main-inner { display:flex; align-items:flex-start; gap:clamp(20px,2.4vw,32px); }
+  html[data-style] body .filter-sidebar { flex:0 0 clamp(236px,20vw,280px); width:auto; position:sticky; top:76px; display:block; max-height:calc(100vh - 96px); margin:0; overflow-y:auto; }
+  html[data-style] body .main-content { flex:1; min-width:0; }
+  html[data-style] body .prod-grid { gap:var(--craft-space); }
+}
+@media(min-width:901px) and (max-width:1180px) {
+  html[data-style] body .prod-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+}
+html[data-style] body .filter-sidebar { scrollbar-width:thin; scrollbar-color:var(--accent) transparent; }
+html[data-style] body .filter-sidebar::-webkit-scrollbar { width:6px; }
+html[data-style] body .filter-sidebar::-webkit-scrollbar-thumb { background:var(--accent); border-radius:6px; }
+
+/* Detail page: continue the same photographic and editorial decisions. */
+html[data-style] body .prod-stage { border-radius:var(--craft-radius); }
+html[data-style] body .prod-title { text-wrap:balance; line-height:1.15; }
+html[data-fit="contain"] body .prod-main-img { object-fit:contain; padding:var(--craft-image-inset); }
+html[data-fit="cover"] body .prod-main-img { object-fit:cover; }
+html[data-card="flat"] body .prod-stage { border:0; }
+html[data-card="block"] body .prod-stage { border:2px solid var(--text); }
+html[data-style] body .prod-specs-list dd { font-variant-numeric:tabular-nums; }
+html[data-style] body .prod-info .prod-price { font-variant-numeric:tabular-nums; }
+@media(min-width:901px) {
+  html[data-world="editorial"] body .prod-layout,
+  html[data-world="luxury"] body .prod-layout { grid-template-columns:minmax(0,1.25fr) minmax(0,1fr); gap:clamp(32px,5vw,80px); }
+  html[data-ratio="4-5"] body .prod-main-img { aspect-ratio:4/5; }
+  html[data-ratio="16-10"] body .prod-main-img { aspect-ratio:16/10; }
+  html[data-ratio="3-2"] body .prod-main-img { aspect-ratio:3/2; }
+}
+
+/* Individual signatures: product truth supplies the content. */
+html[data-style="catalogo"] body .prod-prices { padding-top:12px; border-top:1px solid var(--border); }
+html[data-style="joyeria"] body .prod-img-wrap { outline:1px solid var(--accent); outline-offset:-12px; }
+html[data-style="postres"] body .prod-img-wrap { border-radius:0 0 45% 45% / 0 0 8% 8%; }
+html[data-style="ropa"] body .prod-name { font-style:italic; }
+html[data-style="floreria"] body .sec-title { border-bottom-style:double; border-bottom-width:3px; }
+html[data-style="ferreteria"] body .prod-specs { border-block:1px solid var(--border); padding-block:8px; }
+html[data-style="muebles"] body .prod-specs { display:flex; flex-wrap:wrap; gap:10px; }
+html[data-style="cosmeticos"] body .prod-img-wrap { background:color-mix(in srgb,var(--accent) 7%,var(--bg-card)); }
+html[data-style="vivero"] body .prod-spec { border-radius:12px 2px; }
+html[data-style="belleza"] body .prod-name { font-weight:500; letter-spacing:.015em; }
+html[data-style="eventos"] body .brand-hero .hero-name { font-weight:400; max-width:15ch; }
+html[data-style="minimalista"] body .prod-prices { justify-content:flex-end; }
+html[data-style="pastel"] body .prod-card .prod-body { background:color-mix(in srgb,var(--accent) 4%,var(--bg-card)); }
+html[data-style="monocromo"] body .prod-btn { border:2px solid var(--text); border-radius:0; }
+html[data-style="bohemio"] body .sec-title { border-bottom:1px dashed var(--accent); }
+html[data-style="oceanico"] body .brand-hero { border-bottom:1px solid var(--accent); background:var(--bg); }
+html[data-style="nordico"] body .prod-price { font-weight:500; }
+html[data-style="vibrante"] body .prod-badge-promo { border-radius:2px; padding:7px 12px; }
+html[data-style="retro"] body .prod-price { border:1px solid currentColor; border-radius:5px; padding:3px 9px; }
+html[data-style="futurista"] body .prod-specs { border-bottom:1px solid var(--accent); padding-bottom:10px; }
+html[data-style="rustico"] body .prod-card { outline:1px dashed var(--border); outline-offset:-5px; }
+html[data-style="elegante"] body .sec-title { text-align:center; font-weight:400; letter-spacing:.08em; }
+html[data-style="urbano"] body .prod-name { text-transform:uppercase; font-weight:900; }
+html[data-style="tropical"] body .prod-body { border-top:3px solid var(--accent-glow); }
+html[data-style="acuarela"] body .prod-card { background:color-mix(in srgb,var(--accent) 4%,var(--bg-card)); }
+html[data-style="taqueria-nocturna"] body .prod-prices { justify-content:space-between; border-top:1px dashed var(--border); padding-top:10px; }
+html[data-style="parrilla"] body .prod-body { border-top:2px solid var(--accent); }
+html[data-style="cafe-editorial"] body .prod-name { font-style:italic; font-weight:500; }
+html[data-style="pan-artesanal"] body .prod-body { border-bottom:3px double var(--accent); }
+html[data-style="marisqueria"] body .prod-prices { border-top:2px solid var(--accent-glow); padding-top:12px; }
+html[data-style="heladeria-pop"] body .prod-img-wrap { background:color-mix(in srgb,var(--accent-glow) 16%,var(--bg-card)); }
+html[data-style="cocina-casera"] body .prod-price { border-bottom:2px solid var(--accent-glow); }
+html[data-style="gourmet"] body .prod-name { font-weight:400; font-style:italic; }
+html[data-style="mercado-barrio"] body .prod-price { background:color-mix(in srgb,var(--accent-glow) 12%,var(--bg-card)); color:var(--text); padding:3px 10px; }
+html[data-style="moda-lujo"] body .prod-name { font-weight:400; letter-spacing:.025em; }
+html[data-style="streetwear"] body .prod-name { text-transform:uppercase; font-weight:900; }
+html[data-style="infantil"] body .prod-spec { border-radius:10px; padding:5px 9px; }
+html[data-style="sneakers"] body .prod-img-wrap { border-bottom:3px solid var(--accent-glow); }
+html[data-style="perfumeria"] body .prod-name { font-weight:400; letter-spacing:.04em; }
+html[data-style="optica"] body .prod-specs { display:flex; flex-wrap:wrap; padding-block:8px; border-bottom:1px solid var(--border); }
+html[data-style="clinica"] body .prod-desc { -webkit-line-clamp:3; }
+html[data-style="dental-claro"] body .prod-body { border-top:1px solid var(--accent); }
+html[data-style="bienestar"] body .prod-name { font-weight:400; line-height:1.5; }
+html[data-style="veterinaria"] body .stock-status { border-radius:8px; align-self:flex-start; }
+html[data-style="barberia"] body .sec-title { border-block:3px double var(--accent); padding-block:14px; }
+html[data-style="tinta"] body .prod-name { text-transform:uppercase; letter-spacing:.03em; }
+html[data-style="fitness"] body .prod-price { font-style:italic; font-weight:900; }
+html[data-style="construccion"] body .prod-spec { border:1px solid var(--border); border-radius:0; padding:5px; }
+html[data-style="arquitectura"] body .prod-name { font-weight:500; }
+html[data-style="hogar-escandinavo"] body .prod-specs { border-top:1px solid var(--border); padding-top:10px; }
+html[data-style="automotriz"] body .prod-name { font-style:italic; text-transform:uppercase; }
+html[data-style="refacciones"] body .prod-specs { gap:0; border:1px solid var(--border); }
+html[data-style="refacciones"] body .prod-spec { padding:5px 7px; border-radius:0; }
+html[data-style="tecnologia"] body .prod-specs { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
+html[data-style="corporativo"] body .prod-name { border-bottom:1px solid var(--border); padding-bottom:12px; }
+html[data-style="legal"] body .prod-name { font-weight:400; }
+html[data-style="inmobiliario"] body .prod-specs { display:flex; gap:10px; padding-block:10px; border-block:1px solid var(--border); }
+html[data-style="fotografia"] body .prod-img-wrap { background:var(--bg); }
+html[data-style="musica"] body .prod-name { text-transform:uppercase; letter-spacing:-.025em; font-weight:900; }
+html[data-style="viajes"] body .prod-specs { border-bottom:1px dashed var(--accent); padding-bottom:12px; }
+html[data-style="educacion"] body .prod-spec { border-radius:4px; border:1px solid var(--border); }
+html[data-style="fiesta"] body .prod-price { border-bottom:3px solid var(--accent-glow); }
+
+/* One response per interaction. No entrance displacement or recurring animation. */
+html[data-style].js-motion body :is(.hdr,.hero-overlay > *,.hero .bg,.filter-fab,#chat-fab) { animation:none; }
+html[data-style].js-motion body .rv { opacity:1 !important; transform:none !important; transition:none !important; }
+html[data-style] body .prod-card:hover .prod-price { transform:none; }
+html[data-style] body .prod-img-wrap::after { content:""; position:absolute; inset:0; pointer-events:none; z-index:3; opacity:0; }
+@media(hover:hover) and (prefers-reduced-motion:no-preference) {
+  html[data-style] body .prod-card:hover { transform:none; }
+  html[data-style] body .prod-card:hover .prod-img-wrap > img { transform:scale(1.025); }
+  html:is([data-style="joyeria"],[data-style="elegante"],[data-style="belleza"]) body .prod-img-wrap::after { background:linear-gradient(110deg,transparent 35%,#ffffff40 48%,transparent 60%); transform:translateX(-100%); }
+  html:is([data-style="joyeria"],[data-style="elegante"],[data-style="belleza"]) body .prod-card:hover .prod-img-wrap::after { opacity:1; transform:translateX(100%); transition:transform .8s cubic-bezier(.16,1,.3,1); }
+  html[data-style="parrilla"] body .prod-card:hover { box-shadow:0 16px 32px color-mix(in srgb,var(--accent) 22%,transparent); }
+  html:is([data-style="futurista"],[data-style="tecnologia"]) body .prod-card:hover { border-color:var(--accent); }
+  html[data-style="fotografia"] body .prod-card:hover img { filter:contrast(1.035); }
+  html:is([data-style="minimalista"],[data-style="ropa"],[data-style="arquitectura"],[data-style="cafe-editorial"]) body .prod-name a:hover { text-decoration:underline; text-underline-offset:5px; text-decoration-thickness:1px; }
+}
+@media(max-width:700px) {
+  html[data-style] body .prod-grid { gap:12px; }
+  html[data-style] body .prod-card .prod-name { font-size:.95rem; }
+  html[data-style] body .prod-card .prod-price { font-size:1.15rem; }
+  html[data-style] body .prod-card .prod-body { padding:12px; }
+  html[data-style] body .brand-hero .hero-name { font-size:clamp(2rem,9vw,3rem); }
+  html[data-style] body .prod-img-wrap { --craft-image-inset:6px; }
+  html[data-style] body .prod-actions { flex-wrap:wrap; gap:6px; }
+  html[data-style] body .prod-btn { flex:1 0 100%; }
+  html[data-style] body .prod-view-btn { flex:1; }
+}
+@media(prefers-reduced-motion:reduce) {
+  html[data-style] { scroll-behavior:auto; }
+  html[data-style] body :is(.prod-card,.prod-img-wrap img,.prod-img-wrap::after,.prod-btn,.btn-add,.hero .bg,.hero-overlay > *) { animation:none !important; transition:none !important; transform:none !important; }
+}

@@ -8,12 +8,12 @@
     var c = [0, 2, 4].map(function (i) { var v = parseInt(h.substr(i, 2), 16) / 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
     return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
   }
-  var _onAccent = _lum(_T.accent) > 0.42 ? '#161513' : '#ffffff';
+  var _onAccent = _T.onAccent || ((1.05 / (_lum(_T.accent) + .05)) >= ((_lum(_T.accent) + .05) / .0556) ? '#ffffff' : '#111111');
   var _bgDark = _lum(_T.bg) < 0.18;
   var _waNum = biz.whatsapp ? (String(biz.whatsapp).replace(/\D/g, '').length === 10 ? '52' + String(biz.whatsapp).replace(/\D/g, '') : String(biz.whatsapp).replace(/\D/g, '')) : '';
   var _hasOld = product.old_price && product.old_price > product.price;
 %><!DOCTYPE html>
-<html lang="es" data-style="<%= _dsg %>">
+<html lang="es" data-style="<%= _dsg %>" data-world="<%= _T.world || 'classic' %>" data-fit="<%= (_T.visual || {}).fit || 'contain' %>" data-ratio="<%= (_T.visual || {}).ratio || '1-1' %>" data-card="<%= (_T.visual || {}).card || 'lift' %>">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -200,6 +200,7 @@
   </style>
   <link rel="stylesheet" href="/css/catalog-motion.css?v=20260919a">
   <link rel="stylesheet" href="/css/catalog-media.css?v=20260921b">
+  <link rel="stylesheet" href="/css/catalog-craft.css?v=20260928a">
   <script src="/js/img-retry.js"></script>
   <script src="/js/catalog-motion.js?v=20260920a" defer></script>
   <script src="/js/btn-fit.js?v=20260920a" defer></script>

@@ -110,7 +110,7 @@ A. CABECERA Y HERO
 3. Hero con composición propia de la dirección (no el bloque centrado genérico): define versión con foto/banner y versión solo tipográfica igual de bella. Titular con máximo 8 palabras y una propuesta de valor concreta. CTA primario + secundario.
 
 B. NAVEGACIÓN Y FILTROS
-4. Chips de categoría con scroll horizontal y snap en móvil, indicador activo animado (se desliza, no salta). En desktop, panel de filtros superior de ancho completo y productos debajo, sin sidebar lateral; en móvil, bottom sheet con asa de arrastre. Filtros combinables, contadores recalculados, slider de precio, atributos, ordenamiento, "Limpiar filtros" y estado sin resultados con sugerencias.
+4. Chips de categoría con scroll horizontal y snap en móvil, indicador activo animado (se desliza, no salta). En laptop y desktop, sidebar sticky de filtros a la izquierda y productos a la derecha; en móvil, bottom sheet con asa de arrastre. Filtros combinables, contadores recalculados, slider de precio, atributos, ordenamiento, "Limpiar filtros" y estado sin resultados con sugerencias.
 5. Los resultados se actualizan con transición de lista (salen/entran con stagger ≤30 ms por tarjeta, máx. 12 animadas) sin perder la posición de scroll.
 
 C. PRODUCTOS

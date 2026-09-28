@@ -59,7 +59,7 @@ A. CABECERA Y HERO
 
 B. NAVEGACIÓN Y FILTROS
 4. Filtros combinables:
-   * Desktop: panel superior de ancho completo; los productos comienzan debajo y nunca comparten una cuadrícula lateral con los filtros.
+   * Laptop y desktop: sidebar sticky a la izquierda; los productos ocupan la cuadrícula a la derecha.
    * Móvil: botón accesible que abre drawer lateral o bottom sheet.
    * Búsqueda predictiva por nombre y agrupador.
    * Categoría y agrupador como filtros independientes y combinables.
