@@ -234,7 +234,26 @@
           <img src="<%= product.imgs[0] || '/img/sin-imagen.svg' %>" id="prod-main-img" class="prod-main-img" alt="<%= product.name %>" fetchpriority="high" onclick="openGalImg(this.src)" />
           <button type="button" class="prod-zoom" aria-label="Ampliar imagen" onclick="openGalImg(document.getElementById('prod-main-img').src)"><i class="bi bi-arrows-fullscreen"></i></button>
         </div>
-        <% if (product.imgs.length > 1) { %>
+        <%
+          // Si cada combinación de variante tiene su propia foto, el selector de
+          // variantes ya cambia la imagen principal: las miniaturas sobran.
+          var _allVarImgs = false;
+          try {
+            var _vmS = JSON.parse(product.variants || '{}') || {};
+            var _attrs = (_vmS.attrs || []).filter(function (a) { return a && a.values && a.values.length; });
+            var _vi = _vmS.images || {};
+            if (_attrs.length) {
+              var _combos = [''];
+              _attrs.forEach(function (a, ai) {
+                var next = [];
+                _combos.forEach(function (c) { a.values.forEach(function (v) { if (next.length < 400) next.push(ai ? c + '|' + v : String(v)); }); });
+                _combos = next;
+              });
+              _allVarImgs = _combos.length > 0 && _combos.every(function (k) { return !!_vi[k]; });
+            }
+          } catch (e) {}
+        %>
+        <% if (product.imgs.length > 1 && !_allVarImgs) { %>
           <div class="prod-thumbs">
             <% product.imgs.forEach(function(u, i) { %>
               <img src="<%= u %>" class="prod-thumb <%= i === 0 ? 'active' : '' %>" onclick="switchImg(this, '<%= u %>')" alt="Foto <%= i+1 %>" />

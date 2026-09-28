@@ -567,7 +567,7 @@
   }
 
   /* Sidebar colapsado */
-  body.sidebar-closed aside {
+  body.sidebar-closed > .admin-navigation {
     transform: translateX(-100%);
     opacity: 0;
     pointer-events: none;
@@ -587,7 +587,7 @@
   }
 
   /* Sidebar abierto */
-  body:not(.sidebar-closed) aside {
+  body:not(.sidebar-closed) > .admin-navigation {
     transform: translateX(0);
     opacity: 1;
   }
@@ -616,7 +616,7 @@
     opacity: 1;
     visibility: visible;
   }
-  body.sidebar-open aside {
+  body.sidebar-open > .admin-navigation {
     transform: translateX(0);
     opacity: 1;
     pointer-events: auto;
@@ -638,6 +638,7 @@
 <link rel="stylesheet" href="/css/material.css?v=20260915">
 <link rel="stylesheet" href="/css/admin-mobile.css?v=20260912">
 <link rel="stylesheet" href="/css/admin-refine.css?v=20260920a">
+<link rel="stylesheet" href="/css/admin-workspace.css?v=20260928a">
 <script src="/js/material.js"></script>
 <script src="/js/img-retry.js"></script>
 <script src="/js/masks.js"></script>

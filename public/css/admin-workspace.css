@@ -1,0 +1,128 @@
+/* Shared administration workspace. Keep all selectors inside the admin shell. */
+body.m-material {
+  --ap-bg:#f3f5f7; --ap-card:#ffffff; --ap-text:#1b2933; --ap-text-sec:#586975;
+  --ap-accent:#245b64; --ap-accent-light:#1c4c55; --ap-accent-text:#245b64;
+  --ap-border:#dce3e8; --ap-gradient:var(--ap-accent);
+  --pn-line:var(--ap-border); --pn-soft:#f5f7f9;
+  --ap-shadow:0 1px 3px rgb(27 41 51 / 4%); --ap-shadow-md:0 5px 18px rgb(27 41 51 / 7%);
+  background:var(--ap-bg); color:var(--ap-text); line-height:1.5;
+}
+body.m-material.dark {
+  --ap-bg:#111920; --ap-card:#19232c; --ap-text:#e6edf2; --ap-text-sec:#a7b8c5;
+  --ap-accent:#327e89; --ap-accent-light:#286a75; --ap-accent-text:#92d3dc;
+  --ap-border:#344450; --pn-soft:#202e38; --pn-line:var(--ap-border);
+}
+body.m-material ::selection { background:color-mix(in srgb,var(--ap-accent) 18%,var(--ap-card)); color:var(--ap-text); }
+body.m-material :is(input,textarea) { caret-color:var(--ap-accent); }
+body.m-material :is(button,a,input,textarea,select):focus-visible { outline:2px solid var(--ap-accent-text); outline-offset:3px; }
+body.m-material :is(button,input,select,textarea):disabled { cursor:not-allowed; opacity:.55; }
+body.m-material > main { min-width:0; }
+body.m-material > main > div:first-child { max-width:1660px; margin-inline:auto; padding:32px clamp(20px,3vw,44px) 48px; }
+body.m-material :is(.pn-head,.admin-page-header) { margin-bottom:28px !important; gap:20px; align-items:center; }
+body.m-material :is(.pn-title,.admin-page-header h1,.config-shell .config-title) { font-size:clamp(1.65rem,2.4vw,2.15rem) !important; letter-spacing:-.025em !important; font-weight:750; line-height:1.2; }
+body.m-material :is(.pn-sub,.admin-page-header p,.config-shell .config-lede) { font-size:14px !important; line-height:1.6; margin-top:6px; color:var(--ap-text-sec); }
+body.m-material .pn-date { text-transform:none; letter-spacing:0; font-size:12px; font-weight:500; margin-bottom:7px; }
+body.m-material .admin-page-header__icon { width:46px !important; height:46px !important; border:0; background:var(--pn-soft) !important; color:var(--ap-accent-text) !important; border-radius:12px; }
+body.m-material .admin-page-header__identity { min-width:0; }
+body.m-material .admin-page-header__actions { display:flex; gap:8px; flex-wrap:wrap; }
+
+/* Navigation: a quiet rail and one clear active location. */
+body.m-material > .admin-navigation { background:var(--ap-card); }
+body.m-material .m-sidebar { padding:20px 12px; }
+body.m-material .m-sidebar-group + .m-sidebar-group { margin-top:24px; }
+body.m-material .m-sidebar-group-label { margin:0 12px 8px; font-size:11px; font-weight:650; letter-spacing:.045em; color:var(--ap-text-sec); }
+body.m-material .m-sidebar a { min-height:44px; margin-bottom:4px; border-radius:9px; font-size:13px; font-weight:550; transition:background .15s,color .15s; }
+body.m-material .m-sidebar a:hover { transform:none; background:var(--pn-soft); color:var(--ap-text); }
+body.m-material .m-sidebar a.m-active-nav { background:color-mix(in srgb,var(--ap-accent) 11%,var(--ap-card)) !important; color:var(--ap-accent-text) !important; box-shadow:none; font-weight:700; }
+body.m-material .m-sidebar a svg { width:19px; height:19px; flex:none; opacity:1; }
+body.m-material .sidebar-toggle { box-shadow:none; border-color:var(--ap-border); border-radius:8px; }
+
+/* Sections share a rhythm. No entrance animation on data refresh. */
+body.m-material main :is(.m-card,.pn-kpi,.pn-share,.pn-plan,.metric-card) { animation:none; border:1px solid var(--ap-border); border-radius:14px; box-shadow:var(--ap-shadow); background:var(--ap-card); }
+body.m-material main :is(.m-card,.metric-card):hover { transform:none; box-shadow:var(--ap-shadow); }
+body.m-material main .m-card::before { display:none; }
+body.m-material main .m-card.p-4 { padding:22px; }
+body.m-material main :is(.m-card h2,.cl-h) { font-size:15px; font-weight:700; line-height:1.4; letter-spacing:-.01em; }
+body.m-material .pn-kpis { gap:16px; margin-bottom:24px; }
+body.m-material .pn-kpi { padding:22px; }
+body.m-material .pn-kpi-label { text-transform:none; letter-spacing:0; font-size:12px; font-weight:600; }
+body.m-material .pn-kpi-val { font-size:clamp(1.65rem,2.5vw,2.25rem); font-weight:700; margin-top:18px; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+body.m-material .pn-kpi-ic { background:var(--pn-soft); color:var(--ap-accent-text); width:34px; height:34px; }
+body.m-material .pn-kpi-foot { min-height:22px; line-height:1.5; }
+body.m-material .pn-share { padding:24px; gap:24px; }
+body.m-material .pn-url { background:var(--pn-soft); min-height:46px; }
+body.m-material .pn-share-title { font-size:17px; }
+
+/* Controls: consistent hit areas; labels keep their existing field contract. */
+body.m-material main :is(.pn-btn,.m-btn) { min-height:42px; border-radius:9px; font-size:13px; font-weight:650; box-shadow:none; }
+body.m-material main :is(.pn-btn,.m-btn):hover { transform:none; }
+body.m-material main :is(.pn-btn-solid,.m-btn-filled) { background:var(--ap-accent); color:#fff; }
+body.m-material main :is(.pn-btn-solid,.m-btn-filled):hover { background:var(--ap-accent-light); }
+body.m-material main :is(.m-btn-outlined,.pn-btn:not(.pn-btn-solid)) { border-color:var(--ap-border); color:var(--ap-text); background:var(--ap-card); }
+body.m-material main .m-field :is(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),select,textarea) { border-radius:9px; border-color:var(--ap-border); background:var(--ap-card); color:var(--ap-text); font-size:14px; }
+body.m-material main .m-field textarea { min-height:100px; line-height:1.6; }
+body.m-material main .m-field > label { position:static !important; display:block; transform:none !important; padding:0 !important; margin:0 0 7px; background:transparent !important; color:var(--ap-text-sec); font-size:12px !important; font-weight:600; line-height:1.4; text-transform:none; letter-spacing:0; }
+body.m-material main .m-field > :is(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),select,textarea) { padding:11px 12px; }
+body.m-material main :is(input,textarea)::placeholder { color:var(--ap-text-sec); opacity:1; }
+body.m-material main :is(input,select,textarea):focus-visible { outline:2px solid var(--ap-accent); outline-offset:2px; box-shadow:none !important; }
+body.m-material main :is(input,select,textarea)[aria-invalid="true"] { border-color:#b33c35; }
+body.m-material main :is(.m-badge,.pn-delta) { font-weight:600; font-size:11px; }
+
+/* Tables retain their overflow wrapper and never stretch the entire page. */
+body.m-material main .overflow-x-auto { max-width:100%; overscroll-behavior-x:contain; scrollbar-width:thin; }
+body.m-material main table { border-collapse:collapse; width:100%; }
+body.m-material main table th { padding:13px 16px; background:var(--pn-soft); color:var(--ap-text-sec); font-size:11px; font-weight:650; text-align:left; letter-spacing:.025em; border-bottom:1px solid var(--ap-border); }
+body.m-material main table td { padding:15px 16px; font-size:13px; line-height:1.5; border-bottom:1px solid var(--ap-border); vertical-align:middle; font-variant-numeric:tabular-nums; }
+body.m-material main table tbody tr:hover { background:var(--pn-soft); }
+body.m-material main table .number { text-align:right; }
+body.m-material main table tr:last-child td { border-bottom:0; }
+
+/* Customers: list and editor read as a single workspace. */
+body.m-material .cl-layout { gap:24px; }
+body.m-material .cl-top { padding:20px; }
+body.m-material .cl-row { padding:18px 20px; gap:14px; }
+body.m-material .cl-av { border-radius:12px; background:var(--pn-soft); color:var(--ap-accent-text); }
+body.m-material .cl-search input { background:var(--ap-card); border-radius:9px; }
+body.m-material .cl-sub { line-height:1.7; }
+body.m-material .cl-empty { min-height:260px; padding:40px 24px; gap:8px; }
+body.m-material .cl-empty p { line-height:1.7; }
+body.m-material .cl-side > .m-card { margin-bottom:20px; }
+
+/* Catalog administration and configuration share the same control language. */
+body.m-material .prod-tabs { gap:8px; background:transparent; border:0; box-shadow:none; padding:0 0 18px; border-radius:0; border-bottom:1px solid var(--ap-border); }
+body.m-material .prod-tab { min-height:42px; border-radius:9px; font-size:13px; }
+body.m-material .prod-tab.active { box-shadow:none; background:var(--ap-accent); color:#fff; }
+body.m-material .product-result-summary { color:var(--ap-text-sec); font-size:12px; }
+body.m-material .config-shell .config-hero { margin-bottom:28px; }
+body.m-material .config-shell :is(.config-catalog-link,.config-nav a) { border-radius:9px; }
+body.m-material .config-shell .m-card { box-shadow:none; }
+body.m-material :is(.employee-hero,.supplier-hero) { margin-bottom:28px; }
+body.m-material :is(.employee-hero,.supplier-hero) h1 { font-size:clamp(1.65rem,2.4vw,2.15rem); letter-spacing:-.025em; line-height:1.2; }
+body.m-material.dark .pn-delta.up { color:#9bd4b6; }
+body.m-material.dark .pn-delta.down { color:#ffb1a8; }
+
+@media(min-width:900px) and (max-width:1199px) {
+  body.m-material .pn-kpis,body.m-material .pn-kpis.is-5 { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  body.m-material .cl-layout { grid-template-columns:minmax(0,1fr); }
+  body.m-material .cl-side { position:static; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; }
+}
+@media(max-width:767px) {
+  body.m-material > main > div:first-child { padding:20px 16px calc(104px + env(safe-area-inset-bottom)); }
+  body.m-material :is(.pn-head,.admin-page-header) { align-items:flex-start; gap:14px; margin-bottom:22px !important; }
+  body.m-material .admin-page-header__icon { width:40px !important; height:40px !important; }
+  body.m-material .pn-kpis { gap:10px; }
+  body.m-material .pn-kpi { padding:16px; }
+  body.m-material .pn-kpi-val { font-size:1.6rem; margin-top:14px; }
+  body.m-material .pn-kpi-ic { width:26px; height:26px; font-size:13px; }
+  body.m-material main .m-card.p-4 { padding:18px; }
+  body.m-material .cl-row { padding:16px; }
+  body.m-material .cl-top { padding:18px; }
+  body.m-material main :is(.m-btn,.pn-btn,.cl-del,.cl-wa) { min-height:44px; }
+  body.m-material .prod-tabs { flex-wrap:nowrap; overflow-x:auto; }
+  body.m-material .prod-tab { flex:none; white-space:nowrap; }
+  body.m-material .pn-share { padding:18px; }
+  body.m-material .pn-head-actions { flex-wrap:wrap; }
+}
+@media(prefers-reduced-motion:reduce) {
+  body.m-material *,body.m-material *::before,body.m-material *::after { animation-duration:.01ms !important; transition-duration:.01ms !important; scroll-behavior:auto !important; }
+}

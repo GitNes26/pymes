@@ -46,7 +46,7 @@ SIDEBAR NUEVO (diseño totalmente distinto)
 <!-- Overlay móvil -->
 <div class="sidebar-overlay" onclick="closeSidebarMobile()"></div>
 
-<aside class="fixed inset-y-0 left-0 w-60 hidden md:flex flex-col z-40 transition-all duration-300" style="background:var(--ap-card);border-right:1px solid var(--ap-border);color:var(--ap-text)">
+<aside class="admin-navigation fixed inset-y-0 left-0 w-60 hidden md:flex flex-col z-40 transition-all duration-300" aria-label="Menú administrativo" style="background:var(--ap-card);border-right:1px solid var(--ap-border);color:var(--ap-text)">
 
   <!-- Perfil: logo + nombre + plan (padding-right reserva el espacio del botón de colapsar,
        que es position:fixed y no empuja el layout por sí solo) -->
@@ -70,7 +70,7 @@ SIDEBAR NUEVO (diseño totalmente distinto)
         <p class="m-sidebar-group-label"><%= g %></p>
         <% groupedItems[g].forEach(it => { %>
           <% const act = active === it.id; %>
-          <a href="<%= it.href %>"
+          <a href="<%= it.href %>" <%- act ? 'aria-current="page"' : '' %>
              class="m-ripple group flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13.5px] font-medium transition-colors duration-150
                     <%= act ? 'm-active-nav' : '' %>" style="<%= act ? '' : 'color:var(--ap-text-sec)' %>">
             <svg class="w-[17px] h-[17px] shrink-0" fill="none" stroke="currentColor" stroke-width="1.75"><path d="<%= it.icon %>"/></svg>

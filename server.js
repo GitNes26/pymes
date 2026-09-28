@@ -3989,7 +3989,15 @@ function productImgs(p) {
   const looksLikeImg = s => s.length > 1 && (s[0] === '/' || /^https?:\/\//i.test(s));
   const cover = variantCoverImage(p);
   const raw = [cover, p.image || '', ...parseVariantsArray(p.galeria || '')].map(s => String(s || '').trim()).filter(looksLikeImg);
-  const list = raw.filter((s, i) => raw.indexOf(s) === i);
+  // Quita repetidas aunque vengan de distinto lugar (/uploads/x.jpg y
+  // https://…/i/catamanager/x.jpg son la misma foto): se queda la URL completa.
+  const base = s => s.split('?')[0].split('/').pop();
+  const list = [];
+  raw.forEach(s => {
+    const i = list.findIndex(o => base(o) === base(s));
+    if (i === -1) list.push(s);
+    else if (/^https?:\/\//i.test(s) && !/^https?:\/\//i.test(list[i])) list[i] = s;
+  });
   return list.length ? list : [p.image || '/img/sin-imagen.svg'];
 }
 
