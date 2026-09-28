@@ -50,7 +50,7 @@ services:
       BASE_URL: ${BASE_URL:-}
       # Subcarpeta exclusiva dentro del volumen compartido de uploads.
       UPLOADS_ROOT: /app/public/uploads
-      UPLOADS_PROJECT_NAME: ${UPLOADS_PROJECT_NAME:-catamanager}
+      UPLOADS_PROJECT_NAME: ${UPLOADS_PROJECT_NAME:-}
     volumes:
       - uploads_data:/app/public/uploads
       - backups_data:/app/backups

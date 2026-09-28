@@ -34,11 +34,11 @@ const app = express();
 // monten el mismo volumen en /app/public/uploads. Las URLs públicas continúan
 // siendo /uploads/archivo.ext para no guardar rutas de infraestructura en la BD.
 const UPLOADS_ROOT = path.resolve(process.env.UPLOADS_ROOT || path.join(__dirname, 'public', 'uploads'));
-const UPLOADS_PROJECT_NAME = String(process.env.UPLOADS_PROJECT_NAME || 'catamanager').trim();
-if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(UPLOADS_PROJECT_NAME)) {
+const UPLOADS_PROJECT_NAME = String(process.env.UPLOADS_PROJECT_NAME ?? '').trim(); // vacío = guardar directo en uploads/
+if (UPLOADS_PROJECT_NAME && !/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(UPLOADS_PROJECT_NAME)) {
   throw new Error('UPLOADS_PROJECT_NAME inválido: usa de 1 a 64 letras, números, punto, guion o guion bajo.');
 }
-const UPLOADS_DIR = path.join(UPLOADS_ROOT, UPLOADS_PROJECT_NAME);
+const UPLOADS_DIR = UPLOADS_PROJECT_NAME ? path.join(UPLOADS_ROOT, UPLOADS_PROJECT_NAME) : UPLOADS_ROOT;
 fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 console.log(`[uploads] proyecto=${UPLOADS_PROJECT_NAME} directorio=${UPLOADS_DIR}`);
 
@@ -49,7 +49,10 @@ function uploadedFilePath(filename) {
   if (fs.existsSync(projectFile)) return projectFile;
   // Compatibilidad temporal: antes todos los proyectos escribían en la raíz.
   const legacyFile = path.join(UPLOADS_ROOT, file);
-  return fs.existsSync(legacyFile) && fs.statSync(legacyFile).isFile() ? legacyFile : null;
+  if (fs.existsSync(legacyFile) && fs.statSync(legacyFile).isFile()) return legacyFile;
+  // Fotos que se guardaron antes en uploads/catamanager/ siguen funcionando.
+  const oldProjectFile = path.join(UPLOADS_ROOT, 'catamanager', file);
+  return fs.existsSync(oldProjectFile) && fs.statSync(oldProjectFile).isFile() ? oldProjectFile : null;
 }
 
 // Conexiones en tiempo real del panel, separadas por negocio. Se usa el

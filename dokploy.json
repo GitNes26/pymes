@@ -25,7 +25,7 @@
           "MASTER_KEY": "${MASTER_KEY}",
           "BASE_URL": "${BASE_URL:-https://cadi.nessik.net}",
           "UPLOADS_ROOT": "/app/public/uploads",
-          "UPLOADS_PROJECT_NAME": "${UPLOADS_PROJECT_NAME:-catamanager}"
+          "UPLOADS_PROJECT_NAME": "${UPLOADS_PROJECT_NAME:-}"
         },
         "labels": [
           "traefik.enable=true",
