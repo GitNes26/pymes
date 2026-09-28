@@ -333,21 +333,29 @@ const { buildExpandedCatalogDesigns, recommendCatalogDesigns } = require('./cata
 const { CATALOG_VISUAL_PROFILES } = require('./catalog-visual-profiles');
 const { readableTokens } = require('./lib/catalog-quality');
 const imagesApi = require('./lib/images-api');
-// Publica una foto recién subida: si el microservicio de imágenes está
-// configurado, la manda allá y regresa su URL completa; si falla o no está
-// configurado, se queda en /uploads como antes (y lo deja en el log).
+// Publica una foto recién subida SOLO en el microservicio de imágenes.
+// El archivo que dejó multer en disco es temporal: se borra siempre.
+// Si el servicio no está configurado o falla, la subida responde error
+// (ya no se guarda nada en /uploads del contenedor).
 async function publishImage(file) {
-  const local = '/uploads/' + file.filename;
-  if (!imagesApi.enabled()) return local;
   try {
+    if (!imagesApi.enabled()) {
+      const err = new Error('El servicio de imágenes no está configurado (faltan IMAGES_API_URL / IMAGES_API_KEY).');
+      err.httpStatus = 503;
+      throw err;
+    }
     const data = await imagesApi.upload(file.path, file.filename);
-    fs.promises.unlink(file.path).catch(() => {});
     return data.url;
   } catch (e) {
-    console.error('[images-api] no se pudo subir ' + file.filename + ', se queda en disco local:', e.status || '', e.code || '', e.message);
-    return local;
+    console.error('[images-api] no se pudo subir ' + file.filename + ':', e.status || '', e.code || '', e.message);
+    const err = new Error(e.httpStatus ? e.message : 'No se pudo guardar la foto en el servidor de imágenes. Intenta de nuevo en un momento.');
+    err.httpStatus = e.httpStatus || 502;
+    throw err;
+  } finally {
+    fs.promises.unlink(file.path).catch(() => {});
   }
 }
+
 CAT_DESIGNS.push(...buildExpandedCatalogDesigns(CAT_FONTS));
 CAT_DESIGNS.forEach(d => {
   d.tokens = readableTokens(d.tokens);
@@ -835,7 +843,11 @@ function loginRateLimit(req, res, next) {
 app.post('/:slug/admin/upload', requireAuth, receiveImageUpload, verifyBodyCsrf, async (req, res) => {
   if (!req.file) return res.status(415).json({ error: 'Formato de imagen no compatible. Usa JPG, PNG, GIF o WebP.' });
   await compressUploadedImage(req.file.path, { trim: req.query.trim === '1' });
-  res.json({ url: await publishImage(req.file) });
+  try {
+    res.json({ url: await publishImage(req.file) });
+  } catch (e) {
+    res.status(e.httpStatus || 502).json({ error: e.message });
+  }
 });
 
 // Subida de video desde el constructor (owner)
@@ -856,7 +868,11 @@ app.post('/maestro/:id/uploadvideo', maestroAuth, uploadVideo.single('video'), v
 app.post('/maestro/:id/upload', maestroAuth, receiveImageUpload, verifyBodyCsrf, async (req, res) => {
   if (!req.file) return res.status(415).json({ error: 'Formato de imagen no compatible. Usa JPG, PNG, GIF o WebP.' });
   await compressUploadedImage(req.file.path, { trim: req.query.trim === '1' });
-  res.json({ url: await publishImage(req.file) });
+  try {
+    res.json({ url: await publishImage(req.file) });
+  } catch (e) {
+    res.status(e.httpStatus || 502).json({ error: e.message });
+  }
 });
 
 // Subida de audio/archivos desde el constructor (owner)
