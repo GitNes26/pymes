@@ -447,6 +447,13 @@ app.get('/sw.js', (req, res) => {
 // Archivos del proyecto actual. Para imágenes, ?w=480 devuelve una versión
 // WebP ligera guardada en la caché de la misma carpeta del proyecto.
 const _IMG_W = [240, 360, 480, 640, 800, 1200];
+// Rutas viejas guardadas como /uploads/catamanager/foto.jpg: se sirven igual
+// (reenvía internamente a /uploads/foto.jpg) para que ninguna foto se rompa.
+app.get('/uploads/catamanager/:file', (req, res, next) => {
+  const q = req.url.indexOf('?');
+  req.url = '/uploads/' + req.params.file + (q >= 0 ? req.url.slice(q) : '');
+  next();
+});
 app.get('/uploads/:file', (req, res, next) => {
   const w = parseInt(req.query.w, 10);
   const file = req.params.file;
@@ -5738,6 +5745,19 @@ const panelHeartbeat = setInterval(() => {
   }));
 }, 25000);
 panelHeartbeat.unref();
+
+// Corrige en la BD las rutas viejas /uploads/catamanager/ -> /uploads/
+// (products.image). Se ejecuta al arrancar, por lotes para no bloquear la tabla.
+setTimeout(() => {
+  try {
+    let total = 0, n = 0;
+    do {
+      n = db.prepare("UPDATE products SET image = REPLACE(image, '/uploads/catamanager/', '/uploads/') WHERE id > 0 AND image LIKE '/uploads/catamanager/%' LIMIT 200").run().changes || 0;
+      total += n;
+    } while (n > 0 && total < 100000);
+    if (total) console.log('[uploads] rutas corregidas en products.image:', total);
+  } catch (e) { console.error('[uploads] no se pudieron corregir rutas:', e.message); }
+}, 5000);
 
 server.listen(PORT, () => {
   db.prepare("DELETE FROM sessions WHERE expires_at IS NOT NULL AND expires_at < datetime('now')").run();
