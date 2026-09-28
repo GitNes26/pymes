@@ -4,6 +4,7 @@
   const hasModule = (m) => permsList.some(p => p === m || p.indexOf(m + '.') === 0);
   const items = [
     { id: 'panel', label: 'Panel', group: 'Principal', show: () => has('reportes') || has('pedidos.gestionar'), href: '/' + biz.slug + '/admin/panel', icon: 'M3 12h18M3 6h18M3 18h12M17 18h4' },
+    { id: 'pedidos', label: 'Pedidos', group: 'Principal', show: () => has('pedidos.gestionar'), href: '/' + biz.slug + '/admin/panel#sec-pedidos', icon: 'M4 4h16v16H4zM8 9h8M8 13h5' },
     { id: 'reportes', label: 'Reportes', group: 'Principal', show: () => has('reportes'), href: '/' + biz.slug + '/admin/reportes', icon: 'M3 3v18h18M7 16l4-5 3 2 5-7' },
     { id: 'productos', label: 'Productos', group: 'Principal', show: () => hasModule('productos'), href: '/' + biz.slug + '/admin/productos', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
     { id: 'importar', label: 'Carga masiva', group: 'Principal', show: () => false, href: '/' + biz.slug + '/admin/importar', icon: 'M12 4v12m0 0l-4-4m4 4l4-4M4 20h16' },
@@ -75,7 +76,7 @@ SIDEBAR NUEVO (diseño totalmente distinto)
                     <%= act ? 'm-active-nav' : '' %>" style="<%= act ? '' : 'color:var(--ap-text-sec)' %>">
             <svg class="w-[17px] h-[17px] shrink-0" fill="none" stroke="currentColor" stroke-width="1.75"><path d="<%= it.icon %>"/></svg>
             <span class="flex-1"><%= it.label %></span>
-            <% if (it.id === 'panel') { %><span id="new-orders-badge" style="display:none" class="min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-black items-center justify-center">0</span><% } %>
+            <% if (it.id === 'pedidos') { %><span id="new-orders-badge" style="display:none" class="min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-black items-center justify-center">0</span><% } %>
             <% if (it.id === 'productos') { %><span id="low-stock-badge" style="display:<%= (typeof lowStockCount !== 'undefined' && lowStockCount > 0) ? 'flex' : 'none' %>" class="min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-black items-center justify-center" title="Productos con stock bajo o agotado"><%= (typeof lowStockCount !== 'undefined') ? lowStockCount : 0 %></span><% } %>
           </a>
         <% }) %>
@@ -332,7 +333,7 @@ BARRA SUPERIOR MÓVIL (sin cambios, solo para móvil)
 <!-- ============================================================
 BOTTOM NAV MÓVIL (máx 4 opciones + "Más")
 ============================================================ -->
-<% const PRIO = { panel:0, productos:1, clientes:2, proveedores:3, config:4, importar:5, empleados:6, planes:7 }; %>
+<% const PRIO = { panel:0, pedidos:1, productos:2, clientes:3, proveedores:4, config:5, importar:6, empleados:7, planes:8 }; %>
 <% const navItems = items.slice().sort((a, b) => ((PRIO[a.id] !== undefined ? PRIO[a.id] : 99) - (PRIO[b.id] !== undefined ? PRIO[b.id] : 99))); %>
 <% const mainNav = navItems.slice(0, 4); const moreNav = navItems.slice(4); %>
 <nav class="m-bottomnav md:hidden m-scroll" aria-label="Navegación principal">

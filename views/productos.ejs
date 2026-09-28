@@ -137,7 +137,7 @@
           <button type="button" data-f="promo" aria-pressed="false" class="m-chip !h-8"><i class="bi bi-tag" aria-hidden="true"></i> En promo <span class="m-badge m-badge-error !h-5 !text-[10px]"><%= enPromo %></span></button>
         </div>
 
-        <p id="prod-result-summary" class="product-result-summary" aria-live="polite"></p>
+          <p id="prod-result-summary" class="product-result-summary" aria-live="polite"></p>
 
         <% if (allProducts.length === 0) { %>
           <div class="text-center py-6 border-2 border-dashed border-slate-200 rounded-xl">
@@ -146,6 +146,7 @@
             <% if (perms.includes('productos.crear')) { %><a href="#nuevo-producto" class="m-btn m-btn-filled m-btn-sm" onclick="return irNuevoProducto(event)">Agregar mi primer producto</a><% } %>
           </div>
         <% } else { %>
+          <div class="product-table-head" aria-hidden="true"><span>Producto</span><span>Clasificación</span><span>Precio</span><span>Estado e inventario</span><span>Acciones</span></div>
           <div id="prod-grid" class="product-grid">
             <% allProducts.forEach((p, i) => { %>
               <article class="product-card m-ripple <%= i >= 12 ? 'hidden' : '' %>" data-active-layer
@@ -2413,6 +2414,12 @@
       renderAttrCatalog();
       // El wizard de captura solo existe si hay permiso de crear o editar productos.
       if (!document.getElementById('pf-form')) return;
+      var modalInMain = document.querySelector('main #nuevo-producto');
+      if (modalInMain) {
+        var previousModal = document.body.querySelector(':scope > #nuevo-producto');
+        if (previousModal && previousModal !== modalInMain) previousModal.remove();
+        document.body.appendChild(modalInMain);
+      }
       // El panel es SPA-lite: al guardar, panel-ajax.ejs solo reemplaza el
       // innerHTML de <main> (no vuelve a ejecutar este <script>), así que
       // pfStep/pfTipo/pfMode quedaban con el valor de ANTES de guardar —
