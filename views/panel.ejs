@@ -12,11 +12,12 @@
       <!-- Encabezado -->
       <header class="pn-head">
         <div class="pn-head-txt">
-          <p class="pn-date"><%= new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' }) %></p>
-          <h1 class="pn-title">Hola, <%= biz.name.split(' ')[0] %> 👋</h1>
-          <p class="pn-sub">Así va tu catálogo hoy.</p>
+          <p class="pn-date">Resumen de hoy · <%= new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' }) %></p>
+          <h1 class="pn-title">Panel general</h1>
+          <p class="pn-sub">Hola, <%= biz.name.split(' ')[0] %>. Aquí está el estado de tu negocio.</p>
         </div>
         <div class="pn-head-actions">
+          <span class="pn-live"><i></i> Todo en orden</span>
           <a href="/<%= biz.slug %>/admin/productos" class="pn-btn pn-btn-solid"><i class="bi bi-plus-lg"></i><span>Producto</span></a>
           <a href="/<%= biz.slug %>" target="_blank" class="pn-btn"><i class="bi bi-box-arrow-up-right"></i><span>Ver catálogo</span></a>
         </div>
@@ -42,13 +43,12 @@
 
       <!-- Métricas clave -->
       <% const cards = [
-        { label: 'Visitas hoy', value: stats.today, isNum: true, delta: stats.weekDelta, deltaLabel: 'vs. semana pasada', target: '#sec-charts' },
-        { label: 'Ingresos cobrados', value: stats.revenue, isMoney: true, delta: stats.revenueDelta, deltaLabel: 'vs. semana pasada', title: 'Dinero que realmente entró: abonos cobrados + pedidos de contado cobrados (sin pendientes ni cancelados)', target: '#sec-pedidos' },
-        { label: 'Pedidos WhatsApp', value: stats.activeOrders, isNum: true, title: 'Pedidos activos que siguen en el panel; no incluye pedidos cancelados ni eliminados.', target: '#sec-pedidos' },
-        { label: 'Conversión', value: stats.conv, isPct: true, target: '#sec-funnel' }
+        { label: 'Ventas cobradas', value: stats.revenue, isMoney: true, delta: stats.revenueDelta, deltaLabel: 'vs. semana pasada', title: 'Dinero que realmente entró: abonos cobrados + pedidos de contado cobrados (sin pendientes ni cancelados)', target: '#sec-pedidos' },
+        { label: 'Pedidos activos', value: stats.activeOrders, isNum: true, title: 'Pedidos activos que siguen en el panel; no incluye pedidos cancelados ni eliminados.', target: '#sec-pedidos' },
+        { label: 'Ticket promedio', value: stats.avgOrder, isMoney: true, target: '#sec-pedidos' },
+        { label: 'Visitas hoy', value: stats.today, isNum: true, delta: stats.weekDelta, deltaLabel: 'vs. semana pasada', target: '#sec-charts' }
       ]; %>
-      <% if (stats.hasCostData || stats.supplierSpend > 0) { cards.push({ label: 'Ganancia estimada', value: stats.profit, isMoney: true, title: 'Ingresos cobrados menos el costo de los productos vendidos que ya tienen costo capturado y menos lo pagado a proveedores — si un producto no tiene costo, no se descuenta (es una estimación, no exacta).', target: '#sec-pedidos' }); } %>
-      <% const _ico = { 'Visitas hoy': 'bi-eye', 'Ingresos cobrados': 'bi-cash-coin', 'Pedidos WhatsApp': 'bi-whatsapp', 'Conversión': 'bi-bullseye', 'Ganancia estimada': 'bi-graph-up-arrow' }; %>
+      <% const _ico = { 'Visitas hoy': 'bi-eye', 'Ventas cobradas': 'bi-graph-up-arrow', 'Pedidos activos': 'bi-bag-check', 'Ticket promedio': 'bi-receipt', 'Ganancia estimada': 'bi-cash-coin' }; %>
       <section class="pn-kpis <%= cards.length > 4 ? 'is-5' : '' %>">
         <% cards.forEach((c, ci) => { %>
           <div class="pn-kpi metric-card" style="--i:<%= ci %>" title="<%= c.title || '' %>" data-scroll-target="<%= c.target %>">
@@ -67,21 +67,87 @@
         <% }) %>
       </section>
 
-      <% if (lowStock && lowStock.length > 0) { %>
-        <section class="warning-card mb-3 px-4 py-3">
-          <div class="flex items-center gap-3 flex-wrap">
-            <span class="text-xl">⚠️</span>
-            <div class="flex-1 min-w-[200px]">
-              <p class="text-sm font-extrabold" style="color:#a07d3c">Stock bajo en <%= lowStock.length %> producto(s)</p>
-              <p class="text-xs mt-0.5 truncate" style="color:#b8892e">
-                <% lowStock.slice(0, 6).forEach((p, i) => { %><%= i > 0 ? ' · ' : '' %><b><%= p.name %></b> (<%= p.displayStock <= 0 ? 'agotado' : p.displayStock %><% }) %>
-                <% if (lowStock.length > 6) { %> y <%= lowStock.length - 6 %> más<% } %>
-              </p>
+      <!-- Centro de operación -->
+      <% const activePreview = orders.filter(function(o){ return o.status !== 'cancelado' && o.status !== 'entregado'; }).slice(0, 5); %>
+      <section class="pn-command-grid" aria-label="Resumen operativo">
+        <article class="pn-command-card pn-performance" id="sec-performance">
+          <div class="pn-section-head">
+            <div>
+              <span class="pn-eyebrow">Rendimiento</span>
+              <h2>Ventas de los últimos 7 días</h2>
             </div>
-            <a href="/<%= biz.slug %>/admin/productos" class="m-btn m-btn-sm" style="background:var(--ap-accent-gold);color:#fff">Ver productos</a>
+            <span class="pn-section-total"><%= money(stats.revenueWeek) %> <small>cobrado</small></span>
           </div>
-        </section>
-      <% } %>
+          <% if (stats.ordersDaily && stats.ordersDaily.length) { %>
+            <% const commandMax = Math.max.apply(null, stats.ordersDaily.map(function(d){ return Number(d.s || 0); }).concat([1])); %>
+            <div class="pn-sales-chart" role="img" aria-label="Ventas cobradas durante los últimos siete días">
+              <% stats.ordersDaily.forEach(function(d){ var commandPct = Math.max(7, Math.round((Number(d.s || 0) / commandMax) * 100)); %>
+                <div class="pn-sales-day" title="<%= d.d %>: <%= money(d.s) %>">
+                  <span class="pn-sales-value"><%= Number(d.s || 0) > 0 ? money(d.s) : '' %></span>
+                  <div class="pn-sales-track"><i style="height:<%= commandPct %>%"></i></div>
+                  <span><%= d.d.slice(8) %></span>
+                </div>
+              <% }); %>
+            </div>
+          <% } else { %>
+            <div class="pn-command-empty"><i class="bi bi-bar-chart"></i><p>Las ventas de la semana aparecerán aquí.</p></div>
+          <% } %>
+          <div class="pn-performance-foot">
+            <span><b><%= stats.orders %></b> pedidos esta semana</span>
+            <span><b><%= stats.conv %>%</b> de conversión</span>
+            <% if (stats.hasCostData || stats.supplierSpend > 0) { %><span><b><%= money(stats.profit) %></b> de ganancia estimada</span><% } %>
+            <a href="#sec-charts">Ver detalle <i class="bi bi-arrow-right"></i></a>
+          </div>
+        </article>
+
+        <article class="pn-command-card pn-active-orders">
+          <div class="pn-section-head">
+            <div>
+              <span class="pn-eyebrow">En movimiento</span>
+              <h2>Pedidos activos</h2>
+            </div>
+            <a href="#sec-pedidos">Ver todos</a>
+          </div>
+          <% if (activePreview.length) { %>
+            <div class="pn-order-preview-list">
+              <% activePreview.forEach(function(o){ var compactStatus = o.status === 'nuevo' ? 'Nuevo' : (o.paid ? 'Pagado' : 'Por cobrar'); %>
+                <a class="pn-order-preview" href="#sec-pedidos">
+                  <span class="pn-order-id">#<%= o.id %></span>
+                  <span class="pn-order-person"><b><%= o.customer_name || 'Cliente de WhatsApp' %></b><small><%= (o.items || 'Pedido').split(' | ')[0] %></small></span>
+                  <span class="pn-order-state is-<%= o.status === 'nuevo' ? 'new' : (o.paid ? 'paid' : 'pending') %>"><%= compactStatus %></span>
+                  <strong><%= money(o.total) %></strong>
+                </a>
+              <% }); %>
+            </div>
+          <% } else { %>
+            <div class="pn-command-empty"><i class="bi bi-bag-check"></i><p>No hay pedidos pendientes de atención.</p></div>
+          <% } %>
+        </article>
+
+        <aside class="pn-command-side">
+          <article class="pn-command-card pn-alerts">
+            <div class="pn-section-head">
+              <div><span class="pn-eyebrow">Inventario</span><h2>Stock bajo</h2></div>
+              <a href="/<%= biz.slug %>/admin/productos">Ver productos</a>
+            </div>
+            <% if (lowStock && lowStock.length) { %>
+              <div class="pn-stock-list">
+                <% lowStock.slice(0, 4).forEach(function(p){ %>
+                  <div><span><%= p.name %></span><b><%= p.displayStock <= 0 ? 'Agotado' : p.displayStock + ' disponibles' %></b></div>
+                <% }); %>
+              </div>
+            <% } else { %>
+              <p class="pn-all-good"><i class="bi bi-check-circle"></i> Inventario en orden</p>
+            <% } %>
+          </article>
+          <article class="pn-command-card pn-quick-actions">
+            <div class="pn-section-head"><div><span class="pn-eyebrow">Atajos</span><h2>Acciones rápidas</h2></div></div>
+            <a class="is-primary" href="/<%= biz.slug %>/admin/productos"><i class="bi bi-plus-circle"></i><span>Nuevo producto</span><i class="bi bi-arrow-right"></i></a>
+            <a href="#share-catalog"><i class="bi bi-send"></i><span>Compartir catálogo</span><i class="bi bi-arrow-right"></i></a>
+            <% if (perms.includes('reportes')) { %><a href="/<%= biz.slug %>/admin/reportes"><i class="bi bi-bar-chart"></i><span>Abrir reportes</span><i class="bi bi-arrow-right"></i></a><% } %>
+          </article>
+        </aside>
+      </section>
 
       <% if (priceHistory && priceHistory.length > 0) { %>
         <section class="m-card p-4 mb-3">
@@ -104,7 +170,7 @@
       <% } %>
 
       <!-- Comparte tu catálogo -->
-      <section class="pn-share">
+      <section class="pn-share" id="share-catalog">
         <div class="pn-share-main">
           <p class="pn-share-title">Comparte tu catálogo</p>
           <p class="pn-share-sub">Cada enlace compartido es una visita más. Mándalo por WhatsApp o pégalo en tus redes.</p>
@@ -308,7 +374,7 @@
 
         <div class="flex flex-wrap items-center gap-2 mb-3">
           <div class="relative flex-1 min-w-[160px]">
-            <input id="order-search" type="text" placeholder="Buscar pedido (producto o cliente)…" class="w-full text-xs" style="border:1px solid var(--ap-border);border-radius:12px;padding:6px 12px 6px 36px;background:var(--ap-card);color:var(--ap-text);outline:none">
+            <input id="order-search" type="text" aria-label="Buscar pedidos por producto o cliente" placeholder="Buscar pedido (producto o cliente)…" class="w-full text-xs" style="border:1px solid var(--ap-border);border-radius:12px;padding:6px 12px 6px 36px;background:var(--ap-card);color:var(--ap-text);outline:none">
             <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
           </div>
           <select id="order-orden" class="border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-neutral-400" style="background:var(--ap-card);color:var(--ap-text)">
