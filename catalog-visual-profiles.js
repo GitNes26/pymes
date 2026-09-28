@@ -1,0 +1,75 @@
+'use strict';
+
+// Perfil compositivo explícito por apariencia. Ninguna entrada depende de una
+// inferencia por color: cada una decide retícula, fotografía, hero, filtros,
+// tarjeta, densidad, alineación, movimiento y tratamiento de ofertas.
+const p = (ratio, cols, hero, filter, card, density, align, fit, motion, offers) => ({
+  ratio, cols, hero, filter, card, density, align, fit, motion, offers
+});
+
+const CATALOG_VISUAL_PROFILES = {
+  catalogo: p('4-3',4,'center','side','lift','normal','left','contain','lift','rail'),
+  joyeria: p('4-5',3,'center','top','frame','airy','center','cover','reveal','poster'),
+  postres: p('1-1',4,'center','side','soft','normal','left','cover','scale','rail'),
+  ropa: p('4-5',3,'left','top','flat','airy','left','cover','reveal','poster'),
+  floreria: p('4-5',3,'center','side','soft','airy','left','cover','lift','poster'),
+  ferreteria: p('4-3',4,'left','side','block','compact','left','contain','slide','compact'),
+  muebles: p('3-2',3,'center','top','flat','airy','left','cover','reveal','poster'),
+  cosmeticos: p('1-1',3,'center','top','soft','airy','center','contain','scale','rail'),
+  vivero: p('4-3',4,'left','side','soft','normal','left','cover','lift','rail'),
+  belleza: p('4-5',3,'center','top','lift','airy','center','cover','reveal','poster'),
+  eventos: p('3-2',3,'center','top','frame','airy','center','cover','glow','poster'),
+  minimalista: p('4-5',4,'left','top','flat','airy','left','cover','none','compact'),
+  pastel: p('1-1',4,'center','side','soft','normal','left','contain','scale','rail'),
+  monocromo: p('1-1',4,'left','top','block','compact','left','cover','slide','compact'),
+  bohemio: p('4-5',3,'right','side','lift','airy','left','cover','reveal','poster'),
+  oceanico: p('16-10',3,'center','top','flat','airy','left','cover','reveal','poster'),
+  nordico: p('4-3',3,'left','top','frame','airy','left','cover','lift','rail'),
+  vibrante: p('1-1',4,'left','side','block','normal','left','cover','scale','compact'),
+  retro: p('4-3',4,'center','top','block','normal','left','cover','slide','rail'),
+  futurista: p('16-10',3,'left','top','frame','compact','left','contain','glow','compact'),
+  rustico: p('3-2',3,'left','side','frame','normal','left','cover','lift','rail'),
+  elegante: p('4-5',3,'right','top','frame','airy','center','cover','glow','poster'),
+  urbano: p('1-1',4,'right','side','block','compact','left','cover','slide','compact'),
+  tropical: p('3-2',4,'left','side','soft','normal','left','cover','scale','rail'),
+  acuarela: p('5-4',3,'center','top','soft','airy','left','cover','reveal','poster'),
+
+  'taqueria-nocturna': p('4-3',4,'left','top','block','compact','left','cover','slide','compact'),
+  parrilla: p('3-2',3,'right','side','frame','normal','left','cover','reveal','poster'),
+  'cafe-editorial': p('4-5',3,'left','top','flat','normal','left','cover','none','compact'),
+  'pan-artesanal': p('3-2',3,'center','side','lift','normal','left','cover','lift','rail'),
+  marisqueria: p('16-10',3,'left','top','frame','airy','left','cover','reveal','poster'),
+  'heladeria-pop': p('1-1',4,'center','top','soft','normal','center','cover','scale','rail'),
+  'cocina-casera': p('4-3',4,'left','side','frame','compact','left','cover','lift','compact'),
+  gourmet: p('4-5',3,'center','top','flat','airy','center','cover','reveal','poster'),
+  'mercado-barrio': p('1-1',5,'left','side','block','compact','left','contain','slide','compact'),
+  'moda-lujo': p('4-5',3,'right','top','frame','airy','center','cover','reveal','poster'),
+  streetwear: p('4-5',4,'left','top','block','compact','left','cover','slide','compact'),
+  infantil: p('1-1',4,'right','side','soft','normal','center','contain','scale','rail'),
+  sneakers: p('1-1',4,'right','top','block','normal','left','contain','scale','compact'),
+  perfumeria: p('1-1',3,'center','top','soft','airy','center','contain','reveal','poster'),
+  optica: p('4-5',3,'left','side','flat','normal','left','contain','reveal','rail'),
+  clinica: p('3-2',3,'left','top','frame','airy','left','cover','reveal','poster'),
+  'dental-claro': p('16-10',3,'center','side','flat','airy','left','cover','reveal','rail'),
+  bienestar: p('3-2',3,'center','top','soft','airy','center','cover','reveal','poster'),
+  veterinaria: p('4-3',4,'left','side','soft','normal','left','contain','lift','rail'),
+  barberia: p('3-2',3,'right','top','frame','normal','left','cover','slide','poster'),
+  tinta: p('4-5',3,'left','top','block','compact','left','cover','slide','compact'),
+  fitness: p('4-3',4,'left','side','block','compact','left','cover','scale','compact'),
+  construccion: p('4-3',5,'left','side','block','compact','left','contain','slide','compact'),
+  arquitectura: p('3-2',3,'left','top','flat','airy','left','cover','reveal','poster'),
+  'hogar-escandinavo': p('3-2',3,'center','top','frame','airy','left','cover','lift','poster'),
+  automotriz: p('16-10',4,'left','top','block','compact','left','cover','slide','compact'),
+  refacciones: p('4-3',5,'left','side','frame','compact','left','contain','none','compact'),
+  tecnologia: p('16-10',4,'right','top','frame','compact','left','contain','glow','compact'),
+  corporativo: p('4-3',3,'left','side','flat','normal','left','cover','reveal','rail'),
+  legal: p('4-5',3,'center','top','frame','airy','left','cover','reveal','poster'),
+  inmobiliario: p('16-10',3,'left','top','lift','airy','left','cover','reveal','poster'),
+  fotografia: p('4-5',3,'right','top','flat','airy','left','cover','reveal','poster'),
+  musica: p('1-1',4,'left','side','block','normal','left','cover','glow','compact'),
+  viajes: p('16-10',4,'center','top','lift','airy','left','cover','reveal','poster'),
+  educacion: p('4-3',3,'left','top','frame','normal','left','contain','lift','rail'),
+  fiesta: p('1-1',4,'center','top','block','normal','center','cover','scale','poster')
+};
+
+module.exports = { CATALOG_VISUAL_PROFILES };

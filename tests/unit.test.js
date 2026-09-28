@@ -7,9 +7,29 @@ const {
   parseCustomTags, customTagsJson, parseSpecs, orderLines
 } = require('../lib/pure');
 const { recommendCatalogDesigns } = require('../catalog-designs-expanded');
+const { CATALOG_VISUAL_PROFILES } = require('../catalog-visual-profiles');
 
 const biz = (extra) => Object.assign({ mp_enabled: 1, mp_access_token: 'APP_USR-x', mp_fee_on: 1, mp_fee_pct: 3.49, mp_fee_fixed: 4, mp_fee_iva: 16 }, extra || {});
 const cobro = (f, base) => base * f.m + f.b; // lo que paga el cliente sin redondear
+
+test('las 61 apariencias tienen una composición visual explícita y distinta', () => {
+  const entries = Object.entries(CATALOG_VISUAL_PROFILES);
+  assert.equal(entries.length, 61);
+  assert.equal(new Set(entries.map(([, profile]) => JSON.stringify(profile))).size, 61);
+  const valid = {
+    ratio: ['1-1', '4-3', '3-2', '4-5', '5-4', '16-10'],
+    cols: [3, 4, 5], hero: ['left', 'center', 'right'], filter: ['side', 'top'],
+    card: ['lift', 'frame', 'flat', 'soft', 'block'], density: ['compact', 'normal', 'airy'],
+    align: ['left', 'center'], fit: ['cover', 'contain'],
+    motion: ['lift', 'reveal', 'scale', 'slide', 'glow', 'none'],
+    offers: ['rail', 'poster', 'compact']
+  };
+  entries.forEach(([id, profile]) => {
+    Object.entries(valid).forEach(([key, allowed]) => {
+      assert.ok(allowed.includes(profile[key]), `${id}.${key} debe ser válido`);
+    });
+  });
+});
 
 test('comisión incluida: $180 se cobra $192.43 y al negocio le quedan $180 netos', () => {
   const f = priceMarkupFactor(biz());

@@ -172,7 +172,7 @@ La paleta comparte tinta profunda y superficies blancas, pero cambia de temperat
 
 El catálogo público mantiene una cuadrícula mobile-first que crece hasta cuatro columnas y deja respirar el contenido comercial dentro de contenedores centrados. El detalle público utiliza dos columnas con galería sticky y colapsa a una columna bajo 900px.
 
-Las apariencias se implementan desde una sola plantilla y una capa temática final. La estructura funcional permanece estable; la capa temática puede cambiar proporciones de imagen entre cuadrada, horizontal y retrato, espaciamiento, alineación y tratamiento de tarjetas. En móvil, las composiciones escalonadas vuelven a una cuadrícula regular para conservar lectura y objetivos táctiles.
+Las apariencias se implementan desde una sola plantilla y una capa temática final. Cada una de las 61 declara un perfil compositivo explícito y único: proporción de fotografía, columnas, alineación del hero, posición de filtros, tipo de tarjeta, densidad, alineación de contenido, ajuste de imagen, movimiento y tratamiento de ofertas. Los selectores y la vista previa del teléfono representan esas decisiones antes de guardar. En móvil, las composiciones escalonadas vuelven a una cuadrícula regular para conservar lectura y objetivos táctiles.
 
 La biblioteca puede ser amplia porque la decisión permanece corta: cada giro muestra primero ocho recomendaciones ordenadas y deja el resto detrás de búsqueda y “Ver todos”. Los temas sectoriales declaran sus giros afines y una familia compositiva; la recomendación pondera afinidad directa, estilo del preset y compatibilidad de familia.
 

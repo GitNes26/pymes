@@ -1011,9 +1011,9 @@
             </div>
             <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3" id="catalog-design-grid">
               <% CAT_DESIGNS.forEach(function(d) { %>
-              <% var t = d.tokens; %>
+              <% var t = d.tokens; var v = d.visual; %>
               <% var _isRecommendedDesign = catalogDesignRecommendations.indexOf(d.id) !== -1; %>
-              <label class="cat-design-card relative block cursor-pointer rounded-2xl border-2 transition overflow-hidden <%= catDesign.id === d.id ? 'border-neutral-800' : 'border-slate-200 dark:border-[#30363d] hover:border-slate-300 dark:hover:border-[#3d444d]' %>" data-design-id="<%= d.id %>" data-world="<%= d.world %>" data-recommended="<%= _isRecommendedDesign ? '1' : '0' %>" data-search="<%= (d.name + ' ' + d.desc + ' ' + d.world + ' ' + d.for.join(' ')).toLowerCase() %>" <%= (!_isRecommendedDesign && catDesign.id !== d.id) ? 'hidden' : '' %>>
+              <label class="cat-design-card relative block cursor-pointer rounded-2xl border-2 transition overflow-hidden <%= catDesign.id === d.id ? 'border-neutral-800' : 'border-slate-200 dark:border-[#30363d] hover:border-slate-300 dark:hover:border-[#3d444d]' %>" data-design-id="<%= d.id %>" data-world="<%= d.world %>" data-ratio="<%= v.ratio %>" data-card="<%= v.card %>" data-density="<%= v.density %>" data-align="<%= v.align %>" data-recommended="<%= _isRecommendedDesign ? '1' : '0' %>" data-search="<%= (d.name + ' ' + d.desc + ' ' + d.world + ' ' + d.for.join(' ')).toLowerCase() %>" <%= (!_isRecommendedDesign && catDesign.id !== d.id) ? 'hidden' : '' %>>
                 <input type="radio" name="catalog_design" value="<%= d.id %>" class="sr-only" <%= catDesign.id === d.id ? 'checked' : '' %>>
                 <% if (_isRecommendedDesign) { %><span class="cat-design-recommended">Para tu giro</span><% } %>
 
@@ -1066,6 +1066,18 @@
             .cat-design-card[data-world="artisan"] .cdp-thumb { width:46px; height:28px; }
             .cat-design-card[data-world="vibrant"] .cdp-card { transform:rotate(-1deg); }
             .cat-design-card[data-world="vibrant"] .cdp-btn { transform:rotate(6deg); }
+            .cat-design-card[data-ratio="1-1"] .cdp-thumb { width:32px; height:32px; }
+            .cat-design-card[data-ratio="4-3"] .cdp-thumb { width:38px; height:29px; }
+            .cat-design-card[data-ratio="3-2"] .cdp-thumb { width:42px; height:28px; }
+            .cat-design-card[data-ratio="4-5"] .cdp-thumb { width:28px; height:35px; }
+            .cat-design-card[data-ratio="5-4"] .cdp-thumb { width:38px; height:30px; }
+            .cat-design-card[data-ratio="16-10"] .cdp-thumb { width:45px; height:28px; }
+            .cat-design-card[data-card="flat"] .cdp-card { border-width:0 0 1px !important; border-radius:0 !important; box-shadow:none !important; }
+            .cat-design-card[data-card="block"] .cdp-card { border-width:2px !important; border-radius:3px !important; box-shadow:none !important; }
+            .cat-design-card[data-card="soft"] .cdp-card { border-radius:14px !important; }
+            .cat-design-card[data-density="compact"] .cat-design-preview { padding:8px; gap:5px; }
+            .cat-design-card[data-density="airy"] .cat-design-preview { padding:15px; gap:11px; }
+            .cat-design-card[data-align="center"] .cdp-card { text-align:center; justify-content:center; }
           </style>
           <script>
             (function () {

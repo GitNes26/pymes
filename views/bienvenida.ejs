@@ -127,8 +127,8 @@
             </div>
 
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 lg:gap-4" id="wz-vibe-grid" role="radiogroup" aria-label="Elige el diseño de tu catálogo">
-              <% CAT_DESIGNS.forEach(d => { var t = d.tokens; %>
-                <button type="button" class="wz-card wz-vibe-card" role="radio" aria-checked="false" data-design="<%= d.id %>" data-world="<%= d.world %>" data-search="<%= (d.name + ' ' + d.desc + ' ' + d.world + ' ' + d.for.join(' ')).toLowerCase() %>">
+              <% CAT_DESIGNS.forEach(d => { var t = d.tokens; var v = d.visual; %>
+                <button type="button" class="wz-card wz-vibe-card" role="radio" aria-checked="false" data-design="<%= d.id %>" data-world="<%= d.world %>" data-ratio="<%= v.ratio %>" data-card="<%= v.card %>" data-density="<%= v.density %>" data-align="<%= v.align %>" data-search="<%= (d.name + ' ' + d.desc + ' ' + d.world + ' ' + d.for.join(' ')).toLowerCase() %>">
                   <span class="wz-card-check" aria-hidden="true"><svg class="wz-check-icon" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></span>
                   <span class="wz-design-preview" aria-hidden="true" style="background:<%= t.bg %>">
                     <span class="wz-design-preview-card" style="background:<%= t.card %>;border-radius:<%= Math.min(t.radius,12) %>px;border:1px solid <%= t.border %>">
@@ -373,6 +373,18 @@
     .wz-vibe-card[data-world="artisan"] .wz-design-preview-thumb { width:32px; height:20px; }
     .wz-vibe-card[data-world="vibrant"] .wz-design-preview-card { transform:rotate(-2deg); min-height:40px; }
     .wz-vibe-card[data-world="vibrant"] .wz-design-preview-btn { width:22px; height:22px; transform:rotate(5deg); }
+    .wz-vibe-card[data-ratio="1-1"] .wz-design-preview-thumb { width:24px; height:24px; }
+    .wz-vibe-card[data-ratio="4-3"] .wz-design-preview-thumb { width:30px; height:23px; }
+    .wz-vibe-card[data-ratio="3-2"] .wz-design-preview-thumb { width:33px; height:22px; }
+    .wz-vibe-card[data-ratio="4-5"] .wz-design-preview-thumb { width:22px; height:28px; }
+    .wz-vibe-card[data-ratio="5-4"] .wz-design-preview-thumb { width:30px; height:24px; }
+    .wz-vibe-card[data-ratio="16-10"] .wz-design-preview-thumb { width:35px; height:22px; }
+    .wz-vibe-card[data-card="flat"] .wz-design-preview-card { border-width:0 0 1px !important; border-radius:0 !important; }
+    .wz-vibe-card[data-card="block"] .wz-design-preview-card { border-width:2px !important; border-radius:2px !important; }
+    .wz-vibe-card[data-card="soft"] .wz-design-preview-card { border-radius:13px !important; }
+    .wz-vibe-card[data-density="compact"] .wz-design-preview { padding:7px; gap:5px; }
+    .wz-vibe-card[data-density="airy"] .wz-design-preview { padding:12px; gap:10px; }
+    .wz-vibe-card[data-align="center"] .wz-design-preview-card { justify-content:center; }
 
     /* Filtro de búsqueda: stagger corto para las tarjetas que permanecen visibles */
     .wz-card-filtered-in { animation: wzCardFilterIn .16s cubic-bezier(0.16, 1, 0.3, 1) both; }
@@ -466,6 +478,17 @@
     .wz-phone-products { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 6px; }
     .wz-phone-product { overflow: hidden; background: var(--ap-bg); border: 1px solid var(--ap-border); border-radius: 9px; }
     .wz-phone-product-img { display: block; height: 46px; background: var(--ap-accent); opacity: .16; transition: background .38s cubic-bezier(0.16, 1, 0.3, 1); }
+    .wz-phone-screen[data-ratio="1-1"] .wz-phone-product-img { aspect-ratio:1; height:auto; }
+    .wz-phone-screen[data-ratio="4-3"] .wz-phone-product-img { aspect-ratio:4/3; height:auto; }
+    .wz-phone-screen[data-ratio="3-2"] .wz-phone-product-img { aspect-ratio:3/2; height:auto; }
+    .wz-phone-screen[data-ratio="4-5"] .wz-phone-product-img { aspect-ratio:4/5; height:auto; }
+    .wz-phone-screen[data-ratio="5-4"] .wz-phone-product-img { aspect-ratio:5/4; height:auto; }
+    .wz-phone-screen[data-ratio="16-10"] .wz-phone-product-img { aspect-ratio:16/10; height:auto; }
+    .wz-phone-screen[data-card="flat"] .wz-phone-product { border-width:0 0 1px; border-radius:0; }
+    .wz-phone-screen[data-card="block"] .wz-phone-product { border-width:2px; border-radius:2px; }
+    .wz-phone-screen[data-card="soft"] .wz-phone-product { border-radius:14px; }
+    .wz-phone-screen[data-density="compact"] .wz-phone-products { gap:3px; }
+    .wz-phone-screen[data-density="airy"] .wz-phone-products { gap:9px; }
     .wz-phone-wa {
       display: flex; align-items: center; gap: 6px; height: 26px; margin-top: 8px; padding: 0 9px;
       color: #fff; background: #25d366; border-radius: 8px; font-size: 7px; font-weight: 700;
@@ -560,9 +583,17 @@
     function paintPhone(suffix, designId) {
       var header = document.getElementById('wz-phone-header-' + suffix);
       if (!header) return;
-      var t = designOf(designId).tokens;
+      var design = designOf(designId);
+      var t = design.tokens;
+      var visual = design.visual || t.visual || {};
       var screen = document.getElementById('wz-phone-' + suffix).querySelector('.wz-phone-screen');
-      if (screen) { screen.style.background = t.bg; }
+      if (screen) {
+        screen.style.background = t.bg;
+        screen.dataset.ratio = visual.ratio || '4-3';
+        screen.dataset.card = visual.card || 'lift';
+        screen.dataset.density = visual.density || 'normal';
+        screen.dataset.align = visual.align || 'left';
+      }
       // El header real es una barra clara translúcida (background:var(--bg-card)),
       // no un banner de color — el acento solo vive en detalles chicos (logo, chip activo).
       header.style.background = t.card;

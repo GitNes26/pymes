@@ -330,11 +330,14 @@ const CAT_DESIGN_BASE_WORLDS = {
   acuarela: 'soft'
 };
 const { buildExpandedCatalogDesigns, recommendCatalogDesigns } = require('./catalog-designs-expanded');
+const { CATALOG_VISUAL_PROFILES } = require('./catalog-visual-profiles');
 CAT_DESIGNS.push(...buildExpandedCatalogDesigns(CAT_FONTS));
 CAT_DESIGNS.forEach(d => {
   d.world = d.world || CAT_DESIGN_BASE_WORLDS[d.id] || 'classic';
   d.for = Array.isArray(d.for) ? d.for : [];
+  d.visual = CATALOG_VISUAL_PROFILES[d.id] || CATALOG_VISUAL_PROFILES.catalogo;
   d.tokens.world = d.world;
+  d.tokens.visual = d.visual;
 });
 // Secciones extra del catálogo (columna businesses.extras, JSON). Se sanea todo
 // lo que llega del formulario: largos acotados, solo métodos de pago conocidos

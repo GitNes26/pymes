@@ -6,6 +6,7 @@
   // Estilo visual elegido por el dueño: paleta + tipografía (ver CAT_DESIGNS en server.js)
   var _design = (typeof catDesign !== 'undefined' && catDesign) ? catDesign : 'catalogo';
   var _designWorld = (typeof catDesignTokens !== 'undefined' && catDesignTokens && catDesignTokens.world) ? catDesignTokens.world : 'classic';
+  var _visual = (typeof catDesignTokens !== 'undefined' && catDesignTokens && catDesignTokens.visual) ? catDesignTokens.visual : { ratio:'4-3', cols:4, hero:'center', filter:'side', card:'lift', density:'normal', align:'left', fit:'contain', motion:'lift', offers:'rail' };
   var _designFontHref = (typeof catDesignTokens !== 'undefined' && catDesignTokens && catDesignTokens.font && catDesignTokens.font.href)
     ? catDesignTokens.font.href
     : 'https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap';
@@ -198,7 +199,7 @@
   var _bestIds = (typeof bestIds !== 'undefined' && bestIds) ? bestIds : [];
   var _best = _ex.showTop ? _bestIds.map(function(id){ return _realProds.filter(function(p){ return p.id === id; })[0]; }).filter(Boolean) : [];
 %><!DOCTYPE html>
-<html lang="es" data-style="<%= _design %>" data-world="<%= _designWorld %>">
+<html lang="es" data-style="<%= _design %>" data-world="<%= _designWorld %>" data-ratio="<%= _visual.ratio %>" data-cols="<%= _visual.cols %>" data-hero="<%= _visual.hero %>" data-filter="<%= _visual.filter %>" data-card="<%= _visual.card %>" data-density="<%= _visual.density %>" data-align="<%= _visual.align %>" data-fit="<%= _visual.fit %>" data-motion="<%= _visual.motion %>" data-offers="<%= _visual.offers %>">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -1171,7 +1172,7 @@
   <script src="/js/img-retry.js?v=20260919b"></script>
   <script src="/js/masks.js"></script>
   <link rel="stylesheet" href="/css/tw-static.css?v=20260920a">
-  <link rel="stylesheet" href="/css/catalog-themes.css?v=20260926b">
+  <link rel="stylesheet" href="/css/catalog-themes.css?v=20260927a">
 </head>
 <body>
   <a class="skip-link" href="#contenido">Saltar al contenido</a>
