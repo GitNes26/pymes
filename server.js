@@ -5746,19 +5746,6 @@ const panelHeartbeat = setInterval(() => {
 }, 25000);
 panelHeartbeat.unref();
 
-// Corrige en la BD las rutas viejas /uploads/catamanager/ -> /uploads/
-// (products.image). Se ejecuta al arrancar, por lotes para no bloquear la tabla.
-setTimeout(() => {
-  try {
-    let total = 0, n = 0;
-    do {
-      n = db.prepare("UPDATE products SET image = REPLACE(image, '/uploads/catamanager/', '/uploads/') WHERE id > 0 AND image LIKE '/uploads/catamanager/%' LIMIT 200").run().changes || 0;
-      total += n;
-    } while (n > 0 && total < 100000);
-    if (total) console.log('[uploads] rutas corregidas en products.image:', total);
-  } catch (e) { console.error('[uploads] no se pudieron corregir rutas:', e.message); }
-}, 5000);
-
 server.listen(PORT, () => {
   db.prepare("DELETE FROM sessions WHERE expires_at IS NOT NULL AND expires_at < datetime('now')").run();
   setInterval(() => {
