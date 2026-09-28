@@ -2,66 +2,129 @@
 <html lang="es">
 <head>
   <%- include('admin/head', { title: 'Reportes', biz }) %>
-  <style>
-    .report-number { font-variant-numeric: tabular-nums; }
-    .report-table { width: 100%; border-collapse: collapse; }
-    .report-table th, .report-table td { padding: .7rem .85rem; text-align: left; border-bottom: 1px solid var(--ap-border); }
-    .report-table th { font-size: 10px; font-weight: 700; color: var(--ap-text-sec); white-space: nowrap; }
-    .report-table td { font-size: .8rem; color: var(--ap-text); }
-    .report-table tr:last-child td { border-bottom: 0; }
-    .report-table tbody tr:hover { background: var(--ap-bg); }
-    .report-table .number { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-    .report-table .details { max-width: 22rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  </style>
 </head>
-<body class="m-material min-h-screen" style="background:var(--ap-bg);color:var(--ap-text)">
+<body class="m-material config-admin-page rep-2026 min-h-screen">
   <%- include('admin/sidebar', { biz, active: 'reportes', canDesign }) %>
+  <link rel="stylesheet" href="/css/config-2026.css?v=20260928b">
+  <link rel="stylesheet" href="/css/reportes-2026.css?v=20260928a">
+  <%
+    // Atajos de periodo (fechas locales del servidor, formato AAAA-MM-DD)
+    const _d = function (x) { const z = new Date(x.getTime() - x.getTimezoneOffset() * 60000); return z.toISOString().slice(0, 10); };
+    const _now = new Date();
+    const _ago = function (n) { const t = new Date(_now); t.setDate(t.getDate() - n); return _d(t); };
+    const _monthStart = _d(new Date(_now.getFullYear(), _now.getMonth(), 1));
+    const _quick = [
+      { label: 'Hoy', from: _d(_now), to: _d(_now) },
+      { label: '7 días', from: _ago(6), to: _d(_now) },
+      { label: '30 días', from: _ago(29), to: _d(_now) },
+      { label: 'Este mes', from: _monthStart, to: _d(_now) }
+    ];
+    const _base = '/' + biz.slug + '/admin/reportes';
+  %>
   <main class="transition-all duration-300">
-    <div class="px-4 md:px-8 py-4 md:py-6 pb-24 md:pb-6">
-      <%- include('admin/page-header', {
-        icon: 'M3 3v18h18M7 16l4-5 3 2 5-7',
-        title: 'Reportes',
-        subtitle: 'Revisa pedidos, cobros y actividad de tu catálogo por período.'
-      }) %>
+    <div class="rep-shell">
+      <header class="rep-head">
+        <div>
+          <h1>Reportes</h1>
+          <p>Pedidos, cobros y actividad de tu catálogo en el periodo que elijas.</p>
+        </div>
+        <% if (!period.error) { %>
+          <a class="cfg-btn cfg-btn-ghost" href="<%= _base %>.csv?desde=<%= period.from %>&amp;hasta=<%= period.to %>">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-4-4m4 4 4-4M4 20h16"/></svg>
+            Descargar CSV
+          </a>
+        <% } %>
+      </header>
 
-      <form action="/<%= biz.slug %>/admin/reportes" method="GET" class="m-card p-4 mb-4 flex flex-wrap items-end gap-3">
-        <div class="m-field min-w-36"><label for="report-desde">Desde</label><input id="report-desde" name="desde" type="date" value="<%= period.from %>" required></div>
-        <div class="m-field min-w-36"><label for="report-hasta">Hasta</label><input id="report-hasta" name="hasta" type="date" value="<%= period.to %>" required></div>
-        <button type="submit" class="m-btn m-btn-filled">Aplicar fechas</button>
-        <% if (!period.error) { %><a class="m-btn m-btn-outlined" href="/<%= biz.slug %>/admin/reportes.csv?desde=<%= period.from %>&amp;hasta=<%= period.to %>">Descargar CSV</a><% } %>
+      <form action="<%= _base %>" method="GET" class="rep-period" aria-label="Periodo del reporte">
+        <div class="rep-quick" role="group" aria-label="Periodos rápidos">
+          <% _quick.forEach(function (q) { const on = q.from === period.from && q.to === period.to; %>
+            <a href="<%= _base %>?desde=<%= q.from %>&amp;hasta=<%= q.to %>" class="<%= on ? 'is-on' : '' %>" <%- on ? 'aria-current="true"' : '' %>><%= q.label %></a>
+          <% }) %>
+        </div>
+        <div class="rep-range">
+          <label for="report-desde">Desde</label>
+          <input id="report-desde" name="desde" type="date" value="<%= period.from %>" required>
+          <label for="report-hasta">Hasta</label>
+          <input id="report-hasta" name="hasta" type="date" value="<%= period.to %>" required>
+          <button type="submit" class="cfg-btn cfg-btn-primary">Aplicar</button>
+        </div>
       </form>
 
       <% if (period.error) { %>
-        <div role="alert" class="m-card p-4 mb-4 text-sm font-semibold"><%= period.error %></div>
+        <div role="alert" class="rep-error"><%= period.error %></div>
       <% } else { %>
-        <div class="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-4">
-          <section class="m-card p-4"><p class="text-xs" style="color:var(--ap-text-sec)">Pedidos recibidos</p><p class="report-number text-2xl font-extrabold mt-1"><%= report.count %></p></section>
-          <section class="m-card p-4"><p class="text-xs" style="color:var(--ap-text-sec)">Valor de pedidos vigentes</p><p class="report-number text-2xl font-extrabold mt-1"><%= money(report.sales) %></p></section>
-          <section class="m-card p-4"><p class="text-xs" style="color:var(--ap-text-sec)">Ingresos cobrados</p><p class="report-number text-2xl font-extrabold mt-1"><%= money(report.revenue) %></p></section>
-          <section class="m-card p-4"><p class="text-xs" style="color:var(--ap-text-sec)">Pedidos pendientes</p><p class="report-number text-2xl font-extrabold mt-1"><%= report.pending %></p></section>
+        <%
+          const _vig = report.orders.filter(function (o) { return o.status !== 'cancelado'; }).length;
+          const _ticket = _vig ? report.sales / _vig : 0;
+          const _conv = report.visits ? Math.round(report.waClicks / report.visits * 1000) / 10 : 0;
+          const _close = report.waClicks ? Math.round(report.count / report.waClicks * 1000) / 10 : 0;
+          const _days = report.byDay;
+          const _max = Math.max.apply(null, _days.map(function (d) { return Number(d.revenue) || 0; }).concat([Number(1)]));
+          const _maxO = Math.max.apply(null, _days.map(function (d) { return Number(d.orders) || 0; }).concat([1]));
+          const _W = 720, _H = 200, _gap = _days.length > 40 ? 1 : 3;
+          const _bw = _days.length ? Math.max(1, (_W - _gap * (_days.length - 1)) / _days.length) : 0;
+          const _statusCls = { pendiente: 'is-pend', nuevo: 'is-pend', confirmado: 'is-info', enviado: 'is-info', 'en camino': 'is-info', entregado: 'is-ok', pagado: 'is-ok', cancelado: 'is-bad' };
+        %>
+        <div class="rep-kpis">
+          <section><span>Ingresos cobrados</span><strong><%= money(report.revenue) %></strong><small>Pagos registrados en el periodo</small></section>
+          <section><span>Valor de pedidos</span><strong><%= money(report.sales) %></strong><small>Sin contar cancelados</small></section>
+          <section><span>Pedidos</span><strong><%= report.count %></strong><small class="<%= report.pending ? 'is-warn' : '' %>"><%= report.pending %> <%= report.pending === 1 ? 'pendiente' : 'pendientes' %></small></section>
+          <section><span>Ticket promedio</span><strong><%= money(_ticket) %></strong><small><%= _vig %> pedidos vigentes</small></section>
         </div>
 
-        <section class="m-card p-4 mb-4">
-          <div class="flex items-baseline justify-between flex-wrap gap-2 mb-3"><h2 class="font-extrabold text-sm">Actividad del catálogo</h2><p class="text-xs" style="color:var(--ap-text-sec)">Visitas y clics para hacer pedidos por WhatsApp</p></div>
-          <div class="flex flex-wrap gap-6"><p class="text-sm"><strong class="report-number text-lg"><%= report.visits %></strong> <span style="color:var(--ap-text-sec)">visitas</span></p><p class="text-sm"><strong class="report-number text-lg"><%= report.waClicks %></strong> <span style="color:var(--ap-text-sec)">clics a WhatsApp</span></p></div>
-        </section>
+        <div class="rep-grid">
+          <section class="rep-card">
+            <div class="rep-card-head">
+              <div><h2>Cobrado por día</h2><p>Cada barra es un día; pasa el cursor para ver el detalle.</p></div>
+            </div>
+            <% if (!_days.length) { %>
+              <p class="rep-empty">No hay actividad en este periodo.</p>
+            <% } else { %>
+              <svg class="rep-chart" viewBox="0 0 <%= _W %> <%= _H + 24 %>" preserveAspectRatio="none" role="img" aria-label="Gráfica de cobros por día">
+                <line x1="0" y1="<%= _H %>" x2="<%= _W %>" y2="<%= _H %>" class="rep-axis"/>
+                <% _days.forEach(function (d, i) { const v = Number(d.revenue) || 0; const h = Math.max(v > 0 ? 3 : 0, Math.round(v / _max * (_H - 12))); const x = i * (_bw + _gap); const oh = Math.round((Number(d.orders) || 0) / _maxO * (_H - 12)); %>
+                  <g>
+                    <title><%= d.date %> · <%= money(v) %> cobrado · <%= d.orders %> pedidos · <%= d.visits %> visitas</title>
+                    <rect x="<%= x.toFixed(1) %>" y="0" width="<%= _bw.toFixed(1) %>" height="<%= _H %>" class="rep-hit"/>
+                    <rect x="<%= x.toFixed(1) %>" y="<%= _H - h %>" width="<%= _bw.toFixed(1) %>" height="<%= h %>" rx="2" class="rep-bar"/>
+                    <% if (oh) { %><rect x="<%= (x + _bw / 2 - 1.5).toFixed(1) %>" y="<%= _H - oh %>" width="3" height="3" rx="1.5" class="rep-dot"/><% } %>
+                  </g>
+                <% }) %>
+                <text x="0" y="<%= _H + 18 %>" class="rep-lbl"><%= _days[0].date %></text>
+                <text x="<%= _W %>" y="<%= _H + 18 %>" text-anchor="end" class="rep-lbl"><%= _days[_days.length - 1].date %></text>
+              </svg>
+              <div class="rep-legend"><span><i class="rep-sw-bar"></i>Cobrado</span><span><i class="rep-sw-dot"></i>Pedidos</span><span class="rep-legend-max">Día más alto: <%= money(_max) %></span></div>
+            <% } %>
+          </section>
 
-        <div class="grid lg:grid-cols-2 gap-4">
-          <section class="m-card overflow-hidden">
-            <div class="p-4 pb-2"><h2 class="font-extrabold text-sm">Por día</h2><p class="text-xs mt-1" style="color:var(--ap-text-sec)">Los cobros se muestran en la fecha en que se registraron.</p></div>
-            <% if (!report.byDay.length) { %><p class="p-4 text-sm" style="color:var(--ap-text-sec)">No hay actividad en este período.</p><% } else { %>
-              <div class="overflow-x-auto"><table class="report-table"><thead><tr><th>Fecha</th><th class="number">Pedidos</th><th class="number">Cobrado</th><th class="number">Visitas</th></tr></thead><tbody>
-              <% report.byDay.forEach(d => { %><tr><td><%= d.date %></td><td class="number"><%= d.orders %></td><td class="number"><%= money(d.revenue) %></td><td class="number"><%= d.visits %></td></tr><% }) %>
+          <section class="rep-card">
+            <div class="rep-card-head"><div><h2>Del catálogo al pedido</h2><p>Cuántos visitantes terminan escribiéndote.</p></div></div>
+            <ol class="rep-funnel">
+              <li><span>Visitas al catálogo</span><strong><%= report.visits %></strong><i style="--w:100%"></i></li>
+              <li><span>Abrieron WhatsApp</span><strong><%= report.waClicks %> <em><%= _conv %>%</em></strong><i style="--w:<%= report.visits ? Math.max(2, Math.min(100, report.waClicks / report.visits * 100)).toFixed(1) : 0 %>%"></i></li>
+              <li><span>Pedidos registrados</span><strong><%= report.count %> <em><%= _close %>%</em></strong><i style="--w:<%= report.visits ? Math.max(2, Math.min(100, report.count / report.visits * 100)).toFixed(1) : 0 %>%"></i></li>
+            </ol>
+            <p class="rep-note">Los porcentajes comparan cada paso con el anterior.</p>
+          </section>
+        </div>
+
+        <div class="rep-grid rep-grid-tables">
+          <section class="rep-card rep-card-flush">
+            <div class="rep-card-head"><div><h2>Por día</h2><p>Los cobros aparecen en la fecha en que se registraron.</p></div></div>
+            <% if (!_days.length) { %><p class="rep-empty">No hay actividad en este periodo.</p><% } else { %>
+              <div class="rep-scroll"><table class="rep-table"><thead><tr><th>Fecha</th><th class="num">Pedidos</th><th class="num">Cobrado</th><th class="num">Visitas</th></tr></thead><tbody>
+              <% _days.slice().reverse().forEach(function (d) { %><tr><td><%= d.date %></td><td class="num"><%= d.orders %></td><td class="num"><%= money(d.revenue) %></td><td class="num"><%= d.visits %></td></tr><% }) %>
               </tbody></table></div>
             <% } %>
           </section>
-          <section class="m-card overflow-hidden">
-            <div class="p-4 pb-2"><h2 class="font-extrabold text-sm">Pedidos del período</h2><p class="text-xs mt-1" style="color:var(--ap-text-sec)">Incluye pedidos cancelados; el valor de pedidos vigentes los excluye.</p></div>
-            <% if (!report.orders.length) { %><p class="p-4 text-sm" style="color:var(--ap-text-sec)">No hay pedidos en este período.</p><% } else { %>
-              <div class="overflow-x-auto"><table class="report-table"><thead><tr><th>Fecha</th><th>Cliente</th><th>Productos</th><th>Estado</th><th class="number">Total</th></tr></thead><tbody>
-              <% report.orders.slice(0, 100).forEach(o => { %><tr><td class="whitespace-nowrap"><%= String(o.created_at).slice(0, 10) %></td><td><%= o.customer_name || 'Sin nombre' %></td><td class="details" title="<%= o.items || '' %>"><%= o.items || '—' %></td><td><%= o.status %></td><td class="number"><%= money(o.total) %></td></tr><% }) %>
+          <section class="rep-card rep-card-flush">
+            <div class="rep-card-head"><div><h2>Pedidos del periodo</h2><p>Incluye cancelados; el valor de pedidos no los cuenta.</p></div></div>
+            <% if (!report.orders.length) { %><p class="rep-empty">No hay pedidos en este periodo.</p><% } else { %>
+              <div class="rep-scroll"><table class="rep-table"><thead><tr><th>Fecha</th><th>Cliente</th><th>Productos</th><th>Estado</th><th class="num">Total</th></tr></thead><tbody>
+              <% report.orders.slice(0, 100).forEach(function (o) { const st = String(o.status || '').toLowerCase(); %><tr><td class="nowrap"><%= String(o.created_at).slice(0, 10) %></td><td><%= o.customer_name || 'Sin nombre' %></td><td class="details" title="<%= o.items || '' %>"><%= o.items || '—' %></td><td><span class="rep-pill <%= _statusCls[st] || '' %>"><%= o.status %></span></td><td class="num"><%= money(o.total) %></td></tr><% }) %>
               </tbody></table></div>
-              <% if (report.orders.length > 100) { %><p class="p-3 text-xs" style="color:var(--ap-text-sec)">Mostrando 100 de <%= report.orders.length %> pedidos. El CSV incluye todos.</p><% } %>
+              <% if (report.orders.length > 100) { %><p class="rep-note rep-note-pad">Mostrando 100 de <%= report.orders.length %> pedidos. El CSV incluye todos.</p><% } %>
             <% } %>
           </section>
         </div>

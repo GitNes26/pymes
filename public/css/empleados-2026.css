@@ -1,0 +1,90 @@
+/* Empleados · diseño 2026 (mismo sistema que Configuración y Proveedores).
+   La página trae estilos propios en línea; aquí se usa .emp-2026 para ganarles. */
+body.emp-2026.employees-admin-page {
+  --ee-ink: #16181B; --ee-muted: #5B6166; --ee-petrol: #1D5C5A; --ee-petrol-soft: #1D5C5A;
+  --ee-line: #E3E6E6; --ee-card: #FFFFFF;
+  background-color: #F6F7F7 !important;
+}
+.emp-2026 .employees-shell { max-width: 1480px; padding: 24px 32px 48px; }
+
+/* Encabezado */
+.emp-2026 .employee-hero { align-items: center; margin-bottom: 18px; }
+.emp-2026 .employee-hero h1 { font: 700 30px/1.1 Geist, Inter, system-ui, sans-serif; letter-spacing: -.02em; color: var(--ee-ink); }
+.emp-2026 .employee-hero p { font-size: 14px; margin-top: 4px; }
+.emp-2026 .employee-add-shortcut .employee-icon { width: 16px; height: 16px; }
+
+/* Resumen */
+.emp-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px; }
+.emp-stats > div { display: flex; flex-direction: column; gap: 2px; padding: 16px 18px; border: 1px solid var(--ee-line); border-radius: 8px; background: #fff; }
+.emp-stats strong { font-size: 26px; font-weight: 700; letter-spacing: -.02em; color: var(--ee-ink); font-variant-numeric: tabular-nums; }
+.emp-stats span { font-size: 13px; color: var(--ee-muted); }
+.emp-stats .is-warn { background: #FFFBF4; border-color: #F3DFBF; }
+.emp-stats .is-warn strong { color: #9A5A00; }
+
+/* Directorio */
+.emp-2026 .employee-workspace { grid-template-columns: minmax(0, 1fr) 380px; gap: 14px; }
+.emp-2026 .employee-directory { padding: 20px 22px 22px; border: 1px solid var(--ee-line); border-radius: 8px; background: #fff; }
+.emp-2026 .employee-directory__toolbar { padding: 0 0 14px; }
+.emp-2026 .employee-directory__toolbar h2 { font-size: 19px; font-weight: 700; }
+.emp-2026 .employee-directory__toolbar p { font-size: 13px; font-weight: 400; color: var(--ee-muted); }
+.emp-2026 .employee-directory__toolbar .m-badge { background: #E3F1EC !important; color: #134341 !important; border-radius: 4px !important; font-size: 12px; }
+.emp-2026 .employee-search input { border-radius: 6px !important; border-color: #DCE0E0 !important; background: #fff !important; font-size: 14px !important; min-height: 38px; }
+.emp-2026 .employee-search input:focus { border-color: var(--ee-petrol) !important; box-shadow: 0 0 0 3px rgba(29,92,90,.14) !important; }
+
+.emp-2026 .employee-list { gap: 0; margin-top: 4px; }
+.emp-2026 .employee-row { padding: 14px 4px; border-radius: 0; background: transparent; box-shadow: none; border-bottom: 1px solid #EEF0F0; transition: background .15s; }
+.emp-2026 .employee-row:last-child { border-bottom: 0; }
+.emp-2026 .employee-row:hover { transform: none; box-shadow: none; background: #FAFBFB; }
+.emp-2026 .employee-avatar { width: 40px; height: 40px; border-radius: 50%; background: #E3F1EC; color: #134341; box-shadow: none; font-size: 15px; font-weight: 600; }
+.emp-2026 .employee-row__heading h3 { font-size: 15px; font-weight: 600; }
+.emp-2026 .employee-pin-label { font-size: 12px; font-weight: 400; color: var(--ee-muted); }
+.emp-2026 .employee-permission-summary { margin-top: 6px; gap: 6px; }
+.emp-2026 .employee-permission-summary .m-badge { min-height: 22px; border-radius: 4px !important; font-size: 12px !important; font-weight: 500; background: #F1F3F3 !important; color: #2A2F33 !important; }
+.emp-2026 .employee-permission-count { font-size: 12px; font-weight: 400; }
+.emp-2026 .employee-no-perms { font-size: 12px; font-weight: 500; color: #9A5A00; background: #FDF0DC; padding: 2px 8px; border-radius: 4px; }
+.emp-2026 .employee-edit-button { border-radius: 6px !important; border-color: #DCE0E0 !important; color: var(--ee-ink) !important; font-weight: 500; }
+.emp-2026 .employee-delete-button { border-radius: 6px !important; }
+.emp-2026 .employee-empty, .emp-2026 .employee-search-empty { border-radius: 8px; border-color: #D4D9D9; background: #FAFBFB; }
+.emp-2026 .employee-empty__icon { border-radius: 50%; background: #E3F1EC; color: #1D5C5A; }
+
+/* Editor */
+.emp-2026 .employee-editor { border-radius: 8px; border-color: var(--ee-line); box-shadow: none; }
+.emp-2026 .employee-editor__heading { padding: 18px 20px 14px; border-bottom: 1px solid var(--ee-line); background: #fff; }
+.emp-2026 .employee-editor__title > span { border-radius: 8px; background: #E3F1EC; color: #1D5C5A; box-shadow: none; }
+.emp-2026 .employee-editor__title h2 { font-size: 17px; font-weight: 700; }
+.emp-2026 .employee-editor__title p { font-size: 12px; font-weight: 400; }
+.emp-2026 #emp-form { padding: 18px 20px 20px; }
+.emp-2026 .m-field > input, .emp-2026 .employee-pin-field { border: 1px solid #DCE0E0 !important; border-radius: 3px !important; background: #fff !important; }
+.emp-2026 .m-field > input:focus, .emp-2026 .employee-pin-field:focus-within { border-color: var(--ee-petrol) !important; box-shadow: 0 0 0 3px rgba(29,92,90,.14) !important; }
+.emp-2026 .employee-field-hint { font-size: 12px; color: var(--ee-muted); }
+
+/* Permisos */
+.emp-2026 .employee-permissions legend { font-size: 16px; font-weight: 600; text-transform: none; letter-spacing: 0; color: var(--ee-ink); }
+.emp-2026 .employee-permissions__intro { font-size: 13px; color: var(--ee-muted); margin-bottom: 10px; }
+.emp-2026 .permission-groups { border-top: 1px solid var(--ee-line); }
+.emp-2026 .permission-group { grid-template-columns: 1fr; gap: 8px; padding: 12px 0; border-bottom: 1px solid var(--ee-line); }
+.emp-2026 .permission-group__label { align-items: center; gap: 8px; padding-top: 0; color: var(--ee-ink); }
+.emp-2026 .permission-group__label h3 { flex: 1; font-size: 14px; font-weight: 600; }
+.emp-2026 .permission-group__label .employee-icon { color: #1D5C5A; font-size: 15px; }
+.perm-all { height: 26px; padding: 0 10px; border: 1px solid #DCE0E0; border-radius: 4px; background: #fff; font: inherit; font-size: 12px; font-weight: 500; color: #2A2F33; cursor: pointer; }
+.perm-all:hover { background: #F6F7F7; }
+.perm-all.is-on { background: #E3F1EC; border-color: #BFDCD2; color: #134341; }
+.emp-2026 .permission-options { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.emp-2026 .permission-option { border-radius: 4px !important; font-size: 13px; color: #2A2F33; }
+.emp-2026 .permission-option:has(input:checked) { background: #E3F1EC !important; color: #134341; }
+
+.emp-2026 .employee-editor__footer p { font-size: 12px; color: var(--ee-muted); }
+.emp-2026 #emp-submit { background: #1D5C5A !important; border-radius: 6px !important; font-weight: 600; box-shadow: none !important; }
+.emp-2026 #emp-submit:hover { background: #134341 !important; }
+.emp-2026 .employee-alert { border-radius: 6px; font-weight: 500; font-size: 14px; }
+
+@media (max-width: 1100px) { .emp-2026 .employee-workspace { grid-template-columns: 1fr; } .emp-2026 .employee-editor { position: static; max-height: none; } }
+@media (max-width: 640px) {
+  .emp-2026 .employees-shell { padding: 16px 14px 32px; }
+  .emp-stats { grid-template-columns: 1fr; }
+  .emp-2026 .permission-options { grid-template-columns: 1fr; }
+}
+
+/* Modo oscuro */
+body.dark.emp-2026.employees-admin-page { --ee-ink: #E8EDEF; --ee-muted: #A3AEB4; --ee-line: #2A3338; background-color: #0F1417 !important; }
+body.dark .emp-stats > div, body.dark.emp-2026 .employee-directory, body.dark.emp-2026 .employee-editor, body.dark.emp-2026 .employee-editor__heading { background: #161C20 !important; }

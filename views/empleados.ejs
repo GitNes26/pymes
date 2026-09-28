@@ -3,7 +3,7 @@
 <head>
   <%- include('admin/head', { title: 'Empleados', biz }) %>
 </head>
-<body class="m-material employees-admin-page min-h-screen">
+<body class="m-material employees-admin-page config-admin-page emp-2026 min-h-screen">
   <!--
     THESIS: administrar accesos debe sentirse como organizar un equipo, no como llenar una matriz de permisos.
     OWN-WORLD: suelo perla, tinta azul-negra, petróleo para acción y luz cian/violeta contenida en el editor.
@@ -30,6 +30,8 @@
     <symbol id="ee-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10h.01"/></symbol>
   </svg>
   <%- include('admin/sidebar', { biz, active: 'empleados', canDesign }) %>
+  <link rel="stylesheet" href="/css/config-2026.css?v=20260928b">
+  <link rel="stylesheet" href="/css/empleados-2026.css?v=20260928a">
 
   <main class="transition-all duration-300">
     <div class="employees-shell">
@@ -38,7 +40,7 @@
           <h1>Empleados</h1>
           <p>Asigna un PIN individual y decide exactamente qué puede gestionar cada persona.</p>
         </div>
-        <a href="#employee-editor" class="m-btn m-btn-filled m-btn-sm employee-add-shortcut" onclick="setTimeout(function () { document.getElementById('emp-name').focus(); }, 280)">
+        <a href="#employee-editor" class="cfg-btn cfg-btn-primary employee-add-shortcut" onclick="setTimeout(function () { document.getElementById('emp-name').focus(); }, 280)">
           <svg class="employee-icon" aria-hidden="true"><use href="#ee-person-add"/></svg>
           <span>Nuevo empleado</span>
         </a>
@@ -54,6 +56,17 @@
           <svg class="employee-icon" aria-hidden="true"><use href="#ee-alert"/></svg><span><%= error %></span>
         </div>
       <% } %>
+
+      <%
+        const _empTotal = employees.length;
+        const _empOrders = employees.filter(function (e) { return e.perms.indexOf('pedidos.gestionar') !== -1; }).length;
+        const _empNone = employees.filter(function (e) { return !e.perms.length; }).length;
+      %>
+      <div class="emp-stats" role="list" aria-label="Resumen del equipo">
+        <div role="listitem"><strong><%= _empTotal %></strong><span><%= _empTotal === 1 ? 'Persona en tu equipo' : 'Personas en tu equipo' %></span></div>
+        <div role="listitem"><strong><%= _empOrders %></strong><span>Pueden atender pedidos</span></div>
+        <div role="listitem" class="<%= _empNone ? 'is-warn' : '' %>"><strong><%= _empNone %></strong><span><%= _empNone ? 'Sin permisos asignados' : 'Todos tienen permisos' %></span></div>
+      </div>
 
       <div class="employee-workspace">
         <section class="employee-directory" aria-labelledby="employee-directory-title">
@@ -158,6 +171,7 @@
                     <div class="permission-group__label">
                       <svg class="employee-icon" aria-hidden="true"><use href="#ee-shield"/></svg>
                       <h3 id="perm-module-<%= m.replace(/\s+/g, '-').toLowerCase() %>"><%= m %></h3>
+                      <button type="button" class="perm-all" data-perm-all aria-label="Activar todos los permisos de <%= m %>">Todos</button>
                     </div>
                     <div class="permission-options">
                       <% EMPLOYEE_PERMS.filter(p => p.module === m).forEach(p => { %>
@@ -394,6 +408,39 @@
       document.getElementById('emp-pin').removeAttribute('required');
       document.getElementById('emp-pin-hint').textContent = 'Déjalo vacío para conservar el PIN actual o escribe uno nuevo.';
     }
+  </script>
+  <script>
+    // "Todos" por módulo: activa o quita todos los permisos de ese grupo.
+    (function () {
+      function sync(group) {
+        var boxes = group.querySelectorAll('input[name="perms"]');
+        var all = Array.prototype.every.call(boxes, function (b) { return b.checked; });
+        var btn = group.querySelector('[data-perm-all]');
+        if (btn) { btn.textContent = all ? 'Quitar' : 'Todos'; btn.classList.toggle('is-on', all); }
+      }
+      document.querySelectorAll('.permission-group').forEach(function (group) {
+        var btn = group.querySelector('[data-perm-all]');
+        if (!btn) return;
+        btn.addEventListener('click', function () {
+          var boxes = group.querySelectorAll('input[name="perms"]');
+          var all = Array.prototype.every.call(boxes, function (b) { return b.checked; });
+          boxes.forEach(function (b) { b.checked = !all; b.dispatchEvent(new Event('change', { bubbles: true })); });
+          sync(group);
+        });
+        group.addEventListener('change', function () { sync(group); });
+        sync(group);
+      });
+      // Al editar/cancelar, el formulario cambia las casillas por código: se re-sincroniza.
+      ['editarEmpleado', 'cancelarEdicionEmpleado'].forEach(function (fn) {
+        var orig = window[fn];
+        if (typeof orig !== 'function') return;
+        window[fn] = function () {
+          var r = orig.apply(this, arguments);
+          document.querySelectorAll('.permission-group').forEach(sync);
+          return r;
+        };
+      });
+    })();
   </script>
 </body>
 </html>
