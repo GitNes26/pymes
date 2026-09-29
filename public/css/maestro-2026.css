@@ -1,0 +1,100 @@
+/* Panel maestro · diseño 2026 (mismo sistema que el panel de tiendas) */
+body.mst-2026 {
+  --mx-ink: #16181B; --mx-muted: #5B6166; --mx-line: #E3E6E6; --mx-field: #DCE0E0;
+  --mx-petrol: #1D5C5A; --mx-petrol-2: #134341; --mx-soft: #E3F1EC; --mx-amber: #E8A33D;
+  background: #F6F7F7 !important; color: var(--mx-ink); font-family: Geist, Inter, system-ui, sans-serif;
+}
+
+/* ---------- Acceso ---------- */
+.mst-login { min-height: 100vh; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.mst-login-side { position: relative; overflow: hidden; isolation: isolate; display: flex; flex-direction: column; justify-content: space-between; padding: 44px; background: #0E1211; color: #fff; }
+.mst-login-glow { position: absolute; inset: 0; z-index: -1; background: radial-gradient(60% 60% at 30% 80%, rgba(29,92,90,.6), transparent 70%), radial-gradient(40% 40% at 90% 10%, rgba(232,163,61,.18), transparent 70%); }
+.mst-login-side img { border-radius: 10px; }
+.mst-login-quote { margin: 0; font-size: clamp(36px, 4vw, 56px); line-height: 1.02; letter-spacing: -.04em; font-weight: 600; }
+.mst-login-quote em { font-family: "Instrument Serif", Georgia, serif; font-style: italic; font-weight: 400; color: #7FD1BF; }
+.mst-login-side small { color: rgba(255,255,255,.55); font-size: 13px; }
+.mst-login-main { display: grid; place-items: center; padding: 32px 20px; }
+.mst-login-card { width: 100%; max-width: 380px; display: flex; flex-direction: column; }
+.mst-lock { width: 48px; height: 48px; border-radius: 12px; background: var(--mx-soft); color: var(--mx-petrol); display: grid; place-items: center; margin-bottom: 22px; }
+.mst-lock svg { width: 24px; height: 24px; }
+.mst-login-card h1 { margin: 0; font-size: 30px; font-weight: 700; letter-spacing: -.02em; }
+.mst-login-card > p { margin: 6px 0 26px; font-size: 15px; color: var(--mx-muted); }
+.mst-login-card label { font-size: 14px; font-weight: 500; margin-bottom: 6px; }
+.mst-login-card input { height: 48px; padding: 0 14px; border: 1px solid var(--mx-field); border-radius: 6px; font: inherit; font-size: 18px; letter-spacing: .3em; background: #fff; color: var(--mx-ink); }
+.mst-login-card input:focus { outline: 0; border-color: var(--mx-petrol); box-shadow: 0 0 0 3px rgba(29,92,90,.15); }
+.mst-login-card button { height: 48px; margin-top: 16px; border: 0; border-radius: 6px; background: var(--mx-petrol); color: #fff; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; transition: background .15s; }
+.mst-login-card button:hover { background: var(--mx-petrol-2); }
+.mst-login-card > a { margin-top: 22px; text-align: center; font-size: 14px; color: var(--mx-muted); }
+.mst-login-card > a:hover { color: var(--mx-ink); }
+.mst-error { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; padding: 10px 12px; border-radius: 6px; background: #FDF1F0; color: #A8322D; font-size: 14px; font-weight: 500; }
+.mst-error svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+/* ---------- Encabezado ---------- */
+.mst-2026 .panel-header { background: rgba(255,255,255,.92) !important; backdrop-filter: blur(10px); border-bottom: 1px solid var(--mx-line) !important; box-shadow: none !important; }
+.mst-2026 .panel-header > div, .mst-2026 main { max-width: 1320px !important; }
+.mst-2026 .panel-header h1 { font-size: 18px !important; font-weight: 700 !important; color: var(--mx-ink) !important; }
+.mst-2026 .panel-header p { font-size: 13px !important; color: var(--mx-muted) !important; }
+.mst-brand-img { border-radius: 9px; }
+.mst-head-actions { display: flex; align-items: center; gap: 8px; }
+.mst-head-link { height: 36px; padding: 0 14px; display: flex; align-items: center; border: 1px solid var(--mx-field); border-radius: 6px; font-size: 14px; font-weight: 500; color: var(--mx-ink); background: #fff; }
+.mst-head-link:hover { background: #F6F7F7; }
+.mst-2026 .panel-header form button { height: 36px; padding: 0 14px !important; border-radius: 6px !important; background: transparent !important; color: var(--mx-muted) !important; font-size: 14px !important; font-weight: 500 !important; }
+.mst-2026 .panel-header form button:hover { background: #FDF1F0 !important; color: #A8322D !important; }
+.mst-2026 main { padding-top: 24px !important; padding-bottom: 48px !important; }
+
+/* ---------- Indicadores ---------- */
+.mst-2026 .mp-stat-card { border: 1px solid var(--mx-line) !important; border-radius: 8px !important; padding: 16px 16px 14px !important; background: #fff !important; cursor: pointer; transition: border-color .15s, box-shadow .15s; }
+.mst-2026 .mp-stat-card:hover { transform: none !important; border-color: #C9D5D3 !important; }
+.mst-2026 .mp-stat-card.active-filter { border-color: var(--mx-petrol) !important; box-shadow: 0 0 0 3px rgba(29,92,90,.14) !important; }
+.mst-2026 .mp-stat-val { font-size: 26px !important; font-weight: 700 !important; letter-spacing: -.02em; color: var(--mx-ink) !important; font-variant-numeric: tabular-nums; }
+.mst-2026 .mp-stat-lbl { font-size: 13px !important; font-weight: 400 !important; color: var(--mx-muted) !important; text-transform: none !important; letter-spacing: 0 !important; }
+.mst-2026 .mp-stat-icon { width: 36px !important; height: 36px !important; border-radius: 8px !important; background: var(--mx-soft) !important; color: var(--mx-petrol) !important; font-size: 16px !important; }
+.mst-2026 .mp-adopt-bar { height: 8px; border-radius: 4px; background: #E9ECEC !important; }
+.mst-2026 .mp-adopt-bar .fill { background: var(--mx-petrol) !important; border-radius: 4px; }
+
+/* ---------- Pestañas y filtros ---------- */
+.mst-2026 nav.flex { background: transparent !important; border: 0 !important; border-bottom: 1px solid var(--mx-line) !important; border-radius: 0 !important; padding: 0 !important; }
+.mst-2026 .mt-tab { border-radius: 0 !important; background: transparent !important; box-shadow: none !important; border-bottom: 2px solid transparent !important; font-size: 14px !important; font-weight: 500 !important; color: var(--mx-muted) !important; padding: 10px 12px !important; margin-bottom: -1px; }
+.mst-2026 .mt-tab.active { border-bottom-color: var(--mx-ink) !important; color: var(--mx-ink) !important; font-weight: 600 !important; }
+.mst-2026 .mt-tab-count { background: var(--mx-soft) !important; color: var(--mx-petrol-2) !important; border-radius: 4px !important; }
+.mst-2026 #giro-filtro, .mst-2026 #busca-tienda, .mst-2026 #orden-tiendas { height: 40px; border: 1px solid var(--mx-field) !important; border-radius: 6px !important; background: #fff !important; font-size: 14px !important; color: var(--mx-ink) !important; box-shadow: none !important; }
+.mst-2026 #giro-filtro:focus, .mst-2026 #busca-tienda:focus, .mst-2026 #orden-tiendas:focus { border-color: var(--mx-petrol) !important; box-shadow: 0 0 0 3px rgba(29,92,90,.14) !important; outline: 0; }
+.mst-2026 #conteo-tiendas { font-size: 13px !important; font-weight: 500 !important; color: var(--mx-muted) !important; }
+
+/* ---------- Tiendas ---------- */
+.mst-2026 #tiendas-grid { gap: 10px !important; }
+.mst-2026 .store-card { border: 1px solid var(--mx-line) !important; border-radius: 8px !important; background: #fff !important; box-shadow: none !important; transition: border-color .15s; }
+.mst-2026 .store-card:hover { border-color: #C9D5D3 !important; transform: none !important; }
+.mst-2026 .store-card.suspended { background: #FFFBF4 !important; border-color: #F3DFBF !important; }
+.mst-2026 .store-card.expired { border-left: 3px solid #D9892B !important; }
+.mst-2026 .mc { padding: 16px 18px !important; }
+.mst-2026 .mc-logo { width: 44px !important; height: 44px !important; border-radius: 10px !important; border: 1px solid var(--mx-line); object-fit: cover; }
+.mst-2026 .mc-name span { font-size: 16px !important; font-weight: 600 !important; color: var(--mx-ink) !important; }
+.mst-2026 .mc-name a { font-size: 13px !important; color: var(--mx-petrol) !important; font-weight: 500 !important; }
+.mst-2026 .mc-stats { font-size: 13px !important; color: var(--mx-muted) !important; gap: 14px !important; }
+.mst-2026 .badge-status { border-radius: 4px !important; font-size: 12px !important; font-weight: 500 !important; text-transform: none !important; letter-spacing: 0 !important; padding: 3px 8px !important; border: 0 !important; }
+.mst-2026 .badge-status.active { background: #E3F3E9 !important; color: #1E7A4C !important; }
+.mst-2026 .badge-status.inactive { background: #F1F3F3 !important; color: var(--mx-muted) !important; }
+.mst-2026 .badge-status.pro { background: var(--mx-soft) !important; color: var(--mx-petrol-2) !important; }
+.mst-2026 .badge-status.free, .mst-2026 .badge-status.neutral, .mst-2026 .badge-status.giro { background: #F1F3F3 !important; color: #2A2F33 !important; }
+.mst-2026 .badge-status.warning { background: #FDF0DC !important; color: #9A5A00 !important; }
+.mst-2026 .badge-status.expired, .mst-2026 .badge-status.suspended { background: #FDF1F0 !important; color: #A8322D !important; }
+.mst-2026 .mc-controls { border-top: 1px solid #EEF0F0 !important; margin-top: 12px; padding-top: 12px; }
+.mst-2026 .mc-lbl { font-size: 12px !important; font-weight: 500 !important; color: var(--mx-muted) !important; text-transform: none !important; letter-spacing: 0 !important; }
+.mst-2026 .mc-date { height: 36px; border: 1px solid var(--mx-field) !important; border-radius: 4px !important; font-size: 14px !important; }
+.mst-2026 .mc-save { height: 36px; padding: 0 14px !important; border-radius: 6px !important; background: var(--mx-petrol) !important; color: #fff !important; font-weight: 600 !important; font-size: 13px !important; border: 0 !important; }
+.mst-2026 .mc-save:hover { background: var(--mx-petrol-2) !important; }
+.mst-2026 .mc-act { height: 36px; padding: 0 12px !important; border: 1px solid var(--mx-field) !important; border-radius: 6px !important; background: #fff !important; color: var(--mx-ink) !important; font-size: 13px !important; font-weight: 500 !important; box-shadow: none !important; }
+.mst-2026 .mc-act:hover { background: #F6F7F7 !important; }
+.mst-2026 .mc-act.ok { border-color: #BFDCD2 !important; background: var(--mx-soft) !important; color: var(--mx-petrol-2) !important; }
+
+@media (max-width: 860px) {
+  .mst-login { grid-template-columns: 1fr; }
+  .mst-login-side { min-height: 220px; padding: 28px; }
+  .mst-login-quote { font-size: 32px; }
+  .mst-head-link { display: none; }
+}
+
+/* Modo oscuro */
+body.dark.mst-2026 { --mx-ink: #E8EDEF; --mx-muted: #A3AEB4; --mx-line: #2A3338; --mx-field: #36424A; --mx-soft: #173331; background: #0F1417 !important; }
+body.dark.mst-2026 .store-card, body.dark.mst-2026 .mp-stat-card, body.dark.mst-2026 .panel-header, body.dark .mst-head-link, body.dark.mst-2026 .mc-act { background: #161C20 !important; }
