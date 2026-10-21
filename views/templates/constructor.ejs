@@ -137,6 +137,49 @@
     });
   }
 
+  // Estado de hoy (abierto/cerrado y próxima apertura) con la hora de La Laguna, no la del
+  // servidor: el contenedor corre en UTC y antes marcaba "Cerrado" en pleno horario.
+  var _status = (function () {
+    if (!_horario || typeof _horario !== 'object') return null;
+    var rango = function (d) {
+      if (Array.isArray(_horario)) {
+        for (var i = 0; i < _horario.length; i++) { var h = _horario[i]; if (h && Number(h.d) === d && h.o && h.c) return { o: h.o, c: h.c }; }
+        return null;
+      }
+      var v = _horario[d] || _horario[String(d)];
+      return (v && (v.open || v.o) && (v.close || v.c)) ? { o: v.open || v.o, c: v.close || v.c } : null;
+    };
+    var mins = function (t) { var p = String(t).split(':'); return (parseInt(p[0], 10) || 0) * 60 + (parseInt(p[1], 10) || 0); };
+    var dow = new Date().getDay(), hm = new Date().getHours() * 60 + new Date().getMinutes();
+    try {
+      var parts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Monterrey', weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(new Date());
+      var get = function (t) { var x = parts.filter(function (p) { return p.type === t; })[0]; return x ? x.value : ''; };
+      dow = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(get('weekday'));
+      hm = ((parseInt(get('hour'), 10) || 0) % 24) * 60 + (parseInt(get('minute'), 10) || 0);
+    } catch (e) {}
+    var hoy = rango(dow);
+    var algun = false;
+    for (var k = 0; k < 7; k++) if (rango(k)) algun = true;
+    if (!algun) return null;
+    if (hoy && hm >= mins(hoy.o) && hm < mins(hoy.c)) return { open: true, label: 'Abierto ahora', sub: 'Cierra a las ' + _to12(hoy.c) };
+    if (hoy && hm < mins(hoy.o)) return { open: false, label: 'Cerrado', sub: 'Abre hoy a las ' + _to12(hoy.o) };
+    var dias = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+    for (var n = 1; n <= 7; n++) {
+      var dd = (dow + n) % 7, r = rango(dd);
+      if (r) return { open: false, label: 'Cerrado', sub: 'Abre ' + (n === 1 ? 'mañana' : 'el ' + dias[dd]) + ' a las ' + _to12(r.o) };
+    }
+    return { open: false, label: 'Cerrado', sub: '' };
+  })();
+  var _waHref = _whatsapp ? 'https://wa.me/' + _whatsapp + '?text=' + encodeURIComponent('Hola, vi su catálogo de ' + biz.name + ' y quiero hacer un pedido.') : '';
+  // Franja de confianza bajo la portada: solo con datos reales de la tienda.
+  var _trust = [];
+  if (_whatsapp) _trust.push({ icon: 'bi-whatsapp', t: 'Pedidos por WhatsApp', s: 'Te atendemos directo' });
+  if (biz.mp_enabled && biz.mp_public_key) _trust.push({ icon: 'bi-shield-check', t: 'Pago con tarjeta', s: 'Seguro con Mercado Pago' });
+  else if (biz.transfer_enabled && (biz.transfer_bank || biz.transfer_account)) _trust.push({ icon: 'bi-bank', t: 'Transferencia', s: 'Pago fácil y directo' });
+  if ((typeof shippingZones !== 'undefined' && shippingZones && shippingZones.length) || _ex.envios) _trust.push({ icon: 'bi-truck', t: 'Envíos a domicilio', s: 'Consulta tu zona', href: _ex.envios ? '#xs-ship-t' : '' });
+  if (biz.address) _trust.push({ icon: 'bi-geo-alt', t: 'Visítanos', s: String(biz.address).split(',')[0], href: '#xs-map-t' });
+  _trust = _trust.slice(0, 4);
+
   // Offered products
   var _ofertas = _prods.filter(function(p){ return p && p.old_price && p.old_price > p.price; });
   // Todos los productos activos (los sin foto usan el placeholder sin-imagen.svg en el <img>).
@@ -199,7 +242,7 @@
   var _bestIds = (typeof bestIds !== 'undefined' && bestIds) ? bestIds : [];
   var _best = _ex.showTop ? _bestIds.map(function(id){ return _realProds.filter(function(p){ return p.id === id; })[0]; }).filter(Boolean) : [];
 %><!DOCTYPE html>
-<html lang="es" data-style="<%= _design %>" data-world="<%= _designWorld %>" data-ratio="<%= _visual.ratio %>" data-cols="<%= _visual.cols %>" data-hero="<%= _visual.hero %>" data-filter="<%= _visual.filter %>" data-card="<%= _visual.card %>" data-density="<%= _visual.density %>" data-align="<%= _visual.align %>" data-fit="<%= _visual.fit %>" data-motion="<%= _visual.motion %>" data-offers="<%= _visual.offers %>">
+<html lang="es" data-style="<%= _design %>" data-world="<%= _designWorld %>" data-tone="<%= _bgDark ? 'dark' : 'light' %>" data-ratio="<%= _visual.ratio %>" data-cols="<%= _visual.cols %>" data-hero="<%= _visual.hero %>" data-filter="<%= _visual.filter %>" data-card="<%= _visual.card %>" data-density="<%= _visual.density %>" data-align="<%= _visual.align %>" data-fit="<%= _visual.fit %>" data-motion="<%= _visual.motion %>" data-offers="<%= _visual.offers %>">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -1174,58 +1217,40 @@
   <link rel="stylesheet" href="/css/tw-static.css?v=20260920a">
   <link rel="stylesheet" href="/css/catalog-themes.css?v=20260927a">
   <link rel="stylesheet" href="/css/catalog-craft.css?v=20260928a">
+  <link rel="stylesheet" href="/css/catalog-pro.css?v=20261021a">
 </head>
 <body>
   <a class="skip-link" href="#contenido">Saltar al contenido</a>
 
+  <%
+    // Bloque común de la portada: estado de hoy + llamadas a la acción
+    var _heroExtras = function () {
+      var h = '';
+      if (_status) h += '<div class="hero-meta"><span class="hero-status ' + (_status.open ? 'open' : 'closed') + '"><i class="hero-dot" aria-hidden="true"></i><b>' + _xe(_status.label) + '</b>' + (_status.sub ? '<span class="hero-status-sub">' + _xe(_status.sub) + '</span>' : '') + '</span></div>';
+      var c = '';
+      if (_realProds.length) c += '<a class="hero-cta hero-cta--main" href="#contenido"><span>Ver productos</span><i class="bi bi-arrow-down" aria-hidden="true"></i></a>';
+      if (_waHref) c += '<a class="hero-cta hero-cta--wa" href="' + _waHref + '" target="_blank" rel="noopener"><i class="bi bi-whatsapp" aria-hidden="true"></i><span>Escríbenos</span></a>';
+      if (c) h += '<div class="hero-ctas">' + c + '</div>';
+      return h;
+    };
+  %>
   <% if (biz.banner) { %>
-  <div class="hero<%= biz.banner ? ' has-banner' : '' %>">
+  <div class="hero has-banner">
     <img src="<%= biz.banner %>"<%- _imgAttrs(biz.banner, '100vw') %> class="bg" alt="" fetchpriority="high" decoding="async" data-hide-on-error>
     <div class="hero-overlay">
       <% if (biz.logo && biz.logo !== biz.banner) { %><img src="<%= biz.logo %>" class="hero-logo" alt="Logo de <%= biz.name %>" fetchpriority="high" decoding="async" data-hide-on-error><% } %>
       <h1 class="hero-name"><%= biz.name %></h1>
       <% if (biz.description) { %><div class="hero-desc"><%= biz.description %></div><% } %>
-      <% if (_horarioHtml) { %>
-      <div class="hero-status <%= (function(){
-        if(!_horario) return 'closed';
-        var now=new Date(), dow=now.getDay(), hm=now.getHours()*60+now.getMinutes();
-        if(Array.isArray(_horario)){
-          for(var i=0;i<_horario.length;i++){
-            var h=_horario[i];
-            if(h && h.d===dow && h.o && h.c){
-              var op=parseInt(h.o.split(':')[0])*60+parseInt(h.o.split(':')[1]);
-              var cl=parseInt(h.c.split(':')[0])*60+parseInt(h.c.split(':')[1]);
-              return hm>=op&&hm<=cl?'open':'closed';
-            }
-          }
-        }
-        return 'closed';
-      })() %>">
-        <span><%= (function(){
-          if(!_horario) return '🔴 Cerrado';
-          var now=new Date(), dow=now.getDay(), hm=now.getHours()*60+now.getMinutes();
-          if(Array.isArray(_horario)){
-            for(var i=0;i<_horario.length;i++){
-              var h=_horario[i];
-              if(h && h.d===dow && h.o && h.c){
-                var op=parseInt(h.o.split(':')[0])*60+parseInt(h.o.split(':')[1]);
-                var cl=parseInt(h.c.split(':')[0])*60+parseInt(h.c.split(':')[1]);
-                return hm>=op&&hm<=cl?'🟢 Abierto ahora':'🔴 Cerrado';
-              }
-            }
-          }
-          return '🔴 Cerrado';
-        })() %></span>
-      </div>
-      <% } %>
+      <%- _heroExtras() %>
     </div>
   </div>
-  <% } else if (biz.logo) { %>
-  <!-- Sin banner: el logo se presenta grande en una portada sencilla -->
-  <div class="brand-hero">
-    <img src="<%= biz.logo %>" class="brand-hero-logo" alt="<%= biz.name %>" fetchpriority="high" decoding="async" data-hide-on-error>
+  <% } else { %>
+  <!-- Sin banner: portada sencilla (con el logo grande si lo hay; si no, solo el nombre) -->
+  <div class="brand-hero<%= biz.logo ? '' : ' brand-hero--text' %>">
+    <% if (biz.logo) { %><img src="<%= biz.logo %>" class="brand-hero-logo" alt="<%= biz.name %>" fetchpriority="high" decoding="async" data-hide-on-error><% } %>
     <h1 class="hero-name"><%= biz.name %></h1>
     <% if (biz.description) { %><div class="hero-desc"><%= biz.description %></div><% } %>
+    <%- _heroExtras() %>
   </div>
   <% } %>
 
@@ -1259,9 +1284,10 @@
     <div class="hdr-inner">
       <div class="hdr-left">
         <% if (biz.logo) { %><img src="<%= biz.logo %>" class="hdr-logo" alt="logo" data-hide-on-error><% } %>
-        <% if (biz.banner || biz.logo) { %><span class="hdr-title"><%= biz.name %></span><% } else { %><h1 class="hdr-title"><%= biz.name %></h1><% } %>
+        <span class="hdr-title"><%= biz.name %></span>
       </div>
       <div class="hdr-right">
+        <% if (_waHref) { %><a href="<%= _waHref %>" class="hdr-wa" target="_blank" rel="noopener" aria-label="Escríbenos por WhatsApp"><i class="bi bi-whatsapp" aria-hidden="true"></i><span>WhatsApp</span></a><% } %>
         <% if (_ex.showHow) { %><a href="#como-comprar" class="install-pill how-pill" aria-label="Cómo comprar" title="Cómo comprar" onclick="var s=document.getElementById('como-comprar'); if(s){ s.scrollIntoView({behavior:'smooth',block:'start'}); return false; }"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M9.7 9a2.4 2.4 0 1 1 3.6 2.1c-.8.5-1.3 1-1.3 2"></path><path d="M12 17h.01"></path></svg> ¿Cómo comprar?</a><% } %>
         <button type="button" id="pwa-install-btn-public" class="install-pill" aria-label="Instalar app" title="Instalar app" onclick="window.installPWA && window.installPWA()"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M5 20h14"></path></svg> Instalar app</button>
         <% if (adminLink) { %><a href="<%= adminLink %>" class="admin-pill"><i class="bi bi-speedometer2"></i> Panel</a><% } %>
@@ -1270,12 +1296,26 @@
   </header>
   <% } %>
 
+  <% if (_trust.length >= 2) { %>
+  <!-- ===== FRANJA DE CONFIANZA (datos reales de la tienda) ===== -->
+  <div class="trust-strip" aria-label="Cómo te atendemos">
+    <div class="wrap trust-inner trust-n<%= _trust.length %>">
+      <% _trust.forEach(function (t) { var tag = t.href ? 'a' : 'div'; %>
+      <<%= tag %> class="trust-item<%= t.open === true ? ' is-open' : (t.open === false ? ' is-closed' : '') %>"<% if (t.href) { %> href="<%= t.href %>"<% } %>>
+        <i class="bi <%= t.icon %>" aria-hidden="true"></i>
+        <span><b><%= t.t %></b><% if (t.s) { %><small><%= t.s %></small><% } %></span>
+      </<%= tag %>>
+      <% }) %>
+    </div>
+  </div>
+  <% } %>
+
   <!-- ===== OFERTAS (full width) ===== -->
   <% if (_ofertas.length) { %>
   <div class="ofertas-section">
     <div class="wrap">
       <div class="ofertas-header">
-        <div class="ofertas-title"><i class="bi bi-lightning-charge-fill"></i> Ofertas</div>
+        <div class="ofertas-title"><i class="bi bi-lightning-charge-fill"></i> <span class="sec-title-txt">Ofertas</span> <span class="sec-count"><%= _ofertas.length %></span></div>
         <div class="ofertas-arrows">
           <button class="ofertas-arrow" aria-label="Anterior" onclick="document.getElementById('ofertas-track').scrollBy({left:-220,behavior:'smooth'})"><i class="bi bi-chevron-left"></i></button>
           <button class="ofertas-arrow" aria-label="Siguiente" onclick="document.getElementById('ofertas-track').scrollBy({left:220,behavior:'smooth'})"><i class="bi bi-chevron-right"></i></button>
@@ -1424,7 +1464,22 @@
 
       <!-- GRID DE PRODUCTOS -->
       <div class="main-content">
-        <div class="sec-title"><i class="bi bi-grid-3x3-gap"></i> Productos <span style="font-weight:400;font-size:13px;color:var(--muted);margin-left:6px;">(<span id="prodCount"><%= _realProds.length %></span>)</span></div>
+        <div class="sec-title"><i class="bi bi-grid-3x3-gap"></i> <span class="sec-title-txt">Productos</span> <span class="sec-count"><span id="prodCount"><%= _realProds.length %></span></span></div>
+        <% if (_realProds.length > 6 || _catsShown.length > 1) { %>
+        <!-- Celular: búsqueda y categorías a la mano, sin abrir el panel de filtros -->
+        <div class="shop-tools">
+          <label class="shop-search">
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <input type="search" id="shopSearch" placeholder="Buscar productos" aria-label="Buscar productos" enterkeyhint="search" autocomplete="off">
+          </label>
+          <% if (_catsShown.length > 1) { %>
+          <div class="cat-chips" role="group" aria-label="Categorías">
+            <button type="button" class="cat-chip on" data-cat="all" onclick="catChip('all')">Todo</button>
+            <% _catsShown.forEach(function (cat) { %><button type="button" class="cat-chip" data-cat="<%= cat.id %>" onclick="catChip('<%= cat.id %>')"><%= cat.name %></button><% }) %>
+          </div>
+          <% } %>
+        </div>
+        <% } %>
         <% if (_realProds.length) { %>
         <div class="prod-grid" id="prodGrid">
           <% _gridProds.forEach(function(p) { %>
@@ -1742,9 +1797,10 @@
         <div>
           <h3>Contacto</h3>
           <ul>
-            <% if (_whatsapp) { %><li><i class="bi bi-whatsapp" aria-hidden="true"></i><%= biz.whatsapp %></li><% } %>
-            <% if (biz.phone) { %><li><i class="bi bi-telephone" aria-hidden="true"></i><%= biz.phone %></li><% } %>
-            <% if (biz.address) { %><li><i class="bi bi-geo-alt" aria-hidden="true"></i><%= biz.address %></li><% } %>
+            <% var _fmtTel = function (n) { var d = String(n || '').replace(/\D/g, ''); if (d.length === 12 && d.indexOf('52') === 0) return '+52 ' + d.slice(2, 5) + ' ' + d.slice(5, 8) + ' ' + d.slice(8); if (d.length === 10) return d.slice(0, 3) + ' ' + d.slice(3, 6) + ' ' + d.slice(6); return String(n || ''); }; %>
+            <% if (_whatsapp) { %><li><i class="bi bi-whatsapp" aria-hidden="true"></i><a href="<%= _waHref %>" target="_blank" rel="noopener"><%= _fmtTel(biz.whatsapp) %></a></li><% } %>
+            <% if (biz.phone) { %><li><i class="bi bi-telephone" aria-hidden="true"></i><a href="tel:<%= String(biz.phone).replace(/[^\d+]/g, '') %>"><%= _fmtTel(biz.phone) %></a></li><% } %>
+            <% if (biz.address) { %><li><i class="bi bi-geo-alt" aria-hidden="true"></i><a href="https://maps.google.com/?q=<%= _addressEnc %>" target="_blank" rel="noopener"><%= biz.address %></a></li><% } %>
           </ul>
         </div>
         <div>
@@ -1752,7 +1808,7 @@
           <% if (_horarioHtml) { %><div style="font-size:13px;"><%- _horarioHtml %></div><% } else { %><p style="font-size:13px;">Consultar horarios</p><% } %>
         </div>
       </div>
-      <div class="ftr-copy">© 2026 <%= biz.name %>. Hecho por nessik.net</div>
+      <div class="ftr-copy">© <%= new Date().getFullYear() %> <%= biz.name %>. Hecho por nessik.net</div>
     </div>
   </footer>
   <% } %>
@@ -2047,6 +2103,42 @@
     // Estado inicial: solo la primera página visible
     _updateFacetCounts();
     _renderProducts();
+
+    // ===== BÚSQUEDA Y CATEGORÍAS RÁPIDAS (celular) =====
+    // Usan los mismos filtros del panel lateral (#filterSearch / .filter-cat) para no tener dos lógicas.
+    function _syncCatButtons(cat) {
+      document.querySelectorAll('.filter-cat, .cat-chip').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-cat') === String(cat)); });
+      var chip = document.querySelector('.cat-chip.on');
+      if (chip && chip.scrollIntoView) { try { chip.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' }); } catch (e) {} }
+    }
+    function _runFiltersInPlace() {
+      _updateFacetCounts();
+      _shownCount = PAGE_SIZE;
+      _renderProducts();
+      _pendingCount();
+    }
+    function catChip(cat) {
+      _syncCatButtons(cat);
+      _runFiltersInPlace();
+    }
+    (function () {
+      var ss = document.getElementById('shopSearch');
+      var fs = document.getElementById('filterSearch');
+      if (!ss) return;
+      var t = null;
+      ss.addEventListener('input', function () {
+        if (fs) fs.value = ss.value;
+        clearTimeout(t);
+        t = setTimeout(_runFiltersInPlace, 160);
+      });
+      ss.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); ss.blur(); _runFiltersInPlace(); } });
+      if (fs) fs.addEventListener('input', function () { ss.value = fs.value; });
+      // Las categorías del panel lateral y las del carrusel siempre muestran la misma selección
+      var _origCat = window.catalogFilterCat;
+      window.catalogFilterCat = function (cat, el) { _origCat(cat, el); _syncCatButtons(cat); };
+      var _origClear = window.clearFilters;
+      window.clearFilters = function () { ss.value = ''; _origClear(); _syncCatButtons('all'); };
+    })();
 
     // ===== FORMULARIO DE CONTACTO =====
     function sendContactForm() {

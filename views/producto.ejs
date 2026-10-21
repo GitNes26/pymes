@@ -281,7 +281,7 @@
         </div>
         <p class="prod-stock" id="prod-stock-note"></p>
 
-        <% if (product.promo_desc) { %>
+        <% if (product.promo_desc && String(product.promo_desc).indexOf('Precio rebajado') !== 0) { %>
           <div class="note offer"><i class="bi bi-tag-fill"></i><span><b>Promoción:</b> <%= product.promo_desc %></span></div>
         <% } %>
 
