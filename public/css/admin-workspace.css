@@ -308,3 +308,9 @@ body.m-material.dark .pn-delta.down { color:#ffb1a8; }
 @media(prefers-reduced-motion:reduce) {
   body.m-material *,body.m-material *::before,body.m-material *::after { animation-duration:.01ms !important; transition-duration:.01ms !important; scroll-behavior:auto !important; }
 }
+
+/* Fix buscador + paginación de productos: las reglas de arriba
+   (body.products-admin-page .product-card { display:grid/block !important })
+   tienen más especificidad que .product-card.hidden y dejaban visibles las
+   filas que el filtro/paginador ocultan. Esta regla gana a ambas. */
+body.products-admin-page .product-card.hidden { display:none !important; }
