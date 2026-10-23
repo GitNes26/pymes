@@ -227,7 +227,16 @@ Hooks opcionales de la página (definir antes de abrir):
     S.cbDone = onDone || null;
     S.cbCancel = onCancel || null;
     S.container = container || null;
+    // Fotos de otro dominio (servicio de imágenes, enlaces externos): sin CORS "contaminan" el
+    // canvas y toBlob() falla al aplicar → se cargan a través del proxy same-origin del panel.
+    var PROXY = /^\/[^\/]+\/admin\//.test(UP_URL) ? UP_URL.replace(/\/admin\/.*$/, '/admin/img-proxy') : '';
+    var abs = null; try { abs = new URL(src, location.href); } catch (e) {}
+    var cross = abs && /^https?:$/.test(abs.protocol) && abs.origin !== location.origin;
     var img = new Image();
+    if (cross) {
+      if (PROXY) src = PROXY + '?u=' + encodeURIComponent(abs.href);
+      else img.crossOrigin = 'anonymous';
+    }
     img.onload = function () {
       S.img = img;
       S.aspect = aspect || '1:1'; S.rotQ = 0;
@@ -236,7 +245,12 @@ Hooks opcionales de la página (definir antes de abrir):
       document.body.style.overflow = 'hidden';
       recalc();
     };
-    img.onerror = function () { totToast('No se pudo cargar la imagen'); };
+    var original = abs ? abs.href : src, triedDirect = false;
+    img.onerror = function () {
+      // Si el proxy no pudo traerla, se intenta directo (con CORS) antes de rendirse
+      if (cross && !triedDirect) { triedDirect = true; img.crossOrigin = 'anonymous'; img.src = original; return; }
+      totToast('No se pudo cargar la imagen');
+    };
     img.src = src;
   }
   function imgeApply() {
@@ -245,6 +259,8 @@ Hooks opcionales de la página (definir antes de abrir):
     S.applying = true;
     draw();
     var btn = $('imge-apply'); if (btn) btn.disabled = true;
+    var fail = function (msg) { S.applying = false; if (btn) btn.disabled = false; totToast(msg); };
+    try {
     canvas.toBlob(function (blob) {
       if (!blob) { S.applying = false; if (btn) btn.disabled = false; totToast('No se pudo procesar la imagen'); return; }
       var cbDone = S.cbDone, container = S.container;
@@ -253,8 +269,10 @@ Hooks opcionales de la página (definir antes de abrir):
       fd.append('foto', blob, 'editada.png');
       var tok = csrf();
       if (tok) fd.append('_csrf', tok);
-      fetch(UP_URL + (window.__imgeTrim ? (UP_URL.indexOf('?') > -1 ? '&' : '?') + 'trim=1' : ''), { method: 'POST', body: fd, headers: tok ? { 'x-csrf-token': tok } : {}, credentials: 'same-origin' })
-        .then(function (r) { return r.json(); })
+      var ctl = window.AbortController ? new AbortController() : null;
+      var tmo = setTimeout(function () { if (ctl) ctl.abort(); }, 45000);
+      fetch(UP_URL + (window.__imgeTrim ? (UP_URL.indexOf('?') > -1 ? '&' : '?') + 'trim=1' : ''), { method: 'POST', body: fd, headers: tok ? { 'x-csrf-token': tok } : {}, credentials: 'same-origin', signal: ctl ? ctl.signal : undefined })
+        .then(function (r) { clearTimeout(tmo); return r.json().catch(function () { return { error: 'HTTP ' + r.status }; }); })
         .then(function (d) {
           imgeClose();
           S.applying = false; if (btn) btn.disabled = false;
@@ -269,16 +287,20 @@ Hooks opcionales de la página (definir antes de abrir):
             if (cbDone) try { cbDone(d.url); } catch (e) {}
             totToast('Imagen aplicada ✓', 'ok');
           } else {
-            totToast('No se pudo guardar la imagen');
+            totToast((d && d.error) ? d.error : 'No se pudo guardar la imagen');
             if (cbDone) try { cbDone(null); } catch (e) {}
           }
         })
         .catch(function () {
           imgeClose();
           S.applying = false; if (btn) btn.disabled = false;
-          totToast('Error al guardar la imagen');
+          totToast('Error al guardar la imagen. Revisa tu conexión e intenta de nuevo.');
         });
     }, 'image/png');
+    } catch (e) {
+      // Antes la excepción dejaba el botón "Aplicar" deshabilitado para siempre (cargando sin fin)
+      fail('No se pudo procesar esta imagen. Vuelve a abrir el editor e intenta de nuevo.');
+    }
   }
 
   // ---- Gestos ----
