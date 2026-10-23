@@ -2,6 +2,10 @@
 
 Formato: una sección por fecha, lo más reciente arriba. Prefijos: Fix, Feat, Estilo, BD, Docs.
 
+## 2026-10-23
+
+- **Fix:** en Productos, el editor de imágenes se abría detrás del modal de crear/editar producto (el modal usa `z-index:180` y el editor tenía 130), así que no se podía editar la foto. El editor ahora va en `z-index:1000` (`views/productos.ejs`).
+
 ## 2026-10-21
 
 - **Estilo:** rediseño profesional de la presentación del catálogo público en sus 61 apariencias, con una capa final nueva `public/css/catalog-pro.css` que solo usa los tokens de cada apariencia:

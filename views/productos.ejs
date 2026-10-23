@@ -584,7 +584,8 @@
     </div>
   </dialog>
 
-  <%- include('partials/img-editor', { upUrl: '/' + biz.slug + '/admin/upload', z: 130 }) %>
+  <%# z por encima del modal de producto (#nuevo-producto usa z-index:180 en admin-workspace.css) y debajo de los avisos (SweetAlert ~1060) %>
+  <%- include('partials/img-editor', { upUrl: '/' + biz.slug + '/admin/upload', z: 1000 }) %>
   <script>window.imgeContainerApplied = function () { if (typeof renderFotos === 'function') renderFotos('f'); };</script>
 
   <%- include('admin/panel-ajax') %>
