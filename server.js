@@ -398,9 +398,10 @@ function sanitizeExtras(raw) {
     },
     showNew: !!x.showNew,
     showTop: !!x.showTop,
-    showHow: !!x.showHow
+    showHow: !!x.showHow,
+    byGroup: !!x.byGroup // catálogo separado por agrupador (línea/marca)
   };
-  const vacio = !out.about.text && !out.envios && !out.pagos.length && !out.pagos_nota && !out.testimonios.length && !out.modelos.images.length && !out.globalTags.length && !out.showNew && !out.showTop && !out.showHow;
+  const vacio = !out.about.text && !out.envios && !out.pagos.length && !out.pagos_nota && !out.testimonios.length && !out.modelos.images.length && !out.globalTags.length && !out.showNew && !out.showTop && !out.showHow && !out.byGroup;
   return vacio ? '' : JSON.stringify(out);
 }
 // Ids de los productos que más se han vendido (suma de unidades en pedidos cobrados y no

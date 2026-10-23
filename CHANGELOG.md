@@ -4,6 +4,7 @@ Formato: una sección por fecha, lo más reciente arriba. Prefijos: Fix, Feat, E
 
 ## 2026-10-23
 
+- **Feat:** catálogo separado por **línea o marca** (opcional). En Configuración → Secciones automáticas: "Separar productos por línea o marca". Usa el Agrupador de cada producto (sin cambios en la base de datos: la opción se guarda en `businesses.extras` como `byGroup`). Muestra un índice "Compra por línea" y un encabezado por línea con iniciales, número de productos, precio desde y ofertas; los productos sin agrupador van en "Otros productos". Buscador, filtros y "Ver más" siguen funcionando y las líneas sin resultados se ocultan. Archivos: `views/templates/constructor.ejs`, `views/config.ejs`, `server.js` (`sanitizeExtras`), `public/css/catalog-pro.css`.
 - **Fix:** el botón "Aplicar" del editor de imágenes se quedaba cargando sin fin con fotos de otro dominio (servicio de imágenes o enlaces externos): el navegador bloquea exportar un canvas con imágenes sin CORS y el error dejaba el botón deshabilitado. Ahora esas fotos se cargan por `/:slug/admin/img-proxy`, cualquier error libera el botón con un mensaje claro y la subida tiene límite de 45 s (`views/partials/img-editor.ejs`).
 - **Fix:** en Productos, el editor de imágenes se abría detrás del modal de crear/editar producto (el modal usa `z-index:180` y el editor tenía 130), así que no se podía editar la foto. El editor ahora va en `z-index:1000` (`views/productos.ejs`).
 

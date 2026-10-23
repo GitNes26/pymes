@@ -206,6 +206,27 @@
   });
   var _productGroups = Object.keys(_groupMap).map(function (key) { return _groupMap[key]; })
     .sort(function (a, b) { return a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }); });
+  // Catálogo separado por línea/marca (opción del dueño en Configuración → extras.byGroup).
+  // Usa el Agrupador que ya tiene cada producto: no requiere columnas nuevas.
+  var _lineMono = function (name) {
+    var w = String(name || '').trim().split(/\s+/).filter(Boolean);
+    if (!w.length) return '•';
+    return (w.length > 1 ? w[0][0] + w[1][0] : w[0].slice(0, 2)).toUpperCase();
+  };
+  var _lines = [];
+  (function () {
+    var map = {};
+    _realProds.forEach(function (p) {
+      var k = String(p.group_id && p.group_name ? p.group_id : 0);
+      if (!map[k]) { map[k] = { id: k, name: k === '0' ? 'Otros productos' : p.group_name, count: 0, min: Infinity, offers: 0 }; _lines.push(map[k]); }
+      map[k].count++;
+      map[k].min = Math.min(map[k].min, parseFloat(p.price) || 0);
+      if (p.old_price && p.old_price > p.price) map[k].offers++;
+    });
+    _lines.sort(function (a, b) { if (a.id === '0') return 1; if (b.id === '0') return -1; return a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }); });
+  })();
+  var _byGroup = !!_ex.byGroup && _productGroups.length >= 2;
+  var _lineById = {}; _lines.forEach(function (l) { _lineById[l.id] = l; });
   // La vista general sigue el orden de los agrupadores y, dentro de cada uno, el del producto.
   var _gridProds = _realProds.slice().sort(function (a, b) {
     var aGroup = String(a.group_name || '').trim(), bGroup = String(b.group_name || '').trim();
@@ -1217,7 +1238,7 @@
   <link rel="stylesheet" href="/css/tw-static.css?v=20260920a">
   <link rel="stylesheet" href="/css/catalog-themes.css?v=20260927a">
   <link rel="stylesheet" href="/css/catalog-craft.css?v=20260928a">
-  <link rel="stylesheet" href="/css/catalog-pro.css?v=20261021a">
+  <link rel="stylesheet" href="/css/catalog-pro.css?v=20261023a">
 </head>
 <body>
   <a class="skip-link" href="#contenido">Saltar al contenido</a>
@@ -1481,8 +1502,33 @@
         </div>
         <% } %>
         <% if (_realProds.length) { %>
-        <div class="prod-grid" id="prodGrid">
-          <% _gridProds.forEach(function(p) { %>
+        <% if (_byGroup) { %>
+        <!-- Índice de líneas / marcas -->
+        <nav class="line-index" aria-label="Líneas y marcas">
+          <span class="line-index-lbl">Compra por línea</span>
+          <div class="line-index-track">
+            <% _lines.forEach(function (l) { %>
+            <a class="line-pill" href="#linea-<%= l.id %>" data-line="<%= l.id %>">
+              <span class="line-mono"><%= l.id === '0' ? '+' : _lineMono(l.name) %></span>
+              <span class="line-pill-txt"><b><%= l.name %></b><small><span data-line-count><%= l.count %></span> <%= l.count === 1 ? 'producto' : 'productos' %></small></span>
+            </a>
+            <% }) %>
+          </div>
+        </nav>
+        <% } %>
+        <div class="prod-grid<%= _byGroup ? ' prod-grid--lines' : '' %>" id="prodGrid">
+          <% var _lastLine = null; _gridProds.forEach(function(p) { %>
+          <% if (_byGroup) { var _lk = String(p.group_id && p.group_name ? p.group_id : 0); if (_lk !== _lastLine) { _lastLine = _lk; var _ln = _lineById[_lk]; %>
+          <header class="line-head" id="linea-<%= _lk %>" data-line="<%= _lk %>">
+            <span class="line-mono line-mono--lg"><%= _lk === '0' ? '+' : _lineMono(_ln.name) %></span>
+            <div class="line-txt">
+              <small><%= _lk === '0' ? 'Sin línea' : 'Línea' %></small>
+              <h3><%= _ln.name %></h3>
+            </div>
+            <span class="line-rule" aria-hidden="true"></span>
+            <span class="line-meta"><span><b data-line-count><%= _ln.count %></b> <%= _ln.count === 1 ? 'producto' : 'productos' %></span><span class="line-from">desde <%= _rawMoney(_ln.min) %></span><% if (_ln.offers) { %><span class="line-offers"><%= _ln.offers %> en oferta</span><% } %></span>
+          </header>
+          <% } } %>
           <%- include("../partials/prod-card", { p: p, biz: biz, _money: _money, _rawMoney: _rawMoney, _whatsapp: _whatsapp, _imgAttrs: _imgAttrs, _ph: _ph }) %>
           <% }) %>
         </div>
@@ -2138,6 +2184,44 @@
       window.catalogFilterCat = function (cat, el) { _origCat(cat, el); _syncCatButtons(cat); };
       var _origClear = window.clearFilters;
       window.clearFilters = function () { ss.value = ''; _origClear(); _syncCatButtons('all'); };
+    })();
+
+    // ===== LÍNEAS / MARCAS: encabezados e índice siguen a los filtros =====
+    (function () {
+      if (!document.querySelector('.prod-grid--lines')) return;
+      function syncLines() {
+        var cards = Array.prototype.slice.call(document.querySelectorAll('#prodGrid .prod-card'));
+        var shown = {}, match = {};
+        cards.forEach(function (c) {
+          var g = c.getAttribute('data-group') || '0';
+          if (c.style.display !== 'none') shown[g] = (shown[g] || 0) + 1;
+          if (_matchesFilters(c)) match[g] = (match[g] || 0) + 1;
+        });
+        document.querySelectorAll('#prodGrid .line-head').forEach(function (h) {
+          var g = h.getAttribute('data-line');
+          h.style.display = shown[g] ? '' : 'none';
+          var n = h.querySelector('[data-line-count]'); if (n) n.textContent = match[g] || 0;
+        });
+        document.querySelectorAll('.line-pill').forEach(function (a) {
+          var g = a.getAttribute('data-line');
+          a.style.display = match[g] ? '' : 'none';
+          var n = a.querySelector('[data-line-count]'); if (n) n.textContent = match[g] || 0;
+        });
+      }
+      function later() { syncLines(); setTimeout(syncLines, 180); }
+      var _r = window._renderProducts, _m = window.loadMoreProducts;
+      window._renderProducts = function () { var x = _r.apply(this, arguments); later(); return x; };
+      window.loadMoreProducts = function () { var x = _m.apply(this, arguments); later(); return x; };
+      // Saltar a una línea que aún no está cargada: se muestran productos hasta llegar a ella
+      document.querySelectorAll('.line-pill').forEach(function (a) {
+        a.addEventListener('click', function (e) {
+          var head = document.getElementById('linea-' + a.getAttribute('data-line'));
+          var guard = 0;
+          while (head && head.style.display === 'none' && document.getElementById('loadMoreWrap').style.display !== 'none' && guard++ < 50) { _m(); syncLines(); }
+          if (head) { e.preventDefault(); var hdr = document.querySelector('.hdr'); window.scrollTo({ top: head.getBoundingClientRect().top + window.pageYOffset - ((hdr ? hdr.offsetHeight : 0) + 12), behavior: 'smooth' }); }
+        });
+      });
+      later();
     })();
 
     // ===== FORMULARIO DE CONTACTO =====
