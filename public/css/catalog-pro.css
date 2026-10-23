@@ -676,3 +676,6 @@ html[data-style][data-world] body .cat-tiles-head { align-items: center; }
 html[data-style][data-world] body .hdr .how-pill { width: auto; padding: 0 14px; border-radius: var(--pro-btn-radius); background: transparent; border-color: var(--pro-line); }
 /* Carruseles con margen lateral: que el "imán" respete el margen y la primera tarjeta no quede pegada al borde */
 html[data-style][data-world] body :is(.bh-mosaic, .cat-tiles-track, .line-index-track, .cat-chips) { scroll-padding-inline: 16px; }
+/* Al regresar de un producto: sin animaciones, todo ya en su lugar */
+html.cat-restoring *, html.cat-restoring *::before, html.cat-restoring *::after { transition: none !important; animation: none !important; }
+html.cat-restoring .rv, html.cat-restoring .prod-card { opacity: 1 !important; transform: none !important; }

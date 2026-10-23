@@ -2274,6 +2274,53 @@
       later();
     })();
 
+    // ===== REGRESAR DE UN PRODUCTO: misma vista y misma posición =====
+    // Antes, al volver con "atrás" se perdían "Ver más", búsqueda y filtros: la página regresaba a
+    // 20 productos y el navegador dejaba al cliente en el pie de página.
+    (function () {
+      var KEY = 'catv:<%= biz.slug %>';
+      var store = { get: function () { try { return JSON.parse(sessionStorage.getItem(KEY) || 'null'); } catch (e) { return null; } },
+                    set: function (v) { try { sessionStorage.setItem(KEY, JSON.stringify(v)); } catch (e) {} },
+                    del: function () { try { sessionStorage.removeItem(KEY); } catch (e) {} } };
+      var val = function (id) { var el = document.getElementById(id); return el ? el.value : ''; };
+      function save() {
+        var cat = document.querySelector('.filter-cat.on'), grp = document.querySelector('.filter-group-btn.on');
+        store.set({ t: Date.now(), y: window.pageYOffset, shown: _shownCount, q: val('filterSearch'), min: val('filterPriceMin'), max: val('filterPriceMax'),
+          cat: cat ? cat.getAttribute('data-cat') : 'all', grp: grp ? grp.getAttribute('data-group') : 'all',
+          attrs: Array.prototype.map.call(document.querySelectorAll('.filter-attr.on'), function (b) { return b.getAttribute('data-attr') + '=' + b.getAttribute('data-val'); }) });
+      }
+      // Se guarda justo al salir hacia un producto (tarjetas, nombres, ofertas, mosaico)
+      document.addEventListener('click', function (e) {
+        var el = e.target.closest('.prod-card, .oferta-card, .bh-tile, a[href*="/<%= biz.slug %>/p/"]');
+        if (el) save();
+      }, true);
+      window.addEventListener('pagehide', function () { if (store.get()) save(); });
+      var nav = (performance.getEntriesByType && performance.getEntriesByType('navigation')[0]) || {};
+      var st = store.get();
+      if (nav.type !== 'back_forward' || !st || Date.now() - st.t > 30 * 60 * 1000) { if (nav.type !== 'back_forward') store.del(); return; }
+      if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+      var set = function (id, v) { var el = document.getElementById(id); if (el) el.value = v || ''; };
+      set('filterSearch', st.q); set('shopSearch', st.q); set('filterPriceMin', st.min); set('filterPriceMax', st.max);
+      document.querySelectorAll('.filter-cat, .cat-chip').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-cat') === String(st.cat || 'all')); });
+      document.querySelectorAll('.filter-group-btn').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-group') === String(st.grp || 'all')); });
+      document.querySelectorAll('.filter-attr').forEach(function (b) { b.classList.toggle('on', (st.attrs || []).indexOf(b.getAttribute('data-attr') + '=' + b.getAttribute('data-val')) > -1); });
+      // Sin animaciones de entrada: todo aparece ya en su lugar
+      document.documentElement.classList.add('cat-restoring');
+      document.querySelectorAll('.rv').forEach(function (el) { el.classList.add('in'); });
+      var go = function () { window.scrollTo(0, st.y || 0); };
+      // El render inicial deja salidas programadas a 150 ms (ocultan lo que pasa de 20):
+      // se restaura después de ellas para que no vuelvan a esconder los productos.
+      setTimeout(function () {
+        _updateFacetCounts();
+        _shownCount = Math.max(PAGE_SIZE, st.shown || PAGE_SIZE);
+        _renderProducts();
+        _pendingCount();
+        go();
+        requestAnimationFrame(function () { go(); setTimeout(go, 150); });
+        setTimeout(function () { go(); document.documentElement.classList.remove('cat-restoring'); }, 700);
+      }, 170);
+    })();
+
     // ===== FORMULARIO DE CONTACTO =====
     function sendContactForm() {
       var name = (document.getElementById('cfName')||{}).value||'';

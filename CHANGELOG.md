@@ -4,6 +4,7 @@ Formato: una sección por fecha, lo más reciente arriba. Prefijos: Fix, Feat, E
 
 ## 2026-10-23
 
+- **Fix:** al regresar de ver un producto, el catálogo volvía a 20 productos sin filtros y dejaba al cliente en el pie de página. Ahora se conservan "Ver más", búsqueda, categoría, agrupador, precio y la posición exacta (se guarda en `sessionStorage` por tienda durante 30 min; una visita nueva empieza desde arriba).
 - **Estilo:** portada para tiendas **sin banner**: texto a la izquierda y mosaico con fotos reales de sus productos (destacados primero) a la derecha; en el celular el mosaico se desliza de lado.
 - **Feat:** sección **"Explora por categoría"** con la foto de un producto de cada categoría (hasta 8, la más grande primero); al tocarla filtra el catálogo. Sale con 3+ categorías con foto.
 - **Estilo:** descripciones de producto limpias en la tarjeta ("Beneficios: ° … ° …" → "… · …").
