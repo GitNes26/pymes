@@ -225,7 +225,7 @@
     });
     _lines.sort(function (a, b) { if (a.id === '0') return 1; if (b.id === '0') return -1; return a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }); });
   })();
-  var _byGroup = !!_ex.byGroup && _productGroups.length >= 2;
+  var _byGroup = !!_ex.byGroup && _productGroups.length >= 1; // basta con un agrupador (el resto va en "Otros productos")
   var _lineById = {}; _lines.forEach(function (l) { _lineById[l.id] = l; });
   // La vista general sigue el orden de los agrupadores y, dentro de cada uno, el del producto.
   var _gridProds = _realProds.slice().sort(function (a, b) {

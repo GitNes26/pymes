@@ -541,3 +541,6 @@ html[data-world="soft"][data-style] body .line-mono, html[data-world="vibrant"][
   html[data-style][data-world] body .line-from { display: none; }
 }
 html[data-style][data-world] body .line-from::before { content: "·"; margin-right: 8px; opacity: .6; }
+/* Acentos claros (rosa, pastel, coral, dorado): las iniciales y los íconos se oscurecen
+   hacia el color de texto para que se lean bien sobre el fondo tintado. */
+html[data-tone="light"][data-style][data-world] body :is(.line-pill .line-mono, .trust-item > i) { color: color-mix(in srgb, var(--accent) 55%, var(--text)); }
