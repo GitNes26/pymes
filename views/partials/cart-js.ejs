@@ -203,6 +203,13 @@
   function zoneCostFor(slug) { const z = zoneFor(slug); return z ? Number(z.price) || 0 : 0; } // costo base de la zona, sin comisión
   // Con tarjeta y comisión incluida en el precio, la zona también la lleva (mismo cálculo que hace el servidor al cobrar)
   const MP_FEE_INFO = <%- safeJson((biz.mp_enabled && !(biz.mp_fee_on === 0 || biz.mp_fee_on === '0')) ? { pct: Number(biz.mp_fee_pct == null ? 3.49 : biz.mp_fee_pct), fixed: Number(biz.mp_fee_fixed == null ? 4 : biz.mp_fee_fixed), iva: Number(biz.mp_fee_iva == null ? 16 : biz.mp_fee_iva) } : null) %>;
+  // Gastos extras por pago con tarjeta: comisión de Mercado Pago (con IVA) sobre el total, igual que mpCardFee del servidor
+  function cardFeeFor(net) {
+    if (!MP_FEE_INFO || !(net > 0)) return 0;
+    const k = 1 + MP_FEE_INFO.iva / 100, denom = 1 - (MP_FEE_INFO.pct / 100) * k;
+    if (denom <= 0.2) return 0;
+    return Math.round(((net + MP_FEE_INFO.fixed * k) / denom - net) * 100) / 100;
+  }
   function zoneChargeFor(slug) {
     const base = zoneCostFor(slug);
     if (!base || !MP_FEE_INFO) return base;
@@ -713,8 +720,14 @@
               <option value="">Recoger en tienda (sin costo)</option>
               ${SHIPPING_ZONES.map(z => `<option value="${esc(String(z.id))}" ${String(_zoneSel[g.store.slug] || '') === String(z.id) ? 'selected' : ''}>${esc(z.name)}${Number(z.price) > 0 ? ' — ' + money(z.price) : ' (gratis)'}</option>`).join('')}
             </select>
-            ${zoneFor(g.store.slug) ? `<div style="margin-top:6px;font-size:12px;color:#475569;">Envío: <b>${money(zoneChargeFor(g.store.slug))}</b> · Total con envío: <b>${money(t + zoneChargeFor(g.store.slug))}</b></div>` : ''}
+            ${zoneFor(g.store.slug) ? `<div style="margin-top:6px;font-size:12px;color:#475569;">Envío: <b>${money(zoneCostFor(g.store.slug))}</b> · Total con envío: <b>${money(t + zoneCostFor(g.store.slug))}</b></div>` : ''}
           </div>` : ''}
+          ${(MP_CARD && g.store.slug === SLUG && cardFeeFor(t + zoneCostFor(g.store.slug)) > 0) ? (() => { const sub = Math.round((t + zoneCostFor(g.store.slug)) * 100) / 100, fee = cardFeeFor(sub); return `
+          <div class="card-fee-box" style="margin:2px 12px 10px;padding:10px 12px;border:1px solid #e2e8f0;border-radius:12px;font-size:13px;color:#334155;">
+            <div style="display:flex;justify-content:space-between;gap:8px;"><span>Subtotal${zoneFor(g.store.slug) ? ' con envío' : ''}</span><b>${money(sub)}</b></div>
+            <div style="display:flex;justify-content:space-between;gap:8px;margin-top:4px;"><span>Gastos operativos</span><b>${money(fee)}</b></div>
+            <div style="display:flex;justify-content:space-between;gap:8px;margin-top:6px;padding-top:6px;border-top:1px solid #e2e8f0;font-size:14px;color:#0f172a;"><b>Total</b><b>${money(sub + fee)}</b></div>
+          </div>`; })() : ''}
           <div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;">
             ${(IS_ADMIN && g.store.slug === SLUG) ? `<button type="button" onclick="payCashAdmin(${jattr(g.store.slug)})" style="width:100%;background:#15803d;color:#fff;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:14px;cursor:pointer;">💵 Registrar en efectivo · ${money(cashTotalOf(g))} <small style=\"font-weight:600;opacity:.85\">(sin comisión)</small></button>` : ''}
             ${(MP_CARD && g.store.slug === SLUG) ? `<button type="button" onclick="payCardInApp(${jattr(g.store.slug)})" style="width:100%;background:#009ee3;color:#fff;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:14px;cursor:pointer;">💳 Pagar con tarjeta</button>` : ''}
@@ -1022,8 +1035,8 @@
     if (!validarDatosCliente()) return;
     const g = storeGroups().find(x => x.store.slug === slug);
     if (!g) return;
-    const net = Math.round(g.items.reduce((s, it) => s + it.qty * it.price, 0) * 100) / 100;
-    const total = Math.round((net + zoneChargeFor(slug)) * 100) / 100; // la comisión ya va incluida en el precio de cada producto y de la zona
+    const net = Math.round((g.items.reduce((s, it) => s + it.qty * it.price, 0) + zoneCostFor(slug)) * 100) / 100;
+    const total = Math.round((net + cardFeeFor(net)) * 100) / 100; // productos + envío + gastos extras por pago con tarjeta
     const nombre = (document.getElementById('chat-nombre') || {}).value || '';
     const telefono = (document.getElementById('chat-telefono') || {}).value || '';
     const items = g.items.map(it => ({ id: it.id, qty: it.qty, variant: it.variant || '' }));

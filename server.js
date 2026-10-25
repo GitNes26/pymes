@@ -1940,7 +1940,6 @@ function getCatalog(businessId) {
   const catCounts = {};
   db.prepare('SELECT category_id, COUNT(*) AS c FROM products WHERE business_id = ? AND active = 1 GROUP BY category_id').all(businessId).forEach(r => { catCounts[r.category_id] = r.c; });
   categories.forEach(c => { c.count = catCounts[c.id] || 0; });
-  const _mkF = priceMarkupFactor(db.prepare('SELECT mp_enabled, mp_access_token, mp_fee_on, mp_fee_pct, mp_fee_fixed, mp_fee_iva, transfer_enabled, transfer_bank, transfer_account, cash_enabled FROM businesses WHERE id = ?').get(businessId));
   const products = db.prepare(
     `SELECT p.*, c.name AS category_name, g.name AS group_name FROM products p
      LEFT JOIN categories c ON c.id = p.category_id
@@ -1948,7 +1947,9 @@ function getCatalog(businessId) {
      WHERE p.business_id = ? AND p.active = 1
      ORDER BY p.featured DESC, p.sort ASC, p.created_at DESC`
   ).all(businessId).map(withPromo).map(p => {
-    applyMarkup(p, _mkF);
+    // Los productos se muestran a su precio real: la comisión de Mercado Pago ya no se mete en cada
+    // precio, se cobra aparte como "Gastos extras por pago con tarjeta" sobre el total (ver mpCardFee).
+    p.price_base = p.price;
     p.imgs = productImgs(p);
     if (variantCoverImage(p)) p.image = p.imgs[0]; // la tarjeta muestra la foto de la primera variante
     p.hideStock = p.show_stock === 0 || p.show_stock === '0';
@@ -2588,7 +2589,7 @@ app.get('/:slug/p/:id', (req, res, next) => {
   }
   p.imgs = productImgs(p);
   withPromo(p);
-  applyMarkup(p, priceMarkupFactor(biz));
+  p.price_base = p.price; // precio real (la comisión de tarjeta se cobra aparte, sobre el total)
   const pvm0 = parseVariantList(p.variants);
   p.hideStock = p.show_stock === 0 || p.show_stock === '0';
   p.customTags = parseCustomTags(p.custom_tags);
@@ -3079,8 +3080,8 @@ app.get('/:slug/pagar-mp', async (req, res) => {
     if (!p) return null;
     const qty = Math.max(1, parseInt(it.qty) || 1);
     stockItems.push({ id: p.id, qty, variant: String(it.variant || '') });
-    const unitP = pagoUnitPrice(p, it.variant, priceMarkupFactor(biz));
     const baseP = pagoUnitPrice(p, it.variant);
+    const unitP = baseP;
     total += unitP * qty;
     baseTotalMp += baseP * qty;
     const variant = it.variant ? ` (${it.variant})` : '';
@@ -3089,7 +3090,12 @@ app.get('/:slug/pagar-mp', async (req, res) => {
   }).filter(Boolean);
   if (lines.length === 0) return res.redirect('/' + req.params.slug);
   baseTotalMp = Math.round(baseTotalMp * 100) / 100;
-  if (total > baseTotalMp) lines.push('Cobrado en línea: ' + currencyInfo(biz.currency).symbol + total.toFixed(2) + ' (incluye comisión de pago en línea)');
+  const cardFeeMp = mpCardFee(biz, baseTotalMp);
+  if (cardFeeMp > 0) {
+    mpItems.push({ title: 'Gastos operativos', quantity: 1, unit_price: cardFeeMp, currency_id: biz.currency || 'MXN' });
+    total = Math.round((baseTotalMp + cardFeeMp) * 100) / 100;
+    lines.push('Gastos operativos = ' + currencyInfo(biz.currency).symbol + cardFeeMp.toFixed(2));
+  }
 
   const customerData = customerName ? (customerName + (customerPhone ? ' (' + customerPhone + ')' : '')) : (customerPhone || '');
   const orderId = db.prepare(
@@ -3223,9 +3229,8 @@ app.post('/:slug/pagar-tarjeta', rateLimit(12), async (req, res) => {
     const av = stockAvailable(p, it.variant);
     if (av !== null && qty > av) { stockError = 'No hay suficiente stock de ' + p.name + ' (quedan ' + av + ').'; return null; }
     stockItems.push({ id: p.id, qty, variant: String(it.variant || '') });
-    const unit = pagoUnitPrice(p, it.variant, priceMarkupFactor(biz));
     const baseUnit = pagoUnitPrice(p, it.variant);
-    total += unit * qty;
+    total += baseUnit * qty;
     baseTotal += baseUnit * qty;
     const variant = it.variant ? ' (' + String(it.variant).slice(0, 80) + ')' : '';
     return `• ${qty} x ${p.name}${variant} = ${currencyInfo(biz.currency).symbol}${(baseUnit * qty).toFixed(2)}`;
@@ -3233,15 +3238,16 @@ app.post('/:slug/pagar-tarjeta', rateLimit(12), async (req, res) => {
   if (stockError) return res.status(409).json({ ok: false, error: stockError });
   // Zona de entrega: el costo se relee aquí, nunca se confía en lo que mande el navegador
   const zone = zoneLookup(biz.id, body.zone_id);
-  const _mkF = priceMarkupFactor(biz);
-  const zoneCharge = _mkF ? markupAmount(zone.cost, _mkF) : zone.cost;
-  total = Math.round((total + zoneCharge) * 100) / 100;
   baseTotal = Math.round((baseTotal + zone.cost) * 100) / 100;
+  // Gastos extras por pago con tarjeta: la comisión de Mercado Pago (con IVA) calculada UNA vez sobre
+  // el total (productos + envío), para que a la tienda le llegue completo lo que cobra.
+  const cardFee = mpCardFee(biz, baseTotal);
+  total = Math.round((baseTotal + cardFee) * 100) / 100;
   if (zone.name) lines.push('Entrega: ' + zone.name + (zone.cost > 0 ? ' = ' + currencyInfo(biz.currency).symbol + zone.cost.toFixed(2) : ' (sin costo)'));
-  if (total > baseTotal) lines.push('Cobrado con tarjeta: ' + currencyInfo(biz.currency).symbol + total.toFixed(2) + ' (incluye comisión de pago en línea)');
+  if (cardFee > 0) lines.push('Gastos operativos = ' + currencyInfo(biz.currency).symbol + cardFee.toFixed(2)); // el cliente solo ve "gastos operativos" (es la comisión de Mercado Pago)
   if (!lines.length || !(total > 0)) return res.status(400).json({ ok: false, error: 'El carrito está vacío' });
   const clientTotal = Number(fd.transaction_amount);
-  const charge = total; // la comisión ya viene incluida en el precio de cada producto
+  const charge = total; // productos + envío + gastos extras por pago con tarjeta
   if (isFinite(clientTotal) && Math.abs(clientTotal - charge) > 0.5) return res.status(409).json({ ok: false, error: 'El total cambió (' + currencyInfo(biz.currency).symbol + charge.toFixed(2) + '). Cierra esta ventana, revisa tu carrito y vuelve a intentar.' });
 
   const customerData = customerName ? (customerName + (customerPhone ? ' (' + customerPhone + ')' : '')) : (customerPhone || '');
@@ -3360,8 +3366,10 @@ app.get('/:slug/seguimiento/:ref', (req, res) => {
   const dsg = catDesignOf(biz);
   const wa = String(biz.whatsapp || '').replace(/[^0-9]/g, '');
   const waNum = wa.length === 10 ? '52' + wa : wa;
+  const _gop = String(o.items || '').match(/Gastos operativos = \D*([\d.,]+)/);
+  const paidTotal = Math.round(((Number(o.total) || 0) + (_gop ? Number(_gop[1].replace(/,/g, '')) || 0 : 0)) * 100) / 100;
   res.render('seguimiento', {
-    biz, order: o, tl: orderTimeline(o), T: dsg.tokens, design: dsg.id,
+    biz, order: o, paidTotal, tl: orderTimeline(o), T: dsg.tokens, design: dsg.id,
     items: String(o.items || '').split(/\s*\|\s*/).map(x => x.replace(/^•\s*/, '').trim()).filter(Boolean),
     money: moneyFor(biz),
     waHref: waNum ? 'https://wa.me/' + waNum + '?text=' + encodeURIComponent('Hola ' + biz.name + ', te escribo por mi pedido #' + o.id + '.') : ''

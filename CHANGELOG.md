@@ -4,6 +4,7 @@ Formato: una sección por fecha, lo más reciente arriba. Prefijos: Fix, Feat, E
 
 ## 2026-10-25
 
+- **Cambio:** la comisión de Mercado Pago **ya no se mete en el precio de cada producto**. Los productos (catálogo, ficha y carrito) se ven a su precio real y, al pagar con tarjeta, se suma una sola línea **"Gastos operativos"** (el cliente no ve que es la comisión de Mercado Pago) calculada sobre el total (productos + envío) con la fórmula de `mpCardFee` (comisión % + cargo fijo, con IVA), para que a la tienda le llegue completo. El carrito muestra Subtotal / Gastos operativos / Total; el pedido guarda el total real y una línea "Gastos operativos", y la página de seguimiento muestra el total pagado. En Configuración la opción ahora se llama "Cobrar la comisión al cliente como gastos extras" (si se apaga, la absorbe la tienda). Sin cambios en la base de datos.
 - **Feat:** **seguimiento de pedidos para el cliente.** Cada pedido tiene un enlace privado `/:slug/seguimiento/<id>-<token>` con su número, productos, total, forma de entrega y una línea de tiempo (Recibido → Pago → Preparando → En camino / Listo para recoger → Entregado) con los colores de la tienda; se actualiza sola.
   - Al pagar con tarjeta: botón "Ver mi pedido y su seguimiento" y el enlace va en el mensaje de "Avisar por WhatsApp".
   - En el catálogo: barra "Tu pedido #N · Ver seguimiento" (y "Mis pedidos") con los pedidos hechos desde ese celular en los últimos 30 días.

@@ -163,11 +163,11 @@ t('transferencia: solo aparece con Mercado Pago apagado y datos puestos', async 
   assert.match(h, /const TRANSFER = null/);
 });
 
-t('con Mercado Pago activo el precio incluye la comisión y el apagado la quita', async () => {
+t('con Mercado Pago activo el producto se ve a su precio real (la comisión va aparte como gastos extras)', async () => {
   // (Mercado Pago quedó activo en la prueba anterior)
   let h = await (await http('/' + slug)).text();
-  const precio = Number((h.match(/class="prod-price">\$([\d,]+)/) || [])[1].replace(/,/g, ''));
-  assert.ok(precio > 500 && precio < 1100, 'precio ajustado: ' + precio);
+  assert.match(h, /class="prod-price">\$500\.00/); // sin comisión metida en el precio
+  assert.match(h, /const MP_FEE_INFO = \{/);        // el carrito sí calcula los gastos extras por pago con tarjeta
   db.prepare('UPDATE businesses SET mp_enabled = 0 WHERE id = ?').run(biz.id);
   h = await (await http('/' + slug)).text();
   assert.match(h, /class="prod-price">\$500\.00/); // el primero en el catálogo es el de 500

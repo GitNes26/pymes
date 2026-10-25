@@ -122,7 +122,7 @@
         <li><span><%= m ? m[1] : it %></span><% if (m) { %><b><%= m[2] %></b><% } %></li>
         <% }) %>
       </ul>
-      <div class="total"><span>Total</span><b><%= money(order.total) %></b></div>
+      <div class="total"><span>Total</span><b><%= money(typeof paidTotal !== 'undefined' ? paidTotal : order.total) %></b></div>
     </section>
 
     <% if (waHref) { %><a class="btn btn-wa" href="<%= waHref %>" target="_blank" rel="noopener"><i class="bi bi-whatsapp" aria-hidden="true"></i> Escribir a la tienda</a><% } %>

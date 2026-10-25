@@ -966,15 +966,15 @@
               <input type="hidden" name="mp_fee_on" value="1">
               <label class="flex items-start gap-2.5" style="opacity:.75">
                 <input type="checkbox" checked disabled class="mt-0.5 accent-sky-500">
-                <span class="text-sm font-bold text-slate-700 dark:text-slate-200">Incluir la comisión en el precio de mis productos
-                  <span class="block text-xs font-normal text-slate-500 mt-0.5">Obligatorio en tu plan: no se puede apagar. El cliente ve un solo precio final y a ti te llega el precio que capturas.</span>
+                <span class="text-sm font-bold text-slate-700 dark:text-slate-200">Cobrar la comisión al cliente como "gastos extras"
+                  <span class="block text-xs font-normal text-slate-500 mt-0.5">Obligatorio en tu plan: no se puede apagar. Tus productos se ven a su precio real y, al pagar con tarjeta, se suma una sola línea de gastos extras sobre el total, para que a ti te llegue completo.</span>
                 </span>
               </label>
               <% } else { %>
               <label class="flex items-start gap-2.5 cursor-pointer">
                 <input type="checkbox" name="mp_fee_on" value="1" <%= (biz.mp_fee_on === 0 || biz.mp_fee_on === '0') ? '' : 'checked' %> class="mt-0.5 accent-sky-500">
-                <span class="text-sm font-bold text-slate-700 dark:text-slate-200">Incluir la comisión en el precio de mis productos
-                  <span class="block text-xs font-normal text-slate-500 mt-0.5">El cliente ve un solo precio final y a ti te llega el precio que capturas. Tú sigues poniendo el precio base.</span>
+                <span class="text-sm font-bold text-slate-700 dark:text-slate-200">Cobrar la comisión al cliente como "gastos extras"
+                  <span class="block text-xs font-normal text-slate-500 mt-0.5">Tus productos se ven a su precio real. Al pagar con tarjeta se suma una sola línea, "Gastos extras por pago con tarjeta", calculada sobre el total (productos + envío), para que a ti te llegue completo. Si la apagas, la comisión la absorbes tú.</span>
                 </span>
               </label>
               <% } %>
