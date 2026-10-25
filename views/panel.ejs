@@ -499,6 +499,21 @@
                     </button>
                   <% } %>
                   <% if (o.status !== 'entregado' && o.status !== 'cancelado') { %>
+                    <form method="POST" action="/<%= biz.slug %>/admin/order/<%= o.id %>/etapa" class="inline order-stage-form">
+                      <label class="sr-only" for="etapa-<%= o.id %>">Etapa del pedido #<%= o.id %></label>
+                      <select id="etapa-<%= o.id %>" name="etapa" class="order-stage" onchange="this.form.submit()" title="Etapa que ve el cliente en su seguimiento">
+                        <option value=""<%= !o.fulfillment ? ' selected' : '' %>>📥 Recibido</option>
+                        <option value="preparando"<%= o.fulfillment === 'preparando' ? ' selected' : '' %>>🧺 Preparando</option>
+                        <option value="en_camino"<%= o.fulfillment === 'en_camino' ? ' selected' : '' %>>🚚 En camino</option>
+                        <option value="listo"<%= o.fulfillment === 'listo' ? ' selected' : '' %>>🏪 Listo para recoger</option>
+                      </select>
+                    </form>
+                  <% } %>
+                  <% if (o.noticeHref && o.status !== 'cancelado') { %>
+                    <a href="<%= o.noticeHref %>" target="_blank" rel="noopener" class="m-btn m-btn-sm m-btn-tonal !min-h-0 !py-1.5 !text-emerald-700 !border-emerald-200 hover:!bg-emerald-50" title="Abre WhatsApp con un mensaje para el cliente y su enlace de seguimiento">📲 Avisar al cliente</a>
+                  <% } %>
+                  <button type="button" class="m-btn-icon !w-8 !h-8" title="Copiar enlace de seguimiento" onclick="copiarSeguimiento(this, '<%= o.trackUrl %>')">🔗</button>
+                  <% if (o.status !== 'entregado' && o.status !== 'cancelado') { %>
                     <form method="POST" action="/<%= biz.slug %>/admin/order/<%= o.id %>/entregado" class="inline" data-confirm="<%= oPend ? '¿Entregar el pedido? Quedan ' + money(oRest) + ' por cobrar: se entrega pero NO se marca como pagado. Se registra el abono después.' : 'Marcar como ENTREGADO y cobrado?' %>" data-confirm-ok="Sí, entregar">
                       <button class="m-btn m-btn-sm m-btn-outlined !min-h-0 !py-1.5"><%= oPend ? 'Entregar · falta ' + money(oRest) : '✓ Entregado' %></button>
                     </form>
@@ -519,6 +534,18 @@
 
     </div>
   </main>
+
+  <style>
+    .order-stage { height:32px; padding:0 28px 0 10px; border-radius:9px; border:1px solid var(--ap-border, #e5e7eb); background:var(--ap-card, #fff); color:var(--ap-text, #111); font-size:12px; font-weight:600; cursor:pointer; }
+    .order-stage-form { display:inline-flex; }
+  </style>
+  <script>
+    function copiarSeguimiento(btn, url) {
+      var done = function () { var t = btn.textContent; btn.textContent = '✓'; setTimeout(function () { btn.textContent = t; }, 1400); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done, function () { prompt('Copia el enlace de seguimiento:', url); });
+      else prompt('Copia el enlace de seguimiento:', url);
+    }
+  </script>
 
   <!-- Modal Registrar Abono -->
   <div id="modal-abono" class="hidden fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm">

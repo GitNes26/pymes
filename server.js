@@ -3295,14 +3295,88 @@ app.post('/:slug/pagar-tarjeta', rateLimit(12), async (req, res) => {
     moveOrderStock(orderId, -1);
     notifyOwnerPaid(biz, orderId);
     publishOrderCreated(biz.id, orderId);
-    return res.json({ ok: true, status: 'approved', orderId, total: charge });
+    return res.json({ ok: true, status: 'approved', orderId, total: charge, track: orderTrackUrl(req, biz, orderId) });
   }
   if (pay.status === 'in_process' || pay.status === 'pending') {
     publishOrderCreated(biz.id, orderId);
-    return res.json({ ok: true, status: pay.status, orderId, total: charge }); // el webhook lo marca pagado cuando se apruebe
+    return res.json({ ok: true, status: pay.status, orderId, total: charge, track: orderTrackUrl(req, biz, orderId) }); // el webhook lo marca pagado cuando se apruebe
   }
   moveOrderStock(orderId, 1); db.prepare('DELETE FROM orders WHERE id = ?').run(orderId);
   return res.status(402).json({ ok: false, status: pay.status, error: MP_DETAIL_ES[pay.status_detail] || 'La tarjeta fue rechazada. Prueba con otra tarjeta.' });
+});
+
+// ================= SEGUIMIENTO DEL PEDIDO (cliente) =================
+// Cada pedido tiene un enlace privado /:slug/seguimiento/<id>-<token> que el cliente recibe al pagar
+// o en su mensaje de WhatsApp. El dueño avanza la etapa desde el panel.
+const FULFILL_STEPS = ['preparando', 'en_camino', 'listo'];
+function orderTrackToken(orderId) {
+  const o = db.prepare('SELECT track_token FROM orders WHERE id = ?').get(orderId);
+  if (!o) return '';
+  if (o.track_token) return o.track_token;
+  const t = crypto.randomBytes(6).toString('hex');
+  db.prepare("UPDATE orders SET track_token = ? WHERE id = ? AND (track_token IS NULL OR track_token = '')").run(t, orderId);
+  return db.prepare('SELECT track_token FROM orders WHERE id = ?').get(orderId).track_token;
+}
+function orderTrackPath(biz, orderId) { return '/' + biz.slug + '/seguimiento/' + orderId + '-' + orderTrackToken(orderId); }
+function orderTrackUrl(req, biz, orderId) {
+  const origin = BASE_URL || (req ? req.protocol + '://' + req.get('host') : siteOrigin());
+  return origin + orderTrackPath(biz, orderId);
+}
+// Línea de tiempo que ve el cliente (y que usa el panel para el botón "Avisar al cliente")
+function orderTimeline(o) {
+  const pickup = /recoger/i.test(o.shipping_zone || '') || !o.shipping_zone;
+  const f = o.fulfillment || '';
+  const delivered = o.status === 'entregado';
+  const idx = delivered ? 4 : (f === 'en_camino' || f === 'listo') ? 3 : f === 'preparando' ? 2 : (o.paid ? 1 : 0);
+  const steps = [
+    { k: 'recibido', t: 'Pedido recibido', s: 'La tienda ya tiene tu pedido' },
+    { k: 'pagado', t: o.paid ? 'Pago confirmado' : 'Pago pendiente', s: o.paid ? 'Tu pago quedó registrado' : 'La tienda te confirmará el pago' },
+    { k: 'preparando', t: 'Preparando tu pedido', s: 'Estamos alistando tus productos' },
+    { k: 'camino', t: pickup ? 'Listo para recoger' : 'En camino', s: pickup ? 'Ya puedes pasar por tu pedido' : 'Tu pedido va hacia ti' },
+    { k: 'entregado', t: 'Entregado', s: '¡Gracias por tu compra!' }
+  ].map((st, i) => Object.assign(st, { done: i < idx || (i === idx && (i === 0 || delivered)), current: i === idx && !delivered && o.status !== 'cancelado' }));
+  return { steps, idx, pickup, cancelled: o.status === 'cancelado', delivered };
+}
+// Mensaje sugerido para avisar al cliente según la etapa actual
+function orderNoticeText(biz, o, url) {
+  const tl = orderTimeline(o);
+  const hi = 'Hola' + (o.customer_name ? ' ' + String(o.customer_name).replace(/\s*\(.*\)\s*$/, '').trim() : '') + ', te escribimos de ' + biz.name + '.';
+  let msg;
+  if (tl.cancelled) msg = 'Tu pedido #' + o.id + ' fue cancelado. Si tienes dudas, respóndenos por aquí.';
+  else if (tl.delivered) msg = 'Tu pedido #' + o.id + ' ya fue entregado. ¡Gracias por tu compra!';
+  else if (tl.idx === 3) msg = tl.pickup ? 'Tu pedido #' + o.id + ' ya está listo para recoger.' : 'Tu pedido #' + o.id + ' ya va en camino.';
+  else if (tl.idx === 2) msg = 'Ya estamos preparando tu pedido #' + o.id + '.';
+  else msg = 'Recibimos tu pedido #' + o.id + (o.paid ? ' y tu pago' : '') + '.';
+  return hi + ' ' + msg + '\n\nPuedes ver en qué va aquí: ' + url;
+}
+
+app.get('/:slug/seguimiento/:ref', (req, res) => {
+  const biz = getBusiness(req.params.slug);
+  const m = String(req.params.ref || '').match(/^(\d+)-([a-f0-9]{8,32})$/);
+  const o = (biz && m) ? db.prepare('SELECT * FROM orders WHERE id = ? AND business_id = ?').get(parseInt(m[1], 10), biz.id) : null;
+  if (!o || !o.track_token || o.track_token !== m[2]) return res.status(404).render('404', { message: 'No encontramos ese pedido. Revisa que el enlace esté completo.' });
+  res.set('Cache-Control', 'no-store');
+  res.set('X-Robots-Tag', 'noindex');
+  const dsg = catDesignOf(biz);
+  const wa = String(biz.whatsapp || '').replace(/[^0-9]/g, '');
+  const waNum = wa.length === 10 ? '52' + wa : wa;
+  res.render('seguimiento', {
+    biz, order: o, tl: orderTimeline(o), T: dsg.tokens, design: dsg.id,
+    items: String(o.items || '').split(/\s*\|\s*/).map(x => x.replace(/^•\s*/, '').trim()).filter(Boolean),
+    money: moneyFor(biz),
+    waHref: waNum ? 'https://wa.me/' + waNum + '?text=' + encodeURIComponent('Hola ' + biz.name + ', te escribo por mi pedido #' + o.id + '.') : ''
+  });
+});
+
+// El dueño mueve la etapa de entrega (preparando / en camino o listo para recoger)
+app.post('/:slug/admin/order/:id/etapa', requireAuth, can('pedidos.gestionar'), (req, res) => {
+  const id = parseInt(req.params.id, 10) || 0;
+  const etapa = String((req.body && req.body.etapa) || '');
+  const o = db.prepare('SELECT * FROM orders WHERE id = ? AND business_id = ?').get(id, req.biz.id);
+  if (o && o.status !== 'cancelado' && o.status !== 'entregado' && (etapa === '' || FULFILL_STEPS.includes(etapa))) {
+    db.prepare("UPDATE orders SET fulfillment = ?, fulfillment_at = datetime('now') WHERE id = ? AND business_id = ?").run(etapa, id, req.biz.id);
+  }
+  res.redirect('/' + req.biz.slug + '/admin#pedidos');
 });
 
 // Aviso al dueño por WhatsApp cuando un pedido se paga en línea (WhatsApp Business Cloud API de Meta).
@@ -3390,6 +3464,7 @@ app.post('/api/pedir', (req, res) => {
     // Zona de entrega: el costo se relee aquí por tienda, nunca se confía en lo que mande el navegador
     const zone = zoneLookup(b.id, zoneIdRaw);
     if (zone.name) { total = Math.round((total + zone.cost) * 100) / 100; lines.push(`Entrega: ${zone.name}${zone.cost > 0 ? ' = ' + currencyInfo(b.currency).symbol + zone.cost.toFixed(2) : ' (sin costo)'}`); }
+    let trackLink = '', orderNo = 0;
     if (lines.length) {
       const customerData = nombre ? (nombre + (telefono ? ' (' + telefono + ')' : '')) : (telefono || '');
       const _oidCart = db.prepare(
@@ -3399,10 +3474,13 @@ app.post('/api/pedir', (req, res) => {
       upsertCustomer(b.id, nombre, telefono);
       track(b.id, 'wa', 'pedido');
       publishOrderCreated(b.id, _oidCart);
+      orderNo = _oidCart;
+      trackLink = orderTrackUrl(req, b, _oidCart);
     }
     const instInfo = hasInst ? { isInstallment: true, count: instP.installment_count || 6, frequency: instP.installment_frequency || 'semanal', minDown: instP.installment_min_down || 0 } : null;
-    const message = buildOrderMessage(b.name, lines, total, b.wa_message, currencyInfo(b.currency).symbol, instInfo);
-    return { slug, name: b.name, whatsapp: b.whatsapp, url: waLink(b, message) };
+    let message = buildOrderMessage(b.name, lines, total, b.wa_message, currencyInfo(b.currency).symbol, instInfo);
+    if (trackLink) message += '\n\nPedido #' + orderNo + ' · Seguimiento: ' + trackLink;
+    return { slug, name: b.name, whatsapp: b.whatsapp, url: waLink(b, message), orderId: orderNo || undefined, track: trackLink || undefined };
   });
   res.json({ orders });
 });
@@ -3660,7 +3738,13 @@ function panelData(biz) {
   const orders = db.prepare(
     `SELECT o.*, (SELECT COUNT(*) FROM abonos WHERE order_id = o.id) AS abono_count FROM orders o WHERE o.business_id = ? ORDER BY o.created_at DESC LIMIT 20`
   ).all(biz.id);
-  orders.forEach(o => { if (o.is_installment) o.schedule = installmentSchedule(o); });
+  orders.forEach(o => {
+    if (o.is_installment) o.schedule = installmentSchedule(o);
+    o.trackUrl = siteOrigin() + orderTrackPath(biz, o.id);
+    o.tlIdx = orderTimeline(o).idx;
+    const ph = String(o.customer_phone || '').replace(/[^0-9]/g, '');
+    o.noticeHref = ph ? 'https://wa.me/' + (ph.length === 10 ? '52' + ph : ph) + '?text=' + encodeURIComponent(orderNoticeText(biz, o, o.trackUrl)) : '';
+  });
   const pending = orders.filter(o => !o.paid).length;
   const stats = getStats(biz.id);
   const planMax = PLAN_MAX(biz);

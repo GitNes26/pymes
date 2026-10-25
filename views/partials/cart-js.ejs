@@ -97,6 +97,23 @@
   .cp-ok-ic { width:64px; height:64px; margin:0 auto 12px; display:grid; place-items:center; border-radius:50%; background:color-mix(in srgb, var(--accent, #1e293b) 16%, transparent); color:var(--accent, #1e293b); font-size:30px; font-weight:800; }
   .cp-ok h3 { font-family:var(--font-heading, inherit); font-size:1.3rem; margin-bottom:6px; }
   .cp-ok p { font-size:14px; color:var(--text-secondary, #64748b); }
+  .cp-track { display:block; margin-top:14px; min-height:46px; line-height:46px; text-align:center; border-radius:min(var(--radius, 16px), 14px); background:var(--accent, #1e293b); color:var(--soc-on-accent, #fff); font-weight:800; font-size:14px; text-decoration:none; }
+  .cp-note { margin:10px 0 0; font-size:12px; opacity:.75; }
+  .my-orders-bar { background:color-mix(in srgb, var(--accent, #1e293b) 9%, var(--bg-card, #fff)); border-block:1px solid color-mix(in srgb, var(--accent, #1e293b) 18%, transparent); color:var(--text, #111); }
+  .my-orders-inner { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding-top:10px; padding-bottom:10px; max-width:1440px; margin:0 auto; }
+  .my-orders-ic { font-size:22px; line-height:1; }
+  .my-orders-txt { display:flex; flex-direction:column; min-width:0; flex:1; }
+  .my-orders-txt b { font-size:14px; }
+  .my-orders-txt small { font-size:12px; color:var(--muted, var(--text-secondary, #666)); }
+  .my-orders-go { display:inline-flex; align-items:center; height:38px; padding:0 14px; border-radius:min(var(--radius, 16px), 12px); background:var(--accent, #1e293b); color:var(--soc-on-accent, #fff); font-weight:700; font-size:13px; text-decoration:none; white-space:nowrap; }
+  .my-orders-more { position:relative; font-size:13px; }
+  .my-orders-more summary { cursor:pointer; font-weight:600; list-style:none; padding:8px 4px; }
+  .my-orders-more summary::-webkit-details-marker { display:none; }
+  .my-orders-more > div { position:absolute; right:0; top:100%; z-index:60; min-width:200px; background:var(--bg-card, #fff); border:1px solid var(--border, #e5e7eb); border-radius:12px; box-shadow:0 14px 30px rgba(0,0,0,.15); padding:6px; display:flex; flex-direction:column; }
+  .my-orders-more > div a { padding:9px 10px; border-radius:8px; color:var(--text, #111); text-decoration:none; }
+  .my-orders-more > div a:hover { background:color-mix(in srgb, var(--accent, #1e293b) 8%, transparent); }
+  .my-orders-x { border:0; background:transparent; color:var(--muted, #666); width:32px; height:32px; border-radius:8px; cursor:pointer; font-size:14px; }
+  @media (max-width:600px) { .my-orders-x { order:2; } .my-orders-go { flex:1 1 100%; justify-content:center; order:3; } .my-orders-more { order:4; flex:1 1 100%; } .my-orders-more > div { left:0; right:auto; } }
   .cp-wa { display:block; margin-top:14px; min-height:46px; line-height:46px; text-align:center; border-radius:min(var(--radius, 16px), 14px); background:#25d366; color:#fff; font-weight:800; font-size:14px; text-decoration:none; }
   .cp-done { margin-top:18px; width:100%; min-height:50px; border:0; border-radius:min(var(--radius, 16px), 14px); background:var(--accent, #1e293b); color:var(--on-accent, var(--soc-on-accent, #fff)); font-weight:700; font-size:15px; cursor:pointer; }
 
@@ -798,7 +815,8 @@
     if (!sharePhoto) msg += '\n\n📸 Fotos de mi pedido:\n' + location.origin + '/' + g.store.slug + '/pedido?ids=' + g.items.map(it => it.id).join(',') + '&q=' + g.items.map(it => it.qty).join(',') + (nombre ? '&n=' + encodeURIComponent(nombre) : '') + (telefono ? '&t=' + encodeURIComponent(telefono) : '');
     const url = 'https://wa.me/' + waNumber(g.store.whatsapp) + '?text=' + encodeURIComponent(msg);
     try {
-      fetch('/api/pedir', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: g.items.map(it => ({ store: it.store.slug, id: it.id, qty: it.qty, variant: it.variant })), nombre: nombre, telefono: telefono, zone_id: zoneIdSel }) }).catch(() => {});
+      fetch('/api/pedir', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: g.items.map(it => ({ store: it.store.slug, id: it.id, qty: it.qty, variant: it.variant })), nombre: nombre, telefono: telefono, zone_id: zoneIdSel }) })
+        .then(r => r.json()).then(d => { (d.orders || []).forEach(o => { if (o.track) rememberOrder(o.slug, o.orderId, o.track, total); }); renderMyOrders(); }).catch(() => {});
     } catch (e) {}
     if (sharePhoto) {
       // Sale la foto adjunta: el cliente elige el chat de la tienda en el menu de compartir
@@ -936,6 +954,37 @@
     });
   }
   // Modal grande con los datos para transferir — el recuadro chico dentro del carrito no se leía bien
+  // ---- Mis pedidos: los pedidos hechos desde este celular, con su enlace de seguimiento ----
+  const MYORD_KEY = 'nessik_pedidos';
+  function readMyOrders() { try { return JSON.parse(localStorage.getItem(MYORD_KEY) || '[]') || []; } catch (e) { return []; } }
+  function rememberOrder(slug, id, track, total) {
+    if (!id || !track) return;
+    const list = readMyOrders().filter(o => !(o.slug === slug && o.id === id));
+    list.unshift({ slug: slug, id: id, track: track, total: total || 0, t: Date.now() });
+    try { localStorage.setItem(MYORD_KEY, JSON.stringify(list.slice(0, 20))); } catch (e) {}
+  }
+  function renderMyOrders() {
+    const old = document.getElementById('my-orders-bar'); if (old) old.remove();
+    const mine = readMyOrders().filter(o => o.slug === SLUG && Date.now() - o.t < 30 * 86400000);
+    const anchor = document.getElementById('contenido');
+    if (!mine.length || !anchor) return;
+    const last = mine[0];
+    const bar = document.createElement('div');
+    bar.id = 'my-orders-bar';
+    bar.className = 'my-orders-bar';
+    bar.innerHTML = '<div class="wrap my-orders-inner"><span class="my-orders-ic" aria-hidden="true">📦</span>' +
+      '<span class="my-orders-txt"><b>Tu pedido #' + esc(last.id) + '</b><small>' + (mine.length > 1 ? 'y ' + (mine.length - 1) + ' pedido' + (mine.length > 2 ? 's' : '') + ' más · ' : '') + 'Toca para ver en qué va</small></span>' +
+      '<a class="my-orders-go" href="' + esc(last.track) + '">Ver seguimiento →</a>' +
+      (mine.length > 1 ? '<details class="my-orders-more"><summary>Mis pedidos</summary><div>' + mine.map(o => '<a href="' + esc(o.track) + '">Pedido #' + esc(o.id) + (o.total ? ' · ' + money(o.total) : '') + '</a>').join('') + '</div></details>' : '') +
+      '<button type="button" class="my-orders-x" aria-label="Ocultar">✕</button></div>';
+    bar.querySelector('.my-orders-x').addEventListener('click', function () {
+      try { localStorage.setItem(MYORD_KEY, JSON.stringify(readMyOrders().filter(o => o.slug !== SLUG || o.id !== last.id))); } catch (e) {}
+      renderMyOrders();
+    });
+    anchor.parentNode.insertBefore(bar, anchor);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', renderMyOrders); else renderMyOrders();
+
   function payTransfer(slug) {
     if (!validarDatosCliente()) return;
     const g = storeGroups().find(x => x.store.slug === slug);
@@ -1025,12 +1074,15 @@
                 if (!d.ok) { payAlert((d.error || 'No se pudo procesar el pago.').replace(/^No se pudo procesar el pago\.?\s*/i, '') || 'Intenta con otra tarjeta.'); return Promise.reject(new Error(d.error || 'pago')); }
                 g.items.forEach(it => { delete cart[it.key]; });
                 saveCart(); renderCart();
+                if (d.track) { rememberOrder(slug, d.orderId, d.track, d.total); renderMyOrders(); }
                 const aprobado = d.status === 'approved';
                 bodyEl.innerHTML =
                   '<div class="cp-ok"><div class="cp-ok-ic">' + (aprobado ? '✓' : '⏳') + '</div>' +
                   '<h3>' + (aprobado ? '¡Pago aprobado!' : 'Pago en revisión') + '</h3>' +
                   '<p>' + (aprobado ? 'Recibimos tu pago de ' + money(d.total) + '. Tu pedido #' + d.orderId + ' ya está registrado.' : 'Mercado Pago está revisando tu pago. Te avisaremos cuando se apruebe (pedido #' + d.orderId + ').') + '</p>' +
-                  (STORE_WHATSAPP ? '<a class="cp-wa" target="_blank" rel="noopener" href="https://wa.me/' + waNumber(STORE_WHATSAPP) + '?text=' + encodeURIComponent('Hola ' + STORE_NAME + ', ya pagué mi pedido #' + d.orderId + ' por ' + money(d.total) + ' con tarjeta.' + (nombre ? ' Soy ' + nombre + '.' : '')) + '">📲 Avisar por WhatsApp</a>' : '') +
+                  (d.track ? '<a class="cp-track" href="' + esc(d.track) + '">📦 Ver mi pedido y su seguimiento</a>' : '') +
+                  (STORE_WHATSAPP ? '<a class="cp-wa" target="_blank" rel="noopener" href="https://wa.me/' + waNumber(STORE_WHATSAPP) + '?text=' + encodeURIComponent('Hola ' + STORE_NAME + ', ya pagué mi pedido #' + d.orderId + ' por ' + money(d.total) + ' con tarjeta.' + (nombre ? ' Soy ' + nombre + '.' : '') + (d.track ? '\n\nSeguimiento: ' + d.track : '')) + '">📲 Avisar por WhatsApp</a>' : '') +
+                  (d.track ? '<p class="cp-note">Guardamos el enlace: también lo encuentras en esta tienda, en “Mis pedidos”.</p>' : '') +
                   '<button type="button" class="cp-done">Listo</button></div>';
                 bodyEl.querySelector('.cp-done').addEventListener('click', closeCardPay);
                 toast(aprobado ? '¡Pago aprobado! ✓' : 'Pago en revisión ⏳', aprobado);

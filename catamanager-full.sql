@@ -150,6 +150,9 @@ CREATE TABLE `orders` (
   `installment_count` int DEFAULT '0',
   `paid_at` text COLLATE utf8mb4_unicode_ci,
   `installment_frequency` text COLLATE utf8mb4_unicode_ci DEFAULT (_utf8mb4'semanal'),
+  `track_token` text COLLATE utf8mb4_unicode_ci DEFAULT (_utf8mb4''),
+  `fulfillment` text COLLATE utf8mb4_unicode_ci DEFAULT (_utf8mb4''),
+  `fulfillment_at` text COLLATE utf8mb4_unicode_ci,
   PRIMARY KEY (`id`),
   KEY `idx_ord_biz` (`business_id`),
   CONSTRAINT `fk_ord_biz` FOREIGN KEY (`business_id`) REFERENCES `businesses` (`id`) ON DELETE CASCADE

@@ -334,6 +334,10 @@ addColumnIfMissing('orders', 'stock_applied', 'INTEGER DEFAULT 0'); // 1 = ya se
 addColumnIfMissing('orders', 'items_json', 'TEXT'); // [{id, qty, variant}] para descontar/devolver stock por id de producto
 addColumnIfMissing('orders', 'shipping_cost', 'REAL DEFAULT 0'); // costo de la zona de entrega elegida (ya incluido en el total)
 addColumnIfMissing('orders', 'shipping_zone', "TEXT DEFAULT ''"); // nombre de la zona ("Recoger en tienda" si no aplica)
+// Seguimiento del pedido para el cliente: enlace privado (/:slug/seguimiento/<id>-<token>) y etapa de entrega
+addColumnIfMissing('orders', 'track_token', "TEXT DEFAULT ''"); // parte secreta del enlace de seguimiento
+addColumnIfMissing('orders', 'fulfillment', "TEXT DEFAULT ''"); // '' | preparando | en_camino | listo (para recoger)
+addColumnIfMissing('orders', 'fulfillment_at', 'TEXT'); // cuándo cambió la etapa
 // Pedidos anteriores al control de stock (antes del 2026-09-21 14:26 hora de México): su stock ya lo manejó el dueño a mano
 db.exec("UPDATE orders SET stock_applied = 1 WHERE (stock_applied IS NULL OR stock_applied = 0) AND created_at < '2026-09-21 20:26:22'");
 

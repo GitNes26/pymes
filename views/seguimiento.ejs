@@ -1,0 +1,137 @@
+<%
+  // Seguimiento de un pedido para el cliente (enlace privado /:slug/seguimiento/<id>-<token>).
+  // Toma la apariencia (colores y tipografía) del catálogo de la tienda.
+  function _lum(hex) {
+    var h = String(hex || '').replace('#', ''); if (h.length === 3) h = h.split('').map(function (c) { return c + c; }).join('');
+    if (!/^[0-9a-f]{6}$/i.test(h)) return 0.2;
+    var c = [0, 2, 4].map(function (i) { var v = parseInt(h.substr(i, 2), 16) / 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  }
+  var _onAccent = (1.05 / (_lum(T.accent) + .05)) >= ((_lum(T.accent) + .05) / .0556) ? '#ffffff' : '#111111';
+  var _dark = _lum(T.bg) < 0.2;
+  var _cur = tl.steps.filter(function (s) { return s.current; })[0];
+  var _headline = tl.cancelled ? 'Pedido cancelado' : tl.delivered ? '¡Pedido entregado!' : (_cur ? _cur.t : 'Pedido recibido');
+  var _sub = tl.cancelled ? 'Este pedido fue cancelado. Si tienes dudas, escríbele a la tienda.' : tl.delivered ? 'Gracias por tu compra en ' + biz.name + '.' : (_cur ? _cur.s : '');
+  var _fecha = (typeof fmtFecha === 'function') ? fmtFecha(order.created_at) : String(order.created_at || '').slice(0, 16);
+%><!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex" />
+  <meta name="theme-color" content="<%= T.accent %>" />
+  <title>Pedido #<%= order.id %> · <%= biz.name %></title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="<%= T.font.href %>" rel="stylesheet" />
+  <link rel="stylesheet" href="/vendor/bootstrap-icons/bootstrap-icons.min.css">
+  <style>
+    :root {
+      --bg: <%- T.bg %>; --card: <%- T.card %>; --text: <%- T.text %>; --muted: <%- T.textSec %>;
+      --accent: <%- T.accent %>; --on-accent: <%- _onAccent %>; --radius: <%- Math.min(T.radius, 20) %>px;
+      --line: color-mix(in srgb, var(--text) 12%, transparent);
+      --soft: color-mix(in srgb, var(--accent) 9%, var(--card));
+      --ok: <%- _dark ? '#4ade80' : '#15803d' %>; --bad: <%- _dark ? '#f87171' : '#b91c1c' %>;
+      --font-h: <%- T.font.heading %>; --font-b: <%- T.font.body %>;
+      color-scheme: <%- _dark ? 'dark' : 'light' %>;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--font-b); background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; min-height: 100vh; }
+    a { color: inherit; }
+    .wrap { max-width: 640px; margin: 0 auto; padding: 0 18px; }
+    .top { display: flex; align-items: center; gap: 12px; padding: 18px 0; }
+    .top img { width: 44px; height: 44px; border-radius: 12px; object-fit: contain; background: var(--card); border: 1px solid var(--line); }
+    .top b { font-family: var(--font-h); font-size: 1.1rem; }
+    .top a.back { margin-left: auto; font-size: 13px; font-weight: 600; text-decoration: none; color: var(--muted); display: inline-flex; gap: 6px; align-items: center; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: calc(var(--radius) + 4px); padding: 22px; margin-bottom: 14px; box-shadow: 0 18px 40px -32px rgba(0,0,0,.4); }
+    .eyebrow { font-size: 11.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+    h1 { font-family: var(--font-h); font-size: clamp(1.6rem, 6vw, 2.1rem); line-height: 1.1; margin-top: 8px; }
+    .sub { color: var(--muted); margin-top: 8px; line-height: 1.5; font-size: 15px; }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+    .chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px; border-radius: 999px; background: var(--soft); font-size: 12.5px; font-weight: 600; }
+    .chip.ok { color: var(--ok); background: color-mix(in srgb, var(--ok) 12%, var(--card)); }
+    .chip.bad { color: var(--bad); background: color-mix(in srgb, var(--bad) 12%, var(--card)); }
+
+    .steps { list-style: none; position: relative; }
+    .steps li { position: relative; display: flex; gap: 14px; padding-bottom: 22px; }
+    .steps li:last-child { padding-bottom: 0; }
+    .steps li::before { content: ""; position: absolute; left: 15px; top: 32px; bottom: 2px; width: 2px; background: var(--line); }
+    .steps li:last-child::before { display: none; }
+    .steps li.done::before { background: var(--accent); }
+    .dot { flex: none; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-size: 14px; background: var(--card); border: 2px solid var(--line); color: var(--muted); position: relative; z-index: 1; }
+    .done .dot { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+    .current .dot { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 16%, transparent); }
+    .current .dot::after { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); animation: pulse 1.6s ease-in-out infinite; }
+    @keyframes pulse { 50% { transform: scale(.6); opacity: .55; } }
+    .st b { display: block; font-size: 15px; margin-top: 5px; }
+    .st span { display: block; font-size: 13px; color: var(--muted); margin-top: 2px; }
+    .todo .st b { color: var(--muted); font-weight: 600; }
+
+    .items { list-style: none; }
+    .items li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14px; line-height: 1.4; }
+    .items li:last-child { border-bottom: 0; }
+    .total { display: flex; justify-content: space-between; align-items: baseline; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+    .total b { font-size: 1.35rem; }
+    h2 { font-family: var(--font-h); font-size: 1.15rem; margin-bottom: 12px; }
+
+    .btn { display: flex; align-items: center; justify-content: center; gap: 9px; height: 50px; border-radius: min(var(--radius), 14px); font-weight: 700; font-size: 15px; text-decoration: none; }
+    .btn-wa { background: #1f9d55; color: #fff; }
+    .btn-ghost { border: 1px solid var(--line); background: var(--card); color: var(--text); margin-top: 10px; }
+    .foot { text-align: center; font-size: 12px; color: var(--muted); padding: 22px 0 36px; }
+    @media (prefers-reduced-motion: reduce) { .current .dot::after { animation: none; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <% if (biz.logo) { %><img src="<%= biz.logo %>" alt=""><% } %>
+      <b><%= biz.name %></b>
+      <a class="back" href="/<%= biz.slug %>"><i class="bi bi-shop" aria-hidden="true"></i> Ir a la tienda</a>
+    </header>
+
+    <section class="card" aria-live="polite">
+      <span class="eyebrow">Pedido #<%= order.id %></span>
+      <h1><%= _headline %></h1>
+      <% if (_sub) { %><p class="sub"><%= _sub %></p><% } %>
+      <div class="meta">
+        <span class="chip"><i class="bi bi-calendar3" aria-hidden="true"></i><%= _fecha %></span>
+        <% if (tl.cancelled) { %><span class="chip bad"><i class="bi bi-x-circle" aria-hidden="true"></i>Cancelado</span>
+        <% } else if (order.paid) { %><span class="chip ok"><i class="bi bi-check-circle" aria-hidden="true"></i>Pagado</span>
+        <% } else { %><span class="chip"><i class="bi bi-hourglass-split" aria-hidden="true"></i>Pago pendiente</span><% } %>
+        <span class="chip"><i class="bi <%= tl.pickup ? 'bi-shop' : 'bi-truck' %>" aria-hidden="true"></i><%= order.shipping_zone || 'Recoger en tienda' %></span>
+      </div>
+    </section>
+
+    <% if (!tl.cancelled) { %>
+    <section class="card">
+      <h2>Seguimiento</h2>
+      <ol class="steps">
+        <% tl.steps.forEach(function (s) { %>
+        <li class="<%= s.done ? 'done' : (s.current ? 'current' : 'todo') %>">
+          <span class="dot"><% if (s.done) { %><i class="bi bi-check-lg" aria-hidden="true"></i><% } %></span>
+          <span class="st"><b><%= s.t %></b><% if (s.done || s.current) { %><span><%= s.s %></span><% } %></span>
+        </li>
+        <% }) %>
+      </ol>
+    </section>
+    <% } %>
+
+    <section class="card">
+      <h2>Tu pedido</h2>
+      <ul class="items">
+        <% items.forEach(function (it) { var m = it.match(/^(.*?)\s*=\s*(.+)$/); %>
+        <li><span><%= m ? m[1] : it %></span><% if (m) { %><b><%= m[2] %></b><% } %></li>
+        <% }) %>
+      </ul>
+      <div class="total"><span>Total</span><b><%= money(order.total) %></b></div>
+    </section>
+
+    <% if (waHref) { %><a class="btn btn-wa" href="<%= waHref %>" target="_blank" rel="noopener"><i class="bi bi-whatsapp" aria-hidden="true"></i> Escribir a la tienda</a><% } %>
+    <a class="btn btn-ghost" href="/<%= biz.slug %>"><i class="bi bi-bag" aria-hidden="true"></i> Seguir comprando</a>
+    <p class="foot">Guarda este enlace: aquí verás cuando tu pedido avance. Se actualiza solo.</p>
+  </div>
+  <script>
+    // Se actualiza solo cada minuto mientras la página esté a la vista
+    setInterval(function () { if (document.visibilityState === 'visible') location.reload(); }, 60000);
+  </script>
+</body>
+</html>

@@ -2,6 +2,14 @@
 
 Formato: una sección por fecha, lo más reciente arriba. Prefijos: Fix, Feat, Estilo, BD, Docs.
 
+## 2026-10-25
+
+- **Feat:** **seguimiento de pedidos para el cliente.** Cada pedido tiene un enlace privado `/:slug/seguimiento/<id>-<token>` con su número, productos, total, forma de entrega y una línea de tiempo (Recibido → Pago → Preparando → En camino / Listo para recoger → Entregado) con los colores de la tienda; se actualiza sola.
+  - Al pagar con tarjeta: botón "Ver mi pedido y su seguimiento" y el enlace va en el mensaje de "Avisar por WhatsApp".
+  - En el catálogo: barra "Tu pedido #N · Ver seguimiento" (y "Mis pedidos") con los pedidos hechos desde ese celular en los últimos 30 días.
+  - En el panel (Pedidos): selector de etapa (Recibido / Preparando / En camino / Listo para recoger), botón "📲 Avisar al cliente" (abre WhatsApp al teléfono del cliente con un mensaje según la etapa y el enlace) y 🔗 para copiar el enlace.
+- **BD:** `orders.track_token`, `orders.fulfillment`, `orders.fulfillment_at` (migración en `db.js`; script MySQL en `docs/sql/2026-10-25-seguimiento-pedidos.sql`; `catamanager-full.sql` actualizado).
+
 ## 2026-10-23
 
 - **Feat:** catálogo separado por **línea o marca** (opcional). En Configuración → Secciones automáticas: "Separar productos por línea o marca". Usa el Agrupador de cada producto (sin cambios en la base de datos: la opción se guarda en `businesses.extras` como `byGroup`). Muestra un índice "Compra por línea" y un encabezado por línea con iniciales, número de productos, precio desde y ofertas; los productos sin agrupador van en "Otros productos". Buscador, filtros y "Ver más" siguen funcionando y las líneas sin resultados se ocultan. Archivos: `views/templates/constructor.ejs`, `views/config.ejs`, `server.js` (`sanitizeExtras`), `public/css/catalog-pro.css`.
