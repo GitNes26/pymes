@@ -225,18 +225,6 @@
     });
     _lines.sort(function (a, b) { if (a.id === '0') return 1; if (b.id === '0') return -1; return a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }); });
   })();
-  // Portada sin banner: mosaico con fotos reales de la tienda (destacados primero).
-  var _hasPhoto = function (p) { return p && p.image && !/sin-imagen/.test(p.image); };
-  var _mosaic = _realProds.filter(_hasPhoto).slice(0, 4);
-  if (_mosaic.length < 3) _mosaic = [];
-  // "Explora por categoría": tarjetas con la foto del primer producto de cada categoría.
-  var _catTiles = _catsShown.map(function (c) {
-    var ph = _realProds.filter(function (p) { return String(p.category_id) === String(c.id) && _hasPhoto(p); })[0];
-    return { id: c.id, name: c.name, count: _catCount[String(c.id)] || 0, img: ph ? ph.image : '' };
-  }).sort(function (a, b) { return b.count - a.count; });
-  var _catTilesMore = _catTiles.length > 8;
-  _catTiles = _catTiles.slice(0, _catTilesMore ? 7 : 8);
-  var _showCatTiles = _catsShown.length >= 3 && _catTiles.filter(function (t) { return t.img; }).length >= 3;
   var _byGroup = !!_ex.byGroup && _productGroups.length >= 1; // basta con un agrupador (el resto va en "Otros productos")
   var _lineById = {}; _lines.forEach(function (l) { _lineById[l.id] = l; });
   // La vista general sigue el orden de los agrupadores y, dentro de cada uno, el del producto.
@@ -1279,22 +1267,11 @@
   </div>
   <% } else { %>
   <!-- Sin banner: portada sencilla (con el logo grande si lo hay; si no, solo el nombre) -->
-  <div class="brand-hero<%= biz.logo ? '' : ' brand-hero--text' %><%= _mosaic.length ? ' has-mosaic' : '' %>">
-    <% if (_mosaic.length) { %><div class="bh-inner"><div class="bh-copy"><% } %>
+  <div class="brand-hero<%= biz.logo ? '' : ' brand-hero--text' %>">
     <% if (biz.logo) { %><img src="<%= biz.logo %>" class="brand-hero-logo" alt="<%= biz.name %>" fetchpriority="high" decoding="async" data-hide-on-error><% } %>
-    <% if (_mosaic.length) { %><span class="bh-eyebrow"><%= _realProds.length %> productos<%= _catsShown.length > 1 ? ' · ' + _catsShown.length + ' categorías' : '' %></span><% } %>
     <h1 class="hero-name"><%= biz.name %></h1>
     <% if (biz.description) { %><div class="hero-desc"><%= biz.description %></div><% } %>
     <%- _heroExtras() %>
-    <% if (_mosaic.length) { %></div>
-    <div class="bh-mosaic bh-n<%= _mosaic.length %>" aria-label="Algunos de nuestros productos">
-      <% _mosaic.forEach(function (p, i) { %>
-      <a class="bh-tile" href="/<%= biz.slug %>/p/<%= p.id %>"<%- _ph(p.image) %>>
-        <img src="<%= p.image %>"<%- _imgAttrs(p.image, i === 0 ? '(max-width:900px) 60vw, 420px' : '(max-width:900px) 40vw, 260px') %> alt="<%= p.name %>" <%- i === 0 ? 'fetchpriority="high"' : 'loading="lazy"' %> decoding="async">
-        <% if (i === 0) { %><span class="bh-tag"><b><%= p.name %></b><span><%= _money(p) %></span></span><% } %>
-      </a>
-      <% }) %>
-    </div></div><% } %>
   </div>
   <% } %>
 
@@ -1352,32 +1329,6 @@
       <% }) %>
     </div>
   </div>
-  <% } %>
-
-  <% if (_showCatTiles) { %>
-  <!-- ===== EXPLORA POR CATEGORÍA ===== -->
-  <section class="cat-tiles" aria-labelledby="cat-tiles-t">
-    <div class="wrap">
-      <div class="cat-tiles-head">
-        <h2 class="sec-title" id="cat-tiles-t"><span class="sec-title-txt">Explora por categoría</span></h2>
-        <span class="cat-tiles-n"><%= _catsShown.length %> categorías</span>
-      </div>
-      <div class="cat-tiles-track">
-        <% _catTiles.forEach(function (t) { %>
-        <button type="button" class="cat-tile" onclick="catTile('<%= t.id %>')"<%- t.img ? _ph(t.img) : '' %>>
-          <span class="cat-tile-img"><% if (t.img) { %><img src="<%= t.img %>"<%- _imgAttrs(t.img, '(max-width:900px) 44vw, 280px') %> alt="" loading="lazy" decoding="async"><% } else { %><i class="bi bi-grid" aria-hidden="true"></i><% } %></span>
-          <span class="cat-tile-txt"><b><%= t.name %></b><small><%= t.count %> <%= t.count === 1 ? 'producto' : 'productos' %></small></span>
-        </button>
-        <% }) %>
-        <% if (_catTilesMore) { %>
-        <button type="button" class="cat-tile cat-tile--all" onclick="document.getElementById('filterSidebar') && window.matchMedia('(max-width:900px)').matches ? document.getElementById('filterSidebar').classList.add('sidebar-open') : goProducts(true)">
-          <span class="cat-tile-img"><i class="bi bi-grid-3x3-gap" aria-hidden="true"></i></span>
-          <span class="cat-tile-txt"><b>Ver todas</b><small><%= _catsShown.length %> categorías</small></span>
-        </button>
-        <% } %>
-      </div>
-    </div>
-  </section>
   <% } %>
 
   <!-- ===== OFERTAS (full width) ===== -->
@@ -2212,7 +2163,6 @@
       _renderProducts();
       _pendingCount();
     }
-    function catTile(cat) { catChip(cat); goProducts(true); }
     function catChip(cat) {
       _syncCatButtons(cat);
       _runFiltersInPlace();
@@ -2272,53 +2222,6 @@
         });
       });
       later();
-    })();
-
-    // ===== REGRESAR DE UN PRODUCTO: misma vista y misma posición =====
-    // Antes, al volver con "atrás" se perdían "Ver más", búsqueda y filtros: la página regresaba a
-    // 20 productos y el navegador dejaba al cliente en el pie de página.
-    (function () {
-      var KEY = 'catv:<%= biz.slug %>';
-      var store = { get: function () { try { return JSON.parse(sessionStorage.getItem(KEY) || 'null'); } catch (e) { return null; } },
-                    set: function (v) { try { sessionStorage.setItem(KEY, JSON.stringify(v)); } catch (e) {} },
-                    del: function () { try { sessionStorage.removeItem(KEY); } catch (e) {} } };
-      var val = function (id) { var el = document.getElementById(id); return el ? el.value : ''; };
-      function save() {
-        var cat = document.querySelector('.filter-cat.on'), grp = document.querySelector('.filter-group-btn.on');
-        store.set({ t: Date.now(), y: window.pageYOffset, shown: _shownCount, q: val('filterSearch'), min: val('filterPriceMin'), max: val('filterPriceMax'),
-          cat: cat ? cat.getAttribute('data-cat') : 'all', grp: grp ? grp.getAttribute('data-group') : 'all',
-          attrs: Array.prototype.map.call(document.querySelectorAll('.filter-attr.on'), function (b) { return b.getAttribute('data-attr') + '=' + b.getAttribute('data-val'); }) });
-      }
-      // Se guarda justo al salir hacia un producto (tarjetas, nombres, ofertas, mosaico)
-      document.addEventListener('click', function (e) {
-        var el = e.target.closest('.prod-card, .oferta-card, .bh-tile, a[href*="/<%= biz.slug %>/p/"]');
-        if (el) save();
-      }, true);
-      window.addEventListener('pagehide', function () { if (store.get()) save(); });
-      var nav = (performance.getEntriesByType && performance.getEntriesByType('navigation')[0]) || {};
-      var st = store.get();
-      if (nav.type !== 'back_forward' || !st || Date.now() - st.t > 30 * 60 * 1000) { if (nav.type !== 'back_forward') store.del(); return; }
-      if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
-      var set = function (id, v) { var el = document.getElementById(id); if (el) el.value = v || ''; };
-      set('filterSearch', st.q); set('shopSearch', st.q); set('filterPriceMin', st.min); set('filterPriceMax', st.max);
-      document.querySelectorAll('.filter-cat, .cat-chip').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-cat') === String(st.cat || 'all')); });
-      document.querySelectorAll('.filter-group-btn').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-group') === String(st.grp || 'all')); });
-      document.querySelectorAll('.filter-attr').forEach(function (b) { b.classList.toggle('on', (st.attrs || []).indexOf(b.getAttribute('data-attr') + '=' + b.getAttribute('data-val')) > -1); });
-      // Sin animaciones de entrada: todo aparece ya en su lugar
-      document.documentElement.classList.add('cat-restoring');
-      document.querySelectorAll('.rv').forEach(function (el) { el.classList.add('in'); });
-      var go = function () { window.scrollTo(0, st.y || 0); };
-      // El render inicial deja salidas programadas a 150 ms (ocultan lo que pasa de 20):
-      // se restaura después de ellas para que no vuelvan a esconder los productos.
-      setTimeout(function () {
-        _updateFacetCounts();
-        _shownCount = Math.max(PAGE_SIZE, st.shown || PAGE_SIZE);
-        _renderProducts();
-        _pendingCount();
-        go();
-        requestAnimationFrame(function () { go(); setTimeout(go, 150); });
-        setTimeout(function () { go(); document.documentElement.classList.remove('cat-restoring'); }, 700);
-      }, 170);
     })();
 
     // ===== FORMULARIO DE CONTACTO =====
